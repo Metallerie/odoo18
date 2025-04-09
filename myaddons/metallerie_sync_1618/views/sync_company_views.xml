@@ -1,0 +1,28 @@
+<odoo>
+    <record id="view_sync_company_form" model="ir.ui.view">
+        <field name="name">sync.company.form</field>
+        <field name="model">metallerie.sync.company</field>
+        <field name="arch" type="xml">
+            <form string="Synchronisation des Sociétés">
+                <header>
+                    <button name="sync_v16_to_v18_compagny" string="Lancer la Synchronisation" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sync_company" model="ir.actions.act_window">
+        <field name="name">Synchronisation Sociétés</field>
+        <field name="res_model">metallerie.sync.company</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_sync_company_form"/>
+        <field name="target">inline</field>
+    </record>
+
+    <menuitem id="menu_sync_company" name="Synchronisation Sociétés" parent="base.menu_administration" action="action_sync_company"/>
+</odoo>

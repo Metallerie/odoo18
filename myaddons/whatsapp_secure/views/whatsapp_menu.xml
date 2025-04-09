@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Action d'ouverture du modèle whatsapp.send.message -->
+    <record id="action_whatsapp_send_message" model="ir.actions.act_window">
+        <field name="name">WhatsApp Messages</field>
+        <field name="res_model">whatsapp.send.message</field>
+        <field name="view_mode">tree,form</field>
+        <field name="target">current</field>
+    </record>
+
+    <!-- Menu pour accéder aux messages WhatsApp -->
+    <menuitem id="menu_whatsapp_send"
+              name="WhatsApp Messages"
+              parent="website.main_menu"
+              action="action_whatsapp_send_message"
+              sequence="100"/>
+</odoo>

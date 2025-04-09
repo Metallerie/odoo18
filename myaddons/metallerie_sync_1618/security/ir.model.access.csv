@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_metallerie_sync_company,access.metallerie.sync.company,model_metallerie_sync_company,base.group_system,1,1,1,1
+access_metallerie_sync_partner,access.metallerie.sync.partner,model_metallerie_sync_partner,base.group_system,1,1,1,1
+access_metallerie_sync_field_status,access.metallerie.sync.field.status,model_metallerie_sync_field_status,base.group_system,1,1,1,1
