@@ -74,11 +74,11 @@ class OcrRule(models.Model):
         help="Reference date for date-based conditions."
     )
 
-    # Valeur lisible pour l'affichage
+    # Valeur lisible pour affichage en vue tree
     value_display = fields.Char(
         string="Value (Display)", 
         compute="_compute_value_display", 
-        store=False
+        store=True  # Stocké pour compatibilité avec Odoo 18
     )
 
     @api.depends('value', 'value_text', 'value_date', 'condition_type')
