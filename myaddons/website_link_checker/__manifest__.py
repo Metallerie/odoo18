@@ -4,6 +4,7 @@
     "name": "Website Link Checker",
     "version": "18.0.1",
     "depends": ["website", "mail"],
+    'website': "https://www.metallerie.xyz",
     "author": "Franck & Gpt",
     "category": "Website",
     "summary": "Scan des liens de sitemap et envoi d'un rapport en cas d'erreur",
