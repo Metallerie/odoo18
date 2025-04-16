@@ -1,0 +1,14 @@
+# views/product_template_views.xml
+<odoo>
+  <record id="view_product_template_form_seo" model="ir.ui.view">
+    <field name="name">product.template.form.seo</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_only_form_view"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet/group" position="inside">
+        <field name="exclude_from_sitemap"/>
+        <field name="noindex"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
