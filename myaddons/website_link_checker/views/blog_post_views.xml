@@ -1,0 +1,14 @@
+# views/blog_post_views.xml
+<odoo>
+  <record id="view_blog_post_form_seo" model="ir.ui.view">
+    <field name="name">blog.post.form.seo</field>
+    <field name="model">blog.post</field>
+    <field name="inherit_id" ref="website_blog.view_blog_post_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//group" position="inside">
+        <field name="exclude_from_sitemap"/>
+        <field name="noindex"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
