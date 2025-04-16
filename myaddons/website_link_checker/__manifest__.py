@@ -8,7 +8,7 @@
     "category": "Website",
     "summary": "Scan des liens de sitemap et envoi d'un rapport en cas d'erreur",
     "data": [
-      #  "views/website_page_views.xml",
+        "views/website_page_views.xml",
         "data/ir_cron.xml"
     ],
     "installable": True,
