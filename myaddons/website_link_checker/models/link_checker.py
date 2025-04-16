@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from odoo import models, tools
 
-class LinkChecker(models.Model):
+class LinkChecker(models.Model):  # ✅ Ce n'est plus un AbstractModel
     _name = 'link_checker.cron'
     _description = 'Vérification des liens via les sitemaps'
 
@@ -54,7 +54,6 @@ class LinkChecker(models.Model):
         page_errors = []
         soup = BeautifulSoup(html, 'html.parser')
 
-        # Vérifie les liens <a href>
         for link in soup.find_all('a', href=True):
             link_url = link['href']
             if link_url.startswith('http'):
@@ -65,15 +64,12 @@ class LinkChecker(models.Model):
                 except Exception as e:
                     page_errors.append(f"Lien cassé : {link_url} (erreur : {e})")
 
-        # Vérifie la balise <title>
         if not soup.find('title'):
             page_errors.append("Balise <title> manquante")
 
-        # Vérifie la balise <meta name="description">
         if not soup.find('meta', attrs={'name': 'description'}):
             page_errors.append("Balise <meta name='description'> manquante")
 
-        # Vérifie les images
         for img in soup.find_all('img', src=True):
             img_url = img['src']
             if img_url.startswith('http'):
