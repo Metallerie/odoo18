@@ -2,7 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 from odoo import models, fields, tools
-
+print(">>> MODULE website_link_checker.models.website CHARGÉ <<<")
 class Website(models.Model):
     _inherit = 'website'
 
