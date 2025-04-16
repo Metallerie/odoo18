@@ -4,8 +4,8 @@
     <field name="model">res.config.settings</field>
     <field name="inherit_id" ref="website.res_config_settings_view_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//block[@id='website_settings']" position="inside">
-        <group string="SEO Test">
+<xpath expr="//block[@id='website_settings' and @title='SEO']" position="inside"> 
+  <group string="SEO Test">
           <field name="exclude_from_sitemap"/>
         </group>
       </xpath>
