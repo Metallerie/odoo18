@@ -13,7 +13,7 @@
         "data/ir_cron.xml"
        
     ],
- #   "installable": True,
-#  "application": False
+   "installable": True,
+   "application": False
     
 }
