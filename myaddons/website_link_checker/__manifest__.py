@@ -2,7 +2,7 @@
 # __manifest__.py
 {
     "name": "Website Link Checker",
-    "version": "18.0.1",
+    'version': '18.0.1.0.0',
     "depends": ["website", "mail"],
     'website': "https://www.metallerie.xyz",
     "author": "Franck & Gpt",
