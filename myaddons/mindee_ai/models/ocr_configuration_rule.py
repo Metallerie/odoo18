@@ -74,6 +74,25 @@ class OcrRule(models.Model):
         help="Reference date for date-based conditions."
     )
 
+    # Valeur lisible pour l'affichage
+    value_display = fields.Char(
+        string="Value (Display)", 
+        compute="_compute_value_display", 
+        store=False
+    )
+
+    @api.depends('value', 'value_text', 'value_date', 'condition_type')
+    def _compute_value_display(self):
+        for rule in self:
+            if rule.condition_type == 'number':
+                rule.value_display = str(rule.value) if rule.value is not None else ''
+            elif rule.condition_type == 'text':
+                rule.value_display = rule.value_text or ''
+            elif rule.condition_type == 'date':
+                rule.value_display = rule.value_date.strftime('%Y-%m-%d') if rule.value_date else ''
+            else:
+                rule.value_display = ''
+
     # Contraintes et validations
     @api.constrains('variable', 'value', 'operator', 'condition_type')
     def _check_rule_consistency(self):
@@ -84,4 +103,3 @@ class OcrRule(models.Model):
                 raise ValidationError("A text value is required for text-based comparisons.")
             if rule.condition_type == 'date' and not rule.value_date:
                 raise ValidationError("A date value is required for date-based comparisons.")
-
