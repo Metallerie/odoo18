@@ -1,19 +1,10 @@
-# -*- coding: utf-8 -*-
+# models/website.py
+from odoo import models, fields
 
-# from odoo import models, fields, api
+class Website(models.Model):
+    _inherit = 'website'
 
-
-# class website_link_checker(models.Model):
-#     _name = 'website_link_checker.website_link_checker'
-#     _description = 'website_link_checker.website_link_checker'
-
-#     name = fields.Char()
-#     value = fields.Integer()
-#     value2 = fields.Float(compute="_value_pc", store=True)
-#     description = fields.Text()
-#
-#     @api.depends('value')
-#     def _value_pc(self):
-#         for record in self:
-#             record.value2 = float(record.value) / 100
-
+    link_checker_user_id = fields.Many2one(
+        'res.users',
+        string="Destinataire des rapports de liens cassés"
+    )
