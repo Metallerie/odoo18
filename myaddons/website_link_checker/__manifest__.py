@@ -14,9 +14,6 @@
     'application': False,
     'data': [
         'views/website_page_views.xml',
-        'data/ir_cron.xml'
-       
+        'data/ir_cron.xml',
     ],
-    
-    
 }
