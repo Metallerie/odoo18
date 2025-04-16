@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from odoo import models, tools
 
-class LinkChecker(models.AbstractModel):
+class LinkChecker(models.Model):
     _name = 'link_checker.cron'
     _description = 'Vérification des liens via les sitemaps'
 
