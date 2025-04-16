@@ -15,5 +15,6 @@
     'data': [
         'views/website_page_views.xml',
         'data/ir_cron.xml',
+        'security/ir.model.access.csv',
     ],
 }
