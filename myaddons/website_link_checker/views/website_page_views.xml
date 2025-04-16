@@ -4,11 +4,11 @@
     <field name="model">website.page</field>
     <field name="inherit_id" ref="website.view_page_form"/>
     <field name="arch" type="xml">
-     <xpath expr="//sheet" position="inside">
-      <group string="SEO">
-    <field name="exclude_from_sitemap"/>
-      </group>
-    </xpath>
+     <xpath expr="//form" position="inside">
+        <group string="SEO Test">
+          <field name="exclude_from_sitemap"/>
+        </group>
+      </xpath>
     </field>
   </record>
 </odoo>
