@@ -10,11 +10,8 @@
     "data": [
         "views/website_views.xml",
         "views/website_page_views.xml",
-        "views/blog_post_views.xml",
-        "views/product_template_views.xml",
-        "views/forum_post_views.xml",
-        "data/ir_cron.xml",
+        "data/ir_cron.xml"
     ],
     "installable": True,
-    "application": False,
+    "application": False
 }
