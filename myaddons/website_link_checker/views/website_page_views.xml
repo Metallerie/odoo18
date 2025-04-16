@@ -1,4 +1,3 @@
-# views/website_page_views.xml
 <odoo>
   <record id="view_website_page_form_seo" model="ir.ui.view">
     <field name="name">website.page.form.seo</field>
