@@ -24,8 +24,8 @@
                 <field name="global_rule"/>
                 <field name="variable"/>
                 <field name="operator"/>
-                <field name="value"/-->
-                <field name="active"/>
+                <field name="value"/>
+                <field name="active"/-->
             </tree>
         </field>
     </record>
