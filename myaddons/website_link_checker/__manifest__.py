@@ -11,14 +11,12 @@
     'description': """envoi d'un rapport en cas d'erreur""",
     'installable': True,
     'license': 'LGPL-3',
-    'application': False
+    'application': False,
     'data': [
         'views/website_page_views.xml',
         'data/ir_cron.xml'
        
     ],
-    'installable': True,
-    'license': 'LGPL-3',
-    'application': False
+    
     
 }
