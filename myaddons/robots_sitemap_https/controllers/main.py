@@ -25,10 +25,6 @@ class RobotsAndSitemapHttpsController(http.Controller):
     @http.route('/robots.txt', type='http', auth='public', website=True, sitemap=False)
     def robots_txt(self, **kwargs):
         https_url = request.httprequest.url_root.rstrip("/")
-        robots_txt_content = request.env['website'].get_current_website().robots_content
-        if robots_txt_content:
-            robots_txt_content = robots_txt_content.replace("http://", "https://")
-            return request.make_response(robots_txt_content, headers=[("Content-Type", "text/plain")])
 
         lines = [
             "User-agent: *",
@@ -36,9 +32,7 @@ class RobotsAndSitemapHttpsController(http.Controller):
             "",
             "##############",
             "#   custom   #",
-            "##############",
-            
-        ]
+           
         return request.make_response("\n".join(lines), headers=[("Content-Type", "text/plain")])
 
     @http.route('/sitemap.xml', type='http', auth='public', website=True, multilang=False, sitemap=False)
@@ -109,3 +103,20 @@ class RobotsAndSitemapHttpsController(http.Controller):
                 create_sitemap('%s.xml' % sitemap_base_url, content)
 
         return request.make_response(content, [('Content-Type', mimetype)])
+
+
+# fichier __init__.py
+# --------------------
+# from . import controllers
+
+# fichier __manifest__.py
+# ------------------------
+# {
+#     'name': 'Robots and Sitemap HTTPS Fix',
+#     'version': '1.0',
+#     'category': 'Website',
+#     'summary': 'Force HTTPS for robots.txt and sitemap.xml',
+#     'depends': ['website'],
+#     'installable': True,
+#     'auto_install': False,
+# }
