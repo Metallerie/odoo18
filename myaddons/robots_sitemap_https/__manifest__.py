@@ -1,10 +1,10 @@
 # fichier __manifest__.py
 # ------------------------
 {
-    'name': 'Robots and Sitemap HTTPS Fix',
+    'name': 'Website HTTPS Patch',
     'version': '1.0',
     'category': 'Website',
-    'summary': 'Force HTTPS for robots.txt and sitemap.xml',
+    'summary': 'Force HTTPS in url_root globally (monkey patch)',
     'depends': ['website'],
     'installable': True,
     'auto_install': False,
