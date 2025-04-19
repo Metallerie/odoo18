@@ -40,8 +40,9 @@ class RobotsAndSitemapHttpsController(http.Controller):
             if extra:
                 lines.append(f"Sitemap: {extra}")
 
-        # Lignes custom de la table website_robots
-        custom_lines = website.robots_lines_ids.mapped('content')
+        # Lignes custom de la table website.robots
+        robots_model = request.env['website.robots'].sudo()
+        custom_lines = robots_model.search([('website_id', '=', website.id)]).mapped('content')
         if custom_lines:
             lines += ["##############", "#   custom   #", "##############"]
             lines += custom_lines
