@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import http, fields
+from odoo import http, fields, models
 from odoo.http import request
 import base64, datetime
 from hashlib import md5
@@ -20,19 +20,33 @@ def patched_url_root(self):
 
 WerkzeugRequest.url_root = property(patched_url_root)
 
+
+class Website(models.Model):
+    _inherit = 'website'
+
+    robots_extra_lines = fields.Text(
+        string="Lignes personnalisées du robots.txt",
+        help="Ajoutez ici des directives supplémentaires pour le fichier robots.txt"
+    )
+
+
 class RobotsAndSitemapHttpsController(http.Controller):
 
     @http.route('/robots.txt', type='http', auth='public', website=True, sitemap=False)
     def robots_txt(self, **kwargs):
         https_url = request.httprequest.url_root.rstrip("/")
+        website = request.website
 
         lines = [
             "User-agent: *",
             f"Sitemap: {https_url}/sitemap.xml",
-            "",
-            "##############",
-            "#   custom   #",
+            ""
         ]
+
+        if website.robots_extra_lines:
+            lines += ["##############", "#   custom   #", "##############"]
+            lines += website.robots_extra_lines.strip().splitlines()
+
         return request.make_response("\n".join(lines), headers=[("Content-Type", "text/plain")])
 
     @http.route('/sitemap.xml', type='http', auth='public', website=True, multilang=False, sitemap=False)
@@ -119,4 +133,5 @@ class RobotsAndSitemapHttpsController(http.Controller):
 #     'depends': ['website'],
 #     'installable': True,
 #     'auto_install': False,
+#     'sequence': 99,
 # }
