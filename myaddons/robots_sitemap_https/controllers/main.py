@@ -32,7 +32,7 @@ class RobotsAndSitemapHttpsController(http.Controller):
             "",
             "##############",
             "#   custom   #",
-           
+        ]
         return request.make_response("\n".join(lines), headers=[("Content-Type", "text/plain")])
 
     @http.route('/sitemap.xml', type='http', auth='public', website=True, multilang=False, sitemap=False)
