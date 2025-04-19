@@ -37,11 +37,19 @@ class RobotsAndSitemapHttpsController(http.Controller):
         https_url = request.httprequest.url_root.rstrip("/")
         website = request.website
 
-        lines = [
-            "User-agent: *",
-            f"Sitemap: {https_url}/sitemap.xml",
-            ""
-        ]
+        lines = ["User-agent: *"]
+
+        # Sitemap principal
+        lines.append(f"Sitemap: {https_url}/sitemap.xml")
+
+        # Sitemaps personnalisés via ir.config_parameter
+        custom_sitemaps = request.env['ir.config_parameter'].sudo().get_param('website.sitemap_urls', '')
+        for extra in custom_sitemaps.split(','):
+            extra = extra.strip()
+            if extra:
+                lines.append(f"Sitemap: {extra}")
+
+        lines.append("")
 
         if website.robots_extra_lines:
             lines += ["##############", "#   custom   #", "##############"]
