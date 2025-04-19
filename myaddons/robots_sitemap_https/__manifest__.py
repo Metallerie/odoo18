@@ -8,4 +8,5 @@
     'depends': ['website'],
     'installable': True,
     'auto_install': False,
+    'sequence': 99,
 }
