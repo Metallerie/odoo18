@@ -21,15 +21,6 @@ def patched_url_root(self):
 WerkzeugRequest.url_root = property(patched_url_root)
 
 
-class Website(models.Model):
-    _inherit = 'website'
-
-    robots_extra_lines = fields.Text(
-        string="Lignes personnalisées du robots.txt",
-        help="Ajoutez ici des directives supplémentaires pour le fichier robots.txt"
-    )
-
-
 class RobotsAndSitemapHttpsController(http.Controller):
 
     @http.route('/robots.txt', type='http', auth='public', website=True, sitemap=False)
@@ -49,12 +40,13 @@ class RobotsAndSitemapHttpsController(http.Controller):
             if extra:
                 lines.append(f"Sitemap: {extra}")
 
-        lines.append("")
-
-        if website.robots_extra_lines:
+        # Lignes custom de la table website_robots
+        custom_lines = website.robots_lines_ids.mapped('content')
+        if custom_lines:
             lines += ["##############", "#   custom   #", "##############"]
-            lines += website.robots_extra_lines.strip().splitlines()
+            lines += custom_lines
 
+        lines.append("")
         return request.make_response("\n".join(lines), headers=[("Content-Type", "text/plain")])
 
     @http.route('/sitemap.xml', type='http', auth='public', website=True, multilang=False, sitemap=False)
