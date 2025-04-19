@@ -26,7 +26,6 @@ class RobotsAndSitemapHttpsController(http.Controller):
     @http.route('/robots.txt', type='http', auth='public', website=True, sitemap=False)
     def robots_txt(self, **kwargs):
         https_url = request.httprequest.url_root.rstrip("/")
-        website = request.website
 
         lines = ["User-agent: *"]
 
@@ -40,9 +39,9 @@ class RobotsAndSitemapHttpsController(http.Controller):
             if extra:
                 lines.append(f"Sitemap: {extra}")
 
-        # Lignes custom de la table website.robots
+        # Lignes custom de la table website.robots (pas de website_id disponible)
         robots_model = request.env['website.robots'].sudo()
-        custom_lines = robots_model.search([('website_id', '=', website.id)]).mapped('content')
+        custom_lines = robots_model.search([]).mapped('content')
         if custom_lines:
             lines += ["##############", "#   custom   #", "##############"]
             lines += custom_lines
