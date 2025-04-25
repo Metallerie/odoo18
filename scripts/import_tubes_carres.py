@@ -8,7 +8,7 @@ os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 import odoo
 from odoo import api, tools, sql_db
 
-DB = 'metal-prod-18-clone'
+DB = 'metal-prod-18'
 TEMPLATE_ID = 7  # ID du template "Tube soudés carrés"
 CSV_PATH = '/data/odoo/metal-odoo18-p8179/cvs/tubes_carres_correct.csv'
 

@@ -2,7 +2,7 @@ import os
 
 # Configuration
 source_db = "metal-prod-18"
-target_db = "metal-prod-18-clone"
+target_db = "18-clone"
 pg_user = "odoo"
 pg_host = "localhost"
 pg_port = "5432"
