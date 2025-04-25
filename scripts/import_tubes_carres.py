@@ -27,14 +27,14 @@ try:
 
     values_ids = []
 
-    # Lire le CSV et construire les valeurs d'attribut sous forme "40x40x1,5 mm"
+    # Lire le CSV et construire les valeurs d'attribut sous forme "40x40 mm x 1,5 mm"
     with open(CSV_PATH, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             section = row['section'].strip()
             epaisseur = row['epaisseur'].strip()
             ref_code = row['default_code'].strip()
-            value_name = f"{section}x{epaisseur}"
+            value_name = f"{section} x {epaisseur}"
 
             # Créer la valeur si elle n'existe pas
             value = env['product.attribute.value'].search([
