@@ -11,6 +11,9 @@ class ProductProduct(models.Model):
     product_length = fields.Float("length")
     product_height = fields.Float("height")
     product_width = fields.Float("width")
+    product_thickness = fields.Float("thickness")
+    product_diameter = fields.Float("diameter")
+    section_type = fields.Selection(related="product_tmpl_id.section_type", readonly=False)
     dimensional_uom_id = fields.Many2one(
         "uom.uom",
         "Dimensional UoM",
@@ -23,6 +26,7 @@ class ProductProduct(models.Model):
         readonly=False,
         store=True,
     )
+    
 
     @api.depends(
         "product_length", "product_height", "product_width", "dimensional_uom_id"
