@@ -8,9 +8,9 @@ os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 import odoo
 from odoo import api, tools, sql_db
 
-DB = 'metal-prod-18-clone'
+DB = 'metal-prod-18'
 TEMPLATE_ID = 7  # ID du template "Tube soudés carrés"
-CSV_PATH = '/data/odoo/metal-odoo18-p8179/cvs/tubes_carres_correct.csv'
+CSV_PATH = '/data/odoo/tubes_carres_correct.csv'
 
 # Initialisation
 tools.config.parse_config()
@@ -24,7 +24,7 @@ try:
     def get_or_create_attribute(name):
         attr = env['product.attribute'].search([('name', '=', name)], limit=1)
         if not attr:
-            attr = env['product.attribute'].create({'name': name, 'create_variant': True})
+            attr = env['product.attribute'].create({'name': name})
         return attr
 
     section_attr = get_or_create_attribute('Section')
@@ -32,11 +32,11 @@ try:
 
     # Lire le CSV
     with open(CSV_PATH, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter='\t')
+        reader = csv.DictReader(csvfile)
         for row in reader:
-            section = row['Dimensions'].strip()
-            epaisseur = row['Epaisseur'].strip()
-            ref_four = row['Réf. Four.'].strip()
+            section = row['section'].strip()
+            epaisseur = row['epaisseur'].strip()
+            ref_code = row['default_code'].strip()
 
             # Ajout des valeurs d’attribut
             section_val = env['product.attribute.value'].search([
@@ -85,9 +85,9 @@ try:
 
             if variant:
                 variant.name = f"Tube soudés carrés {section.replace(' ', '')}x{epaisseur}"
-                variant.default_code = ref_four
+                variant.default_code = ref_code
                 variant.list_price = 0.0  # à ajuster si besoin
-                print(f"✅ Produit mis à jour : {variant.name} ({ref_four})")
+                print(f"✅ Produit mis à jour : {variant.name} ({ref_code})")
             else:
                 print(f"⚠️ Variante non trouvée pour {section} / {epaisseur}")
 
