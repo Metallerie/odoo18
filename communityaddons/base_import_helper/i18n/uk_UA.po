@@ -1,0 +1,106 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* base_import_helper
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-09 09:36+0000\n"
+"PO-Revision-Date: 2025-01-09 09:36+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: base_import_helper
+#: model_terms:ir.ui.view,arch_db:base_import_helper.base_import_helper_view_form
+msgid "Click to get additional help"
+msgstr "Натисніть для отримання додаткової інформації"
+
+#. module: base_import_helper
+#: model_terms:ir.ui.view,arch_db:base_import_helper.base_import_helper_view_form
+msgid "Close"
+msgstr "Закрити"
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__file
+msgid "File"
+msgstr "Файл"
+
+#. module: base_import_helper
+#: model_terms:ir.ui.view,arch_db:base_import_helper.base_import_helper_view_form
+msgid "Help"
+msgstr "Допомога"
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__help_url
+msgid "Help URL"
+msgstr "Посилання на додаткову інформацію"
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__id
+msgid "ID"
+msgstr ""
+
+#. module: base_import_helper
+#: model:ir.model,name:base_import_helper.model_base_import_helper
+msgid "Import Helper"
+msgstr "Майстер імпорту даних"
+
+#. module: base_import_helper
+#: model_terms:ir.ui.view,arch_db:base_import_helper.base_import_helper_view_form
+msgid "Import/Update"
+msgstr "Імпортувати/Оновити"
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__mode
+msgid "Mode"
+msgstr "Режим"
+
+#. module: base_import_helper
+#: model_terms:ir.ui.view,arch_db:base_import_helper.base_import_helper_view_form
+msgid "Options"
+msgstr "Налаштування"
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__do_rewrite
+msgid "Rewrite"
+msgstr "Перезаписати"
+
+#. module: base_import_helper
+#: model:ir.model.fields,help:base_import_helper.field_base_import_helper__do_rewrite
+msgid "Rewrite object names in the \"Update\" mode."
+msgstr "Перезаписати назви об'єктів в режимі оновлення."
+
+#. module: base_import_helper
+#: model:ir.model.fields,field_description:base_import_helper.field_base_import_helper__url
+msgid "URL"
+msgstr ""

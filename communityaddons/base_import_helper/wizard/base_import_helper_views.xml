@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="base_import_helper_view_form" model="ir.ui.view">
+        <field name="name">base_import.helper.view.form</field>
+        <field name="model">base_import.helper</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="mode" invisible="1"/>
+                    <group name="general">
+                        <field name="url"/>
+                        <field name="file" invisible="mode"/>
+                        <label for="help_url" string="Help" invisible="not help_url"/>
+                        <div class="o_row" invisible="not help_url">
+                            <field name="help_url" invisible="1" />
+                            <button string="Click to get additional help" name="action_open_help_url" type="object" class="oe_link" />
+                        </div>
+                    </group>
+                    <group string="Options" name="options" class="o_label_nowrap">
+                        <field name="do_rewrite" widget="boolean_toggle"/>
+                    </group>
+                    <footer>
+                        <button name="action_import" string="Import/Update" type="object" class="btn-primary" />
+                        <button special="cancel" string="Close" class="oe_link" />
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

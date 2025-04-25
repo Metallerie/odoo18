@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="base_import_helper_view_form" model="ir.ui.view">
+        <field name="name">base_import.helper.view.form</field>
+        <field name="model">base_import.helper</field>
+        <field name="inherit_id" ref="base_import_helper.base_import_helper_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_import']" position="attributes">
+                <attribute name="string">Import/Update</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_product_google_category_import" model="ir.actions.act_window">
+        <field name="name">Import Google product categories</field>
+        <field name="res_model">base_import.helper</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_mode': 'google_categ',
+            'default_url': 'https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt',
+            'default_help_url': 'https://support.google.com/merchants/answer/6324436',
+        }</field>
+    </record>
+
+    <menuitem
+        id="menu_product_google_category_import"
+        name="Import Google Categories"
+        parent="website.menu_website_global_configuration"
+        action="action_product_google_category_import"
+        groups="sales_team.group_sale_salesman"
+        sequence="100"
+    />
+
+</odoo>

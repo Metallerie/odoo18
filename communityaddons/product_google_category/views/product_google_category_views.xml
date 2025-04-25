@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_google_category_view_form" model="ir.ui.view">
+        <field name="name">product.google.category.form</field>
+        <field name="model">product.google.category</field>
+        <field name="arch" type="xml">
+            <form string="Google Category">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Name" default_focus="1"/></h1>
+                    </div>
+                    <group>
+                        <field name="code"/>
+                        <field name="parent_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="product_google_category_view_list" model="ir.ui.view">
+        <field name="name">product.google.category.list</field>
+        <field name="model">product.google.category</field>
+        <field name="arch" type="xml">
+            <list string="Google Categories">
+                <field name="sequence" optional="hide" groups="base.group_no_one" />
+                <field name="code" optional="hide" />
+                <field name="display_name" optional="show" />
+                <field name="parent_id" optional="hide" />
+                <field name="name" optional="hide" />
+            </list>
+        </field>
+    </record>
+
+    <record id="action_product_google_categories" model="ir.actions.act_window">
+        <field name="name">Google Categories</field>
+        <field name="res_model">product.google.category</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_product_google_category"
+        name="Google Categories"
+        parent="website_sale.menu_catalog"
+        action="action_product_google_categories"
+        sequence="20"
+    />
+
+</odoo>

@@ -9,4 +9,5 @@
     'installable': True,
     'auto_install': False,
     'sequence': 99,
+    'license': 'LGPL-3',
 }
