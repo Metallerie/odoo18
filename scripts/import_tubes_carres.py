@@ -2,97 +2,57 @@ import sys
 import os
 import pandas as pd
 
+# Connexion à Odoo
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
 import odoo
 from odoo import api, tools, sql_db
 
+# Se connecter à la base de données Odoo
 DB = 'metal-prod-18'
-CSV_PATH = '/data/odoo/metal-odoo18-p8179/csv/tubes_carres_correct_full.csv'
+odoo.tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')
+odoo.api.Environment.manage()
+db = sql_db.DB(DB)
+env = api.Environment(db.cursor(), 1, {})
 
-# Initialisation Odoo
-tools.config.parse_config()
-odoo.service.server.load_server_wide_modules()
-db = sql_db.db_connect(DB)
-cr = db.cursor()
-env = api.Environment(cr, 1, {})
+# Demander les informations de base à l'utilisateur
+def calculate_price():
+    height = float(input("Entrez la hauteur (mm) du tube : "))
+    width = float(input("Entrez la largeur (mm) du tube : "))
+    thickness = float(input("Entrez l'épaisseur (mm) du tube : "))
+    reference_price = float(input("Entrez le prix de référence pour 1 mètre linéaire du tube (en €) : "))
 
-try:
-    df = pd.read_csv(CSV_PATH)
+    # Conversion des dimensions en mètres
+    height_m = height / 1000  # Conversion mm en mètre
+    width_m = width / 1000    # Conversion mm en mètre
+    thickness_m = thickness / 1000  # Conversion mm en mètre
 
-    # Récupération du template
-    template = env['product.template'].browse(7)
-    if not template:
-        raise Exception("Template ID 7 introuvable.")
+    # Calcul de la surface déployée en m²
+    surface = (height_m + width_m) * 2  # Surface déployée
 
-    # Récupération de l'unité ML
-    ml_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
-    if not ml_uom:
-        raise Exception("Unité de mesure 'ML' introuvable.")
+    # Calcul du prix par m² pour 1 mm d'épaisseur
+    base_price_per_m2 = reference_price / surface  # Prix par m² pour 1 mm d'épaisseur
+    price_per_mm = base_price_per_m2 * surface  # Prix pour 1 mm d'épaisseur
 
-    # 🧹 Suppression des anciennes variantes
-    old_variants = template.product_variant_ids
-    if old_variants:
-        print(f"🧹 Suppression de {len(old_variants)} anciennes variantes...")
-        old_variants.unlink()
-        template.write({'attribute_line_ids': [(5, 0, 0)]})
-        print("✅ Anciennes variantes supprimées.")
+    # Calcul du prix total pour l'épaisseur donnée
+    price = price_per_mm * thickness_m  # Prix d'achat pour l'épaisseur donnée
 
-    # 🔥 Création de l'attribut "Dimensions Tube"
-    attribute = env['product.attribute'].search([('name', '=', 'Dimensions Tube')], limit=1)
-    if not attribute:
-        attribute = env['product.attribute'].create({'name': 'Dimensions Tube', 'create_variant': 'always'})
+    # Rechercher toutes les variantes de produits avec ID = 7
+    product_variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
-    value_ids = []
+    for variant in product_variants:
+        # Récupérer les informations spécifiques à chaque variante
+        width = round(variant.product_width, 6)
+        height = round(variant.product_height, 6)
+        thickness = round(variant.product_thickness, 6)
+        length = round(variant.product_length, 6)
 
-    # 🛠 Création des valeurs d'attribut avec séquence
-    for index, row in df.iterrows():
-        name = row['name']
-        value = env['product.attribute.value'].search([
-            ('name', '=', name),
-            ('attribute_id', '=', attribute.id)
-        ], limit=1)
-        if not value:
-            value = env['product.attribute.value'].create({
-                'name': name,
-                'attribute_id': attribute.id,
-                'sequence': index,  # Ici on donne la séquence
-            })
-        value_ids.append(value.id)
+        # Calcul du prix pour chaque variante
+        variant_price = price  # Calculer le prix d'achat pour cette variante
 
-    # 🛠 Association de l'attribut et de ses valeurs au template
-    template.write({
-        'attribute_line_ids': [(0, 0, {
-            'attribute_id': attribute.id,
-            'value_ids': [(6, 0, value_ids)],
-        })]
-    })
+        # Affichage simplifié des résultats pour chaque variante dans la console
+        print(f"{variant.display_name}: {variant_price:.4f} €")
 
-    print("✅ Nouvelles variantes créées")
-
-    # 🛠 Mise à jour des variantes avec leurs dimensions
-    for variant in template.product_variant_ids:
-        variant_name = variant.product_template_attribute_value_ids[0].name
-        match = df[df['name'] == variant_name]
-        if not match.empty:
-            row = match.iloc[0]
-            variant.default_code = row['default_code']
-
-            variant.product_width = round(row['width'], 6)
-            variant.product_height = round(row['height'], 6)
-            variant.product_thickness = round(row['thickness'], 6)
-            variant.product_length = round(row['length'], 6)
-            variant.dimensional_uom_id = ml_uom.id
-
-            print(f"✅ Variante mise à jour : {variant_name}")
-
-    cr.commit()
-    print("\n✅ Import complet terminé avec succès !")
-
-except Exception as e:
-    cr.rollback()
-    print("\n❌ Erreur :", e)
-
-finally:
-    cr.close()
+# Exécution du script
+calculate_price()
