@@ -8,7 +8,6 @@
             <xpath expr="//group[@name='inventory']" position="inside">
                 <group name="dimensions" string="Dimensions">
                     <field name="dimensional_uom_id" options="{'no_create': True}" />
-                    <field name="section_type"/>
                     <field name="product_length" string="Length" />
                     <field name="product_height" string="Height" />
                     <field name="product_width" string="Width" />
