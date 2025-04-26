@@ -8,11 +8,11 @@ from odoo import api, fields, models
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
-    product_length = fields.Float("length")
-    product_height = fields.Float("height")
-    product_width = fields.Float("width")
-    product_thickness = fields.Float("thickness")
-    product_diameter = fields.Float("diameter")
+    product_length = fields.Float("length", digits=(16, 6))
+    product_height = fields.Float("height", digits=(16, 6))
+    product_width = fields.Float("width", digits=(16, 6))
+    product_thickness = fields.Float("thickness", digits=(16, 6))
+    product_diameter = fields.Float("diameter", digits=(16, 6))
     dimensional_uom_id = fields.Many2one(
         "uom.uom",
         "Dimensional UoM",
