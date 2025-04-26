@@ -4,28 +4,25 @@ import pandas as pd
 
 # Connexion à Odoo - Approche alternative sans utiliser parse_config
 sys.path.append('/data/odoo/metal-odoo18-p8179')
-os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
 import odoo
 from odoo import api, tools, sql_db
 
-# Initialisation manuelle de la connexion à la base de données Odoo
+# Configurer la connexion Odoo sans utiliser parse_config
 def init_odoo():
-    # Configurer la connexion à la base de données sans utiliser parse_config
+    # Connexion à la base de données manuellement
     odoo.conf = {
         'db_host': 'localhost',
         'db_port': '5432',
         'db_user': 'odoo',
-        'db_password': 'yourpassword',  # Mettre ici le mot de passe de la base de données
+        'db_password': 'yourpassword',  # Remplacer par ton mot de passe
         'db_name': 'metal-prod-18',  # Nom de la base de données
         'addons_path': '/data/odoo/metal-odoo18-p8179/addons',
-        'logfile': '/var/log/odoo/odoo.log',  # Optionnel: log fichier pour les erreurs
+        'logfile': '/var/log/odoo/odoo.log',  # Optionnel
     }
 
-    # Charger l'instance d'Odoo sans passer par la fonction parse_config
-    tools.config.parse_config(odoo.conf)
-    
-    # Initialiser l'environnement Odoo
+    # Initialiser l'instance Odoo sans parse_config
+    tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')  # Pour charger le fichier de configuration sans parse_args
     db_name = 'metal-prod-18'
     odoo.registry(db_name)
     return api.Environment(odoo.sql_db.DB(db_name).cursor(), 1, {})
