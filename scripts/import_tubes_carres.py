@@ -1,6 +1,7 @@
 import sys
 import os
-import csv
+import pandas as pd
+import re
 
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
@@ -8,77 +9,70 @@ os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 import odoo
 from odoo import api, tools, sql_db
 
-DB = 'metal-prod-18'
-TEMPLATE_ID = 7  # ID du template "Tube soudés carrés"
-CSV_PATH = '/data/odoo/metal-odoo18-p8179/cvs/tubes_carres_correct.csv'
+DB = 'metal-prod-18'  # à adapter si besoin
+CSV_PATH = '/data/odoo/metal-odoo18-p8179/csv/tubes_carres_dimensions.csv'  # Ton CSV corrigé
 
-# Initialisation
+# Initialisation Odoo
 tools.config.parse_config()
 odoo.service.server.load_server_wide_modules()
 db = sql_db.db_connect(DB)
 cr = db.cursor()
-env = api.Environment(cr, 1, {})  # Superadmin
+env = api.Environment(cr, 1, {})  # superadmin (uid=1)
 
 try:
-    # Récupérer ou créer l'attribut unique
-    attr = env['product.attribute'].search([('name', '=', 'Tube carré')], limit=1)
-    if not attr:
-        attr = env['product.attribute'].create({'name': 'Tube carré'})
+    # Chargement du CSV
+    df = pd.read_csv(CSV_PATH)
 
-    values_ids = []
+    # Recherche du template "Tube soudés carrés"
+    template = env['product.template'].browse(7)  # ID = 7
 
-    # Lire le CSV et construire les valeurs d'attribut sous forme "40x40 mm x 1,5 mm"
-    with open(CSV_PATH, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            section = row['section'].strip()
-            epaisseur = row['epaisseur'].strip()
-            ref_code = row['default_code'].strip()
-            value_name = f"{section} x {epaisseur}"
+    if not template:
+        raise Exception("Template ID 7 introuvable.")
 
-            # Créer la valeur si elle n'existe pas
-            value = env['product.attribute.value'].search([
-                ('name', '=', value_name), ('attribute_id', '=', attr.id)
-            ], limit=1)
-            if not value:
-                value = env['product.attribute.value'].create({
-                    'name': value_name,
-                    'attribute_id': attr.id
-                })
+    # Suppression des variantes existantes
+    variant_ids = template.product_variant_ids
+    count = len(variant_ids)
+    variant_ids.unlink()
+    print(f"🧹 {count} variantes supprimées.")
 
-            values_ids.append((value, ref_code))
+    # Récupération de l'UoM ML
+    ml_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
+    if not ml_uom:
+        raise Exception("Unité de mesure 'ML' introuvable.")
 
-    template = env['product.template'].browse(TEMPLATE_ID)
+    # Création des nouvelles variantes
+    for index, row in df.iterrows():
+        section = row['section']
+        epaisseur = row['epaisseur']
+        default_code = row['default_code']
 
-    # Nettoyer les lignes d'attributs existantes pour ce template
-    env['product.template.attribute.line'].search([
-        ('product_tmpl_id', '=', template.id)
-    ]).unlink()
+        product_width = row['width']
+        product_height = row['height']
+        product_thickness = row['thickness']
+        product_length = row['length']
 
-    # Ajouter toutes les valeurs comme une seule ligne d'attribut
-    env['product.template.attribute.line'].create({
-        'product_tmpl_id': template.id,
-        'attribute_id': attr.id,
-        'value_ids': [(6, 0, [v.id for v, _ in values_ids])]
-    })
+        # Formatage du nom du produit
+        name = f"Tube soudés carrés {section.replace(' ', '')} x {epaisseur.replace(' ', '')}"
 
-    # Mettre à jour les variantes avec les références et noms
-    for value, ref_code in values_ids:
-        variant = env['product.product'].search([
-            ('product_tmpl_id', '=', template.id),
-            ('product_template_attribute_value_ids', 'in', value.id)
-        ], limit=1)
+        # Création du produit
+        new_variant = env['product.product'].create({
+            'product_tmpl_id': template.id,
+            'default_code': default_code,
+            'name': name,
+        })
 
-        if variant:
-            variant.name = f"Tube soudés carrés {value.name}"
-            variant.default_code = ref_code
-            variant.list_price = 0.0  # à ajuster si besoin
-            print(f"✅ Produit mis à jour : {variant.name} ({ref_code})")
-        else:
-            print(f"⚠️ Variante non trouvée pour {value.name}")
+        # Mise à jour des dimensions sur product.template
+        tmpl = new_variant.product_tmpl_id
+        tmpl.product_width = round(product_width, 6)
+        tmpl.product_height = round(product_height, 6)
+        tmpl.product_thickness = round(product_thickness, 6)
+        tmpl.product_length = round(product_length, 6)
+        tmpl.dimensional_uom_id = ml_uom.id
+
+        print(f"✅ Variante créée : {name}")
 
     cr.commit()
-    print("\n✅ Import terminé avec succès.")
+    print("\n✅ Import terminé avec succès !")
 
 except Exception as e:
     cr.rollback()
