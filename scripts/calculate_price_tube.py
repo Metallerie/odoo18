@@ -1,35 +1,22 @@
 import sys
 import os
 import pandas as pd
-import logging
 
-# Connexion à Odoo - Approche alternative sans utiliser parse_config
 sys.path.append('/data/odoo/metal-odoo18-p8179')
+os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
 import odoo
 from odoo import api, tools, sql_db
 
-# Désactiver les logs d'Odoo pendant l'exécution du script
-logging.disable(logging.CRITICAL)
+DB = 'metal-prod-18'
 
-# Configurer la connexion Odoo sans utiliser parse_config
-def init_odoo():
-    # Connexion à la base de données manuellement
-    odoo.conf = {
-        'db_host': 'localhost',
-        'db_port': '5432',
-        'db_user': 'odoo',
-        'db_password': 'yourpassword',  # Remplacer par ton mot de passe
-        'db_name': 'metal-prod-18',  # Nom de la base de données
-        'addons_path': '/data/odoo/metal-odoo18-p8179/addons',
-        'logfile': '/var/log/odoo/odoo.log',  # Optionnel
-    }
+# Initialisation Odoo
+tools.config.parse_config()
+odoo.service.server.load_server_wide_modules()
+db = sql_db.db_connect(DB)
+cr = db.cursor()
+env = api.Environment(cr, 1, {})
 
-    # Initialiser l'instance Odoo sans parse_config
-    tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')  # Pour charger le fichier de configuration sans parse_args
-    db_name = 'metal-prod-18'
-    odoo.registry(db_name)
-    return api.Environment(odoo.sql_db.DB(db_name).cursor(), 1, {})
 
 # Demander les informations de base à l'utilisateur
 def calculate_price():
@@ -53,9 +40,6 @@ def calculate_price():
     # Calcul du prix total pour l'épaisseur donnée
     price = price_per_mm * thickness_m  # Prix d'achat pour l'épaisseur donnée
 
-    # Se connecter à Odoo et récupérer les variantes
-    env = init_odoo()
-
     # Rechercher toutes les variantes de produits avec ID = 7
     product_variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
@@ -71,9 +55,6 @@ def calculate_price():
 
         # Affichage simplifié des résultats pour chaque variante dans la console
         print(f"{variant.display_name}: {variant_price:.4f} €")
-
-    # Assurer une fermeture propre du curseur et valider la transaction
-    env.cr.commit()
 
 # Exécution du script
 calculate_price()
