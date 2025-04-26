@@ -6,19 +6,26 @@ import pandas as pd
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
-
-
 import odoo
 from odoo import api, tools, sql_db
 
-
-# Connexion à la base de données Odoo
+# Initialisation manuelle de la connexion à la base de données Odoo
 def init_odoo():
-    # Charger la configuration d'Odoo manuellement
-    config = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
-    tools.config.parse_config(config)
+    # Configurer la connexion à la base de données sans utiliser parse_config
+    odoo.conf = {
+        'db_host': 'localhost',
+        'db_port': '5432',
+        'db_user': 'odoo',
+        'db_password': 'yourpassword',  # Mettre ici le mot de passe de la base de données
+        'db_name': 'metal-prod-18',  # Nom de la base de données
+        'addons_path': '/data/odoo/metal-odoo18-p8179/addons',
+        'logfile': '/var/log/odoo/odoo.log',  # Optionnel: log fichier pour les erreurs
+    }
+
+    # Charger l'instance d'Odoo sans passer par la fonction parse_config
+    tools.config.parse_config(odoo.conf)
     
-    # Connexion à la base de données et récupération de l'environnement Odoo
+    # Initialiser l'environnement Odoo
     db_name = 'metal-prod-18'
     odoo.registry(db_name)
     return api.Environment(odoo.sql_db.DB(db_name).cursor(), 1, {})
