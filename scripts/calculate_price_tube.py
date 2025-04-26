@@ -2,30 +2,21 @@ import sys
 import os
 import pandas as pd
 
-# Connexion à Odoo - Approche alternative sans utiliser parse_config
 sys.path.append('/data/odoo/metal-odoo18-p8179')
+os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
 import odoo
 from odoo import api, tools, sql_db
 
-# Configurer la connexion Odoo sans utiliser parse_config
-def init_odoo():
-    # Connexion à la base de données manuellement
-    odoo.conf = {
-        'db_host': 'localhost',
-        'db_port': '5432',
-        'db_user': 'odoo',
-        'db_password': 'yourpassword',  # Remplacer par ton mot de passe
-        'db_name': 'metal-prod-18',  # Nom de la base de données
-        'addons_path': '/data/odoo/metal-odoo18-p8179/addons',
-        'logfile': '/var/log/odoo/odoo.log',  # Optionnel
-    }
+DB = 'metal-prod-18'
 
-    # Initialiser l'instance Odoo sans parse_config
-    tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')  # Pour charger le fichier de configuration sans parse_args
-    db_name = 'metal-prod-18'
-    odoo.registry(db_name)
-    return api.Environment(odoo.sql_db.DB(db_name).cursor(), 1, {})
+# Initialisation Odoo
+tools.config.parse_config()
+odoo.service.server.load_server_wide_modules()
+db = sql_db.db_connect(DB)
+cr = db.cursor()
+env = api.Environment(cr, 1, {})
+
 
 # Demander les informations de base à l'utilisateur
 def calculate_price():
