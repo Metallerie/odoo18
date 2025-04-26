@@ -37,10 +37,10 @@ try:
             epaisseur_m = mm_to_m(epaisseur_mm)
 
             # Mise à jour des dimensions sur le template
-            variant.product_tmpl_id.width = largeur_m
-            variant.product_tmpl_id.height = hauteur_m
-            variant.product_tmpl_id.thickness = epaisseur_m
-            variant.product_tmpl_id.length = 1.0  # 1 mètre car UoM ML
+            variant.product_tmpl_id.product_width = largeur_m
+            variant.product_tmpl_id.product_height = hauteur_m
+            variant.product_tmpl_id.product_thickness = epaisseur_m
+            variant.product_tmpl_id.product_length = 1.0  # 1 mètre car UoM ML
 
             # UoM dimensionnelle forcée à ML
             dimension_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
