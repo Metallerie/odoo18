@@ -1,7 +1,23 @@
-# Script pour calculer le prix d'achat d'un tube en fonction des dimensions et du prix de référence
+import sys
+import os
+import pandas as pd
 
+# Connexion à Odoo
+sys.path.append('/data/odoo/metal-odoo18-p8179')
+os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
+
+import odoo
+from odoo import api, tools, sql_db
+
+# Se connecter à la base de données Odoo
+DB = 'metal-prod-18'
+odoo.tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')
+odoo.api.Environment.manage()
+db = sql_db.DB(DB)
+env = api.Environment(db.cursor(), 1, {})
+
+# Demander les informations de base à l'utilisateur
 def calculate_price():
-    # Demander les informations à l'utilisateur
     height = float(input("Entrez la hauteur (mm) du tube : "))
     width = float(input("Entrez la largeur (mm) du tube : "))
     thickness = float(input("Entrez l'épaisseur (mm) du tube : "))
@@ -22,12 +38,21 @@ def calculate_price():
     # Calcul du prix total pour l'épaisseur donnée
     price = price_per_mm * thickness_m  # Prix d'achat pour l'épaisseur donnée
 
-    # Affichage des résultats dans la console
-    print("\n--- Résultats du calcul ---")
-    print(f"Hauteur : {height} mm, Largeur : {width} mm, Épaisseur : {thickness} mm")
-    print(f"Surface déployée : {surface:.6f} m²")
-    print(f"Prix d'achat pour {thickness} mm d'épaisseur : {price:.4f} €")
-    print(f"Prix de référence : {reference_price:.4f} € pour 1 mètre linéaire")
+    # Rechercher toutes les variantes de produits avec ID = 7
+    product_variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
-# Exécution de la fonction
+    for variant in product_variants:
+        # Récupérer les informations spécifiques à chaque variante
+        width = round(variant.product_width, 6)
+        height = round(variant.product_height, 6)
+        thickness = round(variant.product_thickness, 6)
+        length = round(variant.product_length, 6)
+
+        # Calcul du prix pour chaque variante
+        variant_price = price  # Calculer le prix d'achat pour cette variante
+
+        # Affichage simplifié des résultats pour chaque variante dans la console
+        print(f"{variant.display_name}: {variant_price:.4f} €")
+
+# Exécution du script
 calculate_price()
