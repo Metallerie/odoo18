@@ -18,24 +18,26 @@ class ProductTemplate(models.Model):
         readonly=False,
     )
     product_length = fields.Float(
-        related="product_variant_ids.product_length", readonly=False
+        related="product_variant_ids.product_length", readonly=False,
+        digits=(16, 6)
     )
     product_height = fields.Float(
-        related="product_variant_ids.product_height", readonly=False
+        related="product_variant_ids.product_height", readonly=False, digits=(16, 6)
     )
     product_width = fields.Float(
-        related="product_variant_ids.product_width", readonly=False
+        related="product_variant_ids.product_width", readonly=False, digits=(16, 6)
     )
     volume = fields.Float(
         compute="_compute_volume",
         readonly=False,
         store=True,
+        digits=(16, 6)
     )
     product_thickness = fields.Float(
-        related="product_variant_ids.product_thickness", string="Thickness ",readonly=False
+        related="product_variant_ids.product_thickness", string="Thickness ",readonly=False, digits=(16, 6)
     )
     product_diameter = fields.Float(
-        related="product_variant_ids.product_diameter",string="Diametre", readonly=False
+        related="product_variant_ids.product_diameter",string="Diametre", readonly=False, digits=(16, 6)
     )
 
     @api.model
