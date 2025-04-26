@@ -34,9 +34,9 @@ def calculate_and_update_prices():
     reference_price = float(input("Entrez le prix de référence pour 1 mètre linéaire de ce tube (en €) : "))
 
     # Conversion des dimensions de référence en mètres
-    height_ref = height / 1000
-    width_ref = width / 1000
-    thickness_ref = thickness / 1000
+    height_ref = height 
+    width_ref = width 
+    thickness_ref = thickness 
 
     # Surface déployée du tube de référence (m²)
     surface_ref = (height_ref + width_ref) * 2
@@ -63,6 +63,8 @@ def calculate_and_update_prices():
         variant.write({'standard_price': cost_price})
         # Mise à jour du prix de vente sur le template associé
         variant.product_tmpl_id.write({'list_price': sale_price})
+        # Commit après chaque écriture pour sauvegarder en base
+        env.cr.commit()
         # Affichage simple
         print(f"{variant.display_name}: cout={cost_price:.4f} €, vente={sale_price:.4f} €")
 
