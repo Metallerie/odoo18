@@ -28,37 +28,46 @@ env = api.Environment(cr, 1, {})
 
 # Fonction de calcul de prix
 def calculate_price():
-    height = float(input("Entrez la hauteur (mm) du tube : "))
-    width = float(input("Entrez la largeur (mm) du tube : "))
-    thickness = float(input("Entrez l'épaisseur (mm) du tube : "))
-    reference_price = float(input("Entrez le prix de référence pour 1 mètre linéaire du tube (en €) : "))
+    # Saisie des dimensions et du prix de référence pour un tube de base
+    height = float(input("Entrez la hauteur (mm) du tube de référence : "))
+    width = float(input("Entrez la largeur (mm) du tube de référence : "))
+    thickness = float(input("Entrez l'épaisseur (mm) du tube de référence : "))
+    reference_price = float(input("Entrez le prix de référence pour 1 mètre linéaire de ce tube (en €) : "))
 
-    # Conversion des dimensions en mètres
-    height_m = height / 1000  # mm -> m
-    width_m = width / 1000    # mm -> m
-    thickness_m = thickness / 1000  # mm -> m
+    # Conversion des dimensions de référence en mètres
+    height_ref = height / 1000
+    width_ref = width / 1000
+    thickness_ref = thickness / 1000
 
-    # Calcul de la surface déployée (m²)
-    surface = (height_m + width_m) * 2
+    # Surface déployée du tube de référence (m²)
+    surface_ref = (height_ref + width_ref) * 2
 
-    # Prix par m² pour 1 mm d'épaisseur
-    base_price_per_m2 = reference_price / surface
-    price_per_mm = base_price_per_m2 * surface
-
-    # Prix total pour l'épaisseur donnée
-    price = price_per_mm * thickness_m
+    # Calcul du prix unitaire par m² par mm d'épaisseur
+    # Price_ref = base_unit_price * surface_ref * thickness_ref
+    base_unit_price = reference_price / (surface_ref * thickness_ref)
 
     # Récupération des variantes (product_tmpl_id = 7)
     variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
-    # Affichage simplifié
+    # Calcul et affichage
     for variant in variants:
-        print(f"{variant.display_name}: {price:.4f} €")
+        # Dimensions variante (mm -> m)
+        h = variant.product_height / 1000
+        w = variant.product_width / 1000
+        t = variant.product_thickness / 1000
+        # Surface déployée de la variante
+        surface_var = (h + w) * 2
+        # Prix calculé
+        price_var = base_unit_price * surface_var * t
+        # Affichage simple
+        print(f"{variant.display_name}: {price_var:.4f} €")
 
 # Exécution
-if __name__ == '__main__':
+def main():
     try:
         calculate_price()
     finally:
-        # Fermeture propre du curseur
         cr.close()
+
+if __name__ == '__main__':
+    main()
