@@ -42,8 +42,7 @@ def calculate_price():
     # Surface déployée du tube de référence (m²)
     surface_ref = (height_ref + width_ref) * 2
 
-    # Calcul du prix unitaire par m² par mm d'épaisseur
-    # Price_ref = base_unit_price * surface_ref * thickness_ref
+    # Calcul du prix unitaire par m³ (surface_ref * thickness_ref en m³)
     base_unit_price = reference_price / (surface_ref * thickness_ref)
 
     # Récupération des variantes (product_tmpl_id = 7)
@@ -51,13 +50,13 @@ def calculate_price():
 
     # Calcul et affichage
     for variant in variants:
-        # Dimensions variante (mm -> m)
-        h = variant.product_height / 1000
-        w = variant.product_width / 1000
-        t = variant.product_thickness / 1000
-        # Surface déployée de la variante
+        # Dimensions variante en mètres (déjà stockées en mètre)
+        h = variant.product_height
+        w = variant.product_width
+        t = variant.product_thickness
+        # Surface déployée de la variante (m²)
         surface_var = (h + w) * 2
-        # Prix calculé
+        # Prix calculé pour la variante
         price_var = base_unit_price * surface_var * t
         # Affichage simple
         print(f"{variant.display_name}: {price_var:.4f} €")
