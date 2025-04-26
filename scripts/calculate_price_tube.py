@@ -40,9 +40,6 @@ def calculate_price():
     # Calcul du prix total pour l'épaisseur donnée
     price = price_per_mm * thickness_m  # Prix d'achat pour l'épaisseur donnée
 
-    # Se connecter à Odoo et récupérer les variantes
-    env = init_odoo()
-
     # Rechercher toutes les variantes de produits avec ID = 7
     product_variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
