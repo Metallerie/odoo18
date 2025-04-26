@@ -45,7 +45,7 @@ try:
             # UoM dimensionnelle forcée à ML
             dimension_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
             if dimension_uom:
-                variant.product_tmpl_id.dimension_uom_id = dimension_uom.id
+                variant.product_tmpl_id.dimensional_uom_id = dimension_uom.id
 
             print(f"🔁 {variant.name} → Largeur: {largeur_m:.3f} m, Hauteur: {hauteur_m:.3f} m, Épaisseur: {epaisseur_m:.3f} m")
         else:
