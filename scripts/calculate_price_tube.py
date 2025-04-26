@@ -1,20 +1,23 @@
 import sys
 import os
 import pandas as pd
+from odoo import api, tools, sql_db
 
-# Connexion à Odoo - Approche alternative
+# Connexion à Odoo - Approche alternative sans utiliser parse_config
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
 import odoo
 from odoo import api, tools, sql_db
-from odoo.service import db
 
-# Initialisation de la connexion à la base de données
+# Connexion à la base de données Odoo
 def init_odoo():
-    odoo.tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')
-    odoo.service.server.load_server_wide_modules()
-    db_name = 'metal-prod-18'  # Nom de la base de données
+    # Charger la configuration d'Odoo manuellement
+    config = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
+    tools.config.parse_config(config)
+    
+    # Connexion à la base de données et récupération de l'environnement Odoo
+    db_name = 'metal-prod-18'
     odoo.registry(db_name)
     return api.Environment(odoo.sql_db.DB(db_name).cursor(), 1, {})
 
@@ -61,4 +64,3 @@ def calculate_price():
 
 # Exécution du script
 calculate_price()
-
