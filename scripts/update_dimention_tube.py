@@ -8,7 +8,7 @@ os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 import odoo
 from odoo import api, tools, sql_db
 
-DB = 'metal-prod-18'
+DB = 'metal-prod-18-clone'
 TEMPLATE_ID = 7  # ID du template "Tube soudés carrés"
 
 # Initialisation
@@ -36,17 +36,16 @@ try:
             hauteur_m = mm_to_m(hauteur_mm)
             epaisseur_m = mm_to_m(epaisseur_mm)
 
-            # Mise à jour des dimensions
-            variant.width = largeur_m
-            variant.height = hauteur_m
-            variant.thickness = epaisseur_m
-            variant.length = 1.0  # 1 mètre car UoM ML
+            # Mise à jour des dimensions sur le template
+            variant.product_tmpl_id.width = largeur_m
+            variant.product_tmpl_id.height = hauteur_m
+            variant.product_tmpl_id.thickness = epaisseur_m
+            variant.product_tmpl_id.length = 1.0  # 1 mètre car UoM ML
 
             # UoM dimensionnelle forcée à ML
-            if variant.dimension_uom_id:
-                dimension_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
-                if dimension_uom:
-                    variant.dimension_uom_id = dimension_uom.id
+            dimension_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
+            if dimension_uom:
+                variant.product_tmpl_id.dimension_uom_id = dimension_uom.id
 
             print(f"🔁 {variant.name} → Largeur: {largeur_m:.3f} m, Hauteur: {hauteur_m:.3f} m, Épaisseur: {epaisseur_m:.3f} m")
         else:
