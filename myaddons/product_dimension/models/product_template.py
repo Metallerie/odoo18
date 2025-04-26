@@ -32,10 +32,10 @@ class ProductTemplate(models.Model):
         store=True,
     )
     product_thickness = fields.Float(
-       related="product_variant_ids.product_thickness", string="Thickness ",readonly=False
+        related="product_variant_ids.product_thickness", string="Thickness ",readonly=False
     )
     product_diameter = fields.Float(
-       related="product_variant_ids.product_diameter",string="Diametre", readonly=False
+        related="product_variant_ids.product_diameter",string="Diametre", readonly=False
     )
 
     @api.model
