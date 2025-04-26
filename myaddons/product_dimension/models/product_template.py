@@ -31,9 +31,15 @@ class ProductTemplate(models.Model):
         readonly=False,
         store=True,
     )
-   product_thickness = fields.Float( related="product_variant_ids.product_thickness", string="Thickness ",readonly=False)
-   product_diameter = fields.Float( related="product_variant_ids.product_diameter",string="Diametre", readonly=False)
-   section_type = fields.char(related="product_variant_ids.section_type", string="Type de section", readonly=False)
+   product_thickness = fields.Float(
+       related="product_variant_ids.product_thickness", string="Thickness ",readonly=False
+    )
+   product_diameter = fields.Float(
+       related="product_variant_ids.product_diameter",string="Diametre", readonly=False
+    )
+   section_type = fields.char(
+       related="product_variant_ids.section_type", string="Type de section", readonly=False
+    )
 
     @api.model
     def _calc_volume(self, product_length, product_height, product_width, uom_id):
