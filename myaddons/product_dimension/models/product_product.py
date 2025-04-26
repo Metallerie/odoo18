@@ -13,7 +13,6 @@ class ProductProduct(models.Model):
     product_width = fields.Float("width")
     product_thickness = fields.Float("thickness")
     product_diameter = fields.Float("diameter")
-    section_type = fields.Selection("Type section")
     dimensional_uom_id = fields.Many2one(
         "uom.uom",
         "Dimensional UoM",
