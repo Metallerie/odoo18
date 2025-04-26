@@ -1,14 +1,14 @@
 import sys
 import os
 import pandas as pd
+import odoo
 from odoo import api, tools, sql_db
 
 # Connexion à Odoo - Approche alternative sans utiliser parse_config
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
-import odoo
-from odoo import api, tools, sql_db
+
 
 # Connexion à la base de données Odoo
 def init_odoo():
