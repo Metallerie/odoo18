@@ -10,7 +10,7 @@ import odoo
 from odoo import api, tools, sql_db
 
 DB = 'metal-prod-18'  # à adapter si besoin
-CSV_PATH = '/data/odoo/metal-odoo18-p8179/csv/tubes_carres_dimensions.csv'  # Ton CSV corrigé
+CSV_PATH = '/data/odoo/metal-odoo18-p8179/csv/tubes_carres_correct_full.csv'  # Ton CSV corrigé
 
 # Initialisation Odoo
 tools.config.parse_config()
