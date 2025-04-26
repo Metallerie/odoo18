@@ -1,6 +1,5 @@
 import sys
 import os
-import pandas as pd
 import builtins
 
 # Ajout du chemin vers Odoo et configuration
@@ -13,10 +12,10 @@ from odoo import api, tools, sql_db
 DB = 'metal-prod-18'
 
 # Initialisation Odoo
-# Charge la configuration Odoo
-tools.config.parse_config()
+# Charger la configuration sans arguments
+tools.config.parse_config([])
 odoo.service.server.load_server_wide_modules()
-# Monkey-patch pour corriger l'erreur NameError dans netsvc._open
+# Monkey-patch pour corriger NameError dans netsvc._open
 import odoo.netsvc as netsvc
 netsvc.open = builtins.open
 
@@ -26,8 +25,8 @@ cr = db.cursor()
 # Création de l'environnement Odoo
 env = api.Environment(cr, 1, {})
 
-# Fonction de calcul de prix
-def calculate_price():
+# Fonction de calcul et mise à jour des prix
+def calculate_and_update_prices():
     # Saisie des dimensions et du prix de référence pour un tube de base
     height = float(input("Entrez la hauteur (mm) du tube de référence : "))
     width = float(input("Entrez la largeur (mm) du tube de référence : "))
@@ -48,7 +47,7 @@ def calculate_price():
     # Récupération des variantes (product_tmpl_id = 7)
     variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
-    # Calcul et affichage
+    # Boucle de calcul et mise à jour
     for variant in variants:
         # Dimensions variante en mètres (déjà stockées en mètre)
         h = variant.product_height
@@ -56,17 +55,20 @@ def calculate_price():
         t = variant.product_thickness
         # Surface déployée de la variante (m²)
         surface_var = (h + w) * 2
-        # Prix calculé pour la variante
-        price_var = base_unit_price * surface_var * t
+        # Calcul du prix d'achat
+        cost_price = base_unit_price * surface_var * t
+        # Calcul du prix de vente (x2.5)
+        sale_price = cost_price * 2.5
+        # Mise à jour du coût sur la variante
+        variant.write({'standard_price': cost_price})
+        # Mise à jour du prix de vente sur le template associé
+        variant.product_tmpl_id.write({'list_price': sale_price})
         # Affichage simple
-        print(f"{variant.display_name}: {price_var:.4f} €")
+        print(f"{variant.display_name}: cout={cost_price:.4f} €, vente={sale_price:.4f} €")
 
 # Exécution
-def main():
+if __name__ == '__main__':
     try:
-        calculate_price()
+        calculate_and_update_prices()
     finally:
         cr.close()
-
-if __name__ == '__main__':
-    main()
