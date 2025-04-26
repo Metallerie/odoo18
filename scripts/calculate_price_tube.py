@@ -34,9 +34,9 @@ def calculate_and_update_prices():
     reference_price = float(input("Entrez le prix de référence pour 1 mètre linéaire de ce tube (en €) : "))
 
     # Conversion des dimensions de référence en mètres
-    height_ref = height 
-    width_ref = width 
-    thickness_ref = thickness 
+    height_ref = height / 1000
+    width_ref = width / 1000 
+    thickness_ref = thickness / 1000
 
     # Surface déployée du tube de référence (m²)
     surface_ref = (height_ref + width_ref) * 2
