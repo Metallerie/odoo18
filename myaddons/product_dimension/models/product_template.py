@@ -40,6 +40,13 @@ class ProductTemplate(models.Model):
     section_type = fields.char(
        related="product_variant_ids.section_type", string="Type de section", readonly=False
     )
+    section_type = fields.Selection([
+       ('square', 'Carré'),
+       ('rectangle', 'Rectangulaire'),
+       ('round', 'Rond'),
+       ('ipn', 'IPN / IPE'),
+       ('custom', 'Autre'),
+     ], string="Type de section", default='square')
 
     @api.model
     def _calc_volume(self, product_length, product_height, product_width, uom_id):
