@@ -2,19 +2,21 @@ import sys
 import os
 import pandas as pd
 
-# Connexion à Odoo
+# Connexion à Odoo - Approche alternative
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
 import odoo
 from odoo import api, tools, sql_db
+from odoo.service import db
 
-# Se connecter à la base de données Odoo
-DB = 'metal-prod-18'
-odoo.tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')
-odoo.api.Environment.manage()
-db = sql_db.DB(DB)
-env = api.Environment(db.cursor(), 1, {})
+# Initialisation de la connexion à la base de données
+def init_odoo():
+    odoo.tools.config.parse_config('/data/odoo/metal-odoo18-p8179/odoo18.conf')
+    odoo.service.server.load_server_wide_modules()
+    db_name = 'metal-prod-18'  # Nom de la base de données
+    odoo.registry(db_name)
+    return api.Environment(odoo.sql_db.DB(db_name).cursor(), 1, {})
 
 # Demander les informations de base à l'utilisateur
 def calculate_price():
@@ -38,6 +40,9 @@ def calculate_price():
     # Calcul du prix total pour l'épaisseur donnée
     price = price_per_mm * thickness_m  # Prix d'achat pour l'épaisseur donnée
 
+    # Se connecter à Odoo et récupérer les variantes
+    env = init_odoo()
+
     # Rechercher toutes les variantes de produits avec ID = 7
     product_variants = env['product.product'].search([('product_tmpl_id', '=', 7)])
 
@@ -56,3 +61,4 @@ def calculate_price():
 
 # Exécution du script
 calculate_price()
+
