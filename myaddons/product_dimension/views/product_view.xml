@@ -29,7 +29,6 @@
                     name="dimensions"
                     invisible="product_variant_count &gt; 1"
                 >
-                    <field name="section_type"/>
                     <field name="dimensional_uom_id" options="{'no_create': True}" />
                     <field name="product_length" string="Length" />
                     <field name="product_height" string="Height" />
