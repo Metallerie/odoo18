@@ -37,9 +37,6 @@ class ProductTemplate(models.Model):
     product_diameter = fields.Float(
        related="product_variant_ids.product_diameter",string="Diametre", readonly=False
     )
-    section_type = fields.char(
-       related="product_variant_ids.section_type", string="Type de section", readonly=False
-    )
     section_type = fields.Selection([
        ('square', 'Carré'),
        ('rectangle', 'Rectangulaire'),
