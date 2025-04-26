@@ -30,10 +30,10 @@ try:
         raise Exception("Template ID 7 introuvable.")
 
     # Suppression des variantes existantes
-    variant_ids = template.product_variant_ids
-    count = len(variant_ids)
-    variant_ids.unlink()
-    print(f"🧹 {count} variantes supprimées.")
+    #    variant_ids = template.product_variant_ids
+    #    count = len(variant_ids)
+    #    variant_ids.unlink()
+    #    print(f"🧹 {count} variantes supprimées.")
 
     # Récupération de l'UoM ML
     ml_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
