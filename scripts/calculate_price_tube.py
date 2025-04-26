@@ -58,6 +58,13 @@ def calculate_price():
 
         # Affichage simplifié des résultats pour chaque variante dans la console
         print(f"{variant.display_name}: {variant_price:.4f} €")
+    except ValueError as e:
+        print(f"Erreur : {e}")
+    except Exception as e:
+        print(f"Une erreur inattendue s'est produite : {e}")
+    finally:
+        # Fermeture propre du curseur de la base de données
+        cr.close()
 
 # Exécution du script
 calculate_price()
