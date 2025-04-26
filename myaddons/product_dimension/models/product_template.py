@@ -37,13 +37,6 @@ class ProductTemplate(models.Model):
     product_diameter = fields.Float(
        related="product_variant_ids.product_diameter",string="Diametre", readonly=False
     )
-    section_type = fields.Selection([
-       ('square', 'Carré'),
-       ('rectangle', 'Rectangulaire'),
-       ('round', 'Rond'),
-       ('ipn', 'IPN / IPE'),
-       ('custom', 'Autre'),
-     ], string="Type de section", default='square')
 
     @api.model
     def _calc_volume(self, product_length, product_height, product_width, uom_id):
