@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <template id="product_metal_quantity_unit" inherit_id="website_sale.product">
-        <xpath expr="//div[contains(@class, 'css_quantity')]" position="after">
+        <xpath expr="//input[@name='add_qty']" position="after">
             <t t-if="'metal-au-metre-2' in product.public_categ_ids.mapped('website_slug')">
                 <div class="input-group mt-2" id="unit_selector_group">
                     <label class="input-group-text" for="unit_selector">Unité</label>
@@ -17,7 +16,7 @@
 
     <template id="product_metal_quantity_input_patch" inherit_id="website_sale.product">
         <xpath expr="//input[@name='add_qty']" position="attributes">
-            <attribute name="step">0.001</attribute> <!-- Autoriser trois décimales -->
+            <attribute name="step">0.001</attribute>
         </xpath>
     </template>
 </odoo>
