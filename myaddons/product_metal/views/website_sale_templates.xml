@@ -5,7 +5,7 @@
                 <div class="input-group my-3" id="unit_selector_group">
     <span class="input-group-text">Unité :</span>
     <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="unit_select" id="unit_m" value="1" checked>
+        <input class="form-check-input" type="radio" name="unit_select" id="unit_m" value="1" selected="selected">
         <label class="form-check-label" for="unit_m">Mètre (m)</label>
     </div>
     <div class="form-check form-check-inline">
