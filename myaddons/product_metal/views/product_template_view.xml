@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    
+    <!-- Modifier le sélecteur de quantité dans la vue produit -->
+        <template id="product_quantity_surcharge" inherit_id="website_sale.products_item">
+            <xpath expr="//input[@name='add_qty']" position="attributes">
+                <attribute name="t-att-data-uom_precision">product.uom_precision</attribute>
+            </xpath>
+        </template>
+
+        <!-- Modifier le sélecteur de quantité dans le panier -->
+        <template id="cart_quantity_surcharge" inherit_id="website_sale.cart_lines">
+            <xpath expr="//input[contains(@class, 'js_quantity')]" position="attributes">
+                <attribute name="t-att-data-uom_precision">line.product_id.uom_precision</attribute>
+            </xpath>
+        </template>
 </odoo>
