@@ -6,7 +6,6 @@
         <field name="inherit_id" ref="product.view_product_template_form" />
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
-                <!--field name="uom_precision" /-->
             </xpath>
         </field>
     </record>
