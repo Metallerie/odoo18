@@ -9,11 +9,11 @@
         <label class="form-check-label" for="unit_m">Mètre (m)</label>
     </div>
     <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="unit_select" id="unit_cm" value="0.01">
+        <input class="form-check-input" type="radio" name="unit_select" id="unit_cm" value="0.01"/>
         <label class="form-check-label" for="unit_cm">Centimètre (cm)</label>
     </div>
     <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="unit_select" id="unit_mm" value="0.001">
+        <input class="form-check-input" type="radio" name="unit_select" id="unit_mm" value="0.001"/>
         <label class="form-check-label" for="unit_mm">Millimètre (mm)</label>
     </div>
 </div>
