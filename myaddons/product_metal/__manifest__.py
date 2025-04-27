@@ -13,7 +13,7 @@
     "images": ["static/description/icon.png"],
     'assets': {
     'web.assets_frontend': [
-        'product_metal/static/src/js/product_metal_qty_unit.js',
+        'product_metal/static/src/js/product_quantity_precision.js',
     ],
 },
 
