@@ -13,7 +13,7 @@ odoo.define('product_metal.product_metal_qty_unit', function (require) {
             if (window.location.href.includes('metal-au-metre')) {
                 setTimeout(function () {
                     self._injectUnitSelector();
-                }, 500);
+                }, 500); // Laisse le temps à Odoo de charger la page
             }
         },
 
@@ -24,36 +24,40 @@ odoo.define('product_metal.product_metal_qty_unit', function (require) {
                 return;
             }
 
-            // Permettre les décimales
+            // Autoriser les décimales dans l'input quantité
             qtyInput.attr('step', 'any');
 
-            // Cases à cocher
-            const unitSelector = $(`
+            // Créer les cases à cocher
+            const unitSelectorHtml = `
                 <div class="input-group my-3" id="unit_selector_group">
                     <span class="input-group-text">Unité :</span>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="unit_select" id="unit_m" value="1" checked>
+                        <input class="form-check-input" type="radio" name="unit_select" id="unit_m" value="1" checked="checked"/>
                         <label class="form-check-label" for="unit_m">Mètre (m)</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="unit_select" id="unit_cm" value="0.01">
+                        <input class="form-check-input" type="radio" name="unit_select" id="unit_cm" value="0.01"/>
                         <label class="form-check-label" for="unit_cm">Centimètre (cm)</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="unit_select" id="unit_mm" value="0.001">
+                        <input class="form-check-input" type="radio" name="unit_select" id="unit_mm" value="0.001"/>
                         <label class="form-check-label" for="unit_mm">Millimètre (mm)</label>
                     </div>
                 </div>
-            `);
+            `;
 
-            qtyInput.closest('.js_product_quantity').after(unitSelector);
+            // Injecter juste après la quantité
+            qtyInput.closest('.js_product_quantity').after(unitSelectorHtml);
 
-            // Gestion du changement d'unité
+            // Logique de conversion quand on clique sur une unité
             $('input[name="unit_select"]').on('change', function () {
-                const factor = parseFloat($(this).val());
-                const currentVal = parseFloat(qtyInput.val()) || 0;
-                const newVal = (currentVal * factor).toFixed(3);
-                qtyInput.val(newVal);
+                const selectedFactor = parseFloat($(this).val());
+                let inputQty = parseFloat(qtyInput.val()) || 0;
+
+                if (inputQty) {
+                    inputQty = (inputQty * selectedFactor).toFixed(3);
+                    qtyInput.val(inputQty);
+                }
             });
         },
     });
