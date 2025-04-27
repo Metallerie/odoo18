@@ -13,13 +13,19 @@ publicWidget.registry.WebsiteSale.include({
 
         if (isNaN(value)) {
             value = 0.001; // Valeur minimale par défaut
+            console.warn("Valeur entrée invalide, forcée à 0.001");
         }
 
         // Respecter la précision définie
-        value = parseFloat(value).toFixed(uomPrecision);
+        const roundedValue = parseFloat(value).toFixed(uomPrecision);
+        if (value !== parseFloat(roundedValue)) {
+            console.warn(
+                `Quantité arrondie : ${value} -> ${roundedValue} (précision : ${uomPrecision})`
+            );
+        }
 
-        // Mettre à jour la quantité dans le panier
-        this._changeCartQuantity($input, value);
+        // Mise à jour de la quantité dans le panier
+        this._changeCartQuantity($input, roundedValue);
     },
 
     /**
@@ -28,6 +34,11 @@ publicWidget.registry.WebsiteSale.include({
     _changeCartQuantity: function ($input, value) {
         const lineId = $input.data('line-id');
         const productId = $input.data('product-id');
+
+        // Ajout d'un log pour surveiller les appels RPC
+        console.log(
+            `Mise à jour du panier : ligne=${lineId}, produit=${productId}, quantité=${value}`
+        );
 
         this._rpc({
             route: "/shop/cart/update_json",
@@ -39,6 +50,8 @@ publicWidget.registry.WebsiteSale.include({
         }).then(function (data) {
             if (!data.error) {
                 $input.val(value); // Met à jour le DOM avec la valeur correcte
+            } else {
+                console.error("Erreur lors de la mise à jour du panier :", data.error);
             }
         });
     },
