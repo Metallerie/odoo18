@@ -6,7 +6,7 @@ class SaleOrderLine(models.Model):
     def _get_displayed_quantity(self):
         """Retourne la quantité affichée avec la précision définie sur la variante product.product."""
         # Par défaut, on utilise une précision globale (par exemple, 3)
-        default_precision = 3
+        default_precision = 0
 
         # Si la variante de produit a une précision personnalisée, utilisez-la
         precision = self.product_id.uom_precision or default_precision
