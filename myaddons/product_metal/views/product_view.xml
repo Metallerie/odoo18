@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//group[@name='inventory']" position="inside">
                 <group name="dimensions" string="Dimensions">
+                    <field name="uom_precision" string="precision décimal du panier" />
                     <field name="dimensional_uom_id" options="{'no_create': True}" />
                     <field name="product_length" string="Length" />
                     <field name="product_height" string="Height" />
