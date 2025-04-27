@@ -12,7 +12,7 @@
 
         <!-- Modifier le sélecteur de quantité dans le panier -->
         <template id="cart_quantity_surcharge" inherit_id="website_sale.cart_lines">
-            <xpath expr="//input[contains(@class, 'js_quantity')]" position="attributes">
+            <xpath expr="//input[hasclass('js_quantity')]" position="attributes">
                 <attribute name="t-att-data-uom_precision">line.product_id.uom_precision</attribute>
             </xpath>
         </template>
