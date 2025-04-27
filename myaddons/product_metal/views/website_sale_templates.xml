@@ -1,25 +1,2 @@
 <odoo>
-    <template id="product_metal_quantity_unit" inherit_id="website_sale.cart_lines">
-        <xpath expr="//div[@id='cart_products']/div/t/div[2]" position="inside">
-            <t t-if="line.product_id and 2 in line.product_id.public_categ_ids.ids">
-                <div class="input-group my-3" id="unit_selector_group">
-    <span class="input-group-text">Unité :</span>
-    <div class="form-check form-check-inline">
-        <t t-raw="0"/>
-        <input type="radio" name="unit_select" id="unit_m" value="1" checked="checked"/>
-        <label for="unit_m" class="form-check-label">Mètre (m)</label>
-    </div>
-    <div class="form-check form-check-inline">
-        <input type="radio" name="unit_select" id="unit_cm" value="0.01"/>
-        <label for="unit_cm" class="form-check-label">Centimètre (cm)</label>
-    </div>
-    <div class="form-check form-check-inline">
-        <input type="radio" name="unit_select" id="unit_mm" value="0.001"/>
-        <label for="unit_mm" class="form-check-label">Millimètre (mm)</label>
-    </div>
-</div>
-
-            </t>
-        </xpath>
-    </template>
 </odoo>
