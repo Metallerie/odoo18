@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- Modifier le sélecteur de quantité dans la vue produit -->
-        <template id="product_quantity_surcharge" inherit_id="website_sale.products_item">
+        <template id="product_quantity_surcharge" inherit_id="website_sale.product">
             <xpath expr="//input[@name='add_qty']" position="attributes">
                 <attribute name="t-att-data-uom_precision">product.uom_precision</attribute>
             </xpath>
