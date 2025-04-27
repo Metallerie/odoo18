@@ -1,3 +1,14 @@
 <odoo>
-
+    <template id="product_metal_quantity_unit" inherit_id="website_sale.s_add_to_cart">
+        <xpath expr="//div[contains(@class, 'js_product_quantity')]" position="after">
+            <div t-if="'metal-au-metre-2' in product.public_categ_ids.mapped('website_slug')" class="input-group my-3" id="unit_selector_group">
+                <label class="input-group-text" for="unit_selector">Unité</label>
+                <select id="unit_selector" class="form-select">
+                    <option value="1" selected="selected">Mètre (m)</option>
+                    <option value="0.01">Centimètre (cm)</option>
+                    <option value="0.001">Millimètre (mm)</option>
+                </select>
+            </div>
+        </xpath>
+    </template>
 </odoo>
