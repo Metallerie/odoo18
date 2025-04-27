@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Modifier le sélecteur de quantité dans la vue produit -->
+    <!-- Surcharge de la vue produit -->
         <template id="product_quantity_surcharge" inherit_id="website_sale.product">
             <xpath expr="//input[@name='add_qty']" position="attributes">
-                <attribute name="t-att-data-uom_precision">product.uom_precision</attribute>
+                <!-- La valeur par défaut reflète la précision définie -->
+                <attribute name="t-att-value">combination_info['default_qty'] or 1.0</attribute>
+                <attribute name="t-att-step">combination_info['uom_precision']</attribute>
             </xpath>
         </template>
 
