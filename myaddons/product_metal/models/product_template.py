@@ -8,11 +8,6 @@ from odoo import api, fields, models
 class ProductTemplate(models.Model):
     _inherit = "product.template"
     
-    # Précision personnalisée pour l'unité de mesure de ce produit 
-    uom_precision = fields.Integer(
-        string="Précision UoM",
-        help="Précision personnalisée pour l'unité de mesure de ce produit. Laisser vide pour utiliser la précision par défaut.",
-    )
     # Define all the related fields in product.template with 'readonly=False'
     # to be able to modify the values from product.template.
     dimensional_uom_id = fields.Many2one(
