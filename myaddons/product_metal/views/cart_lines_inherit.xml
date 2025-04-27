@@ -4,7 +4,7 @@
         <!-- Héritage de la vue cart_lines -->
         <template id="cart_lines_inherit" inherit_id="website_sale.cart_lines">
             <xpath expr="//input[@class='js_quantity quantity form-control border-start-0 border-end-0']" position="attributes">
-                <attribute name="t-att-value">format(line._get_displayed_quantity(), '.3f')</attribute>
+                <attribute name="t-att-value">format(line._get_displayed_quantity(),or 0.0, '.3f')</attribute>
             </xpath>
         </template>
     </data>
