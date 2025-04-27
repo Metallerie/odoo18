@@ -1,5 +1,5 @@
 <odoo>
-    <template id="product_metal_quantity_unit" inherit_id="website_sale.s_add_to_cart">
+    <template id="product_metal_quantity_unit" inherit_id="website_sale.product.s_add_to_cart">
         <xpath expr="//div[contains(@class, 'js_product_quantity')]" position="after">
             <div t-if="'metal-au-metre-2' in product.public_categ_ids.mapped('website_slug')" class="input-group my-3" id="unit_selector_group">
                 <label class="input-group-text" for="unit_selector">Unité</label>
