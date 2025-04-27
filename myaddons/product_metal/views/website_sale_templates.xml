@@ -1,6 +1,6 @@
 <odoo>
-    <template id="product_metal_quantity_unit" inherit_id="website_sale.product">
-        <xpath expr="//div[contains(@class, 'o_we_snippet_inject')]" position="before">
+<template id="product_metal_quantity_unit" inherit_id="website_sale.product">
+        <xpath expr="//form[contains(@class, 'oe_website_sale')]" position="inside">
             <t t-if="'metal-au-metre-2' in product.public_categ_ids.mapped('website_slug')">
                 <div class="input-group my-3" id="unit_selector_group">
                     <label class="input-group-text" for="unit_selector">Unité</label>
