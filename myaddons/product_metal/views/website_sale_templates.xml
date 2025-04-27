@@ -5,16 +5,17 @@
                 <div class="input-group my-3" id="unit_selector_group">
     <span class="input-group-text">Unité :</span>
     <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="unit_select" id="unit_m" value="1" checked="checked"/>
-        <label class="form-check-label" for="unit_m">Mètre (m)</label>
+        <t t-raw="0"/>
+        <input type="radio" name="unit_select" id="unit_m" value="1" checked="checked"/>
+        <label for="unit_m" class="form-check-label">Mètre (m)</label>
     </div>
     <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="unit_select" id="unit_cm" value="0.01">
-        <label class="form-check-label" for="unit_cm">Centimètre (cm)</label>
+        <input type="radio" name="unit_select" id="unit_cm" value="0.01"/>
+        <label for="unit_cm" class="form-check-label">Centimètre (cm)</label>
     </div>
     <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="unit_select" id="unit_mm" value="0.001">
-        <label class="form-check-label" for="unit_mm">Millimètre (mm)</label>
+        <input type="radio" name="unit_select" id="unit_mm" value="0.001"/>
+        <label for="unit_mm" class="form-check-label">Millimètre (mm)</label>
     </div>
 </div>
 
