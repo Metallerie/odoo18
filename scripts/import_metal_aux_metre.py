@@ -57,6 +57,7 @@ try:
         if existing:
             print(f"✏️ Produit existant : {code} → mise à jour")
             existing.write({
+                'name': name,
                 'product_width': width,
                 'product_height': height,
                 'product_thickness': thickness,
