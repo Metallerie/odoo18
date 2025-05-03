@@ -17,7 +17,6 @@ default_code,name,length,width,height,thickness,dimensional_uom
 71766,"Tube soudés rectangulaire 80x40x3",6.15,0.080,0.040,0.003,ML
 71768,"Tube soudés rectangulaire 80x50x3",6.15,0.080,0.050,0.003,ML
 71774,"Tube soudés rectangulaire 100x50x3",6.15,0.100,0.050,0.003,ML
-420753,"Tube soudés rectangulaire 100x50x3",12.15,0.100,0.050,0.003,ML
 71781,"Tube soudés rectangulaire 120x60x3",6.15,0.120,0.060,0.003,ML
 71795,"Tube soudés rectangulaire 140x60x3",6.15,0.140,0.060,0.003,ML
 71793,"Tube soudés rectangulaire 140x80x3",6.15,0.140,0.080,0.003,ML
