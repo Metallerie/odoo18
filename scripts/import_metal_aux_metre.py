@@ -17,7 +17,7 @@ cr = db.cursor()
 env = api.Environment(cr, 1, {})
 
 try:
-    # 🎯 Interaction
+    # 🎯 Entrées interactives
     csv_path_input = input("📄 Entrez le chemin du fichier CSV à importer : ").strip()
     CSV_PATH = csv_path_input
 
