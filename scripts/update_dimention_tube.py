@@ -22,7 +22,7 @@ env = api.Environment(cr, 1, {})  # Superadmin
 csv_path = input("\U0001f5c2️  Chemin du fichier CSV : ").strip()
 csv_filename = os.path.basename(csv_path).rsplit('.', 1)[0]  # nom du fichier sans extension
 
-updated_templates = set()
+updated_products = set()
 not_found_codes = []
 
 try:
@@ -47,8 +47,6 @@ try:
 
             product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
             if product:
-                tmpl = product.product_tmpl_id
-
                 # Recherche de l'unité de mesure
                 uom = env['uom.uom'].search([('name', '=', uom_name)], limit=1)
 
@@ -60,9 +58,9 @@ try:
                     'dimensional_uom_id': uom.id if uom else False,
                 }
 
-                tmpl.write(vals)
-                updated_templates.add(tmpl.id)
-                print(f"✅ {default_code} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
+                success = product.write(vals)
+                updated_products.add(product.id)
+                print(f"✅ {default_code} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name} (écrit={success})")
             else:
                 print(f"❌ Produit introuvable pour default_code : {default_code}")
                 not_found_codes.append(default_code)
@@ -70,13 +68,13 @@ try:
         cr.commit()
         print("\n✅ Mise à jour terminée avec succès.")
 
-        if updated_templates:
-            print("\n📋 Récapitulatif des templates modifiés :")
-            templates = env['product.template'].browse(list(updated_templates))
-            for t in templates:
-                print(f"\U0001f527 {t.name} → L={t.product_length} W={t.product_width} H={t.product_height} Ep={t.product_thickness} UoM={t.dimensional_uom_id.name}")
+        if updated_products:
+            print("\n📋 Récapitulatif des produits modifiés :")
+            products = env['product.product'].browse(list(updated_products))
+            for p in products:
+                print(f"\U0001f527 {p.default_code} → L={p.product_length} W={p.product_width} H={p.product_height} Ep={p.product_thickness} UoM={p.dimensional_uom_id.name}")
         else:
-            print("📭 Aucun template n'a été modifié.")
+            print("📭 Aucun produit n'a été modifié.")
 
         if not_found_codes:
             print("\n❌ Default codes non trouvés :")
