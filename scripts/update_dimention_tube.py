@@ -23,8 +23,10 @@ csv_path = input("🗂️  Chemin du fichier CSV : ").strip()
 
 try:
     with open(csv_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter='\t')
+        reader = csv.DictReader(csvfile)
+        print(f"🧾 Champs détectés : {reader.fieldnames}")
         print("\n📄 Lecture du fichier CSV...")
+      
 
         for row in reader:
             default_code = row['default_code'].strip()
