@@ -61,7 +61,7 @@ def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_k
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
         return None, None
 
-def calculate_price_corniere(poids_total_kg, nb_barres, prix_kg, variant):
+def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant):
     try:
         longueur_barre = 6.2  # mètres
         poids_par_barre = poids_total_kg / nb_barres
@@ -76,7 +76,6 @@ def calculate_price_corniere(poids_total_kg, nb_barres, prix_kg, variant):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
-        # Le prix est basé uniquement sur le prix au mètre linéaire issu du poids, pas de calcul supplémentaire
         cost_price = prix_metre
         sale_price = cost_price * 2.5
         return round(cost_price, 4), round(sale_price, 4)
@@ -117,6 +116,9 @@ def calculate_and_update_prices():
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = float(input("Prix d'achat au kg (€) : "))
     elif profile_choice == "3":
+        height = float(input("Hauteur (mm) : "))
+        width = float(input("Largeur (mm) : "))
+        thickness = float(input("Épaisseur (mm) : "))
         poids_total_kg = float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = float(input("Prix d'achat au kg (€) : "))
@@ -136,7 +138,7 @@ def calculate_and_update_prices():
         elif profile_choice == "2":
             cost_price, sale_price = calc_function(width, thickness, poids_total_kg, nb_barres, prix_kg, variant)
         elif profile_choice == "3":
-            cost_price, sale_price = calc_function(poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
 
         if cost_price is None:
             continue
