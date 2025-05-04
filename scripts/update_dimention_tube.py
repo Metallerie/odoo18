@@ -44,7 +44,8 @@ try:
                 print(f"⚠️ Erreur de parsing sur la ligne {default_code} : {err}")
                 continue
 
-            product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
+            products = env['product.product'].search([])
+            product = next((p for p in products if (p.default_code or '').strip() == default_code), None)
             if product:
                 tmpl = product.product_tmpl_id
 
