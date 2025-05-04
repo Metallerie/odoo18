@@ -21,7 +21,7 @@ db = sql_db.db_connect(DB)
 cr = db.cursor()
 env = api.Environment(cr, 1, {})
 
-def calculate_price_tube_carre(height, width, thickness, reference_price, variant):
+def calculate_price_tube_section(height, width, thickness, reference_price, variant):
     surface_ref = (height + width) * 2
     base_unit_price = reference_price / (surface_ref * thickness)
 
@@ -36,11 +36,7 @@ def calculate_price_tube_carre(height, width, thickness, reference_price, varian
     surface_var = (h * 1000 + w * 1000) * 2
     cost_price = base_unit_price * surface_var * (t * 1000)
     sale_price = cost_price * 2.5
-    return cost_price, sale_price
-
-def calculate_price_tube_rectangulaire(height, width, thickness, reference_price, variant):
-    # Même méthode que pour le tube carré
-    return calculate_price_tube_carre(height, width, thickness, reference_price, variant)
+    return round(cost_price, 4), round(sale_price, 4)
 
 def calculate_and_update_prices():
     print("\n📦 Sélection du modèle de produit (template)")
@@ -48,10 +44,10 @@ def calculate_and_update_prices():
 
     print("\n🔧 Sélection du profil :")
     profiles = {
-        "1": ("Tube carré", calculate_price_tube_carre),
-        "2": ("Tube rectangulaire", calculate_price_tube_rectangulaire),
+        "1": "Tube carré",
+        "2": "Tube rectangulaire",
     }
-    for key, (name, _) in profiles.items():
+    for key, name in profiles.items():
         print(f" {key}. {name}")
 
     profile_choice = input("Choisissez le profil à utiliser : ").strip()
@@ -59,7 +55,7 @@ def calculate_and_update_prices():
         print("❌ Profil inconnu.")
         return
 
-    profile_name, calc_function = profiles[profile_choice]
+    profile_name = profiles[profile_choice]
 
     print(f"\n🧮 Calcul basé sur le profil : {profile_name}")
     height = float(input("Hauteur de référence (mm) : "))
@@ -77,12 +73,14 @@ def calculate_and_update_prices():
     variants = env['product.product'].search([('product_tmpl_id', '=', tmpl_id)])
 
     for variant in variants:
-        cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
+        cost_price, sale_price = calculate_price_tube_section(height, width, thickness, reference_price, variant)
 
         if cost_price is None:
             continue
 
-        variant.write({'standard_price': cost_price})
+        variant.write({
+            'standard_price': cost_price,
+        })
 
         pricelist_item = env['product.pricelist.item'].search([
             ('pricelist_id', '=', pricelist.id),
@@ -104,7 +102,7 @@ def calculate_and_update_prices():
             print(f"{variant.display_name}: désactivé (épaisseur spéciale)")
         else:
             variant.write({'active': True})
-            print(f"{variant.display_name}: cout={cost_price:.4f} €, vente={sale_price:.4f} €")
+            print(f"{variant.display_name}: standard={cost_price:.4f} €, vente={sale_price:.4f} €")
 
     env.cr.commit()
 
