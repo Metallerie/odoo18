@@ -1,6 +1,6 @@
 import sys
 import os
-import re
+import csv
 
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
@@ -9,54 +9,59 @@ import odoo
 from odoo import api, tools, sql_db
 
 DB = 'metal-prod-18'
-TEMPLATE_ID = 7  # ID du template "Tube soudés carrés"
 
 # Initialisation
+print("🔧 Initialisation d'Odoo...")
 tools.config.parse_config()
 odoo.service.server.load_server_wide_modules()
 db = sql_db.db_connect(DB)
 cr = db.cursor()
 env = api.Environment(cr, 1, {})  # Superadmin
 
-def mm_to_m(valeur_mm):
-    return float(valeur_mm.replace('mm', '').replace(',', '.').strip()) / 1000
+# Demande du fichier CSV
+csv_path = input("🗂️  Chemin du fichier CSV : ").strip()
 
 try:
-    template = env['product.template'].browse(TEMPLATE_ID)
-    variants = env['product.product'].search([('product_tmpl_id', '=', template.id)])
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter='\t')
+        print("\n📄 Lecture du fichier CSV...")
 
-    for variant in variants:
-        match = re.search(r"(\d+)[xX](\d+).*x *(\d+[,\.]?\d*)", variant.name)
-        if match:
-            largeur_mm = match.group(1)
-            hauteur_mm = match.group(2)
-            epaisseur_mm = match.group(3)
+        for row in reader:
+            default_code = row['default_code'].strip()
+            name = row['name'].strip()
+            try:
+                length = float(row['length'])
+                width = float(row['width'])
+                height = float(row['height'])
+                thickness = float(row['thickness'])
+                uom_name = row['dimensional_uom'].strip()
+            except Exception as err:
+                print(f"⚠️ Erreur de parsing sur la ligne {default_code} : {err}")
+                continue
 
-            largeur_m = mm_to_m(largeur_mm)
-            hauteur_m = mm_to_m(hauteur_mm)
-            epaisseur_m = mm_to_m(epaisseur_mm)
+            product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
+            if product:
+                tmpl = product.product_tmpl_id
+                tmpl.product_length = length
+                tmpl.product_width = width
+                tmpl.product_height = height
+                tmpl.product_thickness = thickness
 
-            # Mise à jour des dimensions sur le template
-            variant.product_tmpl_id.product_width = largeur_m
-            variant.product_tmpl_id.product_height = hauteur_m
-            variant.product_tmpl_id.product_thickness = epaisseur_m
-            variant.product_tmpl_id.product_length = 1.0  # 1 mètre car UoM ML
+                uom = env['uom.uom'].search([('name', '=', uom_name)], limit=1)
+                if uom:
+                    tmpl.dimensional_uom_id = uom.id
 
-            # UoM dimensionnelle forcée à ML
-            dimension_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
-            if dimension_uom:
-                variant.product_tmpl_id.dimensional_uom_id = dimension_uom.id
+                print(f"✅ {default_code} - {name} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
+            else:
+                print(f"❌ Produit introuvable pour default_code : {default_code}")
 
-            print(f"🔁 {variant.name} → Largeur: {largeur_m:.3f} m, Hauteur: {hauteur_m:.3f} m, Épaisseur: {epaisseur_m:.3f} m")
-        else:
-            print(f"⚠️ Format non reconnu pour : {variant.name}")
+        cr.commit()
+        print("\n✅ Mise à jour terminée avec succès.")
 
-    cr.commit()
-    print("\n✅ Dimensions mises à jour pour tous les tubes carrés.")
-
+except FileNotFoundError:
+    print(f"❌ Fichier non trouvé : {csv_path}")
 except Exception as e:
     cr.rollback()
-    print("\n❌ Erreur :", e)
-
+    print("\n❌ Erreur générale :", e)
 finally:
     cr.close()
