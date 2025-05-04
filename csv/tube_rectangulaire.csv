@@ -1,32 +1,30 @@
 default_code,name,length,width,height,thickness,dimensional_uom
-71666,"Tube soudés rectangulaire 30x20x2",6.15,0.030,0.020,0.002,ML
-71668,"Tube soudés rectangulaire 35x20x2",6.15,0.035,0.020,0.002,ML
-71670,"Tube soudés rectangulaire 40x20x2",6.15,0.040,0.020,0.002,ML
-831015,"Tube soudés rectangulaire 40x25x2",6.15,0.040,0.025,0.002,ML
-71672,"Tube soudés rectangulaire 40x27x2",6.15,0.040,0.027,0.002,ML
-71674,"Tube soudés rectangulaire 50x30x2",6.15,0.050,0.030,0.002,ML
-71676,"Tube soudés rectangulaire 60x30x2",6.15,0.060,0.030,0.002,ML
-71678,"Tube soudés rectangulaire 60x40x2",6.15,0.060,0.040,0.002,ML
-71680,"Tube soudés rectangulaire 80x40x2",6.15,0.080,0.040,0.002,ML
-608102,"Tube soudés rectangulaire 100x20x2",6.15,0.100,0.020,0.002,ML
-71683,"Tube soudés rectangulaire 100x50x2",6.15,0.100,0.050,0.002,ML
-71757,"Tube soudés rectangulaire 50x30x3",6.15,0.050,0.030,0.003,ML
-71758,"Tube soudés rectangulaire 60x30x3",6.15,0.060,0.030,0.003,ML
-71760,"Tube soudés rectangulaire 60x40x3",6.15,0.060,0.040,0.003,ML
-71763,"Tube soudés rectangulaire 70x35x3",6.15,0.070,0.035,0.003,ML
-71766,"Tube soudés rectangulaire 80x40x3",6.15,0.080,0.040,0.003,ML
-71768,"Tube soudés rectangulaire 80x50x3",6.15,0.080,0.050,0.003,ML
-71774,"Tube soudés rectangulaire 100x50x3",6.15,0.100,0.050,0.003,ML
-71781,"Tube soudés rectangulaire 120x60x3",6.15,0.120,0.060,0.003,ML
-71795,"Tube soudés rectangulaire 140x60x3",6.15,0.140,0.060,0.003,ML
-71793,"Tube soudés rectangulaire 140x80x3",6.15,0.140,0.080,0.003,ML
-71796,"Tube soudés rectangulaire 150x50x3",6.15,0.150,0.050,0.003,ML
-71802,"Tube soudés rectangulaire 150x100x3",6.15,0.150,0.100,0.003,ML
-71732,"Tube soudés rectangulaire 180x80x3",6.15,0.180,0.080,0.003,ML
-71761,"Tube soudés rectangulaire 60x40x4",6.15,0.060,0.040,0.004,ML
-71772,"Tube soudés rectangulaire 80x50x5",6.15,0.080,0.050,0.005,ML
-71776,"Tube soudés rectangulaire 100x50x4",6.15,0.100,0.050,0.004,ML
-71801,"Tube soudés rectangulaire 150x100x4",6.15,0.150,0.100,0.004,ML
-71803,"Tube soudés rectangulaire 200x100x4",6.15,0.200,0.100,0.004,ML
-71778,"Tube soudés rectangulaire 100x50x5",6.15,0.100,0.050,0.005,ML
-71784,"Tube soudés rectangulaire 120x60x5",6.15,0.120,0.060,0.005,ML
+"71666","30x20 mm x 2 mm",6.15,0.030,0.020,0.002,"ML"
+"71668","35x20 mm x 2 mm",6.15,0.035,0.020,0.002,"ML"
+"71670","40x20 mm x 2 mm",6.15,0.040,0.020,0.002,"ML"
+"831015","40x25 mm x 2 mm",6.15,0.040,0.025,0.002,"ML"
+"71672","40x27 mm x 2 mm",6.15,0.040,0.027,0.002,"ML"
+"71674","50x30 mm x 2 mm",6.15,0.050,0.030,0.002,"ML"
+"71676","60x30 mm x 2 mm",6.15,0.060,0.030,0.002,"ML"
+"71678","60x40 mm x 2 mm",6.15,0.060,0.040,0.002,"ML"
+"71680","80x40 mm x 2 mm",6.15,0.080,0.040,0.002,"ML"
+"608102","100x20 mm x 2 mm",6.15,0.100,0.020,0.002,"ML"
+"71683","100x50 mm x 2 mm",6.15,0.100,0.050,0.002,"ML"
+"71757","50x30 mm x 3 mm",6.15,0.050,0.030,0.003,"ML"
+"71758","60x30 mm x 3 mm",6.15,0.060,0.030,0.003,"ML"
+"71760","60x40 mm x 3 mm",6.15,0.060,0.040,0.003,"ML"
+"71763","70x35 mm x 3 mm",6.15,0.070,0.035,0.003,"ML"
+"71766","80x40 mm x 3 mm",6.15,0.080,0.040,0.003,"ML"
+"71768","80x50 mm x 3 mm",6.15,0.080,0.050,0.003,"ML"
+"71774","100x50 mm x 3 mm",6.15,0.100,0.050,0.003,"ML"
+"71781","120x60 mm x 3 mm",6.15,0.120,0.060,0.003,"ML"
+"71795","140x60 mm x 3 mm",6.15,0.140,0.060,0.003,"ML"
+"71793","140x80 mm x 3 mm",6.15,0.140,0.080,0.003,"ML"
+"71796","150x50 mm x 3 mm",6.15,0.150,0.050,0.003,"ML"
+"71802","150x100 mm x 3 mm",6.15,0.150,0.100,0.003,"ML"
+"71732","180x80 mm x 3 mm",6.15,0.180,0.080,0.003,"ML"
+"71761","60x40 mm x 4 mm",6.15,0.060,0.040,0.004,"ML"
+"71772","80x50x5 mm",6.15,0.080,0.050,0.005,"ML"
+"71776","100x50 mm x 4 mm",6.15,0.100,0.050,0.004,"ML"
+"71801","150x100 mm x 4 mm",6.15,0.150,0.100,0.004,"ML"
+"71803","200x100 mm x 4 mm",6.15,0.200,0.100,0.004,"ML"
