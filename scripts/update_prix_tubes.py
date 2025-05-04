@@ -48,7 +48,7 @@ def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_k
         base_unit_price = prix_metre / (width * thickness)
 
         w = variant.product_width
-        t = variant.product_thickness
+        t = variant.product_height
 
         if not all([w, t]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
