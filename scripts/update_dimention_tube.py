@@ -64,7 +64,7 @@ try:
 
                 # Nettoyage du nom avant ajout
                 base_name = tmpl.name.split('[')[0].strip()
-                product.write({'name': f"{base_name}  [{csv_filename}]")
+                product.write({'name': f"{base_name}  [{csv_filename}]}")
 
                 updated_templates.add(tmpl.id)
                 print(f"✅ {default_code} mis à jour : name={product.name} L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
