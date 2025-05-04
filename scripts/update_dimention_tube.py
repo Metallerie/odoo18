@@ -11,7 +11,7 @@ from odoo import api, tools, sql_db
 DB = 'metal-prod-18'
 
 # Initialisation
-print("🔧 Initialisation d'Odoo...")
+print("\U0001f527 Initialisation d'Odoo...")
 tools.config.parse_config()
 odoo.service.server.load_server_wide_modules()
 db = sql_db.db_connect(DB)
@@ -19,20 +19,21 @@ cr = db.cursor()
 env = api.Environment(cr, 1, {})  # Superadmin
 
 # Demande du fichier CSV
-csv_path = input("🗂️  Chemin du fichier CSV : ").strip()
+csv_path = input("\U0001f5c2️  Chemin du fichier CSV : ").strip()
+csv_filename = os.path.basename(csv_path).rsplit('.', 1)[0]  # nom du fichier sans extension
 
 updated_templates = set()
 not_found_codes = []
 
 try:
     with open(csv_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)  # CSV standard (séparateur virgule)
-        print(f"\n📄 Lecture du fichier CSV... Champs détectés : {reader.fieldnames}\n")
+        reader = csv.DictReader(csvfile)
+        print(f"\n\U0001f4c4 Lecture du fichier CSV... Champs détectés : {reader.fieldnames}\n")
 
         for row in reader:
             default_code = row.get('default_code', '').strip()
             name = row.get('name', '').strip()
-            print(f"🔍 Recherche du produit {default_code} ({name})")
+            print(f"\U0001f50d Recherche du produit {default_code} ({name})")
 
             try:
                 length = float(row['length'])
@@ -61,8 +62,9 @@ try:
                 }
 
                 tmpl.write(vals)
+                product.name = f"{tmpl.name} [{csv_filename}]"  # Mise à jour du name du product.product
                 updated_templates.add(tmpl.id)
-                print(f"✅ {default_code} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
+                print(f"✅ {default_code} mis à jour : name={product.name} L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
             else:
                 print(f"❌ Produit introuvable pour default_code : {default_code}")
                 not_found_codes.append(default_code)
@@ -70,16 +72,14 @@ try:
         cr.commit()
         print("\n✅ Mise à jour terminée avec succès.")
 
-        # Afficher les enregistrements modifiés
         if updated_templates:
             print("\n📋 Récapitulatif des templates modifiés :")
             templates = env['product.template'].browse(list(updated_templates))
             for t in templates:
-                print(f"🔧 {t.name} → L={t.product_length} W={t.product_width} H={t.product_height} Ep={t.product_thickness} UoM={t.dimensional_uom_id.name}")
+                print(f"\U0001f527 {t.name} → L={t.product_length} W={t.product_width} H={t.product_height} Ep={t.product_thickness} UoM={t.dimensional_uom_id.name}")
         else:
             print("📭 Aucun template n'a été modifié.")
 
-        # Afficher les default_code non trouvés
         if not_found_codes:
             print("\n❌ Default codes non trouvés :")
             for code in not_found_codes:
