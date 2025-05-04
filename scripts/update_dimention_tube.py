@@ -28,7 +28,8 @@ try:
         print("\n📄 Lecture du fichier CSV...")
       
 
-        for row in reader:
+        for row in reader:   
+            print(row)  # 👈 à ajouter ici pour debug
             default_code = row['default_code'].strip()
             name = row['name'].strip()
             try:
@@ -39,7 +40,7 @@ try:
                 uom_name = row['dimensional_uom'].strip()
             except Exception as err:
                 print(f"⚠️ Erreur de parsing sur la ligne {default_code} : {err}")
-                continue
+ #               continue
 
             product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
             if product:
