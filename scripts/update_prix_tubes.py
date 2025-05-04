@@ -38,6 +38,10 @@ def calculate_price_tube_carre(height, width, thickness, reference_price, varian
     sale_price = cost_price * 2.5
     return cost_price, sale_price
 
+def calculate_price_tube_rectangulaire(height, width, thickness, reference_price, variant):
+    # Même méthode que pour le tube carré
+    return calculate_price_tube_carre(height, width, thickness, reference_price, variant)
+
 def calculate_and_update_prices():
     print("\n📦 Sélection du modèle de produit (template)")
     tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
@@ -45,7 +49,7 @@ def calculate_and_update_prices():
     print("\n🔧 Sélection du profil :")
     profiles = {
         "1": ("Tube carré", calculate_price_tube_carre),
-        # Ajouts futurs : "2": ("Tube rectangulaire", calculate_price_tube_rectangulaire), etc.
+        "2": ("Tube rectangulaire", calculate_price_tube_rectangulaire),
     }
     for key, (name, _) in profiles.items():
         print(f" {key}. {name}")
