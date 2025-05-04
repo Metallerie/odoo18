@@ -23,15 +23,14 @@ csv_path = input("🗂️  Chemin du fichier CSV : ").strip()
 
 try:
     with open(csv_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        print(f"🧾 Champs détectés : {reader.fieldnames}")
-        print("\n📄 Lecture du fichier CSV...")
-      
+        reader = csv.DictReader(csvfile)  # CSV standard (séparateur virgule)
+        print(f"\n📄 Lecture du fichier CSV... Champs détectés : {reader.fieldnames}\n")
 
-        for row in reader:   
-            print(row)  # 👈 à ajouter ici pour debug
-            default_code = row['default_code'].strip()
-            name = row['name'].strip()
+        for row in reader:
+            default_code = row.get('default_code', '').strip()
+            name = row.get('name', '').strip()
+            print(f"🔍 Recherche du produit {default_code} ({name})")
+
             try:
                 length = float(row['length'])
                 width = float(row['width'])
@@ -40,21 +39,25 @@ try:
                 uom_name = row['dimensional_uom'].strip()
             except Exception as err:
                 print(f"⚠️ Erreur de parsing sur la ligne {default_code} : {err}")
- #               continue
+                continue
 
             product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
             if product:
-#              tmpl = product.product_tmpl_id
-                tmpl.product_length = length
-                tmpl.product_width = width
-                tmpl.product_height = height
-                tmpl.product_thickness = thickness
+                tmpl = product.product_tmpl_id
 
+                # Recherche de l'unité de mesure
                 uom = env['uom.uom'].search([('name', '=', uom_name)], limit=1)
-                if uom:
-                    tmpl.dimensional_uom_id = uom.id
 
-                print(f"✅ {default_code} - {name} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
+                vals = {
+                    'product_length': length,
+                    'product_width': width,
+                    'product_height': height,
+                    'product_thickness': thickness,
+                    'dimensional_uom_id': uom.id if uom else False,
+                }
+
+                tmpl.write(vals)
+                print(f"✅ {default_code} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
             else:
                 print(f"❌ Produit introuvable pour default_code : {default_code}")
 
