@@ -45,8 +45,7 @@ try:
                 print(f"⚠️ Erreur de parsing sur la ligne {default_code} : {err}")
                 continue
 
-            products = env['product.product'].search([])
-            product = next((p for p in products if (p.default_code or '').strip() == default_code), None)
+            product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
             if product:
                 tmpl = product.product_tmpl_id
 
@@ -62,7 +61,11 @@ try:
                 }
 
                 tmpl.write(vals)
-                product.name = f"{tmpl.name} [{csv_filename}]"  # Mise à jour du name du product.product
+
+                # Nettoyage du nom avant ajout
+                base_name = tmpl.name.split('[')[0].strip()
+                product.write({'name': f"{base_name} [{csv_filename}]")
+
                 updated_templates.add(tmpl.id)
                 print(f"✅ {default_code} mis à jour : name={product.name} L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
             else:
