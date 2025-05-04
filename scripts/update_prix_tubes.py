@@ -68,17 +68,17 @@ def calculate_price_corniere(width, thickness, poids_total_kg, nb_barres, prix_k
         poids_par_m = poids_par_barre / longueur_barre
         prix_metre = poids_par_m * prix_kg
 
-        base_unit_price = prix_metre / (width * thickness * 2)
-
         w = variant.product_width
-        t = variant.product_height  # hauteur = épaisseur dans ce cas
+        h = variant.product_height
+        t = variant.product_thickness
 
-        if not all([w, t]):
+        if not all([w, h, t]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
-        surface = (w * 1000) * (t * 1000) * 2  # deux ailes
-        cost_price = base_unit_price * surface
+        # Surface déployée (deux ailes pleines)
+        surface_mm2 = (w * 1000 + h * 1000) * (t * 1000)
+        cost_price = prix_metre / ((w + h) * t) * surface_mm2
         sale_price = cost_price * 2.5
         return round(cost_price, 4), round(sale_price, 4)
     except Exception as e:
