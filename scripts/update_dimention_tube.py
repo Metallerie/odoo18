@@ -50,17 +50,22 @@ try:
                 # Recherche de l'unité de mesure
                 uom = env['uom.uom'].search([('name', '=', uom_name)], limit=1)
 
+                # Construction du nouveau nom : nom du template + nom du fichier CSV
+                template_name = product.product_tmpl_id.name.split('[')[0].strip()
+                new_name = f"{template_name} [{csv_filename}]"
+
                 vals = {
                     'product_length': length,
                     'product_width': width,
                     'product_height': height,
                     'product_thickness': thickness,
                     'dimensional_uom_id': uom.id if uom else False,
+                    'name': new_name
                 }
 
                 success = product.write(vals)
                 updated_products.add(product.id)
-                print(f"✅ {default_code} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name} (écrit={success})")
+                print(f"✅ {default_code} mis à jour : name={new_name} L={length} W={width} H={height} Ep={thickness} UoM={uom_name} (écrit={success})")
             else:
                 print(f"❌ Produit introuvable pour default_code : {default_code}")
                 not_found_codes.append(default_code)
@@ -72,7 +77,7 @@ try:
             print("\n📋 Récapitulatif des produits modifiés :")
             products = env['product.product'].browse(list(updated_products))
             for p in products:
-                print(f"\U0001f527 {p.default_code} → L={p.product_length} W={p.product_width} H={p.product_height} Ep={p.product_thickness} UoM={p.dimensional_uom_id.name}")
+                print(f"\U0001f527 {p.default_code} → {p.name} | L={p.product_length} W={p.product_width} H={p.product_height} Ep={p.product_thickness} UoM={p.dimensional_uom_id.name}")
         else:
             print("📭 Aucun produit n'a été modifié.")
 
