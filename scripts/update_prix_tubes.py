@@ -48,7 +48,7 @@ def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_k
         base_unit_price = prix_metre / (width * thickness)
 
         w = variant.product_width
-        t = variant.product_height
+        t = variant.product_height  # hauteur = épaisseur dans ce cas
 
         if not all([w, t]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
@@ -61,6 +61,30 @@ def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_k
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
         return None, None
 
+def calculate_price_corniere(width, thickness, poids_total_kg, nb_barres, prix_kg, variant):
+    try:
+        longueur_barre = 6.2  # mètres
+        poids_par_barre = poids_total_kg / nb_barres
+        poids_par_m = poids_par_barre / longueur_barre
+        prix_metre = poids_par_m * prix_kg
+
+        base_unit_price = prix_metre / (width * thickness * 2)
+
+        w = variant.product_width
+        t = variant.product_height  # hauteur = épaisseur dans ce cas
+
+        if not all([w, t]):
+            print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
+            return None, None
+
+        surface = (w * 1000) * (t * 1000) * 2  # deux ailes
+        cost_price = base_unit_price * surface
+        sale_price = cost_price * 2.5
+        return round(cost_price, 4), round(sale_price, 4)
+    except Exception as e:
+        print(f"❌ Erreur de calcul cornière pour {variant.display_name} : {e}")
+        return None, None
+
 def calculate_and_update_prices():
     print("\n📦 Sélection du modèle de produit (template)")
     tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
@@ -69,6 +93,7 @@ def calculate_and_update_prices():
     profiles = {
         "1": ("Tube carré / rectangulaire", calculate_price_tube_section),
         "2": ("Fer plat", calculate_price_fer_plat),
+        "3": ("Cornière égale", calculate_price_corniere),
     }
     for key, (name, _) in profiles.items():
         print(f" {key}. {name}")
@@ -86,9 +111,9 @@ def calculate_and_update_prices():
         width = float(input("Largeur de référence (mm) : "))
         thickness = float(input("Épaisseur de référence (mm) : "))
         reference_price = float(input("Prix d'achat du mètre linéaire (€) : "))
-    elif profile_choice == "2":
-        width = float(input("Largeur du fer plat (mm) : "))
-        thickness = float(input("Épaisseur du fer plat (mm) : "))
+    elif profile_choice in ("2", "3"):
+        width = float(input("Largeur (mm) : "))
+        thickness = float(input("Épaisseur (mm) : "))
         poids_total_kg = float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = float(input("Prix d'achat au kg (€) : "))
@@ -105,7 +130,7 @@ def calculate_and_update_prices():
     for variant in variants:
         if profile_choice == "1":
             cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
-        elif profile_choice == "2":
+        elif profile_choice in ("2", "3"):
             cost_price, sale_price = calc_function(width, thickness, poids_total_kg, nb_barres, prix_kg, variant)
 
         if cost_price is None:
