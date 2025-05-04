@@ -80,6 +80,7 @@ def calculate_and_update_prices():
 
         variant.write({
             'standard_price': cost_price,
+            'lst_price': sale_price,
         })
 
         pricelist_item = env['product.pricelist.item'].search([
