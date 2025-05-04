@@ -44,7 +44,7 @@ try:
 
             product = env['product.product'].search([('default_code', '=', default_code)], limit=1)
             if product:
-                tmpl = product.product_tmpl_id
+#              tmpl = product.product_tmpl_id
                 tmpl.product_length = length
                 tmpl.product_width = width
                 tmpl.product_height = height
