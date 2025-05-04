@@ -61,13 +61,8 @@ try:
                 }
 
                 tmpl.write(vals)
-
-                # Nettoyage du nom avant ajout
-                base_name = tmpl.name.split('[')[0].strip()
-                product.write({'name': f"{base_name} [{csv_filename}]"})
-
                 updated_templates.add(tmpl.id)
-                print(f"✅ {default_code} mis à jour : name={product.name} L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
+                print(f"✅ {default_code} mis à jour : L={length} W={width} H={height} Ep={thickness} UoM={uom_name}")
             else:
                 print(f"❌ Produit introuvable pour default_code : {default_code}")
                 not_found_codes.append(default_code)
