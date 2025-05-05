@@ -132,7 +132,7 @@ def calculate_and_update_prices():
         reference_price = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
     elif profile_choice == "2":
         width = safe_float(input("Largeur (mm) : "))
-        thickness = safe_float(input("Épaisseur (mm) : "))
+        height = safe_float(input("Hauteur de référence (mm) : "))
         poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
@@ -157,7 +157,7 @@ def calculate_and_update_prices():
         if profile_choice == "1":
             cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
         elif profile_choice == "2":
-            cost_price, sale_price = calc_function(width, thickness, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price = calc_function(width, width, poids_total_kg, nb_barres, prix_kg, variant)
         elif profile_choice == "3":
             cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
 
