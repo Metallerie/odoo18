@@ -76,12 +76,12 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     sale_price = cost_price * 2.5
     return round(cost_price, 4), round(sale_price, 4)
 
-def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_kg, variant):
+def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, variant):
     try:
         w = safe_float(variant.product_width)
-        t = safe_float(variant.product_thickness)
+        h = safe_float(variant.product_height)
 
-        if not all([w, t]):
+        if not all([w, h]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
@@ -94,7 +94,7 @@ def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_k
         prix_par_mm3 = prix_par_m / volume_ref_mm3
 
         surface_var_mm2 = w * 1000
-        volume_var_mm3 = surface_var_mm2 * t
+        volume_var_mm3 = surface_var_mm2 * h
 
         cost_price = volume_var_mm3 * prix_par_mm3
         sale_price = cost_price * 2.5
@@ -157,7 +157,7 @@ def calculate_and_update_prices():
         if profile_choice == "1":
             cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
         elif profile_choice == "2":
-            cost_price, sale_price = calc_function(width, width, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price = calc_function(width, height, poids_total_kg, nb_barres, prix_kg, variant)
         elif profile_choice == "3":
             cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
 
