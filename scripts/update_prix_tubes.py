@@ -28,7 +28,7 @@ def safe_float(val):
     except Exception:
         return 0.0
 
-def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant):
+def calculate_price_corniere(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant):
     try:
         h = safe_float(variant.product_height)
         w = safe_float(variant.product_width)
@@ -41,16 +41,22 @@ def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres
         poids_par_m = poids_total_kg / (nb_barres * 6.2)
         prix_par_m = poids_par_m * prix_kg
 
-        surface_ref_mm2 = (width + height) * 1000
-        volume_ref_mm3 = surface_ref_mm2 * thickness
+        width_ref_m = width_ref / 1000
+        height_ref_m = height_ref / 1000
+        thickness_ref_m = thickness_ref / 1000
 
-        prix_par_mm3 = prix_par_m / volume_ref_mm3
+        surface_ref_m2 = (width_ref_m + height_ref_m) * thickness_ref_m
+        surface_var_m2 = (w + h) * t
 
-        surface_var_mm2 = (w + h) * 1000
-        volume_var_mm3 = surface_var_mm2 * t
+        if surface_ref_m2 == 0:
+            print(f"🚨 Surface de référence nulle pour cornière, vérifie tes valeurs.")
+            return None, None
 
-        cost_price = volume_var_mm3 * prix_par_mm3
+        ratio_surface = surface_var_m2 / surface_ref_m2
+        cost_price = prix_par_m * ratio_surface
         sale_price = cost_price * 2.5
+
+        print(f"🧲 {variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
 
         return round(cost_price, 2), round(sale_price, 2)
 
@@ -144,9 +150,9 @@ def calculate_and_update_prices():
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
         poids_par_barre = poids_total_kg / nb_barres
     elif profile_choice == "3":
-        height = safe_float(input("Hauteur (mm) : "))
-        width = safe_float(input("Largeur (mm) : "))
-        thickness = safe_float(input("Épaisseur (mm) : "))
+        width_ref = safe_float(input("Largeur de référence (mm) : "))
+        height_ref = safe_float(input("Hauteur de référence (mm) : "))
+        thickness_ref = safe_float(input("Épaisseur de référence (mm) : "))
         poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
@@ -166,7 +172,7 @@ def calculate_and_update_prices():
         elif profile_choice == "2":
             cost_price, sale_price = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
         elif profile_choice == "3":
-            cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
 
         if cost_price is None:
             continue
