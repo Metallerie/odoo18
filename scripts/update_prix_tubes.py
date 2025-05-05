@@ -103,6 +103,8 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
         cost_price = volume_var_mm3 * prix_par_mm3
         sale_price = cost_price * 2.5
 
+        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_mm3={volume_var_mm3:.2f} | prix_par_mm3={prix_par_mm3:.6f} | cost={cost_price:.4f} | vente={sale_price:.4f}")
+
         return round(cost_price, 4), round(sale_price, 4)
     except Exception as e:
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
