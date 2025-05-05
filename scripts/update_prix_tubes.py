@@ -98,7 +98,7 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
 
         prix_par_cm3 = prix_par_m / volume_ref_cm3
 
-        surface_var_cm2 = w * h
+        surface_var_cm2 = (w / 10) * (h / 10)  # corrigé ici !
         volume_var_cm3 = surface_var_cm2 * 100
 
         cost_price = volume_var_cm3 * prix_par_cm3
