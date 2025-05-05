@@ -53,7 +53,7 @@ def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres
         cost_price = volume_var_mm3 * prix_par_mm3
         sale_price = cost_price * 2.5
 
-        return round(cost_price, 4), round(sale_price, 4)
+        return round(cost_price, 2), round(sale_price, 2)
 
     except Exception as e:
         print(f"❌ Erreur de calcul cornière pour {variant.display_name} : {e}")
@@ -74,7 +74,7 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     surface_var = (h * 1000 + w * 1000) * 2
     cost_price = base_unit_price * surface_var * (t * 1000)
     sale_price = cost_price * 2.5
-    return round(cost_price, 4), round(sale_price, 4)
+    return round(cost_price, 2), round(sale_price, 2)
 
 def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, variant):
     try:
@@ -105,9 +105,9 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
         cost_price = volume_var_cm3 * prix_par_cm3
         sale_price = cost_price * 2.5
 
-        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_cm3={volume_var_cm3:.2f} | prix_par_cm3={prix_par_cm3:.6f} | cost={cost_price:.4f} | vente={sale_price:.4f}")
+        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_cm3={volume_var_cm3:.2f} | prix_par_cm3={prix_par_cm3:.6f} | cost={cost_price:.2f} | vente={sale_price:.2f}")
 
-        return round(cost_price, 4), round(sale_price, 4)
+        return round(cost_price, 2), round(sale_price, 2)
     except Exception as e:
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
         return None, None
@@ -197,7 +197,7 @@ def calculate_and_update_prices():
             print(f"{variant.display_name}: désactivé (épaisseur spéciale)")
         else:
             variant.write({'active': True})
-            print(f"{variant.display_name}: standard={cost_price:.4f} €, vente={sale_price:.4f} €")
+            print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
 
     env.cr.commit()
 
