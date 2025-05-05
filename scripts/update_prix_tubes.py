@@ -84,21 +84,25 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
-        surface_ref_mm2 = width_ref * height_ref
-        surface_var_mm2 = w * h
+        # Convertir la référence en mètres
+        width_ref_m = width_ref / 1000
+        height_ref_m = height_ref / 1000
 
-        if surface_ref_mm2 == 0:
+        surface_ref_m2 = width_ref_m * height_ref_m
+        surface_var_m2 = w * h
+
+        if surface_ref_m2 == 0:
             print(f"🚨 Surface de référence nulle, vérifie tes valeurs.")
             return None, None
 
         poids_par_m_ref = poids_kg_par_barre / 6.2
         prix_par_m_ref = poids_par_m_ref * prix_kg
 
-        ratio_surface = surface_var_mm2 / surface_ref_mm2
+        ratio_surface = surface_var_m2 / surface_ref_m2
         cost_price = prix_par_m_ref * ratio_surface
         sale_price = cost_price * 2.5
 
-        print(f"🧲 {variant.default_code} | surface={int(surface_var_mm2)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
+        print(f"🧲 {variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
 
         return round(cost_price, 2), round(sale_price, 2)
 
