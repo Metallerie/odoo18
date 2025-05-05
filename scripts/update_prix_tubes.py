@@ -75,7 +75,7 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     sale_price = cost_price * 2.5
     return round(cost_price, 2), round(sale_price, 2)
 
-def calculate_price_fer_plat(width_ref, height_ref, poids_total_kg_ref, prix_kg, variant):
+def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg, variant):
     try:
         w = safe_float(variant.product_width)
         h = safe_float(variant.product_height)
@@ -91,7 +91,7 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_total_kg_ref, prix_kg,
             print(f"🚨 Surface de référence nulle, vérifie tes valeurs.")
             return None, None
 
-        poids_par_m_ref = poids_total_kg_ref / 6.2
+        poids_par_m_ref = poids_kg_par_barre / 6.2
         prix_par_m_ref = poids_par_m_ref * prix_kg
 
         ratio_surface = surface_var_mm2 / surface_ref_mm2
@@ -135,8 +135,10 @@ def calculate_and_update_prices():
     elif profile_choice == "2":
         width_ref = safe_float(input("Largeur de référence (mm) : "))
         height_ref = safe_float(input("Épaisseur de référence (mm) : "))
-        poids_total_kg = safe_float(input("Poids total d'une barre de référence (kg) : "))
+        poids_total_kg = safe_float(input("Poids total de la commande (kg) : "))
+        nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
+        poids_par_barre = poids_total_kg / nb_barres
     elif profile_choice == "3":
         height = safe_float(input("Hauteur (mm) : "))
         width = safe_float(input("Largeur (mm) : "))
@@ -158,7 +160,7 @@ def calculate_and_update_prices():
         if profile_choice == "1":
             cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
         elif profile_choice == "2":
-            cost_price, sale_price = calc_function(width_ref, height_ref, poids_total_kg, prix_kg, variant)
+            cost_price, sale_price = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
         elif profile_choice == "3":
             cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
 
