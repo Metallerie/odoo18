@@ -88,23 +88,24 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
         poids_par_m = poids_total_kg / (nb_barres * 6.2)
         prix_par_m = poids_par_m * prix_kg
 
-        surface_ref_mm2 = width * 1000
-        volume_ref_mm3 = (width * 1000) * (height * 1000)
-      
-        if height == 0 or volume_ref_mm3 == 0:
+        # Conversion en cm
+        surface_ref_cm2 = (width / 10) * 100  # largeur en cm * 1m
+        volume_ref_cm3 = surface_ref_cm2 * (height / 10)
+
+        if height == 0 or volume_ref_cm3 == 0:
             print(f"⚠️ Volume de référence nul pour la saisie {width}x{height}, impossible de calculer.")
             return None, None
 
-        prix_par_mm3 = prix_par_m / volume_ref_mm3
+        prix_par_cm3 = prix_par_m / volume_ref_cm3
 
-        surface_var_mm2 = w * 1000  # w en mètres → mm
-        h_mm = h * 1000  # h en mètres → mm
-        volume_var_mm3 = surface_var_mm2 * h_mm
+        surface_var_cm2 = w * 100
+        h_cm = h * 100
+        volume_var_cm3 = surface_var_cm2 * h_cm
 
-        cost_price = volume_var_mm3 * prix_par_mm3
+        cost_price = volume_var_cm3 * prix_par_cm3
         sale_price = cost_price * 2.5
 
-        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_mm3={volume_var_mm3:.2f} | prix_par_mm3={prix_par_mm3:.6f} | cost={cost_price:.4f} | vente={sale_price:.4f}")
+        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_cm3={volume_var_cm3:.2f} | prix_par_cm3={prix_par_cm3:.6f} | cost={cost_price:.4f} | vente={sale_price:.4f}")
 
         return round(cost_price, 4), round(sale_price, 4)
     except Exception as e:
