@@ -75,7 +75,7 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     sale_price = cost_price * 2.5
     return round(cost_price, 2), round(sale_price, 2)
 
-def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, variant):
+def calculate_price_fer_plat(width_ref, height_ref, poids_total_kg_ref, prix_kg, variant):
     try:
         w = safe_float(variant.product_width)
         h = safe_float(variant.product_height)
@@ -84,24 +84,23 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
-        longueur_m = nb_barres * 6.2
-        poids_total_mg = poids_total_kg * 1_000_000
-        poids_par_m_mg = poids_total_mg / longueur_m
-        prix_par_m = poids_par_m_mg * (prix_kg / 1_000_000)
+        surface_ref_mm2 = width_ref * height_ref
+        surface_var_mm2 = w * h
 
-        volume_var_mm3 = w * h * 1000  # longueur = 1 mètre = 1000 mm
-        masse_var_mg = volume_var_mm3 * 7.85  # densité acier = 7.85 mg/mm3
-
-        if poids_par_m_mg == 0:
-            print(f"🚨 poids_par_m_mg est nul pour {variant.display_name}")
+        if surface_ref_mm2 == 0:
+            print(f"🚨 Surface de référence nulle, vérifie tes valeurs.")
             return None, None
 
-        cost_price = (masse_var_mg / poids_par_m_mg) * prix_par_m
+        poids_par_m_ref = poids_total_kg_ref / 6.2
+        prix_par_m_ref = poids_par_m_ref * prix_kg
+
+        ratio_surface = surface_var_mm2 / surface_ref_mm2
+        cost_price = prix_par_m_ref * ratio_surface
         sale_price = cost_price * 2.5
 
-        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_mm3={volume_var_mm3:.0f} | masse_mg={masse_var_mg:.0f} | poids_par_m_mg={poids_par_m_mg:.0f} | prix_par_m={prix_par_m:.4f} | cost={cost_price:.4f} | vente={sale_price:.4f}")
+        print(f"🧲 {variant.default_code} | surface={surface_var_mm2} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
 
-        return round(cost_price, 4), round(sale_price, 4)
+        return round(cost_price, 2), round(sale_price, 2)
 
     except Exception as e:
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
@@ -126,7 +125,7 @@ def calculate_and_update_prices():
         return
 
     profile_name, calc_function = profiles[profile_choice]
-    print(f"\n🧲 Calcul basé sur le profil : {profile_name}")
+    print(f"\n🪢 Calcul basé sur le profil : {profile_name}")
 
     if profile_choice == "1":
         height = safe_float(input("Hauteur de référence (mm) : "))
@@ -134,10 +133,9 @@ def calculate_and_update_prices():
         thickness = safe_float(input("Épaisseur de référence (mm) : "))
         reference_price = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
     elif profile_choice == "2":
-        width = safe_float(input("Largeur (mm) : "))
-        height = safe_float(input("Hauteur (mm) : "))
-        poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
-        nb_barres = int(input("Nombre de barres achetées : "))
+        width_ref = safe_float(input("Largeur de référence (mm) : "))
+        height_ref = safe_float(input("Épaisseur de référence (mm) : "))
+        poids_total_kg = safe_float(input("Poids total d'une barre de référence (kg) : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
     elif profile_choice == "3":
         height = safe_float(input("Hauteur (mm) : "))
@@ -160,7 +158,7 @@ def calculate_and_update_prices():
         if profile_choice == "1":
             cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
         elif profile_choice == "2":
-            cost_price, sale_price = calc_function(width, height, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price = calc_function(width_ref, height_ref, poids_total_kg, prix_kg, variant)
         elif profile_choice == "3":
             cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
 
