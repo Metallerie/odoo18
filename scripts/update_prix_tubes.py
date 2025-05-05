@@ -197,12 +197,7 @@ def calculate_and_update_prices():
                 'fixed_price': sale_price,
             })
 
-        if variant.product_thickness in (0.004, 0.005):
-            variant.write({'active': False})
-            print(f"{variant.display_name}: désactivé (épaisseur spéciale)")
-        else:
-            variant.write({'active': True})
-            print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
+        print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
 
     env.cr.commit()
 
