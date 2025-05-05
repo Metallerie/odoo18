@@ -89,16 +89,17 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
         prix_par_m = poids_par_m * prix_kg
 
         surface_ref_mm2 = width * 1000
-        volume_ref_mm3 = surface_ref_mm2 * height
-
+        volume_ref_mm3 = (width * 1000) * (height * 1000)
+      
         if height == 0 or volume_ref_mm3 == 0:
             print(f"⚠️ Volume de référence nul pour la saisie {width}x{height}, impossible de calculer.")
             return None, None
 
         prix_par_mm3 = prix_par_m / volume_ref_mm3
 
-        surface_var_mm2 = w * 1000
-        volume_var_mm3 = surface_var_mm2 * h
+        surface_var_mm2 = w * 1000  # w en mètres → mm
+        h_mm = h * 1000  # h en mètres → mm
+        volume_var_mm3 = surface_var_mm2 * h_mm
 
         cost_price = volume_var_mm3 * prix_par_mm3
         sale_price = cost_price * 2.5
