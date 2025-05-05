@@ -91,6 +91,10 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
         surface_ref_mm2 = width * 1000
         volume_ref_mm3 = surface_ref_mm2 * height
 
+        if height == 0 or volume_ref_mm3 == 0:
+            print(f"⚠️ Volume de référence nul pour la saisie {width}x{height}, impossible de calculer.")
+            return None, None
+
         prix_par_mm3 = prix_par_m / volume_ref_mm3
 
         surface_var_mm2 = w * 1000
@@ -132,7 +136,7 @@ def calculate_and_update_prices():
         reference_price = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
     elif profile_choice == "2":
         width = safe_float(input("Largeur (mm) : "))
-        height = safe_float(input("Hauteur de référence (mm) : "))
+        height = safe_float(input("Hauteur (mm) : "))
         poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
