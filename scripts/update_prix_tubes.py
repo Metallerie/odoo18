@@ -21,6 +21,36 @@ db = sql_db.db_connect(DB)
 cr = db.cursor()
 env = api.Environment(cr, 1, {})
 
+def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant):
+    try:
+        h = variant.product_height
+        w = variant.product_width
+        t = variant.product_thickness
+
+        if not all([h, w, t]):
+            print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
+            return None, None
+
+        poids_par_m = poids_total_kg / (nb_barres * 6.2)
+        prix_par_m = poids_par_m * prix_kg
+
+        surface_ref_mm2 = (width + height) * 1000
+        volume_ref_mm3 = surface_ref_mm2 * thickness
+
+        prix_par_mm3 = prix_par_m / volume_ref_mm3
+
+        surface_var_mm2 = (w + h) * 1000
+        volume_var_mm3 = surface_var_mm2 * t
+
+        cost_price = volume_var_mm3 * prix_par_mm3
+        sale_price = cost_price * 2.5
+
+        return round(cost_price, 4), round(sale_price, 4)
+
+    except Exception as e:
+        print(f"❌ Erreur de calcul cornière pour {variant.display_name} : {e}")
+        return None, None
+
 def calculate_price_tube_section(height, width, thickness, reference_price, variant):
     surface_ref = (height + width) * 2
     base_unit_price = reference_price / (surface_ref * thickness)
@@ -40,47 +70,30 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
 
 def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_kg, variant):
     try:
-        longueur_barre = 6.2  # mètres
-        poids_par_barre = poids_total_kg / nb_barres
-        poids_par_m = poids_par_barre / longueur_barre
-        prix_metre = poids_par_m * prix_kg
-
-        base_unit_price = prix_metre / (width * thickness)
-
         w = variant.product_width
-        t = variant.product_height  # hauteur = épaisseur dans ce cas
+        t = variant.product_thickness
 
         if not all([w, t]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
-        cost_price = base_unit_price * (w * 1000) * (t * 1000)
+        poids_par_m = poids_total_kg / (nb_barres * 6.2)
+        prix_par_m = poids_par_m * prix_kg
+
+        surface_ref_mm2 = width * 1000
+        volume_ref_mm3 = surface_ref_mm2 * thickness
+
+        prix_par_mm3 = prix_par_m / volume_ref_mm3
+
+        surface_var_mm2 = w * 1000
+        volume_var_mm3 = surface_var_mm2 * t
+
+        cost_price = volume_var_mm3 * prix_par_mm3
         sale_price = cost_price * 2.5
+
         return round(cost_price, 4), round(sale_price, 4)
     except Exception as e:
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
-        return None, None
-
-def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant):
-    try:
-        longueur_barre = 6.2  # mètres
-        poids_par_barre = poids_total_kg / nb_barres
-        poids_par_m = poids_par_barre / longueur_barre
-        prix_metre = poids_par_m * prix_kg
-
-        h = variant.product_height
-        w = variant.product_width
-        t = variant.product_thickness
-
-        if not all([h, w, t]):
-            print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
-            return None, None
-
-        cost_price = prix_metre
-        sale_price = cost_price * 2.5
-        return round(cost_price, 4), round(sale_price, 4)
-    except Exception as e:
-        print(f"❌ Erreur de calcul cornière pour {variant.display_name} : {e}")
         return None, None
 
 def calculate_and_update_prices():
