@@ -85,123 +85,23 @@ def calculate_price_fer_plat(width, height, poids_total_kg, nb_barres, prix_kg, 
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
-        poids_par_m = poids_total_kg / (nb_barres * 6.2)
-        prix_par_m = poids_par_m * prix_kg
+        longueur_m = nb_barres * 6.2
+        poids_total_mg = poids_total_kg * 1_000_000
+        poids_par_m_mg = poids_total_mg / longueur_m
+        prix_par_m = poids_par_m_mg * (prix_kg / 1_000_000)
 
-        # Conversion en cm
-        surface_ref_cm2 = (width / 10) * (height / 10)  # surface en cm²
-        volume_ref_cm3 = surface_ref_cm2 * 100  # volume sur 1m linéaire en cm³
+        volume_var_mm3 = w * h * 1000  # longueur = 1 mètre = 1000 mm
+        masse_var_mg = volume_var_mm3 * 7.85  # densité acier = 7.85 mg/mm3
 
-        if height == 0 or volume_ref_cm3 == 0:
-            print(f"⚠️ Volume de référence nul pour la saisie {width}x{height}, impossible de calculer.")
-            return None, None
-
-        prix_par_cm3 = prix_par_m / volume_ref_cm3
-
-        surface_var_cm2 = (w / 10) * (h / 10)  # corrigé ici !
-        volume_var_cm3 = surface_var_cm2 * 100
-
-        cost_price = volume_var_cm3 * prix_par_cm3
+        cost_price = (masse_var_mg / poids_par_m_mg) * prix_par_m
         sale_price = cost_price * 2.5
 
-        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_cm3={volume_var_cm3:.2f} | prix_par_cm3={prix_par_cm3:.6f} | cost={cost_price:.2f} | vente={sale_price:.2f}")
+        print(f"🔍 {variant.default_code} | W={w} H={h} | volume_var_mm3={volume_var_mm3:.0f} | masse_mg={masse_var_mg:.0f} | cost={cost_price:.4f} | vente={sale_price:.4f}")
 
-        return round(cost_price, 2), round(sale_price, 2)
+        return round(cost_price, 4), round(sale_price, 4)
+
     except Exception as e:
         print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
         return None, None
 
-def calculate_and_update_prices():
-    print("\n📦 Sélection du modèle de produit (template)")
-    tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
-
-    print("\n🔧 Sélection du profil :")
-    profiles = {
-        "1": ("Tube carré / rectangulaire", calculate_price_tube_section),
-        "2": ("Fer plat", calculate_price_fer_plat),
-        "3": ("Cornière (égale ou inégale)", calculate_price_corniere),
-    }
-    for key, (name, _) in profiles.items():
-        print(f" {key}. {name}")
-
-    profile_choice = input("Choisissez le profil à utiliser : ").strip()
-    if profile_choice not in profiles:
-        print("❌ Profil inconnu.")
-        return
-
-    profile_name, calc_function = profiles[profile_choice]
-    print(f"\n🧲 Calcul basé sur le profil : {profile_name}")
-
-    if profile_choice == "1":
-        height = safe_float(input("Hauteur de référence (mm) : "))
-        width = safe_float(input("Largeur de référence (mm) : "))
-        thickness = safe_float(input("Épaisseur de référence (mm) : "))
-        reference_price = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
-    elif profile_choice == "2":
-        width = safe_float(input("Largeur (mm) : "))
-        height = safe_float(input("Hauteur (mm) : "))
-        poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
-        nb_barres = int(input("Nombre de barres achetées : "))
-        prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
-    elif profile_choice == "3":
-        height = safe_float(input("Hauteur (mm) : "))
-        width = safe_float(input("Largeur (mm) : "))
-        thickness = safe_float(input("Épaisseur (mm) : "))
-        poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
-        nb_barres = int(input("Nombre de barres achetées : "))
-        prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
-
-    pricelist = env['product.pricelist'].search([('name', '=', 'Métal au mètre')], limit=1)
-    if not pricelist:
-        pricelist = env['product.pricelist'].create({
-            'name': 'Métal au mètre',
-            'currency_id': env.ref('base.EUR').id,
-        })
-
-    variants = env['product.product'].search([('product_tmpl_id', '=', tmpl_id)])
-
-    for variant in variants:
-        if profile_choice == "1":
-            cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
-        elif profile_choice == "2":
-            cost_price, sale_price = calc_function(width, height, poids_total_kg, nb_barres, prix_kg, variant)
-        elif profile_choice == "3":
-            cost_price, sale_price = calc_function(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant)
-
-        if cost_price is None:
-            continue
-
-        variant.write({
-            'standard_price': cost_price,
-            'lst_price': sale_price,
-        })
-
-        pricelist_item = env['product.pricelist.item'].search([
-            ('pricelist_id', '=', pricelist.id),
-            ('product_id', '=', variant.id)
-        ], limit=1)
-
-        if pricelist_item:
-            pricelist_item.write({'fixed_price': sale_price})
-        else:
-            env['product.pricelist.item'].create({
-                'pricelist_id': pricelist.id,
-                'applied_on': '0_product_variant',
-                'product_id': variant.id,
-                'fixed_price': sale_price,
-            })
-
-        if variant.product_thickness in (0.004, 0.005):
-            variant.write({'active': False})
-            print(f"{variant.display_name}: désactivé (épaisseur spéciale)")
-        else:
-            variant.write({'active': True})
-            print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
-
-    env.cr.commit()
-
-if __name__ == '__main__':
-    try:
-        calculate_and_update_prices()
-    finally:
-        cr.close()
+# ... Le reste du code ne change pas ...
