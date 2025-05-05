@@ -98,7 +98,8 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
         cost_price = prix_par_m_ref * ratio_surface
         sale_price = cost_price * 2.5
 
-print(f"🧲 {variant.default_code} | surface={int(surface_var_mm2)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
+            print(f"🧲 {variant.default_code} | surface={int(surface_var_mm2)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
+
         return round(cost_price, 2), round(sale_price, 2)
 
     except Exception as e:
