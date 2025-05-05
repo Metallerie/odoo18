@@ -21,11 +21,19 @@ db = sql_db.db_connect(DB)
 cr = db.cursor()
 env = api.Environment(cr, 1, {})
 
+# Fonction utilitaire pour accepter les valeurs nulles ou vides
+
+def safe_float(val):
+    try:
+        return float(str(val).strip()) if str(val).strip() else 0.0
+    except Exception:
+        return 0.0
+
 def calculate_price_corniere(width, height, thickness, poids_total_kg, nb_barres, prix_kg, variant):
     try:
-        h = variant.product_height
-        w = variant.product_width
-        t = variant.product_thickness
+        h = safe_float(variant.product_height)
+        w = safe_float(variant.product_width)
+        t = safe_float(variant.product_thickness)
 
         if not all([h, w, t]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
@@ -55,9 +63,9 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     surface_ref = (height + width) * 2
     base_unit_price = reference_price / (surface_ref * thickness)
 
-    h = variant.product_height
-    w = variant.product_width
-    t = variant.product_thickness
+    h = safe_float(variant.product_height)
+    w = safe_float(variant.product_width)
+    t = safe_float(variant.product_thickness)
 
     if not all([h, w, t]):
         print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
@@ -70,8 +78,8 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
 
 def calculate_price_fer_plat(width, thickness, poids_total_kg, nb_barres, prix_kg, variant):
     try:
-        w = variant.product_width
-        t = variant.product_thickness
+        w = safe_float(variant.product_width)
+        t = safe_float(variant.product_thickness)
 
         if not all([w, t]):
             print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
@@ -115,26 +123,26 @@ def calculate_and_update_prices():
         return
 
     profile_name, calc_function = profiles[profile_choice]
-    print(f"\n🧮 Calcul basé sur le profil : {profile_name}")
+    print(f"\n🧲 Calcul basé sur le profil : {profile_name}")
 
     if profile_choice == "1":
-        height = float(input("Hauteur de référence (mm) : "))
-        width = float(input("Largeur de référence (mm) : "))
-        thickness = float(input("Épaisseur de référence (mm) : "))
-        reference_price = float(input("Prix d'achat du mètre linéaire (€) : "))
+        height = safe_float(input("Hauteur de référence (mm) : "))
+        width = safe_float(input("Largeur de référence (mm) : "))
+        thickness = safe_float(input("Épaisseur de référence (mm) : "))
+        reference_price = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
     elif profile_choice == "2":
-        width = float(input("Largeur (mm) : "))
-        thickness = float(input("Épaisseur (mm) : "))
-        poids_total_kg = float(input("Poids total acheté (kg) : "))
+        width = safe_float(input("Largeur (mm) : "))
+        thickness = safe_float(input("Épaisseur (mm) : "))
+        poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
-        prix_kg = float(input("Prix d'achat au kg (€) : "))
+        prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
     elif profile_choice == "3":
-        height = float(input("Hauteur (mm) : "))
-        width = float(input("Largeur (mm) : "))
-        thickness = float(input("Épaisseur (mm) : "))
-        poids_total_kg = float(input("Poids total acheté (kg) : "))
+        height = safe_float(input("Hauteur (mm) : "))
+        width = safe_float(input("Largeur (mm) : "))
+        thickness = safe_float(input("Épaisseur (mm) : "))
+        poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
-        prix_kg = float(input("Prix d'achat au kg (€) : "))
+        prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
 
     pricelist = env['product.pricelist'].search([('name', '=', 'Métal au mètre')], limit=1)
     if not pricelist:
