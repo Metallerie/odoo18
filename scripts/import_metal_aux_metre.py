@@ -35,24 +35,24 @@ try:
             'create_variant': 'always'
         })
 
-    # 📐 Unité ML
+    # 📀 Unité ML
     ml_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
     if not ml_uom:
         raise Exception("❌ Unité 'ML' introuvable.")
 
-    # 📥 Lecture CSV
+    # 📅 Lecture CSV
     df = pd.read_csv(CSV_PATH)
     value_ids = []
 
     for index, row in df.iterrows():
         code = str(row['default_code'])
         name = row['name']
-        width = float(row['width'])
-        height = float(row['height'])
-        thickness = float(row['thickness'])
-        length = float(row['length'])
+        width = float(row['width']) if not pd.isna(row['width']) else 0.0
+        height = float(row['height']) if not pd.isna(row['height']) else 0.0
+        thickness = float(row['thickness']) if 'thickness' in row and not pd.isna(row['thickness']) else 0.0
+        length = float(row['length']) if not pd.isna(row['length']) else 0.0
 
-        # 🔁 Produit existant ?
+        # 🔀 Produit existant ?
         existing = env['product.product'].search([('default_code', '=', code)], limit=1)
         if existing:
             print(f"✏️ Produit existant : {code} → mise à jour")
@@ -77,7 +77,7 @@ try:
                     'sequence': index
                 })
 
-            value_ids.append(value.id)
+            value_ids.append((code, value.id))
 
     # 🔗 Lien attributs au template
     if value_ids:
@@ -85,9 +85,20 @@ try:
         template.write({
             'attribute_line_ids': [(0, 0, {
                 'attribute_id': attribute.id,
-                'value_ids': [(6, 0, value_ids)],
+                'value_ids': [(6, 0, [v[1] for v in value_ids])],
             })]
         })
+
+    # 💡 Forcer la création des variantes
+    template._create_variant_ids()
+
+    # 🔀 Mise à jour des default_code sur les nouvelles variantes
+    for variant in template.product_variant_ids:
+        attrs = variant.product_template_attribute_value_ids.mapped('name')
+        matched_code = next((code for code, val_id in value_ids if val_id in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id').ids), None)
+        if matched_code:
+            variant.default_code = matched_code
+            print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
 
     cr.commit()
     print("\n✅ Import terminé avec succès !")
