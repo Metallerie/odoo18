@@ -163,25 +163,24 @@ def calculate_and_update_prices():
         })
 
     variants = env['product.product'].search([('product_tmpl_id', '=', tmpl_id)])
+    template = env['product.template'].browse(tmpl_id)
+    min_sale_price = None
     total_updated = 0
 
     for variant in variants:
         if profile_choice == "1":
-            cost_price, _ = calc_function(height, width, thickness, reference_price, variant)
+            cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
         elif profile_choice == "2":
-            cost_price, _ = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
+            cost_price, sale_price = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
         elif profile_choice == "3":
-            cost_price, _ = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
 
         if cost_price is None:
             print(f"[!] Pas de mise à jour pour {variant.display_name}")
             continue
 
-        sale_price = round(cost_price * 2.5, 2)
-
         variant.write({
-            'standard_price': cost_price,
-            'lst_price': sale_price,
+            'standard_price': cost_price
         })
 
         pricelist_item = env['product.pricelist.item'].search([
@@ -199,8 +198,14 @@ def calculate_and_update_prices():
                 'fixed_price': sale_price,
             })
 
+        if min_sale_price is None or sale_price < min_sale_price:
+            min_sale_price = sale_price
+
         print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
         total_updated += 1
+
+    if min_sale_price is not None:
+        template.write({'lst_price': min_sale_price})
 
     print(f"\n--- Total variantes mises à jour : {total_updated} ---")
     env.cr.commit()
