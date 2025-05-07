@@ -34,7 +34,7 @@ def calculate_price_corniere(width_ref, height_ref, thickness_ref, poids_total_k
         w = safe_float(variant.product_width)
 
         if not all([h, w]):
-            print(f"\u26a0\ufe0f Dimensions manquantes pour {variant.display_name}, ignoré.")
+            print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
         poids_par_m = poids_total_kg / (nb_barres * 6.2)
@@ -48,19 +48,19 @@ def calculate_price_corniere(width_ref, height_ref, thickness_ref, poids_total_k
         surface_var_m2 = (w + h) * thickness_ref_m
 
         if surface_ref_m2 == 0:
-            print(f"🚨 Surface de référence nulle pour cornière, vérifie tes valeurs.")
+            print("[!] Surface de référence nulle pour cornière, vérifie tes valeurs.")
             return None, None
 
         ratio_surface = surface_var_m2 / surface_ref_m2
         cost_price = prix_par_m * ratio_surface
         sale_price = cost_price * 2.5
 
-        print(f"🧲 {variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
+        print(f"{variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
 
         return round(cost_price, 2), round(sale_price, 2)
 
     except Exception as e:
-        print(f"❌ Erreur de calcul cornière pour {variant.display_name} : {e}")
+        print(f"[X] Erreur de calcul cornière pour {variant.display_name} : {e}")
         return None, None
 
 def calculate_price_tube_section(height, width, thickness, reference_price, variant):
@@ -72,7 +72,7 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     t = safe_float(variant.product_thickness)
 
     if not all([h, w, t]):
-        print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
+        print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
         return None, None
 
     surface_var = (h * 1000 + w * 1000) * 2
@@ -86,7 +86,7 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
         h = safe_float(variant.product_height)
 
         if not all([w, h]):
-            print(f"⚠️ Dimensions manquantes pour {variant.display_name}, ignoré.")
+            print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
 
         width_ref_m = width_ref / 1000
@@ -96,7 +96,7 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
         surface_var_m2 = w * h
 
         if surface_ref_m2 == 0:
-            print(f"🚨 Surface de référence nulle, vérifie tes valeurs.")
+            print("[!] Surface de référence nulle, vérifie tes valeurs.")
             return None, None
 
         poids_par_m_ref = poids_kg_par_barre / 6.2
@@ -106,19 +106,19 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
         cost_price = prix_par_m_ref * ratio_surface
         sale_price = cost_price * 2.5
 
-        print(f"🧲 {variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
+        print(f"{variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
 
         return round(cost_price, 2), round(sale_price, 2)
 
     except Exception as e:
-        print(f"❌ Erreur de calcul fer plat pour {variant.display_name} : {e}")
+        print(f"[X] Erreur de calcul fer plat pour {variant.display_name} : {e}")
         return None, None
 
 def calculate_and_update_prices():
-    print("\n\ud83d\udce6 Sélection du modèle de produit (template)")
+    print("\n--- Sélection du modèle de produit (template) ---")
     tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
 
-    print("\n\ud83d\udd27 Sélection du profil :")
+    print("\n--- Sélection du profil : ---")
     profiles = {
         "1": ("Tube carré / rectangulaire", calculate_price_tube_section),
         "2": ("Fer plat", calculate_price_fer_plat),
@@ -129,11 +129,11 @@ def calculate_and_update_prices():
 
     profile_choice = input("Choisissez le profil à utiliser : ").strip()
     if profile_choice not in profiles:
-        print("❌ Profil inconnu.")
+        print("[X] Profil inconnu.")
         return
 
     profile_name, calc_function = profiles[profile_choice]
-    print(f"\n🫢 Calcul basé sur le profil : {profile_name}")
+    print(f"\n--- Calcul basé sur le profil : {profile_name} ---")
 
     if profile_choice == "1":
         height = safe_float(input("Hauteur de référence (mm) : "))
@@ -174,7 +174,7 @@ def calculate_and_update_prices():
             cost_price, sale_price = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
 
         if cost_price is None:
-            print(f"⛔ Pas de mise à jour pour {variant.display_name}")
+            print(f"[!] Pas de mise à jour pour {variant.display_name}")
             continue
 
         variant.write({
@@ -200,7 +200,7 @@ def calculate_and_update_prices():
         print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
         total_updated += 1
 
-    print(f"\n✅ Total variantes mises à jour : {total_updated}")
+    print(f"\n--- Total variantes mises à jour : {total_updated} ---")
     env.cr.commit()
 
 if __name__ == '__main__':
