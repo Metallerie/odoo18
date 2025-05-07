@@ -136,3 +136,10 @@ def calculate_price_tube_rond(d_ref_mm, t_ref_mm, prix_ref_m, variant):
     except Exception as e:
         print(f"[X] Erreur de calcul tube rond pour {variant.display_name} : {e}")
         return None, None
+
+# Fonction pour lister les templates de la catégorie Métal au mètre (ID 6)
+def lister_templates_metal():
+    print("\n--- Produits dans la catégorie 'Métal au mètre' (ID 6) ---")
+    templates = env['product.template'].search([('categ_id', '=', 6)])
+    for tmpl in templates:
+        print(f"ID: {tmpl.id} | Nom: {tmpl.name}")
