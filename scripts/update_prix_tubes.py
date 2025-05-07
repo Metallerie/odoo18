@@ -167,15 +167,17 @@ def calculate_and_update_prices():
 
     for variant in variants:
         if profile_choice == "1":
-            cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
+            cost_price, _ = calc_function(height, width, thickness, reference_price, variant)
         elif profile_choice == "2":
-            cost_price, sale_price = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
+            cost_price, _ = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
         elif profile_choice == "3":
-            cost_price, sale_price = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, _ = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
 
         if cost_price is None:
             print(f"[!] Pas de mise à jour pour {variant.display_name}")
             continue
+
+        sale_price = round(cost_price * 2.5, 2)
 
         variant.write({
             'standard_price': cost_price,
