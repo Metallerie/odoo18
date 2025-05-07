@@ -1,6 +1,7 @@
 import sys
 import os
 import builtins
+import math
 
 # --- Configuration de l'environnement Odoo ---
 sys.path.append('/data/odoo/metal-odoo18-p8179')
@@ -28,93 +29,17 @@ def safe_float(val):
     except Exception:
         return 0.0
 
-def calculate_price_corniere(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant):
-    try:
-        h = safe_float(variant.product_height)
-        w = safe_float(variant.product_width)
+# Fonction pour lister les templates dans la catégorie Métal au mètre (ID 6)
+def lister_templates_metal():
+    print("\n--- Produits dans la catégorie 'Métal au mètre' (ID 6) ---")
+    templates = env['product.template'].search([('categ_id', '=', 6)])
+    for tmpl in templates:
+        print(f"ID: {tmpl.id} | Nom: {tmpl.name}")
 
-        if not all([h, w]):
-            print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
-            return None, None
-
-        poids_par_m = poids_total_kg / (nb_barres * 6.2)
-        prix_par_m = poids_par_m * prix_kg
-
-        width_ref_m = width_ref / 1000
-        height_ref_m = height_ref / 1000
-        thickness_ref_m = thickness_ref / 1000
-
-        surface_ref_m2 = (width_ref_m + height_ref_m) * thickness_ref_m
-        surface_var_m2 = (w + h) * thickness_ref_m
-
-        if surface_ref_m2 == 0:
-            print("[!] Surface de référence nulle pour cornière, vérifie tes valeurs.")
-            return None, None
-
-        ratio_surface = surface_var_m2 / surface_ref_m2
-        cost_price = prix_par_m * ratio_surface
-        sale_price = cost_price * 2.5
-
-        print(f"{variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
-
-        return round(cost_price, 2), round(sale_price, 2)
-
-    except Exception as e:
-        print(f"[X] Erreur de calcul cornière pour {variant.display_name} : {e}")
-        return None, None
-
-def calculate_price_tube_section(height, width, thickness, reference_price, variant):
-    surface_ref = (height + width) * 2
-    base_unit_price = reference_price / (surface_ref * thickness)
-
-    h = safe_float(variant.product_height)
-    w = safe_float(variant.product_width)
-    t = safe_float(variant.product_thickness)
-
-    if not all([h, w, t]):
-        print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
-        return None, None
-
-    surface_var = (h * 1000 + w * 1000) * 2
-    cost_price = base_unit_price * surface_var * (t * 1000)
-    sale_price = cost_price * 2.5
-    return round(cost_price, 2), round(sale_price, 2)
-
-def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg, variant):
-    try:
-        w = safe_float(variant.product_width)
-        h = safe_float(variant.product_height)
-
-        if not all([w, h]):
-            print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
-            return None, None
-
-        width_ref_m = width_ref / 1000
-        height_ref_m = height_ref / 1000
-
-        surface_ref_m2 = width_ref_m * height_ref_m
-        surface_var_m2 = w * h
-
-        if surface_ref_m2 == 0:
-            print("[!] Surface de référence nulle, vérifie tes valeurs.")
-            return None, None
-
-        poids_par_m_ref = poids_kg_par_barre / 6.2
-        prix_par_m_ref = poids_par_m_ref * prix_kg
-
-        ratio_surface = surface_var_m2 / surface_ref_m2
-        cost_price = prix_par_m_ref * ratio_surface
-        sale_price = cost_price * 2.5
-
-        print(f"{variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
-
-        return round(cost_price, 2), round(sale_price, 2)
-
-    except Exception as e:
-        print(f"[X] Erreur de calcul fer plat pour {variant.display_name} : {e}")
-        return None, None
-
+# Fonction principale de mise à jour des prix
 def calculate_and_update_prices():
+    lister_templates_metal()
+
     print("\n--- Sélection du modèle de produit (template) ---")
     tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
 
@@ -123,6 +48,7 @@ def calculate_and_update_prices():
         "1": ("Tube carré / rectangulaire", calculate_price_tube_section),
         "2": ("Fer plat", calculate_price_fer_plat),
         "3": ("Cornière (égale ou inégale)", calculate_price_corniere),
+        "4": ("Tube rond", calculate_price_tube_rond),
     }
     for key, (name, _) in profiles.items():
         print(f" {key}. {name}")
@@ -154,6 +80,10 @@ def calculate_and_update_prices():
         poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
+    elif profile_choice == "4":
+        d_ref = safe_float(input("Diamètre de référence (mm) : "))
+        t_ref = safe_float(input("Épaisseur de référence (mm) : "))
+        prix_ref_m = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
 
     pricelist = env['product.pricelist'].search([('name', '=', 'Métal au mètre')], limit=1)
     if not pricelist:
@@ -164,8 +94,6 @@ def calculate_and_update_prices():
 
     variants = env['product.product'].search([('product_tmpl_id', '=', tmpl_id)])
     total_updated = 0
-
-    # Calculer tous les prix, puis déterminer le prix le plus bas
     min_sale_price = None
     prix_par_variant = {}
 
@@ -176,6 +104,8 @@ def calculate_and_update_prices():
             cost_price, sale_price = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
         elif profile_choice == "3":
             cost_price, sale_price = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
+        elif profile_choice == "4":
+            cost_price, sale_price = calc_function(d_ref, t_ref, prix_ref_m, variant)
 
         if cost_price is None:
             print(f"[!] Pas de mise à jour pour {variant.display_name}")
@@ -211,12 +141,11 @@ def calculate_and_update_prices():
 
     print(f"\n--- Total variantes mises à jour : {total_updated} ---")
     print(f"--- Prix le plus bas attribué aux variantes : {min_sale_price:.2f} € ---")
-    # Appliquer le prix de vente le plus bas à toutes les variantes (lst_price)
     if min_sale_price is not None:
         for variant in variants:
             variant.lst_price = min_sale_price
             print(f"[{variant.default_code}] ✅ lst_price ajusté à {min_sale_price:.2f} € (prix le plus bas)")
-    
+
     env.cr.commit()
 
 if __name__ == '__main__':
