@@ -31,7 +31,7 @@ try:
     CSV_PATH = os.path.join(CSV_DIR, csv_filename)
 
     # 💼 Liste des produits dans la catégorie ID 2
-    products = env['product.template'].search([('categ_id', '=', 2)])
+    products = env['product.template'].search([('categ_id', '=', 6)])
     if not products:
         raise Exception("❌ Aucun produit trouvé dans la catégorie 'Métal au mètre'.")
 
