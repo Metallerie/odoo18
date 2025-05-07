@@ -2,7 +2,7 @@ import sys
 import os
 import pandas as pd
 
-# 🛠️ Config Odoo
+# 🔧 Config Odoo
 sys.path.append('/data/odoo/metal-odoo18-p8179')
 os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 
@@ -17,7 +17,7 @@ cr = db.cursor()
 env = api.Environment(cr, 1, {})
 
 try:
-    # 🎯 Entrées interactives
+    # 🌟 Entrées utilisateur
     csv_path_input = input("📄 Entrez le chemin du fichier CSV à importer : ").strip()
     CSV_PATH = csv_path_input
 
@@ -40,9 +40,10 @@ try:
     if not ml_uom:
         raise Exception("❌ Unité 'ML' introuvable.")
 
-    # 📅 Lecture CSV
+    # 📆 Lecture CSV
     df = pd.read_csv(CSV_PATH)
     value_ids = []
+    dimensions_by_code = {}
 
     for index, row in df.iterrows():
         code = str(row['default_code'])
@@ -52,7 +53,15 @@ try:
         thickness = float(row['thickness']) if 'thickness' in row and not pd.isna(row['thickness']) else 0.0
         length = float(row['length']) if not pd.isna(row['length']) else 0.0
 
-        # 🔀 Produit existant ?
+        dimensions_by_code[code] = {
+            'name': name,
+            'width': width,
+            'height': height,
+            'thickness': thickness,
+            'length': length
+        }
+
+        # 🔄 Mise à jour si produit existe
         existing = env['product.product'].search([('default_code', '=', code)], limit=1)
         if existing:
             print(f"✏️ Produit existant : {code} → mise à jour")
@@ -64,22 +73,23 @@ try:
                 'product_length': length,
                 'dimensional_uom_id': ml_uom.id
             })
-        else:
-            # ➕ Création de valeur d’attribut si nécessaire
-            value = env['product.attribute.value'].search([
-                ('name', '=', name),
-                ('attribute_id', '=', attribute.id)
-            ], limit=1)
-            if not value:
-                value = env['product.attribute.value'].create({
-                    'name': name,
-                    'attribute_id': attribute.id,
-                    'sequence': index
-                })
+            continue
 
-            value_ids.append((code, value.id))
+        # ➕ Création valeur d'attribut si nécessaire
+        value = env['product.attribute.value'].search([
+            ('name', '=', name),
+            ('attribute_id', '=', attribute.id)
+        ], limit=1)
+        if not value:
+            value = env['product.attribute.value'].create({
+                'name': name,
+                'attribute_id': attribute.id,
+                'sequence': index
+            })
 
-    # 🔗 Lien attributs au template
+        value_ids.append((code, value.id))
+
+    # 🪩 Lien des valeurs au template
     if value_ids:
         print("🧩 Association des nouvelles valeurs au template...")
         template.write({
@@ -89,33 +99,31 @@ try:
             })]
         })
 
-    # 💡 Forcer la création des variantes
+    # 💡 Création des variantes
     template._create_variant_ids()
 
-    # 🔀 Mise à jour des default_code sur les nouvelles variantes
+    # 🔄 Mise à jour des nouvelles variantes
     for variant in template.product_variant_ids:
-        attrs = variant.product_template_attribute_value_ids.mapped('name')
-        matched_code = next((code for code, val_id in value_ids if val_id in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id').ids), None)
-        if matched_code:
-            # On retrouve la ligne du CSV correspondant à ce code
-            row_match = df[df['default_code'] == matched_code]
-            if not row_match.empty:
-                row_data = row_match.iloc[0]
-                width = float(row_data['width']) if not pd.isna(row_data['width']) else 0.0
-                height = float(row_data['height']) if not pd.isna(row_data['height']) else 0.0
-                thickness = float(row_data['thickness']) if 'thickness' in row_data and not pd.isna(row_data['thickness']) else 0.0
-                length = float(row_data['length']) if not pd.isna(row_data['length']) else 0.0
-
-                variant.write({
-                    'default_code': matched_code,
-                    'product_width': width,
-                    'product_height': height,
-                    'product_thickness': thickness,
-                    'product_length': length,
-                    'dimensional_uom_id': ml_uom.id
-                })
-
+        matched_code = next(
+            (code for code, val_id in value_ids
+             if val_id in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id').ids),
+            None
+        )
+        if matched_code and matched_code in dimensions_by_code:
+            dims = dimensions_by_code[matched_code]
+            variant.write({
+                'default_code': matched_code,
+                'name': dims['name'],
+                'product_width': dims['width'],
+                'product_height': dims['height'],
+                'product_thickness': dims['thickness'],
+                'product_length': dims['length'],
+                'dimensional_uom_id': ml_uom.id
+            })
             print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
+
+    cr.commit()
+    print("\n✅ Import terminé avec succès !")
 
 except Exception as e:
     cr.rollback()
