@@ -97,11 +97,25 @@ try:
         attrs = variant.product_template_attribute_value_ids.mapped('name')
         matched_code = next((code for code, val_id in value_ids if val_id in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id').ids), None)
         if matched_code:
-            variant.default_code = matched_code
-            print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
+            # On retrouve la ligne du CSV correspondant à ce code
+            row_match = df[df['default_code'] == matched_code]
+            if not row_match.empty:
+                row_data = row_match.iloc[0]
+                width = float(row_data['width']) if not pd.isna(row_data['width']) else 0.0
+                height = float(row_data['height']) if not pd.isna(row_data['height']) else 0.0
+                thickness = float(row_data['thickness']) if 'thickness' in row_data and not pd.isna(row_data['thickness']) else 0.0
+                length = float(row_data['length']) if not pd.isna(row_data['length']) else 0.0
 
-    cr.commit()
-    print("\n✅ Import terminé avec succès !")
+                variant.write({
+                    'default_code': matched_code,
+                    'product_width': width,
+                    'product_height': height,
+                    'product_thickness': thickness,
+                    'product_length': length,
+                    'dimensional_uom_id': ml_uom.id
+                })
+
+            print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
 
 except Exception as e:
     cr.rollback()
