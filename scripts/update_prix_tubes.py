@@ -114,6 +114,36 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
         print(f"[X] Erreur de calcul fer plat pour {variant.display_name} : {e}")
         return None, None
 
+# Fonction pour calculer le prix des tubes ronds
+def calculate_price_tube_rond(d_ref_mm, t_ref_mm, prix_ref_m, variant):
+    try:
+        d = safe_float(variant.product_diameter) * 1000
+        t = safe_float(variant.product_thickness) * 1000
+
+        if not all([d, t]):
+            print(f"[!] Dimensions manquantes pour {variant.display_name}")
+            return None, None
+
+        surface_ref = math.pi * d_ref_mm
+        prix_mm2 = prix_ref_m / (surface_ref * t_ref_mm)
+
+        surface_var = math.pi * d
+        cost_price = prix_mm2 * surface_var * t
+        sale_price = cost_price * 2.5
+
+        return round(cost_price, 2), round(sale_price, 2)
+
+    except Exception as e:
+        print(f"[X] Erreur de calcul tube rond pour {variant.display_name} : {e}")
+        return None, None
+
+# Fonction pour lister les templates de la catégorie Métal au mètre (ID 6)
+def lister_templates_metal():
+    print("\n--- Produits dans la catégorie 'Métal au mètre' (ID 6) ---")
+    templates = env['product.template'].search([('categ_id', '=', 6)])
+    for tmpl in templates:
+        print(f"ID: {tmpl.id} | Nom: {tmpl.name}")
+
 def calculate_and_update_prices():
     print("\n--- Sélection du modèle de produit (template) ---")
     tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
