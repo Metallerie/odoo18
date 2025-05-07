@@ -163,9 +163,11 @@ def calculate_and_update_prices():
         })
 
     variants = env['product.product'].search([('product_tmpl_id', '=', tmpl_id)])
-    template = env['product.template'].browse(tmpl_id)
-    min_sale_price = None
     total_updated = 0
+
+    # Calculer tous les prix, puis déterminer le prix le plus bas
+    min_sale_price = None
+    prix_par_variant = {}
 
     for variant in variants:
         if profile_choice == "1":
@@ -179,8 +181,11 @@ def calculate_and_update_prices():
             print(f"[!] Pas de mise à jour pour {variant.display_name}")
             continue
 
+        prix_par_variant[variant.id] = sale_price
+
         variant.write({
-            'standard_price': cost_price
+            'standard_price': cost_price,
+            'lst_price': sale_price
         })
 
         pricelist_item = env['product.pricelist.item'].search([
@@ -201,13 +206,11 @@ def calculate_and_update_prices():
         if min_sale_price is None or sale_price < min_sale_price:
             min_sale_price = sale_price
 
-        print(f"{variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
+        print(f"[{variant.id}] {variant.display_name}: standard={cost_price:.2f} €, vente={sale_price:.2f} €")
         total_updated += 1
 
-    if min_sale_price is not None:
-        template.write({'lst_price': min_sale_price})
-
     print(f"\n--- Total variantes mises à jour : {total_updated} ---")
+    print(f"--- Prix le plus bas attribué aux variantes : {min_sale_price:.2f} € ---")
     env.cr.commit()
 
 if __name__ == '__main__':
