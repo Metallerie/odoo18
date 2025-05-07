@@ -211,6 +211,12 @@ def calculate_and_update_prices():
 
     print(f"\n--- Total variantes mises à jour : {total_updated} ---")
     print(f"--- Prix le plus bas attribué aux variantes : {min_sale_price:.2f} € ---")
+    # Appliquer le prix de vente le plus bas à toutes les variantes (lst_price)
+    if min_sale_price is not None:
+        for variant in variants:
+            variant.lst_price = min_sale_price
+            print(f"[{variant.default_code}] ✅ lst_price ajusté à {min_sale_price:.2f} € (prix le plus bas)")
+    
     env.cr.commit()
 
 if __name__ == '__main__':
