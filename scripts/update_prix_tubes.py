@@ -1,6 +1,7 @@
 import sys
 import os
 import builtins
+import math
 
 # --- Configuration de l'environnement Odoo ---
 sys.path.append('/data/odoo/metal-odoo18-p8179')
@@ -151,8 +152,10 @@ def calculate_and_update_prices():
     print("\n--- Sélection du profil : ---")
     profiles = {
         "1": ("Tube carré / rectangulaire", calculate_price_tube_section),
-        "2": ("Fer plat", calculate_price_fer_plat),
+        "2": ("Fer plat ou carré plein ", calculate_price_fer_plat),
         "3": ("Cornière (égale ou inégale)", calculate_price_corniere),
+        "4": ("Tube rond", calculate_price_tube_rond),
+
     }
     for key, (name, _) in profiles.items():
         print(f" {key}. {name}")
@@ -184,6 +187,12 @@ def calculate_and_update_prices():
         poids_total_kg = safe_float(input("Poids total acheté (kg) : "))
         nb_barres = int(input("Nombre de barres achetées : "))
         prix_kg = safe_float(input("Prix d'achat au kg (€) : "))
+    elif profile_choice == "4":
+        d_ref_mm  = safe_float(input("Diamètre de référence (mm) : "))
+        t_ref_mm = safe_float(input("Épaisseur de référence (mm) : "))
+        prix_ref_m = safe_float(input("Prix d'achat du mètre linéaire (€) : "))
+
+
 
     pricelist = env['product.pricelist'].search([('name', '=', 'Métal au mètre')], limit=1)
     if not pricelist:
@@ -206,6 +215,8 @@ def calculate_and_update_prices():
             cost_price, sale_price = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
         elif profile_choice == "3":
             cost_price, sale_price = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
+        elif profile_choice == "4":
+            cost_price, sale_price = calc_function(d_ref_mm, t_ref_mm, prix_ref_m, variant)
 
         if cost_price is None:
             print(f"[!] Pas de mise à jour pour {variant.display_name}")
