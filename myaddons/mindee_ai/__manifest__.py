@@ -8,7 +8,7 @@
     'author': 'hasabalrasool',
     'website': "https://sbs-cloud.com",
     'company': 'Source Bussiness Solutions',
-    'depends': ['base', 'account','product','partner' ],
+    'depends': ['base', 'account','product'],
     'data': [
         'views/account_move.xml',
         'views/res_config_settings.xml',
