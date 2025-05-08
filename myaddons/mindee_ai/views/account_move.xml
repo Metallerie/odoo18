@@ -17,7 +17,6 @@
     <record id="view_ocr_rule_tree" model="ir.ui.view">
         <field name="name">ocr.configuration.rule.tree</field>
         <field name="model">ocr.configuration.rule</field>
-        <field name="type">tree</field> <!-- C'est cette ligne qu'il manquait -->
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
