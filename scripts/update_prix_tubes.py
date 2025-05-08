@@ -146,6 +146,8 @@ def lister_templates_metal():
         print(f"ID: {tmpl.id} | Nom: {tmpl.name}")
 
 def calculate_and_update_prices():
+    lister_templates_metal()  # ✅ Affiche les templates avant de demander l’ID
+
     print("\n--- Sélection du modèle de produit (template) ---")
     tmpl_id = int(input("Entrez l'ID du product.template à traiter : ").strip())
 
