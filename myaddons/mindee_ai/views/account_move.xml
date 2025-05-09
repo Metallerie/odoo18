@@ -65,7 +65,7 @@
         <field name="name">OCR Configuration Rules</field>
         <field name="res_model">ocr.configuration.rule</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_ocr_rule_tree"/>
+        <field name="view_id" ref="view_ocr_rule_list"/>
     </record>
 
     <!-- Menu : OCR Configuration Rule -->
