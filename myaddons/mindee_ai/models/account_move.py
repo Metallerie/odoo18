@@ -63,8 +63,14 @@ class AccountMove(models.Model):
                             unit_price = item.unit_price or 0.0
                             quantity = item.quantity or 1
                             tax_rate = item.tax_rate or 0.0
+                            product_reference = item.product_reference or None
 
-                            product_id = self.env['product.product'].search([('name', 'ilike', description)], limit=1)
+                            product_id = False
+
+                            if product_reference:
+                                product_id = self.env['product.product'].search([('default_code', '=', product_reference)], limit=1)
+                            if not product_id:
+                                product_id = self.env['product.product'].search([('name', 'ilike', description)], limit=1)
                             if not product_id:
                                 product_id = self.env['product.product'].create({
                                     'name': description,
@@ -72,8 +78,9 @@ class AccountMove(models.Model):
                                     'list_price': unit_price,
                                     'purchase_ok': True,
                                     'sale_ok': False,
+                                    'default_code': product_reference or f"NEW-{description[:10].upper()}",
                                 })
-                                _logger.info(f"Produit créé : {description} avec un prix unitaire de {unit_price}")
+                                _logger.info(f"Produit créé : {description} avec une référence {product_reference or 'générée automatiquement'}")
 
                             line_net = unit_price * quantity
                             line_tax = line_net * (tax_rate / 100.0)
