@@ -96,7 +96,8 @@ class AccountMove(models.Model):
                             line_ids.append((0, 0, line_data))
 
                             # Ligne éco-part si le produit est concerné
-                            if ecopart_tax in product_id.supplier_taxes_id:
+                            has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
+                            if has_ecopart_tax:  
                                 weight_kg = product_id.weight * quantity if product_id.weight else 0.0
                                 if weight_kg > 0:
                                     ecotax_line = {
