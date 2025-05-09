@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<odoo>
+odoo>
     <data>
-
-<field name="model">res.config.settings</field>
-    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+ <record id="view_res_config_settings_inherit_mindee" model="ir.ui.view">
+    <field name="name">res.config.settings.inherit.mindee</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.view_res_config_settings"/>
     <field name="arch" type="xml">
-        <xpath expr="//form" position="inside">
-            <app string="AI" name="mindee_ai" groups="base.group_system">
-                <block title="Mindee Integration">
-                    <setting id="mindee_api_key_setting" string="Mindee API Key">
-                        <field name="mindee_api_key"/>
-                    </setting>
-                </block>
-            </app>
+        <xpath expr="//div[@id='snailmail_settings']" position="inside">
+            <div class="mt16 o_setting_box">
+                <label for="mindee_api_key"/>
+                <div class="o_setting_right_pane">
+                    <field name="mindee_api_key" placeholder="Clé API Mindee"/>
+                </div>
+            </div>
         </xpath>
     </field>
 </record>
-</data>
+
+    </data>
 </odoo>
