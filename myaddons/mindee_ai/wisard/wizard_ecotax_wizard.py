@@ -17,12 +17,12 @@ class EcotaxSetupWizard(models.TransientModel):
         if not ecotax:
             ecotax = Tax.create({
                 'name': 'Éco-part',
-                'amount': 0.002,
+                'amount': 0,
                 'amount_type': 'fixed',
                 'type_tax_use': 'purchase',
                 'price_include': False,
                 'active': True,
-                'description': 'Écotaxe 0.002€/kg',
+                'description': 'Écotaxe 0',
             })
             _logger.info("Taxe Éco-part créée.")
 
