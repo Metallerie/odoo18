@@ -24,9 +24,6 @@ class AccountMove(models.Model):
 
         ecotax_product = self.env['product.product'].browse(30)  # Produit Éco-part
 
-        if not default_tax:
-            _logger.error("La taxe d'achat par défaut à 20% est introuvable.")
-            return False
 
         for move in self:
             for message in move.message_ids:
