@@ -22,8 +22,6 @@ class AccountMove(models.Model):
             _logger.error(f"Échec de l'initialisation du client Mindee: {e}")
             return False
 
-        default_tax = self.env['account.tax'].search([('amount', '=', 20), ('type_tax_use', '=', 'purchase')], limit=1)
-        ecopart_tax = self.env['account.tax'].search([('name', '=', 'Éco-part')], limit=1)
         ecotax_product = self.env['product.product'].browse(30)  # Produit Éco-part
 
         if not default_tax:
@@ -90,15 +88,13 @@ class AccountMove(models.Model):
                             total_calculated_net += line_net
                             total_calculated_tax += line_tax
 
-                            tax_ids = [(6, 0, [default_tax.id])] if tax_rate == 0.0 else [(6, 0, [tax_rate])]
-
                             # Ligne produit principale
                             line_data = {
                                 "name": description,
                                 "product_id": product_id.id,
                                 "price_unit": unit_price,
                                 "quantity": quantity,
-                                "tax_ids": tax_ids,
+                                "tax_ids": [(6, 0, product_id.supplier_taxes_id.ids)], 
                             }
                             line_ids.append((0, 0, line_data))
 
@@ -110,7 +106,7 @@ class AccountMove(models.Model):
                                         "name": f"Éco-part pour {description}",
                                         "product_id": ecotax_product.id,
                                         "quantity": weight_kg,
-                                        "price_unit": 0.002,
+                                        "price_unit": ecotax_product.standard_price,
                                         "tax_ids": [],
                                     }
                                     line_ids.append((0, 0, ecotax_line))
