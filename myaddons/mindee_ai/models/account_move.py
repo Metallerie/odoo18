@@ -8,7 +8,6 @@ _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
     def action_open_pdf_viewer(self):
         self.ensure_one()
         if self.pdf_attachment_id:
@@ -20,6 +19,8 @@ class AccountMove(models.Model):
         return False
         
     def action_ocr_fetch(self):
+        pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
+
         move.pdf_attachment_id = attachment
         api_key = self.env['ir.config_parameter'].sudo().get_param('mindee_ai.mindee_api_key')
         if not api_key:
