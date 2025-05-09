@@ -1,27 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
+    <record id="view_res_config_settings_inherit_mindee" model="ir.ui.view">
+        <field name="name">res.config.settings.inherit.mindee</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.view_res_config_settings"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='general_settings']" position="inside">
+                <setting id="mindee_api_key_setting" string="Clé API Mindee">
+                    <field name="mindee_api_key"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
 
-        <record id="view_res_config_settings_inherit_mindee" model="ir.ui.view">
-            <field name="name">res.config.settings.inherit.mindee</field>
-            <field name="model">res.config.settings</field>
-            <field name="inherit_id" ref="base.view_res_config_settings"/>
-            <field name="arch" type="xml">
-                <xpath expr="//div[@id='snailmail_settings']" position="inside">
-                    <div class="o_setting_box">
-                        <div class="o_setting_left_pane">
-                            <field name="mindee_api_key"/>
-                        </div>
-                        <div class="o_setting_right_pane">
-                            <label for="mindee_api_key"/>
-                            <div class="text-muted">
-                                Clé API pour la connexion à Mindee.
-                            </div>
-                        </div>
-                    </div>
-                </xpath>
-            </field>
-        </record>
 
     </data>
 </odoo>
