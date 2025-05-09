@@ -12,6 +12,7 @@
     'data': [
         'views/account_move.xml',
         'views/res_config_settings.xml',
+        'security/ir.model.access.csv',
     ],
     'license': 'LGPL-3',
     'installable': True,
