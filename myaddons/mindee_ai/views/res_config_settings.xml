@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-    <record id="view_res_config_settings_inherit_mindee" model="ir.ui.view">
-        <field name="name">res.config.settings.inherit.mindee</field>
-        <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="base.view_res_config_settings"/>
-        <field name="arch" type="xml">
-            <xpath expr="//div[@id='general_settings']" position="inside">
+        <record id="view_res_config_settings_inherit_mindee" model="ir.ui.view">
+            <field name="name">res.config.settings.inherit.mindee</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.view_ir_config_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@class='o_settings_container']" position="inside">
                     <field name="mindee_api_key" string="Clé API Mindee"/>
-            </xpath>
-        </field>
-    </record>
-
-
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
 
