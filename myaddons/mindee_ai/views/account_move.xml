@@ -21,12 +21,6 @@
                  visible="show_pdf_button"/>
 
 
-                 <button name="action_test_button"
-                  type="object"
-                  string="🔍 Bouton Test"
-                  class="btn btn-danger"
-                  visible="1"/>
-
                 </xpath>
             </field>
         </record>
