@@ -23,6 +23,9 @@ class AccountMove(models.Model):
             return False
 
         default_tax = self.env['account.tax'].search([('amount', '=', 20), ('type_tax_use', '=', 'purchase')], limit=1)
+        ecopart_tax = self.env['account.tax'].search([('name', '=', 'Éco-part')], limit=1)
+        ecotax_product = self.env['product.product'].browse(30)  # Produit Éco-part
+
         if not default_tax:
             _logger.error("La taxe d'achat par défaut à 20% est introuvable.")
             return False
@@ -89,6 +92,7 @@ class AccountMove(models.Model):
 
                             tax_ids = [(6, 0, [default_tax.id])] if tax_rate == 0.0 else [(6, 0, [tax_rate])]
 
+                            # Ligne produit principale
                             line_data = {
                                 "name": description,
                                 "product_id": product_id.id,
@@ -97,6 +101,19 @@ class AccountMove(models.Model):
                                 "tax_ids": tax_ids,
                             }
                             line_ids.append((0, 0, line_data))
+
+                            # Ligne éco-part si le produit est concerné
+                            if ecopart_tax in product_id.supplier_taxes_id:
+                                weight_kg = product_id.weight * quantity if product_id.weight else 0.0
+                                if weight_kg > 0:
+                                    ecotax_line = {
+                                        "name": f"Éco-part pour {description}",
+                                        "product_id": ecotax_product.id,
+                                        "quantity": weight_kg,
+                                        "price_unit": 0.002,
+                                        "tax_ids": [],
+                                    }
+                                    line_ids.append((0, 0, ecotax_line))
 
                         document_total_net = document.inference.prediction.total_net.value or 0.0
                         document_total_amount = document.inference.prediction.total_amount.value or 0.0
