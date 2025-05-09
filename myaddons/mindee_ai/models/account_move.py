@@ -86,6 +86,7 @@ class AccountMove(models.Model):
                             total_calculated_tax += line_tax
 
                             # Ligne produit principale
+                            _logger.debug(f"[OCR] Produit : {product_id.name} | Taxes : {product_id.supplier_taxes_id.mapped('name')}")
                             line_data = {
                                 "name": description,
                                 "product_id": product_id.id,
@@ -96,8 +97,13 @@ class AccountMove(models.Model):
                             line_ids.append((0, 0, line_data))
 
                             # Ligne éco-part si le produit est concerné
+                            
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
-                            if has_ecopart_tax:  
+                            _logger.debug(f"[OCR] Est-ce que {product_id.name} a une taxe fixe (Éco-part) ? {'Oui' if has_ecopart_tax else 'Non'}")
+                            if has_ecopart_tax: 
+                                _logger.debug(f"[OCR] Poids estimé pour {product_id.name} : {weight_kg} kg")
+                                _logger.debug(f"[OCR] Prix unitaire de l’éco-part (depuis produit ECO-TAXE) : {ecotax_product.standard_price}")
+
                                 weight_kg = product_id.weight * quantity if product_id.weight else 0.0
                                 if weight_kg > 0:
                                     ecotax_line = {
