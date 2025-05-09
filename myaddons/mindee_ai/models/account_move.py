@@ -8,8 +8,9 @@ _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-
+    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
     def action_ocr_fetch(self):
+        move.pdf_attachment_id = attachment
         api_key = self.env['ir.config_parameter'].sudo().get_param('mindee_ai.mindee_api_key')
         if not api_key:
             _logger.error("La clé API Mindee n'est pas définie dans les paramètres de configuration.")
