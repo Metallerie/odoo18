@@ -24,7 +24,6 @@ class AccountMove(models.Model):
 
         ecotax_product = self.env['product.product'].browse(30)  # Produit Éco-part
 
-
         for move in self:
             for message in move.message_ids:
                 for attachment in message.attachment_ids:
@@ -85,48 +84,42 @@ class AccountMove(models.Model):
                             total_calculated_net += line_net
                             total_calculated_tax += line_tax
 
-                            # Ligne produit principale
                             _logger.debug(f"[OCR] Produit : {product_id.name} | Taxes : {product_id.supplier_taxes_id.mapped('name')}")
                             line_data = {
                                 "name": description,
                                 "product_id": product_id.id,
                                 "price_unit": unit_price,
                                 "quantity": quantity,
-                                "tax_ids": [(6, 0, product_id.supplier_taxes_id.ids)], 
+                                "tax_ids": [(6, 0, product_id.supplier_taxes_id.ids)],
                             }
                             line_ids.append((0, 0, line_data))
 
-                            # Ligne éco-part si le produit est concerné
-                            
+                            # Ligne éco-part si applicable
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
                             _logger.debug(f"[OCR] Est-ce que {product_id.name} a une taxe fixe (Éco-part) ? {'Oui' if has_ecopart_tax else 'Non'}")
-                            if has_ecopart_tax: 
-                                _logger.debug(f"[OCR] Poids estimé pour {product_id.name} : {weight_kg} kg")
-                                _logger.debug(f"[OCR] Prix unitaire de l’éco-part (depuis produit ECO-TAXE) : {ecotax_product.standard_price}")
 
+                            if has_ecopart_tax:
                                 unit_measure = (item.unit_of_measure or "").lower()
 
-                            # Détermination du poids en kg
-                            if unit_measure == 'kg':
-                                weight_kg = quantity
-                            elif product_id.weight:
-                                weight_kg = product_id.weight * quantity
-                            else:
-                                weight_kg = 0.0
+                                if unit_measure == 'kg':
+                                    weight_kg = quantity
+                                elif product_id.weight:
+                                    weight_kg = product_id.weight * quantity
+                                else:
+                                    weight_kg = 0.0
 
-                            # Log utile
-                            _logger.debug(f"[OCR] Produit : {product_id.name} | Unité Mindee : {unit_measure} | Quantité : {quantity} | Poids estimé : {weight_kg} kg")
+                                _logger.debug(f"[OCR] Produit : {product_id.name} | Unité Mindee : {unit_measure} | Quantité : {quantity} | Poids estimé : {weight_kg} kg")
+                                _logger.debug(f"[OCR] Prix unitaire de l’éco-part (depuis produit ECO-TAXE) : {ecotax_product.standard_price}")
 
-                            # Création de la ligne éco-part si applicable
-                            if weight_kg > 0:
-                            ecotax_line = {
-                                "name": f"Éco-part pour {description}",
-                                "product_id": ecotax_product.id,
-                                "quantity": weight_kg,
-                                "price_unit": ecotax_product.standard_price,
-                                "tax_ids": [(6, 0, ecotax_product.supplier_taxes_id.ids)],
-                            }
-                            line_ids.append((0, 0, ecotax_line))
+                                if weight_kg > 0:
+                                    ecotax_line = {
+                                        "name": f"Éco-part pour {description}",
+                                        "product_id": ecotax_product.id,
+                                        "quantity": weight_kg,
+                                        "price_unit": ecotax_product.standard_price,
+                                        "tax_ids": [(6, 0, ecotax_product.supplier_taxes_id.ids)],
+                                    }
+                                    line_ids.append((0, 0, ecotax_line))
 
                         document_total_net = document.inference.prediction.total_net.value or 0.0
                         document_total_amount = document.inference.prediction.total_amount.value or 0.0
