@@ -13,6 +13,11 @@
                             class="btn btn-primary"
                             type="object"
                             invisible="state != 'draft'"/>
+                  <button name="action_ocr_fetch"
+                           string="Scan From Attachment"
+                           class="btn btn-primary"
+                           type="object"
+                           attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                 </xpath>
             </field>
         </record>
