@@ -22,7 +22,7 @@ class AccountMove(models.Model):
             _logger.error(f"Échec de l'initialisation du client Mindee: {e}")
             return False
 
-        ecotax_product = self.env['product.product'].browse(30)  # Produit Éco-part
+        ecotax_product = self.env['product.template'].browse(30)  # Produit Éco-part
 
         for move in self:
             for message in move.message_ids:
