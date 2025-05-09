@@ -105,7 +105,7 @@ class AccountMove(models.Model):
                             _logger.debug(f"[OCR] Est-ce que {product_id.name} a une taxe fixe (Éco-part) ? {'Oui' if has_ecopart_tax else 'Non'}")
 
                             if has_ecopart_tax:
-                                unit_measure = (item.unit_of_measure or "").lower()
+                                unit_measure = (item.unit_measure or "").lower()
 
                                 if unit_measure == 'kg':
                                     weight_kg = quantity
