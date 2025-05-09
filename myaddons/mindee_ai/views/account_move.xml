@@ -15,7 +15,7 @@
     </field>
 </record>
 
-    </record>
+ 
  
     <!-- Vue en liste -->
     <record id="view_ocr_rule_tree" model="ir.ui.view">
