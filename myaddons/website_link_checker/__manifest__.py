@@ -16,8 +16,4 @@
         'views/website_page_views.xml',
         'data/ir_cron.xml',
     ],
-      'license': 'LGPL-3',
-    'installable': True,
-    'auto_install': False,
-    'application': False,
-}
+      
