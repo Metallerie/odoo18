@@ -16,21 +16,22 @@
                 </xpath>
             </field>
         </record>
- <record id="view_ocr_rule_tree" model="ir.ui.view">
-        <field name="name">ocr.configuration.rule.tree</field>
-        <field name="model">ocr.configuration.rule</field>
-        <field name="arch" type="xml">
-            <tree>
-                <field name="name"/>
-                <field name="partner_id"/>
-                <field name="global_rule"/>
-                <field name="variable"/>
-                <field name="operator"/>
-                <field name="value"/>
-                <field name="active"/>
-            </tree>
-        </field>
-    </record>
+ <record id="view_ocr_rule_list" model="ir.ui.view">
+    <field name="name">ocr.configuration.rule.list</field>
+    <field name="model">ocr.configuration.rule</field>
+    <field name="arch" type="xml">
+        <list string="Rules">
+            <field name="name"/>
+            <field name="partner_id"/>
+            <field name="global_rule"/>
+            <field name="variable"/>
+            <field name="operator"/>
+            <field name="value"/>
+            <field name="active"/>
+        </list>
+    </field>
+</record>
+
 
     <!-- Vue formulaire -->
     <record id="view_ocr_rule_form" model="ir.ui.view">
@@ -63,7 +64,7 @@
     <record id="action_ocr_rule" model="ir.actions.act_window">
         <field name="name">OCR Configuration Rules</field>
         <field name="res_model">ocr.configuration.rule</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_ocr_rule_tree"/>
     </record>
 
