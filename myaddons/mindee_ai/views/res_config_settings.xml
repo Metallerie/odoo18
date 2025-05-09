@@ -7,9 +7,7 @@
         <field name="inherit_id" ref="base.view_res_config_settings"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@id='general_settings']" position="inside">
-                <setting id="mindee_api_key_setting" string="Clé API Mindee">
-                    <field name="mindee_api_key"/>
-                </setting>
+                    <field name="mindee_api_key" string="Clé API Mindee"/>
             </xpath>
         </field>
     </record>
