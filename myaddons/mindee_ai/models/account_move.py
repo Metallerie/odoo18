@@ -11,7 +11,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     def action_ocr_fetch(self):
-        api_key = self.env['ir.config_parameter'].sudo().get_param('mindee_api_key')
+        api_key = self.env['ir.config_parameter'].sudo().get_param('mindee_ai.mindee_api_key')
         if not api_key:
             _logger.error("La clé API Mindee n'est pas définie dans les paramètres de configuration.")
             return False
