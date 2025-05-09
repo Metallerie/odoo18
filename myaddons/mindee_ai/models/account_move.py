@@ -10,9 +10,6 @@ class AccountMove(models.Model):
 
     pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")  # CHAMP DÉFINI CORRECTEMENT
     show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button', store=True)
-    def action_test_button(self):
-        _logger.warning("🔥 Le bouton test fonctionne !")
-        return True
 
     def _compute_show_pdf_button(self):
        for move in self:
