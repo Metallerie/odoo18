@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models
 from mindee import Client, product
-from odoo.exceptions import ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -22,7 +21,16 @@ class AccountMove(models.Model):
             _logger.error(f"Échec de l'initialisation du client Mindee: {e}")
             return False
 
-        ecotax_product = self.env['product.template'].browse(30)  # Produit Éco-part
+        # Chargement du produit Éco-part depuis le template
+        template = self.env['product.template'].browse(30)
+        if not template.exists():
+            _logger.warning("Le template produit Éco-part ID 30 est introuvable.")
+            return False
+
+        ecotax_product = template.product_variant_id
+        if not ecotax_product:
+            _logger.warning("Aucune variante trouvée pour le produit Éco-part.")
+            return False
 
         for move in self:
             for message in move.message_ids:
@@ -50,16 +58,16 @@ class AccountMove(models.Model):
                                 "street": document.inference.prediction.supplier_address.value or "Adresse non fournie",
                             })
 
-                        line_items = document.inference.prediction.line_items or []
+                        # Initialisation pour CHAQUE attachment (sinon accumulation)
                         line_ids = []
                         total_calculated_net = 0.0
                         total_calculated_tax = 0.0
 
+                        line_items = document.inference.prediction.line_items or []
                         for item in line_items:
                             description = item.description or "Description non fournie"
                             unit_price = item.unit_price or 0.0
                             quantity = item.quantity or 1
-                            tax_rate = item.tax_rate or 0.0
                             product_code = item.product_code or None
 
                             product_id = False
@@ -80,9 +88,7 @@ class AccountMove(models.Model):
                                 _logger.info(f"Produit créé : {description} avec une référence {product_code or 'générée automatiquement'}")
 
                             line_net = unit_price * quantity
-                            line_tax = line_net * (tax_rate / 100.0)
                             total_calculated_net += line_net
-                            total_calculated_tax += line_tax
 
                             _logger.debug(f"[OCR] Produit : {product_id.name} | Taxes : {product_id.supplier_taxes_id.mapped('name')}")
                             line_data = {
@@ -94,12 +100,12 @@ class AccountMove(models.Model):
                             }
                             line_ids.append((0, 0, line_data))
 
-                            # Ligne éco-part si applicable
+                            # Éco-part si le produit a une taxe fixe
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
                             _logger.debug(f"[OCR] Est-ce que {product_id.name} a une taxe fixe (Éco-part) ? {'Oui' if has_ecopart_tax else 'Non'}")
 
                             if has_ecopart_tax:
-                                unit_measure = (item.unit_measure or "").lower()
+                                unit_measure = (item.unit_of_measure or "").lower()
 
                                 if unit_measure == 'kg':
                                     weight_kg = quantity
@@ -108,8 +114,8 @@ class AccountMove(models.Model):
                                 else:
                                     weight_kg = 0.0
 
-                                _logger.debug(f"[OCR] Produit : {product_id.name} | Unité Mindee : {unit_measure} | Quantité : {quantity} | Poids estimé : {weight_kg} kg")
-                                _logger.debug(f"[OCR] Prix unitaire de l’éco-part (depuis produit ECO-TAXE) : {ecotax_product.standard_price}")
+                                _logger.debug(f"[OCR] Produit : {product_id.name} | UoM : {unit_measure} | Quantité : {quantity} | Poids estimé : {weight_kg} kg")
+                                _logger.debug(f"[OCR] Prix unitaire Éco-part : {ecotax_product.standard_price}")
 
                                 if weight_kg > 0:
                                     ecotax_line = {
@@ -143,3 +149,4 @@ class AccountMove(models.Model):
                         })
 
         return True
+
