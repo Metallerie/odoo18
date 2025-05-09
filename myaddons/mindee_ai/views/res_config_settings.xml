@@ -7,12 +7,11 @@
     <field name="inherit_id" ref="base.view_res_config_settings"/>
     <field name="arch" type="xml">
         <xpath expr="//div[@id='snailmail_settings']" position="inside">
-            <div class="mt16 o_setting_box">
-                <label for="mindee_api_key"/>
-                <div class="o_setting_right_pane">
-                    <field name="mindee_api_key" placeholder="Clé API Mindee"/>
-                </div>
-            </div>
+       <div class="o_setting_box" id="mindee_setting_box">
+             <div class="o_setting_left_pane">
+               <field name="mindee_api_key" placeholder="Clé API Mindee"/>
+        </div>
+       </div>
         </xpath>
     </field>
 </record>
