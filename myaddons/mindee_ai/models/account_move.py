@@ -68,7 +68,7 @@ class AccountMove(models.Model):
                             if not product_id:
                                 product_id = self.env['product.product'].create({
                                     'name': description,
-                                    'type': 'product',
+                                    'type': 'consu',
                                     'list_price': unit_price,
                                     'purchase_ok': True,
                                     'sale_ok': False,
