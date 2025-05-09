@@ -9,8 +9,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")  # CHAMP DÉFINI CORRECTEMENT
-    show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button')
-    
+    show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button', store=True)    
     def _compute_show_pdf_button(self):
        for move in self:
            move.show_pdf_button = bool(move.pdf_attachment_id)
