@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-from odoo import models,fields
+from odoo import models, fields
 from mindee import Client, product
 import logging
 
 _logger = logging.getLogger(__name__)
 
-
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")  # CHAMP DÉFINI CORRECTEMENT
+
     def action_open_pdf_viewer(self):
         self.ensure_one()
         if self.pdf_attachment_id:
@@ -17,11 +19,8 @@ class AccountMove(models.Model):
                 'target': 'new',
             }
         return False
-        
-    def action_ocr_fetch(self):
-        pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
 
-        move.pdf_attachment_id = attachment
+    def action_ocr_fetch(self):
         api_key = self.env['ir.config_parameter'].sudo().get_param('mindee_ai.mindee_api_key')
         if not api_key:
             _logger.error("La clé API Mindee n'est pas définie dans les paramètres de configuration.")
@@ -33,7 +32,6 @@ class AccountMove(models.Model):
             _logger.error(f"Échec de l'initialisation du client Mindee: {e}")
             return False
 
-        # Chargement du produit Éco-part depuis le template
         template = self.env['product.template'].browse(30)
         if not template.exists():
             _logger.warning("Le template produit Éco-part ID 30 est introuvable.")
@@ -57,6 +55,8 @@ class AccountMove(models.Model):
                             _logger.error(f"Erreur lors de la lecture du document {attachment.display_name}: {e}")
                             continue
 
+                        move.pdf_attachment_id = attachment  # ICI c’est OK
+
                         document = api_response.document
                         partner_name = (
                             document.inference.prediction.supplier_name.value
@@ -70,7 +70,6 @@ class AccountMove(models.Model):
                                 "street": document.inference.prediction.supplier_address.value or "Adresse non fournie",
                             })
 
-                        # Initialisation pour CHAQUE attachment (sinon accumulation)
                         line_ids = []
                         total_calculated_net = 0.0
                         total_calculated_tax = 0.0
@@ -102,7 +101,6 @@ class AccountMove(models.Model):
                             line_net = unit_price * quantity
                             total_calculated_net += line_net
 
-                            _logger.debug(f"[OCR] Produit : {product_id.name} | Taxes : {product_id.supplier_taxes_id.mapped('name')}")
                             line_data = {
                                 "name": description,
                                 "product_id": product_id.id,
@@ -112,22 +110,15 @@ class AccountMove(models.Model):
                             }
                             line_ids.append((0, 0, line_data))
 
-                            # Éco-part si le produit a une taxe fixe
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
-                            _logger.debug(f"[OCR] Est-ce que {product_id.name} a une taxe fixe (Éco-part) ? {'Oui' if has_ecopart_tax else 'Non'}")
-
                             if has_ecopart_tax:
                                 unit_measure = (item.unit_measure or "").lower()
-
                                 if unit_measure == 'kg':
                                     weight_kg = quantity
                                 elif product_id.weight:
                                     weight_kg = product_id.weight * quantity
                                 else:
                                     weight_kg = 0.0
-
-                                _logger.debug(f"[OCR] Produit : {product_id.name} | UoM : {unit_measure} | Quantité : {quantity} | Poids estimé : {weight_kg} kg")
-                                _logger.debug(f"[OCR] Prix unitaire Éco-part : {ecotax_product.standard_price}")
 
                                 if weight_kg > 0:
                                     ecotax_line = {
@@ -161,4 +152,3 @@ class AccountMove(models.Model):
                         })
 
         return True
-
