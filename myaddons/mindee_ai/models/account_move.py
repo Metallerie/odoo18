@@ -8,13 +8,12 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")  # CHAMP DÉFINI CORRECTEMENT
+    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
     show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button', store=True)
 
     def _compute_show_pdf_button(self):
        for move in self:
            move.show_pdf_button = bool(move.pdf_attachment_id)
-
 
     def action_open_pdf_viewer(self):
         self.ensure_one()
@@ -61,7 +60,7 @@ class AccountMove(models.Model):
                             _logger.error(f"Erreur lors de la lecture du document {attachment.display_name}: {e}")
                             continue
 
-                        move.pdf_attachment_id = attachment  # ICI c’est OK
+                        move.pdf_attachment_id = attachment
 
                         document = api_response.document
                         partner_name = (
@@ -115,6 +114,34 @@ class AccountMove(models.Model):
                                 "tax_ids": [(6, 0, product_id.supplier_taxes_id.ids)],
                             }
                             line_ids.append((0, 0, line_data))
+
+                            # Détermination de la cible pour supplierinfo : produit OU template
+                            supplierinfo_domain = [('name', '=', partner_id.id)]
+                            supplierinfo_vals = {
+                                'name': partner_id.id,
+                                'min_qty': 1,
+                                'price': unit_price,
+                                'product_code': product_code or product_id.default_code,
+                                'product_name': description,
+                                'product_uom': product_id.uom_po_id.id,
+                                'delay': 1,
+                            }
+
+                            if product_id.product_tmpl_id.product_variant_count > 1:
+                                supplierinfo_domain.append(('product_id', '=', product_id.id))
+                                supplierinfo_vals['product_id'] = product_id.id
+                            else:
+                                supplierinfo_domain.append(('product_tmpl_id', '=', product_id.product_tmpl_id.id))
+                                supplierinfo_vals['product_tmpl_id'] = product_id.product_tmpl_id.id
+
+                            supplierinfo = self.env['product.supplierinfo'].search(supplierinfo_domain, limit=1)
+
+                            if supplierinfo:
+                                supplierinfo.write(supplierinfo_vals)
+                                _logger.info(f"Fournisseur mis à jour pour {description} et {partner_id.name}")
+                            else:
+                                self.env['product.supplierinfo'].create(supplierinfo_vals)
+                                _logger.info(f"Fournisseur ajouté pour {description} et {partner_id.name}")
 
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
                             if has_ecopart_tax:
