@@ -44,15 +44,21 @@ class ProductTemplate(models.Model):
         related="product_variant_ids.product_diameter",string="Diametre", readonly=False, digits=(16, 6)
     )
     uom_po_id = fields.Many2one(
-        'uom.uom',
-        'Purchase Unit',
-        compute='_compute_uom_po_id',
-        readonly=False,
-        store=True,
-        precompute=True,
-        domain=[],  # 🧨 suppression de la contrainte de catégorie !
-        help="Unité de mesure utilisée pour les achats, sans restriction de catégorie."
-    )
+        'uom.uom', 'Purchase Unit',
+        default=_get_default_uom_id, required=True,
+        domain=[],
+        help="Default unit of measure used for purchase orders. It is not restricted to the same category as the sales unit."
+)
+
+    @api.onchange('uom_id', 'uom_po_id')
+    def _onchange_uom_po_id(self):
+        if self.uom_id and self.uom_po_id and self.uom_id.category_id != self.uom_po_id.category_id:
+        return {
+            'warning': {
+                'title': "Attention",
+                'message': "L'unité d'achat (%s) et l'unité de vente (%s) appartiennent à des catégories différentes. Assurez-vous que cela est intentionnel." % (self.uom_po_id.name, self.uom_id.name),
+            }
+        }
 
     @api.constrains('uom_id', 'uom_po_id')
     def _check_uom_category(self):
