@@ -12,6 +12,7 @@
     'data': [
         'views/account_move.xml',
         'views/res_config_settings.xml',
+        'views/product_assign_line_wizard.xml',
         'security/ir.model.access.csv',
     ],
     'license': 'LGPL-3',
