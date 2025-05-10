@@ -66,9 +66,9 @@ try:
     for index, row in df.iterrows():
         code = str(row['default_code'])
         name = row['name'].strip()
-        diameter = float(row['product_diameter']) if not pd.isna(row['product_diameter']) else 0.0
+        diameter = float(row['product_diameter']) if 'product_diameter' in row and not pd.isna(row['product_diameter']) else 0.0
         thickness = float(row['thickness']) if 'thickness' in row and not pd.isna(row['thickness']) else 0.0
-        length = float(row['length']) if not pd.isna(row['length']) else 0.0
+        length = float(row['length']) if 'length' in row and not pd.isna(row['length']) else 0.0
         uom_id = int(row['uom_id']) if 'uom_id' in row and not pd.isna(row['uom_id']) else False
         uom_po_id = int(row['uom_po_id']) if 'uom_po_id' in row and not pd.isna(row['uom_po_id']) else False
 
