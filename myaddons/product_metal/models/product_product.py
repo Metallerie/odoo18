@@ -42,12 +42,7 @@ class ProductProduct(models.Model):
                 product.dimensional_uom_id,
             )
 
-    @api.model
-    def _get_dimension_uom_domain(self):
-        return [("category_id", "=", self.env.ref("uom.uom_categ_length").id)]
-        
-    @api.constrains('uom_id', 'uom_po_id')
-    def _check_uom_category(self):
-        # 🔓 On désactive volontairement la contrainte standard Odoo
-        # Cela permet d'utiliser des unités dans des catégories différentes (ex: mètre et kg)
-        pass
+    @api.onchange('uom_po_id')
+    def _onchange_uom(self):
+        if self.uom_id and self.uom_po_id and self.uom_id.category_id != self.uom_po_id.category_id:
+            _logger.warning(f"[UOM INFO] Vente en {self.uom_id.name}, achat en {self.uom_po_id.name} pour {self.display_name}")
