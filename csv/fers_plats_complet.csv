@@ -1,4 +1,4 @@
-default_code,name,length,width,height,dimensional_uom
+default_code,name,length,width,height,dimensional_uom,uom_id,uom_po_id
 "70853","10x3 mm",6.20,0.010,0.003,"ML",5,12
 "70857","12x4 mm",6.20,0.012,0.004,"ML",5,12
 "70858","12x5 mm",6.20,0.012,0.005,"ML",5,12
