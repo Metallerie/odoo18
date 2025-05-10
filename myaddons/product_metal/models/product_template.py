@@ -43,6 +43,22 @@ class ProductTemplate(models.Model):
     product_diameter = fields.Float(
         related="product_variant_ids.product_diameter",string="Diametre", readonly=False, digits=(16, 6)
     )
+    uom_po_id = fields.Many2one(
+        'uom.uom',
+        'Purchase Unit',
+        compute='_compute_uom_po_id',
+        readonly=False,
+        store=True,
+        precompute=True,
+        domain=[],  # 🧨 suppression de la contrainte de catégorie !
+        help="Unité de mesure utilisée pour les achats, sans restriction de catégorie."
+    )
+
+    @api.constrains('uom_id', 'uom_po_id')
+    def _check_uom_category(self):
+        # ❌ on neutralise la contrainte Odoo qui bloque les catégories différentes
+        pass
+    
 
     @api.model
     def _calc_volume(self, product_length, product_height, product_width, uom_id):
@@ -91,8 +107,4 @@ class ProductTemplate(models.Model):
             res.update({"product_width": self.product_width})
         return res
         
-    @api.constrains('uom_id', 'uom_po_id')
-    def _check_uom_category(self):
-        # 🔓 On désactive volontairement la contrainte standard Odoo
-        # Cela permet d'utiliser des unités dans des catégories différentes (ex: mètre et kg)
-        pass
+    
