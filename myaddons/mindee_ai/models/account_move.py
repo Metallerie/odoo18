@@ -116,7 +116,7 @@ class AccountMove(models.Model):
                             line_ids.append((0, 0, line_data))
 
                             # Détermination de la cible pour supplierinfo : produit OU template
-                            supplierinfo_domain = [('name', '=', partner_id.id)]
+                            supplierinfo_domain = [('partner_id', '=', partner_id.id)]
                             supplierinfo_vals = {
                                 'name': partner_id.id,
                                 'min_qty': 1,
