@@ -1,0 +1,18 @@
+<odoo>
+  <record id="view_product_assign_line_wizard_form" model="ir.ui.view">
+    <field name="name">product.assign.line.wizard.form</field>
+    <field name="model">product.assign.line.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Affecter un produit">
+        <group>
+          <field name="ocr_description" readonly="1"/>
+          <field name="product_id"/>
+        </group>
+        <footer>
+          <button string="Valider" type="object" name="action_validate_assignment" class="btn-primary"/>
+          <button string="Annuler" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+</odoo>
