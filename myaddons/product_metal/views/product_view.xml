@@ -54,7 +54,7 @@
             <xpath expr="//group[@name='purchase']" position="replace">
              <group name="purchase">
                  <group string="Vendor Bills" name="bill">
-                   <field name="uom_po_id" "/>
+                   <field name="uom_po_id" />
                  </group>
                   </group>      
             </xpath>
