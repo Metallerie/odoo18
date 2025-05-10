@@ -4,10 +4,6 @@ from odoo import api, fields, models, tools
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
-    @tools.ormcache()
-    def _get_default_uom_id(self):
-        # Deletion forbidden (at least through unlink)
-        return self.env.ref('uom.product_uom_unit')
 
 
     # Précision personnalisée pour l'unité de mesure de cette variante de produit
@@ -60,33 +56,7 @@ class ProductTemplate(models.Model):
         readonly=False,
         digits=(16, 6),
     )
-    uom_po_id = fields.Many2one(
-        "uom.uom",
-        "Unité d'achat",
-        default=_get_default_uom_id,
-        required=True,
-        domain=[],
-        help="Unité de mesure par défaut utilisée pour les commandes d'achat. Elle n'est pas restreinte à la même catégorie que l'unité de vente.",
-    )
-
-    @api.onchange("uom_id", "uom_po_id")
-    def _onchange_uom_po_id(self):
-        if self.uom_id and self.uom_po_id and self.uom_id.category_id != self.uom_po_id.category_id:
-            return {
-                "warning": {
-                    "title": "Attention",
-                    "message": (
-                        "L'unité d'achat (%s) et l'unité de vente (%s) appartiennent à des catégories différentes. "
-                        "Assurez-vous que cela est intentionnel."
-                    ) % (self.uom_po_id.name, self.uom_id.name),
-                }
-            }
-
-    @api.constrains("uom_id", "uom_po_id")
-    def _check_uom_category(self):
-        # ❌ Neutralisation de la contrainte Odoo qui bloque les catégories différentes
-        pass
-
+  
     @api.model
     def _calc_volume(self, product_length, product_height, product_width, uom_id):
         volume = 0
