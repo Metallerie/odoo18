@@ -90,3 +90,9 @@ class ProductTemplate(models.Model):
         if self.product_width:
             res.update({"product_width": self.product_width})
         return res
+        
+    @api.constrains('uom_id', 'uom_po_id')
+    def _check_uom_category(self):
+        # 🔓 On désactive volontairement la contrainte standard Odoo
+        # Cela permet d'utiliser des unités dans des catégories différentes (ex: mètre et kg)
+        pass
