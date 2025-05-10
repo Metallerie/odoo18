@@ -5,6 +5,12 @@ class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
     is_unassigned = fields.Boolean(string="Produit non affecté", default=False)
+    show_assign_button = fields.Boolean(string="Afficher bouton produit", compute='_compute_show_assign_button', store=True)
+
+    @api.depends('is_unassigned')
+    def _compute_show_assign_button(self):
+        for line in self:
+            line.show_assign_button = line.is_unassigned
 
     def action_assign_product(self):
         self.ensure_one()
