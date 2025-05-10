@@ -138,10 +138,10 @@ class AccountMove(models.Model):
 
                             if supplierinfo:
                                 supplierinfo.write(supplierinfo_vals)
-                                _logger.info(f"Fournisseur mis à jour pour {description} et {partner_id.name}")
+                                _logger.info(f"Fournisseur mis à jour pour {description} et {partner_id.product_name}")
                             else:
                                 self.env['product.supplierinfo'].create(supplierinfo_vals)
-                                _logger.info(f"Fournisseur ajouté pour {description} et {partner_id.name}")
+                                _logger.info(f"Fournisseur ajouté pour {description} et {partner_id.product_name}")
 
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
                             if has_ecopart_tax:
