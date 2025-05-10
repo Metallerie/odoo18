@@ -3,7 +3,7 @@
     
     <record model="ir.ui.view" id="product_normal_form_view_patch">
         <field name="name">product_normal_form_view_patch</field>
-        <field name="model">product.product</field>
+        <field name="model">product.tamplate</field>
         <field name="inherit_id" ref="product.product_normal_form_view" />
         <field name="arch" type="xml">
             <xpath expr="//group[@name='group_lots_and_weight']" position="after">
@@ -13,8 +13,8 @@
                     <field name="product_length" string="Length" />
                     <field name="product_height" string="Height" />
                     <field name="product_width" string="Width" />
-                    <field name="product_thickness"/>
-                    <field name="product_diameter"/>
+                    <field name="product_thickness" string="Thickness" />
+                    <field name="product_diameter" string="Diameter" />
 
                 </group>
             </xpath>
