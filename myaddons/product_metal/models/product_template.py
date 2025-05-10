@@ -48,7 +48,7 @@ class ProductTemplate(models.Model):
         default=_get_default_uom_id, required=True,
         domain=[],
         help="Default unit of measure used for purchase orders. It is not restricted to the same category as the sales unit."
-)
+    )
 
     @api.onchange('uom_id', 'uom_po_id')
     def _onchange_uom_po_id(self):
