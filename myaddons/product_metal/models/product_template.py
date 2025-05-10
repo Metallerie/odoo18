@@ -1,8 +1,14 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
+
+    @tools.ormcache()
+    def _get_default_uom_id(self):
+        # Deletion forbidden (at least through unlink)
+        return self.env.ref('uom.product_uom_unit')
+
 
     # Précision personnalisée pour l'unité de mesure de cette variante de produit
     uom_precision = fields.Integer(
