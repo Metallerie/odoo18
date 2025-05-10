@@ -1,16 +1,6 @@
 <?xml version="1.0" ?>
 <odoo>
-      <record id="product_template_form_view_uom_patch" model="ir.ui.view">
-    <field name="name">product.template.uom.override</field>
-    <field name="model">product.template</field>
-    <field name="inherit_id" ref="product.product_template_form_view"/>
-    <field name="arch" type="xml">
-      <field name="uom_po_id" position="attributes">
-        <!-- 🧨 On enlève le domain qui bloque les UoM -->
-        <attribute name="domain">[]</attribute>
-      </field>
-    </field>
-  </record>
+    
     <record model="ir.ui.view" id="product_normal_form_view_patch">
         <field name="name">product_normal_form_view_patch</field>
         <field name="model">product.product</field>
