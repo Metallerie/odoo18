@@ -7,7 +7,7 @@
     "license": "AGPL-3",
     "website": "https://www.metallerie.xyz",
     "depends": ["base","product","website_sale","uom"],
-    "data": ["views/product_view.xml"],
+    "data": ["security/ir.model.access.csv", "views/product_view.xml"],
     "installable": True,
     "images": ["static/description/icon.png"],
     'assets': {
