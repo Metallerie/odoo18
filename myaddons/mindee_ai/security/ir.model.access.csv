@@ -1,2 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 mindee_ai.access_ocr_configuration_rule,Access OCR Configuration Rule,mindee_ai.model_ocr_configuration_rule,base.group_user,1,0,0,0
+mindee_ai.access_product_assign_line_wizard,access_product_assign_line_wizard,model_product_assign_line_wizard,base.group_user,1,0,0,0
