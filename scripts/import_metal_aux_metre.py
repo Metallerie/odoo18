@@ -53,12 +53,12 @@ try:
             'create_variant': 'always'
         })
 
-    # 📀 Unité ML
-    ml_uom = env['uom.uom'].search([('name', '=', 'ML')], limit=1)
-    if not ml_uom:
-        raise Exception("❌ Unité 'ML' introuvable.")
+    # ⚠️ Mode de livraison activé ?
+    delivery_enabled = env['ir.config_parameter'].sudo().get_param('stock.use_existing_lots')
+    if delivery_enabled is None:
+        print("⚠️ Impossible de vérifier si le mode de livraison est activé.")
 
-    # 📆 Lecture CSV
+    # 🔖 Lecture CSV
     df = pd.read_csv(CSV_PATH)
     value_ids = []
     dimensions_by_code = {}
@@ -69,24 +69,38 @@ try:
         diameter = float(row['product_diameter']) if not pd.isna(row['product_diameter']) else 0.0
         thickness = float(row['thickness']) if 'thickness' in row and not pd.isna(row['thickness']) else 0.0
         length = float(row['length']) if not pd.isna(row['length']) else 0.0
+        uom_id = int(row['uom_id']) if 'uom_id' in row and not pd.isna(row['uom_id']) else False
+        uom_po_id = int(row['uom_po_id']) if 'uom_po_id' in row and not pd.isna(row['uom_po_id']) else False
 
         dimensions_by_code[code] = {
             'name': name,
             'product_diameter': diameter,
             'product_thickness': thickness,
-            'product_length': length
+            'product_length': length,
+            'uom_id': uom_id,
+            'uom_po_id': uom_po_id
         }
 
         # 🔄 Mise à jour si produit existe
         existing = env['product.product'].search([('default_code', '=', code)], limit=1)
         if existing:
             print(f"✏️ Produit existant : {code} → mise à jour")
-            existing.write({
+            update_vals = {
                 'name': name,
                 'product_diameter': diameter,
                 'product_thickness': thickness,
                 'product_length': length,
-                'dimensional_uom_id': ml_uom.id
+                'dimensional_uom_id': uom_id or existing.dimensional_uom_id.id
+            }
+            if uom_id:
+                update_vals['uom_id'] = uom_id
+            if uom_po_id:
+                update_vals['uom_po_id'] = uom_po_id
+
+            existing.write(update_vals)
+            existing.product_tmpl_id.write({
+                'uom_id': uom_id or existing.product_tmpl_id.uom_id.id,
+                'uom_po_id': uom_po_id or existing.product_tmpl_id.uom_po_id.id
             })
             continue
 
@@ -104,7 +118,7 @@ try:
 
         value_ids.append((code, value.id))
 
-    # 🪩 Lien des valeurs au template
+    # 🧹 Association des valeurs au template
     if value_ids:
         print("🧹 Association des nouvelles valeurs au template...")
         template.write({
@@ -126,13 +140,23 @@ try:
         )
         if matched_code and matched_code in dimensions_by_code:
             dims = dimensions_by_code[matched_code]
-            variant.write({
+            update_vals = {
                 'default_code': matched_code,
                 'name': dims['name'],
                 'product_diameter': dims['product_diameter'],
                 'product_thickness': dims['product_thickness'],
                 'product_length': dims['product_length'],
-                'dimensional_uom_id': ml_uom.id
+                'dimensional_uom_id': dims['uom_id']
+            }
+            if dims['uom_id']:
+                update_vals['uom_id'] = dims['uom_id']
+            if dims['uom_po_id']:
+                update_vals['uom_po_id'] = dims['uom_po_id']
+
+            variant.write(update_vals)
+            variant.product_tmpl_id.write({
+                'uom_id': dims['uom_id'],
+                'uom_po_id': dims['uom_po_id']
             })
             print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
 
