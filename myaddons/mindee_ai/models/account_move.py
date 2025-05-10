@@ -118,7 +118,7 @@ class AccountMove(models.Model):
                             # Détermination de la cible pour supplierinfo : produit OU template
                             supplierinfo_domain = [('partner_id', '=', partner_id.id)]
                             supplierinfo_vals = {
-                                'name': partner_id.id,
+                                'partner_id': partner_id.id,
                                 'min_qty': 1,
                                 'price': unit_price,
                                 'product_code': product_code or product_id.default_code,
@@ -138,10 +138,10 @@ class AccountMove(models.Model):
 
                             if supplierinfo:
                                 supplierinfo.write(supplierinfo_vals)
-                                _logger.info(f"Fournisseur mis à jour pour {description} et {partner_id.product_name}")
+                                _logger.info(f"Fournisseur mis à jour pour {description} et {partner_id.name}")
                             else:
                                 self.env['product.supplierinfo'].create(supplierinfo_vals)
-                                _logger.info(f"Fournisseur ajouté pour {description} et {partner_id.product_name}")
+                                _logger.info(f"Fournisseur ajouté pour {description} et {partner_id.name}")
 
                             has_ecopart_tax = any(tax.amount_type == 'fixed' for tax in product_id.supplier_taxes_id)
                             if has_ecopart_tax:
