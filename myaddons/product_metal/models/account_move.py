@@ -9,13 +9,13 @@ class AccountMove(models.Model):
     stock_picking_id = fields.Many2one('stock.picking', string="Bon de réception lié")
 
    def action_create_stock_picking(self):
-    StockPicking = self.env['stock.picking']
-    StockMove = self.env['stock.move']
-    Location = self.env.ref('stock.stock_location_suppliers')
+       StockPicking = self.env['stock.picking']
+       StockMove = self.env['stock.move']
+       Location = self.env.ref('stock.stock_location_suppliers')
 
-    for move in self:
-        if move.stock_picking_id:
-            continue
+       for move in self:
+           if move.stock_picking_id:
+               continue
 
         # 🛠 Corrige les produits consu + is_storable → type = 'product'
         corrections = 0
