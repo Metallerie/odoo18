@@ -2,7 +2,7 @@ from odoo import models, fields, api
 import logging
 
 _logger = logging.getLogger(__name__)
-
+_logger.info()
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
