@@ -30,7 +30,7 @@ try:
     csv_filename = input("\n📄 Copiez-collez le nom du fichier CSV à importer : ").strip()
     CSV_PATH = os.path.join(CSV_DIR, csv_filename)
 
-    # 💼 Liste des produits dans la catégorie ID 2
+    # 💼 Liste des produits dans la catégorie ID 6
     products = env['product.template'].search([('categ_id', '=', 6)])
     if not products:
         raise Exception("❌ Aucun produit trouvé dans la catégorie 'Métal au mètre'.")
@@ -44,19 +44,16 @@ try:
     if not template or not template.exists():
         raise Exception("❌ Template introuvable.")
 
-    # 🔍 Attribut dynamique
-    attribute_name = f"Dimensions {template.name}"
-    attribute = env['product.attribute'].search([('name', '=', attribute_name)], limit=1)
-    if not attribute:
-        attribute = env['product.attribute'].create({
-            'name': attribute_name,
-            'create_variant': 'always'
-        })
+    # 🔍 Liste des attributs disponibles
+    all_attributes = env['product.attribute'].search([])
+    print("\n🎛️ Attributs disponibles dans Odoo :")
+    for attr in all_attributes:
+        print(f" - ID: {attr.id} | Nom: {attr.name}")
 
-    # ⚠️ Mode de livraison activé ?
-    delivery_enabled = env['ir.config_parameter'].sudo().get_param('stock.use_existing_lots')
-    if delivery_enabled is None:
-        print("⚠️ Impossible de vérifier si le mode de livraison est activé.")
+    attribute_id = int(input("\n🧩 Entre l'ID de l'attribut à utiliser pour créer les variantes : "))
+    attribute = env['product.attribute'].browse(attribute_id)
+    if not attribute or not attribute.exists():
+        raise Exception("❌ Attribut introuvable.")
 
     # 🔖 Lecture CSV
     df = pd.read_csv(CSV_PATH)
@@ -72,7 +69,6 @@ try:
         height = float(row['height']) if not pd.isna(row['height']) else 0.0
         thickness = float(row['thickness']) if 'thickness' in row and not pd.isna(row['thickness']) else 0.0
 
-
         dimensions_by_code[code] = {
             'name': name,
             'product_diameter': diameter,
@@ -80,27 +76,13 @@ try:
             'product_width': width,
             'product_height': height,
             'product_thickness': thickness,
-
         }
 
         # 🔄 Mise à jour si produit existe
         existing = env['product.product'].search([('default_code', '=', code)], limit=1)
         if existing:
             print(f"✏️ Produit existant : {code} → mise à jour")
-            update_vals = {
-                'name': name,
-                'product_diameter': diameter,
-                'product_thickness': thickness,
-                'product_length': length,
-                'product_width': width,
-                'product_height': height,
-                'product_thickness': thickness,
-
-            }
-           
-
-            existing.write(update_vals)
-           
+            existing.write(dimensions_by_code[code])
             continue
 
         # ➕ Création valeur d'attribut si nécessaire
@@ -117,20 +99,21 @@ try:
 
         value_ids.append((code, value.id))
 
-    # 🧹 Association des valeurs au template
+    # 🧹 Mise à jour ou ajout de la ligne d'attribut proprement
     if value_ids:
-        print("🧹 Association des nouvelles valeurs au template...")
-        template.write({
-            'attribute_line_ids': [(0, 0, {
-                'attribute_id': attribute.id,
-                'value_ids': [(6, 0, [v[1] for v in value_ids])],
-            })]
-        })
+        value_id_list = [v[1] for v in value_ids]
+        line = template.attribute_line_ids.filtered(lambda l: l.attribute_id.id == attribute.id)
+        if line:
+            line.write({'value_ids': [(6, 0, value_id_list)]})
+        else:
+            template.write({
+                'attribute_line_ids': [(0, 0, {
+                    'attribute_id': attribute.id,
+                    'value_ids': [(6, 0, value_id_list)]
+                })]
+            })
 
-    # 💫 Création des variantes
-    template._create_variant_ids()
-
-    # 🔄 Mise à jour des nouvelles variantes
+    # 🔄 Mise à jour des variantes
     for variant in template.product_variant_ids:
         matched_code = next(
             (code for code, val_id in value_ids
@@ -138,20 +121,11 @@ try:
             None
         )
         if matched_code and matched_code in dimensions_by_code:
-            dims = dimensions_by_code[matched_code]
-            update_vals = {
+            variant.write({
                 'default_code': matched_code,
-                'name': dims['name'],
-                'product_diameter': dims['product_diameter'],
-                'product_length': dims['product_length'],
-                'product_width': dims['product_width'],
-                'product_height': dims['product_height'],
-                'product_thickness': dims['product_thickness'],
-            }
-            
-            variant.write(update_vals)
-            
-            print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
+                **dimensions_by_code[matched_code]
+            })
+            print(f"✅ Variante mise à jour : {variant.name} → {matched_code}")
 
     cr.commit()
     print("\n✅ Import terminé avec succès !")
