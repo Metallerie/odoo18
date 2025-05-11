@@ -97,7 +97,7 @@ try:
                 'product_thickness': thickness,
 
             }
-           id
+           
 
             existing.write(update_vals)
            
