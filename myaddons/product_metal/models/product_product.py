@@ -13,7 +13,7 @@ class ProductProduct(models.Model):
     product_width = fields.Float("width", digits=(16, 6))
     product_thickness = fields.Float("thickness", digits=(16, 6))
     product_diameter = fields.Float("diameter", digits=(16, 6))
- 
+    product_kg_ml = fields.Float(string="Poids (kg) par mètre linéaire", digits='Product Unit of Measure')
   
     
     
