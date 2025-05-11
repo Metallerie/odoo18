@@ -47,7 +47,7 @@ try:
             product_uom = line.product_id.uom_id
             if line.product_uom and line.product_uom.category_id != product_uom.category_id:
                 print(f"   ⚠️ Conflit d'UoM sur la ligne '{line.name}': {line.product_uom.name} ≠ {product_uom.name}")
-                line.write({'product_uom': product_uom.id})
+                line.write({'product_uom': 29})
                 print("   ✅ UoM corrigée.")
        
         order.write({'state': 'draft'})
