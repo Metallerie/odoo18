@@ -1,4 +1,4 @@
-default_code,name,length,width,height,thickness,uom_id,uom_po_id
+default_code,name,diameter,length,width,height,thickness,uom_id,uom_po_id
 "70809","15x15 mm x 3 mm",6.2,0.015,0.015,0.003,29,30
 "70811","20x20 mm x 3 mm",6.2,0.020,0.020,0.003,29,30
 "70812","25x25 mm x 3 mm",6.2,0.025,0.025,0.003,29,30
