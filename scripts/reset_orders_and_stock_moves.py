@@ -44,11 +44,15 @@ try:
 
         order.action_cancel()
         for line in order.order_line:
+            if line.product_uom and line.product_id.uom_id:
+            line_uom = line.product_uom
             product_uom = line.product_id.uom_id
-            if line.product_uom and line.product_uom.category_id != product_uom.category_id:
-                print(f"   ⚠️ Conflit d'UoM sur la ligne '{line.name}': {line.product_uom.name} ≠ {product_uom.name}")
-                line.write({'product_uom': 29})
-                print("   ✅ UoM corrigée.")
+            if line_uom.category_id.id != product_uom.category_id.id:
+                print(f"   ❌ Conflit UoM sur la ligne:")
+                print(f"      - Produit     : {line.product_id.display_name}")
+                print(f"      - Désignation : {line.name}")
+                print(f"      - UoM Ligne   : {line_uom.name} (Catégorie: {line_uom.category_id.name})")
+                print(f"      - UoM Produit : {product_uom.name} (Catégorie: {product_uom.category_id.name})")
        
         order.write({'state': 'draft'})
         print("   - Repassée en brouillon.")
