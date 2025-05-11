@@ -77,8 +77,8 @@ try:
             'name': name,
             'product_diameter': diameter,
             'product_length': length,
-            'product_length': width,
-            'product_length': height,
+            'product_width': width,
+            'product_height': height,
             'product_thickness': thickness,
 
         }
