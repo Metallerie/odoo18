@@ -121,11 +121,12 @@ try:
              if val_id in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id').ids),
             None
         )
-        if matched_code and matched_code in dimensions_by_code:
-            variant.write({
-                'default_code': matched_code,
-                **dimensions_by_code[matched_code]
-            })
+    new_name = f"{template.name} {dimensions_by_code[matched_code]['name']}"
+    variant.write({
+        'default_code': matched_code,
+        'name': new_name,
+        **dimensions_by_code[matched_code]
+        })
             print(f"✅ Variante mise à jour : {variant.name} → {matched_code}")
 
     cr.commit()
