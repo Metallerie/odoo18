@@ -215,12 +215,18 @@ def calculate_and_update_prices():
     for variant in variants:
         if profile_choice == "1":
             cost_price, sale_price = calc_function(height, width, thickness, reference_price, variant)
+            poids_par_m = 0.000  # Optionnel, à définir pour cohérence
+
         elif profile_choice == "2":
-            cost_price, sale_price, poids_par_m = calc_function(width_ref, height_ref, poids_par_barre, prix_kg, variant)
+            cost_price, sale_price, poids_par_m = calc_function(width_ref, height_ref, poids_total_kg, nb_barres, prix_kg, variant)
+
         elif profile_choice == "3":
-             cost_price, sale_price, poids_par_m = calc_function(width_ref, height_ref, poids_total_kg, nb_barres, prix_kg, variant)
+            cost_price, sale_price, poids_par_m = calc_function(width_ref, height_ref, thickness_ref, poids_total_kg, nb_barres, prix_kg, variant)
+
         elif profile_choice == "4":
-             cost_price, sale_price = calc_function(d_ref_mm, t_ref_mm, prix_ref_m, variant)
+            cost_price, sale_price = calc_function(d_ref_mm, t_ref_mm, prix_ref_m, variant)
+            poids_par_m = 0.000  # idem, pour éviter plantage plus bas
+
 
         if cost_price is None:
             print(f"[!] Pas de mise à jour pour {variant.display_name}")
