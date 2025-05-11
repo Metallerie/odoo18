@@ -23,6 +23,7 @@ class AccountMove(models.Model):
                 'location_id': Location.id,
                 'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
                 'origin': move.name,
+                'move_type': 'direct',  # ✅ Ajoute ça si nécessaire
             })
 
             for line in move.invoice_line_ids:
