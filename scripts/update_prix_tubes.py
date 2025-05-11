@@ -229,7 +229,7 @@ def calculate_and_update_prices():
 
         variant.write({
             'standard_price': cost_price,
-            'lst_price': sale_price
+            'lst_price': sale_price,
             'product_kg_ml': poids_par_m
 
         })
