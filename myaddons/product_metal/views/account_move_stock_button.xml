@@ -1,16 +1,25 @@
 <odoo>
-<record id="view_invoice_form_stock_move_button" model="ir.ui.view">
-    <field name="name">invoice.form.account.stock_move</field>
+<record id="view_invoice_form_stock_buttons" model="ir.ui.view">
+    <field name="name">invoice.form.stock.picking.buttons</field>
     <field name="model">account.move</field>
     <field name="inherit_id" ref="account.view_move_form"/>
     <field name="arch" type="xml">
         <xpath expr="//header" position="inside">
-            <button name="action_update_stock_from_invoice"
-                    string="Mise à jour du stock"
+            <!-- Bouton pour créer le picking -->
+            <button name="action_create_stock_picking"
+                    string="Créer bon de réception"
                     type="object"
                     class="btn btn-primary"
-                    decoration-bf="state != 'posted'"/>
+                    decoration-bf="state != 'posted' or stock_picking_id"/>
+
+            <!-- Bouton pour valider le picking -->
+            <button name="action_validate_stock_picking"
+                    string="Valider bon de réception"
+                    type="object"
+                    class="btn btn-success"
+                    decoration-bf="state != 'posted' or not stock_picking_id or stock_picking_id.state != 'draft'"/>
         </xpath>
     </field>
 </record>
+
 </odoo>
