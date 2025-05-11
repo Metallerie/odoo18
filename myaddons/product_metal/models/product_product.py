@@ -14,7 +14,7 @@ class ProductProduct(models.Model):
     product_thickness = fields.Float("thickness", digits=(16, 6))
     product_diameter = fields.Float("diameter", digits=(16, 6))
  
-    )
+  
     
     
        
