@@ -90,7 +90,7 @@ try:
                 'product_thickness': thickness,
             }
          
-          
+            existing.write(update_vals)  # ← ajoute cette ligne
             continue
 
         # ➕ Création valeur d'attribut si nécessaire
