@@ -4,7 +4,13 @@ from odoo import api, fields, models, tools
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
+    product_kg_ml = fields.Float(
+        related="product_variant_ids.product_kg_ml",
+        string="Poids (kg) par mètre linéaire",
+        digits='Product Unit of Measure'
+        readonly=False,
 
+    )
 
     # Précision personnalisée pour l'unité de mesure de cette variante de produit
     uom_precision = fields.Integer(
