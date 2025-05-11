@@ -81,7 +81,7 @@ def calculate_price_tube_section(height, width, thickness, reference_price, vari
     sale_price = cost_price * 2.5
     return round(cost_price, 2), round(sale_price, 2)
 
-def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg, variant)
+def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg, variant):
         w = safe_float(variant.product_width)
         h = safe_float(variant.product_height)
 
