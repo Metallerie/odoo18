@@ -17,7 +17,7 @@ class AccountMove(models.Model):
             if move.stock_picking_id:
                 continue
 
-            # 🛠 Corrige les produits consu + is_storable → type = 'product'
+            # 🛠 Corrige les produits consu + is_storable → type = 'consu'
             corrections = 0
             for line in move.invoice_line_ids:
                 tmpl = line.product_id.product_tmpl_id
