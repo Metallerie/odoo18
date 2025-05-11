@@ -45,8 +45,8 @@ try:
         order.action_cancel()
         for line in order.order_line:
             if line.product_uom and line.product_id.uom_id:
-            line_uom = line.product_uom
-            product_uom = line.product_id.uom_id
+                line_uom = line.product_uom
+                product_uom = line.product_id.uom_id
             if line_uom.category_id.id != product_uom.category_id.id:
                 print(f"   ❌ Conflit UoM sur la ligne:")
                 print(f"      - Produit     : {line.product_id.display_name}")
