@@ -30,7 +30,7 @@ try:
     csv_filename = input("\n📄 Copiez-collez le nom du fichier CSV à importer : ").strip()
     CSV_PATH = os.path.join(CSV_DIR, csv_filename)
 
-    # 💼 Liste des produits dans la catégorie ID 2
+    # 💼 Liste des produits dans la catégorie ID 6
     products = env['product.template'].search([('categ_id', '=', 6)])
     if not products:
         raise Exception("❌ Aucun produit trouvé dans la catégorie 'Métal au mètre'.")
@@ -53,11 +53,6 @@ try:
             'create_variant': 'always'
         })
 
-    # ⚠️ Mode de livraison activé ?
-    delivery_enabled = env['ir.config_parameter'].sudo().get_param('stock.use_existing_lots')
-    if delivery_enabled is None:
-        print("⚠️ Impossible de vérifier si le mode de livraison est activé.")
-
     # 🔖 Lecture CSV
     df = pd.read_csv(CSV_PATH)
     value_ids = []
@@ -66,17 +61,21 @@ try:
     for index, row in df.iterrows():
         code = str(row['default_code'])
         name = row['name'].strip()
-        diameter = float(row['product_diameter']) if 'product_diameter' in row and not pd.isna(row['product_diameter']) else 0.0
-        thickness = float(row['thickness']) if 'thickness' in row and not pd.isna(row['thickness']) else 0.0
-        length = float(row['length']) if 'length' in row and not pd.isna(row['length']) else 0.0
-        uom_id = int(row['uom_id']) if 'uom_id' in row and not pd.isna(row['uom_id']) else False
-        uom_po_id = int(row['uom_po_id']) if 'uom_po_id' in row and not pd.isna(row['uom_po_id']) else False
+        diameter = float(row['diameter']) if 'length' in df.columns and not pd.isna(row['diameter']) else 0.0
+        length = float(row['length']) if 'length' in df.columns and not pd.isna(row['length']) else 0.0
+        width = float(row['width']) if 'width' in df.columns and not pd.isna(row['width']) else 0.0
+        height = float(row['height']) if 'height' in df.columns and not pd.isna(row['height']) else 0.0
+        thickness = float(row['thickness']) if 'thickness' in df.columns and not pd.isna(row['thickness']) else 0.0
+        uom_id = int(row['uom_id']) if 'uom_id' in df.columns and not pd.isna(row['uom_id']) else False
+        uom_po_id = int(row['uom_po_id']) if 'uom_po_id' in df.columns and not pd.isna(row['uom_po_id']) else False
 
         dimensions_by_code[code] = {
             'name': name,
             'product_diameter': diameter,
-            'product_thickness': thickness,
             'product_length': length,
+            'product_width': width,
+            'product_height': height,
+            'product_thickness': thickness,
             'uom_id': uom_id,
             'uom_po_id': uom_po_id
         }
@@ -88,9 +87,10 @@ try:
             update_vals = {
                 'name': name,
                 'product_diameter': diameter,
-                'product_thickness': thickness,
                 'product_length': length,
-                'dimensional_uom_id': uom_id or existing.dimensional_uom_id.id
+                'product_width': width,
+                'product_height': height,
+                'product_thickness': thickness,
             }
             if uom_id:
                 update_vals['uom_id'] = uom_id
@@ -144,9 +144,10 @@ try:
                 'default_code': matched_code,
                 'name': dims['name'],
                 'product_diameter': dims['product_diameter'],
-                'product_thickness': dims['product_thickness'],
                 'product_length': dims['product_length'],
-                'dimensional_uom_id': dims['uom_id']
+                'product_width': dims['product_width'],
+                'product_height': dims['product_height'],
+                'product_thickness': dims['product_thickness'],
             }
             if dims['uom_id']:
                 update_vals['uom_id'] = dims['uom_id']
