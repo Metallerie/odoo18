@@ -1,2 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_product_product,access_product_product,model_product_product,,1,1,1,1
+access_account_move_custom,access_account_move_custom,model_account_move,,1,1,0,0
+access_stock_picking_custom,access_stock_picking_custom,model_stock_picking,,1,1,1,0
+access_stock_move_custom,access_stock_move_custom,model_stock_move,,1,1,1,0
+
+
