@@ -112,9 +112,9 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_kg_par_barre, prix_kg,
 
         return round(cost_price, 2), round(sale_price, 2)
 
-    except Exception as e:
-        print(f"[X] Erreur de calcul fer plat pour {variant.display_name} : {e}")
-        return None, None
+        except Exception as e:
+            print(f"[X] Erreur de calcul fer plat pour {variant.display_name} : {e}")
+            return None, None
 
 # Fonction pour calculer le prix des tubes ronds
 def calculate_price_tube_rond(d_ref_mm, t_ref_mm, prix_ref_m, variant):
