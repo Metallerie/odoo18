@@ -100,7 +100,7 @@ def calculate_price_fer_plat(width_ref, height_ref, poids_total_kg, nb_barres, p
             print("[!] Surface de référence nulle, vérifie tes valeurs.")
             return None, None
 
-        poids_par_m_ref = poids_kg_par_barre / 6.2
+        poids_par_m_ref = poids_total_kg / (nb_barres * 6.2)
         prix_par_m_ref = poids_par_m_ref * prix_kg
 
         ratio_surface = surface_var_m2 / surface_ref_m2
