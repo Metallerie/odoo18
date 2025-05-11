@@ -35,7 +35,8 @@ try:
                 print(f"   ⚠️ Échec d'annulation picking : {str(e)}")
 
         # Supprimer les paiements en espèces uniquement
-        cash_payments = order.statement_ids.filtered(lambda s: s.journal_id.name.lower() in ['cash', 'espèces', 'especes'])
+        payments = env['pos.payment'].search([('pos_order_id', '=', order.id)])
+        cash_payments = payments.filtered(lambda p: p.journal_id.name.lower() in ['cash', 'espèces', 'especes'])
         for payment in cash_payments:
             try:
                 payment.unlink()
