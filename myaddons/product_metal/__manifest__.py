@@ -6,8 +6,10 @@
     "author": "Modifié par franck et Gpt Regroupement des fonctionalités de la métallerie de corneilla del vercol ",
     "license": "AGPL-3",
     "website": "https://www.metallerie.xyz",
-    "depends": ["base","product","website_sale","uom"],
-    "data": ["security/ir.model.access.csv", "views/product_view.xml"],
+    "depends": ["base","product","website_sale","uom","stock"],
+    "data": ["security/ir.model.access.csv",
+             'views/account_move_stock_button.xml',
+             "views/product_view.xml"],
     "installable": True,
     "images": ["static/description/icon.png"],
     'assets': {
