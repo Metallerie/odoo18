@@ -127,7 +127,7 @@ try:
         'name': new_name,
         **dimensions_by_code[matched_code]
         })
-            print(f"✅ Variante mise à jour : {variant.name} → {matched_code}")
+        print(f"✅ Variante mise à jour : {variant.name} → {matched_code}")
 
     cr.commit()
     print("\n✅ Import terminé avec succès !")
