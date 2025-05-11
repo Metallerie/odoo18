@@ -9,7 +9,6 @@
             <xpath expr="//group[@name='group_lots_and_weight']" position="after">
                 <group name="dimensions" string="Dimensions">
                     <field name="uom_precision" string="precision décimal du panier" />
-                    <field name="dimensional_uom_id" string="unité de mesure" />
                     <field name="product_length" string="Length" />
                     <field name="product_height" string="Height" />
                     <field name="product_width" string="Width" />
@@ -33,7 +32,6 @@
                     name="dimensions"
                     invisible="product_variant_count &gt; 1">
                     <field name="uom_precision" string="precision décimal du panier" />
-                    <field name="dimensional_uom_id" string="unité de mesure" />
                     <field name="product_length" string="Length" />
                     <field name="product_height" string="Height" />
                     <field name="product_width" string="Width" />
