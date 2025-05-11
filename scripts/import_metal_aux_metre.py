@@ -66,9 +66,7 @@ try:
         width = float(row['width']) if 'width' in df.columns and not pd.isna(row['width']) else 0.0
         height = float(row['height']) if 'height' in df.columns and not pd.isna(row['height']) else 0.0
         thickness = float(row['thickness']) if 'thickness' in df.columns and not pd.isna(row['thickness']) else 0.0
-        uom_id = int(row['uom_id']) if 'uom_id' in df.columns and not pd.isna(row['uom_id']) else False
-        uom_po_id = int(row['uom_po_id']) if 'uom_po_id' in df.columns and not pd.isna(row['uom_po_id']) else False
-
+       
         dimensions_by_code[code] = {
             'name': name,
             'product_diameter': diameter,
@@ -76,8 +74,7 @@ try:
             'product_width': width,
             'product_height': height,
             'product_thickness': thickness,
-            'uom_id': uom_id,
-            'uom_po_id': uom_po_id
+         
         }
 
         # 🔄 Mise à jour si produit existe
@@ -92,16 +89,8 @@ try:
                 'product_height': height,
                 'product_thickness': thickness,
             }
-            if uom_id:
-                update_vals['uom_id'] = uom_id
-            if uom_po_id:
-                update_vals['uom_po_id'] = uom_po_id
-
-            existing.write(update_vals)
-            existing.product_tmpl_id.write({
-                'uom_id': uom_id or existing.product_tmpl_id.uom_id.id,
-                'uom_po_id': uom_po_id or existing.product_tmpl_id.uom_po_id.id
-            })
+         
+          
             continue
 
         # ➕ Création valeur d'attribut si nécessaire
@@ -149,16 +138,10 @@ try:
                 'product_height': dims['product_height'],
                 'product_thickness': dims['product_thickness'],
             }
-            if dims['uom_id']:
-                update_vals['uom_id'] = dims['uom_id']
-            if dims['uom_po_id']:
-                update_vals['uom_po_id'] = dims['uom_po_id']
+           
 
             variant.write(update_vals)
-            variant.product_tmpl_id.write({
-                'uom_id': dims['uom_id'],
-                'uom_po_id': dims['uom_po_id']
-            })
+         
             print(f"✅ Variante créée : {variant.name} → {variant.default_code}")
 
     cr.commit()
