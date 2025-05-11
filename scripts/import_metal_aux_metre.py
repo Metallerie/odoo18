@@ -121,6 +121,9 @@ try:
              if val_id in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id').ids),
             None
         )
+    dims = dimensions_by_code[matched_code].copy()
+    dims.pop('name', None)  # ⛔ empêche l’écrasement du nom du template
+
     new_name = f"{template.name} {dimensions_by_code[matched_code]['name']}"
     variant.write({
         'default_code': matched_code,
