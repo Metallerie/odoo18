@@ -30,15 +30,16 @@ try:
     csv_filename = input("\n📄 Copiez-collez le nom du fichier CSV à importer : ").strip()
     CSV_PATH = os.path.join(CSV_DIR, csv_filename)
 
-    # 💼 Liste des produits dans la catégorie ID 6
+    # 💼 Liste des produits dans la catégorie ID 6 (Métal au mètre)
     products = env['product.template'].search([('categ_id', '=', 6)])
+
     if not products:
         raise Exception("❌ Aucun produit trouvé dans la catégorie 'Métal au mètre'.")
 
-    print("\n📊 Produits disponibles dans 'Métal au mètre' :")
+    print("\n📊 Produits (templates) dans la catégorie 'Métal au mètre' :")
     for p in products:
         print(f" - ID: {p.id} | Nom: {p.name}")
-
+        
     template_id = int(input("\n🔍 Copiez-collez l'ID du produit principal : "))
     template = env['product.template'].browse(template_id)
     if not template or not template.exists():
