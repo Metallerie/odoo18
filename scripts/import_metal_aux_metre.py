@@ -15,7 +15,7 @@ odoo.service.server.load_server_wide_modules()
 db = sql_db.db_connect('metal-prod-18')
 cr = db.cursor()
 env = api.Environment(cr, 1, {})
-
+env.context = dict(env.context, lang='fr_FR')  # 🟢 force la langue française
 try:
     # 📂 Liste des fichiers CSV dans le dossier
     CSV_DIR = '/data/odoo/metal-odoo18-p8179/csv'
