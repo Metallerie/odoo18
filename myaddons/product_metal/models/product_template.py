@@ -7,7 +7,7 @@ class ProductTemplate(models.Model):
     product_kg_ml = fields.Float(
         related="product_variant_ids.product_kg_ml",
         string="Poids (kg) par mètre linéaire",
-        digits='Product Unit of Measure'
+        digits='Product Unit of Measure',
         readonly=False,
 
     )
