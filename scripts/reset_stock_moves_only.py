@@ -28,7 +28,7 @@ try:
 
         # Annuler le picking si encore actif
         if picking and picking.state == 'done':
-            picking.button_cancel()
+            picking.action_cancel()
             print(f"   - Picking annulé : {picking.name}")
 
         # Repasser le move en draft
