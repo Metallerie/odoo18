@@ -35,14 +35,6 @@ try:
 
     for order in orders:
         print(f"\n⛔ Annulation de la commande : {order.name}")
-
-        # Annulation des livraisons associées
-        pickings = order.picking_ids.filtered(lambda p: p.state not in ['done', 'cancel'])
-        for picking in pickings:
-            picking.action_cancel()
-            print(f"   - Livraison annulée : {picking.name}")
-
-        order.action_cancel()
         for line in order.order_line:
             if line.product_uom and line.product_id.uom_id:
                 line_uom = line.product_uom
@@ -53,6 +45,15 @@ try:
                 print(f"      - Désignation : {line.name}")
                 print(f"      - UoM Ligne   : {line_uom.name} (Catégorie: {line_uom.category_id.name})")
                 print(f"      - UoM Produit : {product_uom.name} (Catégorie: {product_uom.category_id.name})")
+
+
+        # Annulation des livraisons associées
+        pickings = order.picking_ids.filtered(lambda p: p.state not in ['done', 'cancel'])
+        for picking in pickings:
+            picking.action_cancel()
+            print(f"   - Livraison annulée : {picking.name}")
+
+        order.action_cancel()
        
         order.write({'state': 'draft'})
         print("   - Repassée en brouillon.")
