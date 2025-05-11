@@ -5,44 +5,47 @@ _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    stock_picking_id = fields.Many2one('stock.picking', string="Bon de réception lié")
+    
+    def action_create_stock_picking(self):
+    StockPicking = self.env['stock.picking']
+    StockMove = self.env['stock.move']
+    Location = self.env.ref('stock.stock_location_suppliers')
 
-    def action_update_stock_from_invoice(self):
+    for move in self:
+        if move.stock_picking_id:
+            continue
+
+        picking = StockPicking.create({
+            'partner_id': move.partner_id.id,
+            'picking_type_id': self.env.ref('stock.picking_type_in').id,
+            'location_id': Location.id,
+            'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
+            'origin': move.name,
+        })
+
+        for line in move.invoice_line_ids:
+            product = line.product_id
+            if product and product.type == 'product':
+                StockMove.create({
+                    'product_id': product.id,
+                    'name': f"{move.name} - {product.display_name}",
+                    'product_uom_qty': line.quantity,
+                    'product_uom': product.uom_po_id.id,
+                    'picking_id': picking.id,
+                    'location_id': Location.id,
+                    'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
+                })
+
+        move.stock_picking_id = picking.id
+        move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> créé.")
+    return True
+    
+    def action_validate_stock_picking(self):
         for move in self:
-            if move.move_type != 'in_invoice' or move.state != 'posted':
-                continue
-
-            for line in move.invoice_line_ids:
-                product = line.product_id
-                if not product or product.type != 'product':
-                    continue
-
-                qty_po = line.quantity
-                uom_po = product.uom_po_id
-                uom_stock = product.uom_id
-
-                try:
-                    if uom_po.category_id == uom_stock.category_id:
-                        qty_stock = uom_po._compute_quantity(qty_po, uom_stock)
-                    else:
-                        uom_ref = product.uom_id.name.upper()
-                        if uom_ref in ('KG', 'KILOGRAMME'):
-                            qty_stock = qty_po * product.product_kg_ml
-                        elif uom_ref in ('ML', 'MÈTRE', 'M'):
-                            if product.product_kg_ml > 0:
-                                qty_stock = qty_po / product.product_kg_ml
-                            else:
-                                _logger.warning(f"⚠️ {product.display_name} : product_kg_ml manquant.")
-                                continue
-                        else:
-                            _logger.warning(f"⚠️ Conversion inconnue pour {product.display_name} (UoM: {uom_ref})")
-                            continue
-
-                    location = move.company_id.partner_id.property_stock_supplier
-                    self.env['stock.quant']._update_available_quantity(product, location, qty_stock)
-                    _logger.info(f"✅ {product.display_name} ➝ +{qty_stock:.3f} {uom_stock.name}")
-
-                except Exception as e:
-                    _logger.error(f"❌ Erreur sur {product.display_name} : {str(e)}")
-
-            move.message_post(body="📦 Mise à jour du stock effectuée à partir de la facture validée.")
-        return True
+            if move.stock_picking_id and move.stock_picking_id.state == 'draft':
+                move.stock_picking_id.action_confirm()
+                move.stock_picking_id.action_assign()
+                move.stock_picking_id.button_validate()
+                move.message_post(body=f"✅ Bon de réception <b>{move.stock_picking_id.name}</b> validé.")
+    return True
