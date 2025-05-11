@@ -17,6 +17,17 @@ env = api.Environment(cr, 1, {})
 
 try:
     print("🔄 Démarrage de la remise à zéro des commandes et mouvements de stock...")
+    # === 🔁 RAZ des commandes clients ===
+
+    # 🔎 Affichage des commandes existantes
+    all_orders = env['sale.order'].search([])
+    print(f"\n📋 Commandes présentes dans la base : {len(all_orders)}")
+    for o in all_orders:
+        print(f" - {o.name} | État : {o.state} | Date : {o.date_order}")
+
+    orders = env['sale.order'].search([('state', '=', 'sale')])
+    print(f"\n🧾 {len(orders)} commandes confirmées à traiter...")
+    
 
     # === 🔁 RAZ des commandes clients ===
     orders = env['sale.order'].search([('state', '=', 'sale')])
