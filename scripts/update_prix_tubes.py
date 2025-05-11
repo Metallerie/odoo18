@@ -37,9 +37,9 @@ def calculate_price_corniere(width_ref, height_ref, thickness_ref, poids_total_k
         if not all([h, w]):
             print(f"[!] Dimensions manquantes pour {variant.display_name}, ignoré.")
             return None, None
-
-        poids_par_m = poids_total_kg / (nb_barres * 6.2)
-        prix_par_m = poids_par_m * prix_kg
+        
+        poids_par_m_ref = poids_total_kg / (nb_barres * 6.2)
+        prix_par_m = poids_par_m_ref * prix_kg
 
         width_ref_m = width_ref / 1000
         height_ref_m = height_ref / 1000
@@ -55,6 +55,8 @@ def calculate_price_corniere(width_ref, height_ref, thickness_ref, poids_total_k
         ratio_surface = surface_var_m2 / surface_ref_m2
         cost_price = prix_par_m * ratio_surface
         sale_price = cost_price * 2.5
+        poids_par_m = poids_par_m_ref  * ratio_surface
+
 
         print(f"{variant.default_code} | surface={int(surface_var_m2 * 1_000_000)} mm² | coûts={cost_price:.2f} € | vente={sale_price:.2f} €")
 
