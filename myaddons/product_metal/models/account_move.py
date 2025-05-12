@@ -52,13 +52,13 @@ class AccountMove(models.Model):
 
         move.stock_picking_id = picking.id
         move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> créé.")
-    return True
-
-    def action_validate_stock_picking(self):
-        for move in self:
-            if move.stock_picking_id and move.stock_picking_id.state == 'draft':
-                move.stock_picking_id.action_confirm()
-                move.stock_picking_id.action_assign()
-                move.stock_picking_id.button_validate()
-                move.message_post(body=f"✅ Bon de réception <b>{move.stock_picking_id.name}</b> validé.")
         return True
+
+        def action_validate_stock_picking(self):
+            for move in self:
+                if move.stock_picking_id and move.stock_picking_id.state == 'draft':
+                    move.stock_picking_id.action_confirm()
+                    move.stock_picking_id.action_assign()
+                    move.stock_picking_id.button_validate()
+                    move.message_post(body=f"✅ Bon de réception <b>{move.stock_picking_id.name}</b> validé.")
+            return True
