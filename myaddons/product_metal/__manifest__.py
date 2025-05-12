@@ -1,4 +1,3 @@
-
 {
     "name": "Product Métal",
     "version": "18.0.1.0.0",
@@ -15,7 +14,5 @@
     'assets': {
     'web.assets_frontend': [
         'product_metal/static/src/js/product_quantity_precision.js',
-    ],
-},
-
-}
+    ]},
+ }
