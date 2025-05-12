@@ -26,7 +26,7 @@ class AccountMove(models.Model):
 
         if corrections:
             move.message_post(body=f"🔁 {corrections} produit(s) corrigé(s) automatiquement en 'Stocké'.")
-
+        _logger.info(move.fields_get())
         # 🎯 Création du picking
         picking = StockPicking.create({
             'partner_id': move.partner_id.id,
