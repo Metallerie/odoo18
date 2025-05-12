@@ -11,7 +11,7 @@ class AccountMove(models.Model):
     def action_create_stock_picking(self):
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
-       Location = self.env.ref('stock.stock_location_suppliers')
+        Location = self.env.ref('stock.stock_location_suppliers')
 
         for move in self:
             if move.stock_picking_id:
