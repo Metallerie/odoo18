@@ -46,6 +46,10 @@ class AccountMove(models.Model):
             for line in move.invoice_line_ids:
                 product = line.product_id
                 if product and product.product_tmpl_id.type == 'product':
+                    fields_list = self.env['stock.picking'].fields_get()
+                    _logger.info("🔍 Champs stock.picking attendus : %s", list(fields_list.keys()))
+                    _logger.info("📤 picking_vals envoyés : %s", picking_vals)
+
                     StockMove.create({
                         'product_id': product.id,
                         'name': f"{move.name} - {product.display_name}",
