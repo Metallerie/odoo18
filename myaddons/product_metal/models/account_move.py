@@ -17,18 +17,18 @@ class AccountMove(models.Model):
             if move.stock_picking_id:
                 continue
 
-            # 🛠 Corrige les produits consu + is_storable → type = 'consu'
+            # 🔁 Corriger les produits consu + is_storable
             corrections = 0
             for line in move.invoice_line_ids:
                 tmpl = line.product_id.product_tmpl_id
-                if tmpl.type == 'consu' and tmpl.is_storable:
+                if tmpl.type == 'consu' and tmpl.is_storable is False:
                     tmpl.is_storable = True
                     corrections += 1
 
             if corrections:
-                move.message_post(body=f"🔁 {corrections} produit(s) corrigé(s) automatiquement en 'Stocké'.")
+                move.message_post(body=f"🔁 {corrections} produit(s) mis à jour automatiquement en 'Stocké'.")
 
-            # 🎯 Création du picking
+            # 📦 Création du picking
             picking = StockPicking.create({
                 'partner_id': move.partner_id.id,
                 'picking_type_id': self.env.ref('stock.picking_type_in').id,
@@ -52,13 +52,4 @@ class AccountMove(models.Model):
 
             move.stock_picking_id = picking.id
             move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> créé.")
-        return True
-
-    def action_validate_stock_picking(self):
-        for move in self:
-            if move.stock_picking_id and move.stock_picking_id.state == 'draft':
-                move.stock_picking_id.action_confirm()
-                move.stock_picking_id.action_assign()
-                move.stock_picking_id.button_validate()
-                move.message_post(body=f"✅ Bon de réception <b>{move.stock_picking_id.name}</b> validé.")
         return True
