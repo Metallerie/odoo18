@@ -22,7 +22,6 @@ class AccountMove(models.Model):
         for line in move.invoice_line_ids:
             tmpl = line.product_id.product_tmpl_id
             if tmpl.type == 'consu' and tmpl.is_storable:
-                tmpl.type = 'consu'
                 corrections += 1
 
         if corrections:
