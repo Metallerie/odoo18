@@ -14,7 +14,7 @@ class AccountMove(models.Model):
         Location = self.env.ref('stock.stock_location_suppliers')
 
         for move in self:
-            if move.stock_picking_id:
+            if move.stock__id:
                 continue
 
             # 🔁 Corriger les produits consu + is_storable
@@ -37,7 +37,7 @@ class AccountMove(models.Model):
             }
 
             try:
-                picking = StockPicking.create(picking_vals)
+                picking = StockPicking.with_context({}).create(picking_vals)
             except Exception as e:
                 _logger.error(f"❌ ERREUR création picking pour {move.name} : {e}")
                 _logger.error(f"🕵️ Contenu envoyé : {picking_vals}")
