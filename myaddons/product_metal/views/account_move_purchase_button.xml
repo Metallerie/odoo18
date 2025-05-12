@@ -1,0 +1,16 @@
+<odoo>
+  <record id="view_invoice_form_purchase_button" model="ir.ui.view">
+    <field name="name">invoice.form.purchase.order.button</field>
+    <field name="model">account.move</field>
+    <field name="inherit_id" ref="account.view_move_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//header" position="inside">
+        <button name="action_create_purchase_order_from_invoice"
+                type="object"
+                string="Créer bon de commande"
+                class="btn btn-secondary"
+                decoration-bf="purchase_order_id or move_type != 'in_invoice' or state != 'posted'"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
