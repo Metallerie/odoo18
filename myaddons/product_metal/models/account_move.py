@@ -14,7 +14,7 @@ class AccountMove(models.Model):
         Location = self.env.ref('stock.stock_location_suppliers')
 
         for move in self:
-            if move.stock__id:
+            if move.stock_picking_id:
                 continue
 
             # 🔁 Corriger les produits consu + is_storable
@@ -26,8 +26,9 @@ class AccountMove(models.Model):
                     corrections += 1
 
             if corrections:
-                move.message_post(body=f"🔁 {corrections} produit(s) mis à jour automatiquement en 'Stocké'.")
+                move.message_post(body=f"🔁 {corrections} produit(s) corrigé(s) automatiquement en 'Stocké'.")
 
+            # 📤 Construction des valeurs de picking
             picking_vals = {
                 'partner_id': move.partner_id.id,
                 'picking_type_id': self.env.ref('stock.picking_type_in').id,
@@ -37,19 +38,18 @@ class AccountMove(models.Model):
             }
 
             try:
+                _logger.info(f"📦 Création du picking pour facture {move.name}")
+                _logger.info(f"🧾 picking_vals transmis : {picking_vals}")
                 picking = StockPicking.with_context({}).create(picking_vals)
             except Exception as e:
-                _logger.error(f"❌ ERREUR création picking pour {move.name} : {e}")
-                _logger.error(f"🕵️ Contenu envoyé : {picking_vals}")
+                _logger.error(f"❌ Erreur lors de la création du picking : {e}")
+                _logger.error(f"💥 Valeurs envoyées : {picking_vals}")
                 raise
 
+            # 🧱 Création des mouvements
             for line in move.invoice_line_ids:
                 product = line.product_id
                 if product and product.product_tmpl_id.type == 'product':
-                    fields_list = self.env['stock.picking'].fields_get()
-                    _logger.info("🔍 Champs stock.picking attendus : %s", list(fields_list.keys()))
-                    _logger.info("📤 picking_vals envoyés : %s", picking_vals)
-
                     StockMove.create({
                         'product_id': product.id,
                         'name': f"{move.name} - {product.display_name}",
@@ -62,4 +62,13 @@ class AccountMove(models.Model):
 
             move.stock_picking_id = picking.id
             move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> créé.")
+        return True
+
+    def action_validate_stock_picking(self):
+        for move in self:
+            if move.stock_picking_id and move.stock_picking_id.state == 'draft':
+                move.stock_picking_id.action_confirm()
+                move.stock_picking_id.action_assign()
+                move.stock_picking_id.button_validate()
+                move.message_post(body=f"✅ Bon de réception <b>{move.stock_picking_id.name}</b> validé.")
         return True
