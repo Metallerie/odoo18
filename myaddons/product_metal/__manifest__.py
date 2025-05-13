@@ -12,7 +12,7 @@
     'data': [
         'views/account_move_purchase_button.xml',
         'views/product_view.xml',
-        'security/ir.model.access.csv'
+  #      'security/ir.model.access.csv'
     ],
     'installable': True,
     'images': ['static/description/icon.png'],
