@@ -13,8 +13,7 @@
       </xpath>
     </field>
   </record>
-  <odoo>
-<odoo>
+
   <record id="view_invoice_form_validate_po_and_receipt" model="ir.ui.view">
     <field name="name">invoice.form.validate.po.and.receipt</field>
     <field name="model">account.move</field>
@@ -29,8 +28,4 @@
       </xpath>
     </field>
   </record>
-</odoo>
-
-</odoo>
-
 </odoo>
