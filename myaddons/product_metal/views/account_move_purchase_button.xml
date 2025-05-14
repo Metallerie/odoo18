@@ -1,3 +1,4 @@
+<?xml version="1.0" ?>
 <odoo>
   <record id="view_invoice_form_purchase_button" model="ir.ui.view">
     <field name="name">invoice.form.purchase.order.button</field>
