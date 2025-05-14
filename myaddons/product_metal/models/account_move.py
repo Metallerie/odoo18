@@ -27,6 +27,7 @@ class AccountMove(models.Model):
             po = PurchaseOrder.create({
                 'partner_id': move.partner_id.id,
                 'origin': move.name,
+                'partner_ref': move.ref,
                 'date_order': fields.Date.today(),
             })
 
