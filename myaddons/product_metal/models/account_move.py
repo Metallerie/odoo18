@@ -65,6 +65,7 @@ class AccountMove(models.Model):
                 'location_id': self.env.ref('stock.stock_location_suppliers').id,
                 'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
                 'origin': move.name,
+                'move_type': 'direct', 
             })
 
             for line in po.order_line:
