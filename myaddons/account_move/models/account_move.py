@@ -87,6 +87,7 @@ def action_validate_purchase_and_create_receipt(self):
                 'picking_id': picking.id,
                 'location_id': self.env.ref('stock.stock_location_suppliers').id,
                 'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
+                'state': 'done',  # ou 'one' si réception en un seul lot
             })
 
         move.stock_picking_id = picking.id
