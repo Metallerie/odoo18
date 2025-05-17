@@ -2,29 +2,28 @@
 {
     'name': "account_move",
 
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
+    'summary': "Création bon de commande a partire d'une facture suivi de la validation en stock",
 
     'description': """
-Long description of module's purpose
     """,
 
-    'author': "My Company",
-    'website': "https://www.yourcompany.com",
+    'author': "My Franck Company & gpt",
+    'website': "https://www.metallerie.xyz",
 
     # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
+    # Check https://github.com/odoo/odoo/blob/18.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
-    'version': '0.1',
+    'category': 'Product',
+    'version': '18.0.1.0.0',
 
     # any module necessary for this one to work correctly
-    'depends': ['base'],
+    'depends': ['base','account','purchase','stock'],
 
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',
-        'views/views.xml',
-        'views/templates.xml',
+        'views/account_move_purchase_button.xml',
+        #'views/templates.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
