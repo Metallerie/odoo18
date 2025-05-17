@@ -91,11 +91,11 @@
     </record-->
 
     <!-- Menu : OCR Configuration Rule -->
-    <!-menuitem id="menu_ocr_rule"
+    <!--menuitem id="menu_ocr_rule"
               name="OCR Configuration Rules"
               parent="account.menu_account_supplier"
               action="action_ocr_rule"
               sequence="50"
-    /->
+    /-->
 
 </odoo>
