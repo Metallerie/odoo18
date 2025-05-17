@@ -1,4 +1,7 @@
-from odoo import api, fields, models
+# -*- coding: utf-8 -*-
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -47,15 +50,24 @@ class AccountMove(models.Model):
 
         return True
 
-    def action_validate_purchase_and_create_receipt(self):
+    def action_validate_purchase_order(self):
         for move in self:
             po = move.purchase_order_id
             if not po:
-                raise UserError("Aucun bon de commande lié à cette facture.")
+                raise UserError("❌ Aucun bon de commande lié.")
+            if po.state not in ('draft', 'sent'):
+                raise UserError("❌ Le bon de commande est déjà validé.")
+            po.with_context(move_type=False).button_confirm()
+            move.message_post(body=f"✅ Bon de commande <b>{po.name}</b> validé.")
+        return True
 
-            if po.state in ('draft', 'sent'):
-                po.with_context(move_type=False).button_confirm()
-                move.message_post(body=f"✅ Bon de commande <b>{po.name}</b> validé.")
+    def action_create_receipt_from_po(self):
+        for move in self:
+            po = move.purchase_order_id
+            if not po or po.state != 'purchase':
+                raise UserError("⚠️ Le bon de commande n'est pas validé ou introuvable.")
+            if move.stock_picking_id:
+                raise UserError("🚫 Une réception est déjà liée à cette facture.")
 
             picking = self.env['stock.picking'].create({
                 'partner_id': move.partner_id.id,
@@ -88,4 +100,6 @@ class AccountMove(models.Model):
 
             move.stock_picking_id = picking.id
             move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> généré à partir du bon de commande <b>{po.name}</b>.")
+
         return True
+
