@@ -57,7 +57,7 @@ class AccountMove(models.Model):
                 raise UserError("❌ Aucun bon de commande lié.")
             if po.state not in ('draft', 'sent'):
                 raise UserError("❌ Le bon de commande est déjà validé.")
-            po.with_context(move_type=False).button_confirm()
+            po.button_confirm()
             move.message_post(body=f"✅ Bon de commande <b>{po.name}</b> validé.")
         return True
 
