@@ -49,11 +49,11 @@ class AccountMove(models.Model):
 
         return True
     
-def action_validate_purchase_and_create_receipt(self):
-    for move in self:
-        po = move.purchase_order_id
-        if not po:
-            raise UserError("Aucun bon de commande lié à cette facture.")
+        def action_validate_purchase_and_create_receipt(self):
+            for move in self:
+                po = move.purchase_order_id
+            if not po:
+                raise UserError("Aucun bon de commande lié à cette facture.")
         
         # ✅ Corrige le contexte pour éviter l'erreur sur procurement.group.move_type
         if po.state in ('draft', 'sent'):
@@ -90,6 +90,6 @@ def action_validate_purchase_and_create_receipt(self):
                 'state': 'done',  # ou 'one' si réception en un seul lot
             })
 
-        move.stock_picking_id = picking.id
-        move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> généré à partir du bon de commande <b>{po.name}</b>.")
-    return True
+            move.stock_picking_id = picking.id
+            move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> généré à partir du bon de commande <b>{po.name}</b>.")
+        return True
