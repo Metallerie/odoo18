@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
  
-  <!--record id="view_move_line_form_inherit_unassigned" model="ir.ui.view">
+  <record id="view_move_line_form_inherit_unassigned" model="ir.ui.view">
     <field name="name">account.move.line.form.unassigned</field>
     <field name="model">account.move.line</field>
     <field name="inherit_id" ref="account.view_move_line_form" />
@@ -14,7 +14,7 @@
                 invisible="not show_assign_button"/>
       </xpath>
      </field>
-    </record-->
+    </record>
  
     <record id="view_move_form_inherit_ocr_button" model="ir.ui.view">
             <field name="name">invoice.form.inherit.account.move</field>
@@ -38,7 +38,7 @@
                 </xpath>
             </field>
         </record>
- <!--record id="view_ocr_rule_list" model="ir.ui.view">
+ <record id="view_ocr_rule_list" model="ir.ui.view">
     <field name="name">ocr.configuration.rule.list</field>
     <field name="model">ocr.configuration.rule</field>
     <field name="arch" type="xml">
@@ -52,11 +52,11 @@
             <field name="active"/>
         </list>
     </field>
-</record-->
+</record>
 
 
     <!-- Vue formulaire -->
-    <!--record id="view_ocr_rule_form" model="ir.ui.view">
+    <record id="view_ocr_rule_form" model="ir.ui.view">
         <field name="name">ocr.configuration.rule.form</field>
         <field name="model">ocr.configuration.rule</field>
         <field name="arch" type="xml">
@@ -80,22 +80,22 @@
                 </sheet>
             </form>
         </field>
-    </record-->
+    </record>
 
     <!-- Action pour afficher les règles OCR -->
-    <!--ecord id="action_ocr_rule" model="ir.actions.act_window">
+    <record id="action_ocr_rule" model="ir.actions.act_window">
         <field name="name">OCR Configuration Rules</field>
         <field name="res_model">ocr.configuration.rule</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_ocr_rule_list"/>
-    </record-->
+    </record>
 
     <!-- Menu : OCR Configuration Rule -->
-    <!--menuitem id="menu_ocr_rule"
+    <menuitem id="menu_ocr_rule"
               name="OCR Configuration Rules"
               parent="account.menu_account_supplier"
               action="action_ocr_rule"
               sequence="50"
-    /-->
+    />
 
 </odoo>
