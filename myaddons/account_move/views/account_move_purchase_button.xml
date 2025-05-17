@@ -12,7 +12,7 @@
                 string="Créer bon de commande"
                 class="btn btn-primary"
                 decoration-muted="purchase_order_id or move_type != 'in_invoice' or state != 'posted'"
-                decoration-bf="purchase_order_id or move_type != 'in_invoice' or state != 'posted" />
+                decoration-bf="purchase_order_id or move_type != 'in_invoice' or state != 'posted'" />
 
         <!-- 2️⃣ Valider bon de commande (actif seulement si PO à l’état draft) -->
         <button name="action_validate_purchase_order"
