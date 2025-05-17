@@ -7,7 +7,7 @@
     'license': 'AGPL-3',
     'website': 'https://www.metallerie.xyz',
     'depends': [
-        'base','product','purchase','stock','website_sale','uom'
+        'base','account','product','purchase','stock','website_sale','uom'
     ],
     'data': [
         'views/account_move_purchase_button.xml',
