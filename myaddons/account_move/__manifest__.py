@@ -29,5 +29,9 @@
     'demo': [
         'demo/demo.xml',
     ],
+    'installable': True,
+    'images': ['static/description/icon.png'],
+
+
 }
 
