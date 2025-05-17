@@ -1,5 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_product_product,access_product_product,model_product_product,base.group_user,1,1,1,1
 access_account_move_purchase_link,access_account_move_purchase_link,model_account_move,base.group_user,1,1,1,0
-#access_purchase_order_metal,access_purchase_order_metal,model_purchase_order, account.group_account_manager,1,1,1,0
-#access_purchase_order_line_metal,access_purchase_order_line_metal,model_purchase_order_line, account.group_account_manager,1,1,1,0
