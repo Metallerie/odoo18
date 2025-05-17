@@ -15,7 +15,7 @@
     # for the full list
     'category': 'Product',
     'version': '18.0.1.0.0',
-
+    'license': 'AGPL-3',
     # any module necessary for this one to work correctly
     'depends': ['base','account','purchase','stock'],
 
