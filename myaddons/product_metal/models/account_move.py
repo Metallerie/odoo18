@@ -49,44 +49,46 @@ class AccountMove(models.Model):
 
         return True
     
-    def action_validate_purchase_and_create_receipt(self):
-        for move in self:
-            po = move.purchase_order_id
-            if not po:
-                raise UserError("Aucun bon de commande lié à cette facture.")
-            if po.state in ('draft', 'sent'):
-                po.button_confirm()
-                move.message_post(body=f"✅ Bon de commande <b>{po.name}</b> validé.")
+def action_validate_purchase_and_create_receipt(self):
+    for move in self:
+        po = move.purchase_order_id
+        if not po:
+            raise UserError("Aucun bon de commande lié à cette facture.")
+        
+        # ✅ Corrige le contexte pour éviter l'erreur sur procurement.group.move_type
+        if po.state in ('draft', 'sent'):
+            po.with_context(move_type=False).button_confirm()
+            move.message_post(body=f"✅ Bon de commande <b>{po.name}</b> validé.")
 
-            # Création du bon de réception
-            picking = self.env['stock.picking'].create({
-                'partner_id': move.partner_id.id,
-                'picking_type_id': self.env.ref('stock.picking_type_in').id,
+        # 🎯 Création du bon de réception
+        picking = self.env['stock.picking'].create({
+            'partner_id': move.partner_id.id,
+            'picking_type_id': self.env.ref('stock.picking_type_in').id,
+            'location_id': self.env.ref('stock.stock_location_suppliers').id,
+            'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
+            'origin': move.name,
+            'move_type': 'direct',  # ou 'one' si réception en un seul lot
+        })
+
+        for line in po.order_line:
+            product = line.product_id
+            if product.type != 'product':
+                continue
+
+            qty = line.product_qty
+            if product.product_kg_ml > 0 and product.uom_id.name.lower() == 'kg':
+                qty = qty / product.product_kg_ml
+
+            self.env['stock.move'].create({
+                'name': product.display_name,
+                'product_id': product.id,
+                'product_uom_qty': qty,
+                'product_uom': product.uom_id.id,
+                'picking_id': picking.id,
                 'location_id': self.env.ref('stock.stock_location_suppliers').id,
                 'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
-                'origin': move.name,
-                'move_type': 'direct', 
             })
 
-            for line in po.order_line:
-                product = line.product_id
-                if product.type != 'product':
-                    continue
-
-                qty = line.product_qty
-                if product.product_kg_ml > 0 and product.uom_id.name.lower() == 'kg':
-                    qty = qty / product.product_kg_ml
-
-                self.env['stock.move'].create({
-                    'name': product.display_name,
-                    'product_id': product.id,
-                    'product_uom_qty': qty,
-                    'product_uom': product.uom_id.id,
-                    'picking_id': picking.id,
-                    'location_id': self.env.ref('stock.stock_location_suppliers').id,
-                    'location_dest_id': move.company_id.partner_id.property_stock_supplier.id,
-                })
-
-            move.stock_picking_id = picking.id
-            move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> généré à partir du bon de commande <b>{po.name}</b>.")
-        return True
+        move.stock_picking_id = picking.id
+        move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> généré à partir du bon de commande <b>{po.name}</b>.")
+    return True
