@@ -7,18 +7,18 @@
     'license': 'AGPL-3',
     'website': 'https://www.metallerie.xyz',
     'depends': [
-        'base','account','product','purchase','stock','website_sale','uom'
+        'base','account','product','purchase','stock','website_sale','uom',
     ],
     'data': [
+        'security/ir.model.access.csv',
         'views/account_move_purchase_button.xml',
         'views/product_view.xml',
-        'security/ir.model.access.csv',
     ],
     'installable': True,
     'images': ['static/description/icon.png'],
     'assets': {
     'web.assets_frontend': [
-        'product_metal/static/src/js/product_quantity_precision.js'
+        'product_metal/static/src/js/product_quantity_precision.js',
     ]
     },
  }
