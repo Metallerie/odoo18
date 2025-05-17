@@ -5,6 +5,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     purchase_order_id = fields.Many2one('purchase.order', string="Bon de commande lié")
+    stock_picking_id = fields.Many2one('stock.picking', string="Bon de réception")
 
     def action_create_purchase_order_from_invoice(self):
         PurchaseOrder = self.env['purchase.order']
