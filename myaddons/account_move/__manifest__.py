@@ -2,7 +2,7 @@
 {
     'name': "account_move",
 
-    'summary': "Création bon de commande a partire d'une facture suivi de la validation en stock",
+    'summary': "Création bon de commande a partir d'une facture suivi de la validation en stock",
 
     'description': """
     """,
