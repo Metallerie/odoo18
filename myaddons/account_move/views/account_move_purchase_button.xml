@@ -6,7 +6,7 @@
     <field name="arch" type="xml">
       <xpath expr="//header" position="inside">
 
-        <!-- 1️⃣ Créer bon de commande (actif seulement si facture fournisseur postée et sans PO) -->
+        <!-- 1️⃣ Créer bon de commande -->
         <button name="action_create_purchase_order_from_invoice"
                 type="object"
                 string="Créer bon de commande"
@@ -14,15 +14,15 @@
                 decoration-muted="purchase_order_id or move_type != 'in_invoice' or state != 'posted'"
                 decoration-bf="purchase_order_id or move_type != 'in_invoice' or state != 'posted'" />
 
-        <!-- 2️⃣ Valider bon de commande (actif seulement si PO à l’état draft) -->
+        <!-- 2️⃣ Valider bon de commande -->
         <button name="action_validate_purchase_order"
                 type="object"
                 string="Valider bon de commande"
                 class="btn btn-success"
-                decoration-muted="not purchase_order_id or purchase_order_id.state != 'draft' or record. move_type != 'in_invoice'"
-                decoration-bf="not purchase_order_id or purchase_order_id.state != 'draft' or record.move_type != 'in_invoice'" />
+                decoration-muted="not purchase_order_id or purchase_order_id.state != 'draft' or move_type != 'in_invoice'"
+                decoration-bf="not purchase_order_id or purchase_order_id.state != 'draft' or move_type != 'in_invoice'" />
 
-        <!-- 3️⃣ Créer réception (actif seulement si PO validé et pas encore de réception) -->
+        <!-- 3️⃣ Créer réception -->
         <button name="action_create_receipt_from_po"
                 type="object"
                 string="Créer bon de réception"
