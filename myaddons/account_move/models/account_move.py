@@ -39,6 +39,7 @@ class AccountMove(models.Model):
                     'product_id': line.product_id.id,
                     'name': line.name or line.product_id.display_name,
                     'product_qty': line.quantity,
+                    'qty_received': line.quantity,
                     'product_uom': line.product_uom_id.id or line.product_id.uom_po_id.id,
                     'price_unit': line.price_unit or 0.0,
                     'date_planned': fields.Date.today(),
