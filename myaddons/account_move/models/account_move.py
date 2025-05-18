@@ -85,15 +85,16 @@ class AccountMove(models.Model):
                 if po_line and product.product_kg_ml > 0 and po_line[0].product_uom.name.lower() == 'kg':
                     qty = qty / product.product_kg_ml
 
-                    self.env['stock.move.line'].create({
-                        'picking_id': picking.id,
-                        'move_id': move.id,
-                        'product_id': product.id,
-                        'product_uom_id': move.product_uom_id.id,
-                        'qty_done': qty,
-                        'location_id': move.location_id.id,
-                        'location_dest_id': move.location_dest_id.id,
-                    })
+                self.env['stock.move.line'].create({
+                    'picking_id': picking.id,
+                    'move_id': stock_move.id,
+                    'product_id': product.id,
+                    'product_uom_id': stock_move.product_uom.id,
+                    'qty_done': qty,
+                    'location_id': stock_move.location_id.id,
+                    'location_dest_id': stock_move.location_dest_id.id,
+                })
+
             picking.button_validate()
             move.stock_picking_id = picking.id
             move.message_post(body=f"📦 Bon de réception <b>{picking.name}</b> validé à partir du bon de commande <b>{po.name}</b>.")
