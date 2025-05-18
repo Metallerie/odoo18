@@ -89,7 +89,7 @@ class AccountMove(models.Model):
                         'picking_id': picking.id,
                         'move_id': move.id,
                         'product_id': product.id,
-                        'product_uom_id': move.product_uom_id.id,
+                        'product_uom_id': stock_move.product_uom.id,
                         'qty_done': qty,
                         'location_id': move.location_id.id,
                         'location_dest_id': move.location_dest_id.id,
