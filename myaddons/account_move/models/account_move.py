@@ -92,7 +92,8 @@ class AccountMove(models.Model):
                     'move_id': stock_move.id,
                     'product_id': product.id,
                     'product_uom_id': stock_move.product_uom.id,
-                    'quantity_done': qty,  # ✅ Champ correct
+                    'quantity': qty,  # ✅ Champ correct
+                    'quantity_product_uom': qty,  # ✅ Champ correct
                     'description_picking': f"Achat en {stock_move.product_uom.name} → Conversion : {round(qty, 3)} ML",
                     'location_id': stock_move.location_id.id,
                     'location_dest_id': stock_move.location_dest_id.id,
