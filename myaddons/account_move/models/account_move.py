@@ -82,8 +82,9 @@ class AccountMove(models.Model):
                 qty = stock_move.product_uom_qty
 
                 po_line = po.order_line.filtered(lambda l: l.product_id == product)
-                if po_line and product.product_kg_ml > 0 and po_line[0].product_uom.name.lower() == 'kg':
+                if product.product_kg_ml > 0 and stock_move.product_uom.name.lower() == 'kg':
                     qty = qty / product.product_kg_ml
+
 
                 self.env['stock.move.line'].create({
                     'picking_id': picking.id,
