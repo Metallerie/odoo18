@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <odoo>
-    
+      <data>
+
     <record model="ir.ui.view" id="product_normal_form_view_patch">
         <field name="name">product_normal_form_view_patch</field>
         <field name="model">product.product</field>
@@ -57,5 +58,25 @@
             </xpath>
         </field>
       </record>
+
+    <record id="view_product_product_tree_inherit_custom" model="ir.ui.view">
+      <field name="name">product.product.tree.inherit.custom</field>
+      <field name="model">product.product</field>
+      <field name="inherit_id" ref="product.product_product_tree_view"/>
+      <field name="arch" type="xml">
+        <xpath expr="//tree" position="inside">
+          <field name="uom_precision" string="Précision panier"/>
+          <field name="product_length" string="Longueur"/>
+          <field name="product_height" string="Hauteur"/>
+          <field name="product_width" string="Largeur"/>
+          <field name="product_thickness" string="Épaisseur"/>
+          <field name="product_diameter" string="Diamètre"/>
+          <field name="product_kg_ml" string="Kg/ML"/>
+        </xpath>
+      </field>
+    </record>
+
+  </data>
+
 
 </odoo>
