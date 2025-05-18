@@ -77,9 +77,9 @@ class AccountMove(models.Model):
 
             # ✅ Confirmer et remplir les quantités
             picking.action_confirm()
-            for move_line in picking.move_ids_without_package:
-                product = move_line.product_id
-                qty = move_line.product_uom_qty
+            for stock_move in picking.move_ids_without_package:
+                product = stock_move.product_id
+                qty = stock_move.product_uom_qty
 
                 po_line = po.order_line.filtered(lambda l: l.product_id == product)
                 if po_line and product.product_kg_ml > 0 and po_line[0].product_uom.name.lower() == 'kg':
