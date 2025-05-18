@@ -64,7 +64,8 @@
       <field name="model">product.product</field>
       <field name="inherit_id" ref="product.product_product_tree_view"/>
       <field name="arch" type="xml">
-        <xpath expr="//tree" position="inside">
+        <xpath expr="//field[@name='uom_id']" position="after">
+          <field name="uom_po_id" string="Unité d'achat"/>
           <field name="uom_precision" string="Précision panier"/>
           <field name="product_length" string="Longueur"/>
           <field name="product_height" string="Hauteur"/>
