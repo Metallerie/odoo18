@@ -121,10 +121,12 @@ class RobotsAndSitemapHttpsController(http.Controller):
             for loc in locs:
                 url = loc['loc']
                 if '/blog/' in url:
-                    slug = url.rstrip('/').split('/')[-1]
-                    post = request.env['blog.post'].sudo().search([('website_url', '=', url)], limit=1)
-                    if post and post.cover_properties.get('image'):
-                        loc['image'] = request.httprequest.url_root.rstrip("/") + post.cover_properties['image']
+                    post = request.env['blog.post'].sudo().search([
+                        ('website_url', '=', url)
+                    ], limit=1)
+                    cover_props = post.cover_properties if hasattr(post, 'cover_properties') else {}
+                    if post and isinstance(cover_props, dict) and 'image' in cover_props:
+                        loc['image'] = request.httprequest.url_root.rstrip("/") + cover_props['image']
                         loc['title'] = post.name
 
             pages = 0
