@@ -109,10 +109,8 @@ class RobotsAndSitemapHttpsController(http.Controller):
             for loc in locs:
                 url = loc['loc']
                 if '/shop/' in url and not '/category/' in url:
-                    slug = url.split('/shop/')[-1].split('/')[0]
                     product = request.env['product.template'].sudo().search([
-                        '|',
-                        ('website_url', '=', url),
+                        ('website_url', '=', url)
                     ], limit=1)
                     if product and product.image_1024:
                         image_url = f"/web/image/product.template/{product.id}/image_1024"
@@ -124,7 +122,7 @@ class RobotsAndSitemapHttpsController(http.Controller):
                 url = loc['loc']
                 if '/blog/' in url:
                     slug = url.rstrip('/').split('/')[-1]
-                    post = request.env['blog.post'].sudo().search([('slug', '=', slug)], limit=1)
+                    post = request.env['blog.post'].sudo().search([('website_url', '=', url)], limit=1)
                     if post and post.cover_properties.get('image'):
                         loc['image'] = request.httprequest.url_root.rstrip("/") + post.cover_properties['image']
                         loc['title'] = post.name
