@@ -111,8 +111,7 @@ class RobotsAndSitemapHttpsController(http.Controller):
                 if '/shop/' in url and not '/category/' in url:
                     slug = url.split('/shop/')[-1].split('/')[0]
                     product = request.env['product.template'].sudo().search([
-                        '|',
-                        ('website_url', '=ilike', f"%{slug}")
+                       ('website_url', '=ilike', url)
                     ], limit=1)
                     if product and product.image_1024:
                         image_url = f"/web/image/product.template/{product.id}/image_1024"
