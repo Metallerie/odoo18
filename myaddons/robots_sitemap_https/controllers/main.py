@@ -115,11 +115,11 @@ class RobotsAndSitemapHttpsController(http.Controller):
                         ('website_url', '=', url),
                         ('website_slug', '=', slug)
                     ], limit=1)
-                if post and post.image_banner:
-                    image_url = f"/web/image/blog.post/{post.id}/image_banner"
-                    loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
-                    loc['title'] = post.name
-                  
+                    if product and product.image_1024:
+                        image_url = f"/web/image/product.template/{product.id}/image_1024"
+                        loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
+                        loc['title'] = product.name
+
             # Enrichissement avec les images des articles de blog
             for loc in locs:
                 url = loc['loc']
