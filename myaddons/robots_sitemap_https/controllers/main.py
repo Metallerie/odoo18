@@ -103,27 +103,6 @@ class RobotsAndSitemapHttpsController(http.Controller):
             EXCLUDE_REGEX = re.compile(r'/website/info|/feed|/whatsapp/send')
             locs = list(filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs))
 
-            for loc in locs:
-                url = loc['loc']
-                if '/shop/' in url and not '/category/' in url:
-                    product = request.env['product.template'].sudo().search([
-                        ('website_url', '=', url)
-                    ], limit=1)
-                    if product and product.image_1024:
-                        image_url = f"/web/image/product.template/{product.id}/image_1024"
-                        loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
-                        loc['title'] = product.name
-
-            for loc in locs:
-                url = loc['loc']
-                if '/blog/' in url:
-                    post = request.env['blog.post'].sudo().search([
-                        ('website_url', '=', url)
-                    ], limit=1)
-                    if post and isinstance(post.cover_properties, dict) and post.cover_properties.get('image'):
-                        loc['image'] = request.httprequest.url_root.rstrip("/") + post.cover_properties['image']
-                        loc['title'] = post.name
-
             values = {
                 'locs': locs,
                 'url_root': url_root.rstrip("/"),
