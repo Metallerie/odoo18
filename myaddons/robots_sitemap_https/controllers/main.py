@@ -3,12 +3,9 @@ from odoo import http, fields, models
 from odoo.http import request
 import base64, datetime, re
 from hashlib import md5
-from itertools import islice
 import logging
 
 _logger = logging.getLogger(__name__)
-
-LOC_PER_SITEMAP = 45000  # nombre de liens max par sitemap
 
 # Monkey patch global pour corriger url_root partout (http → https)
 from werkzeug.wrappers.request import Request as WerkzeugRequest
@@ -87,12 +84,13 @@ class RobotsAndSitemapHttpsController(http.Controller):
                 'url': url,
             })
 
+        force = kwargs.get('force')
         dom = [('url', '=', '%s.xml' % sitemap_base_url), ('type', '=', 'binary')]
         sitemap = Attachment.search(dom, limit=1)
-        if sitemap:
+        if sitemap and not force:
             create_date = fields.Datetime.from_string(sitemap.create_date)
             delta = datetime.datetime.now() - create_date
-            if delta < datetime.timedelta(hours=1):  # ou 12h ou 24h selon ton besoin
+            if delta < datetime.timedelta(seconds=0):
                 content = base64.b64decode(sitemap.datas)
 
         if not content:
@@ -105,7 +103,6 @@ class RobotsAndSitemapHttpsController(http.Controller):
             EXCLUDE_REGEX = re.compile(r'/website/info|/feed|/whatsapp/send')
             locs = list(filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs))
 
-            # Enrichissement avec les images des produits
             for loc in locs:
                 url = loc['loc']
                 if '/shop/' in url and not '/category/' in url:
@@ -117,45 +114,26 @@ class RobotsAndSitemapHttpsController(http.Controller):
                         loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
                         loc['title'] = product.name
 
-            # Enrichissement avec les images des articles de blog
             for loc in locs:
                 url = loc['loc']
                 if '/blog/' in url:
                     post = request.env['blog.post'].sudo().search([
                         ('website_url', '=', url)
                     ], limit=1)
-                    cover_props = post.cover_properties if hasattr(post, 'cover_properties') else {}
-                    if post and isinstance(cover_props, dict) and 'image' in cover_props:
-                        loc['image'] = request.httprequest.url_root.rstrip("/") + cover_props['image']
+                    if post and isinstance(post.cover_properties, dict) and post.cover_properties.get('image'):
+                        loc['image'] = request.httprequest.url_root.rstrip("/") + post.cover_properties['image']
                         loc['title'] = post.name
 
-            pages = 0
-            while True:
-                values = {
-                    'locs': islice(locs, 0, LOC_PER_SITEMAP),
-                    'url_root': url_root.rstrip("/"),
-                }
-                urls = View._render_template('website.sitemap_locs', values)
-                if urls.strip():
-                    content = View._render_template('website.sitemap_xml', {'content': urls})
-                    pages += 1
-                    last_sitemap = create_sitemap('%s-%d.xml' % (sitemap_base_url, pages), content)
-                else:
-                    break
+            values = {
+                'locs': locs,
+                'url_root': url_root.rstrip("/"),
+            }
+            urls = View._render_template('website.sitemap_locs', values)
 
-            if not pages:
-                return request.not_found()
-            elif pages == 1:
-                last_sitemap.write({
-                    'url': "%s.xml" % sitemap_base_url,
-                    'name': "%s.xml" % sitemap_base_url,
-                })
-            else:
-                pages_with_website = ["%d-%s-%d" % (current_website.id, hashed_url_root, p) for p in range(1, pages + 1)]
-                content = View._render_template('website.sitemap_index_xml', {
-                    'pages': pages_with_website,
-                    'url_root': url_root.rstrip("/"),
-                })
+            if urls.strip():
+                content = View._render_template('website.sitemap_xml', {'content': urls})
                 create_sitemap('%s.xml' % sitemap_base_url, content)
+            else:
+                return request.not_found()
 
         return request.make_response(content, [('Content-Type', mimetype)])
