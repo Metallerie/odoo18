@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import http, fields, models
+from odoo import http, fields
 from odoo.http import request
 import base64, datetime, re
 from hashlib import md5
@@ -103,29 +103,30 @@ class RobotsAndSitemapHttpsController(http.Controller):
 
             locs = request.website.with_user(request.website.user_id)._enumerate_pages()
             EXCLUDE_REGEX = re.compile(r'/website/info|/feed|/whatsapp/send')
-            locs = list(filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs))
+            locs = filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs)
+            locs = list(locs)
 
-            # Enrichissement avec les images des produits
             for loc in locs:
                 url = loc['loc']
+
                 if '/shop/' in url and not '/category/' in url:
                     slug = url.split('/shop/')[-1].split('/')[0]
                     product = request.env['product.template'].sudo().search([
-                       ('website_url', '=ilike', url)
+                        ('website_url', '=ilike', url)
                     ], limit=1)
                     if product and product.image_1024:
                         image_url = f"/web/image/product.template/{product.id}/image_1024"
                         loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
                         loc['title'] = product.name
 
-            # Enrichissement avec les images des articles de blog
-            for loc in locs:
-                url = loc['loc']
-                if '/blog/' in url:
-                    slug = url.rstrip('/').split('/')[-1]
-                    post = request.env['blog.post'].sudo().search([('slug', '=', slug)], limit=1)
-                    if post and post.cover_properties.get('image'):
-                        loc['image'] = request.httprequest.url_root.rstrip("/") + post.cover_properties['image']
+                elif '/blog/' in url:
+                    slug = url.split('/')[-1]
+                    post = request.env['blog.post'].sudo().search([
+                        ('website_url', '=ilike', f"%{slug}")
+                    ], limit=1)
+                    if post and post.website_meta_image:
+                        image_url = f"/web/image/blog.post/{post.id}/website_meta_image"
+                        loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
                         loc['title'] = post.name
 
             pages = 0
