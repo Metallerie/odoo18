@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import http, fields, models
 from odoo.http import request
-import base64, datetime
+import base64, datetime, re
 from hashlib import md5
 from itertools import islice
 import logging
@@ -104,8 +104,12 @@ class RobotsAndSitemapHttpsController(http.Controller):
             sitemaps = Attachment.search(dom)
             sitemaps.unlink()
 
-            pages = 0
+            # Étape clé : filtrer les URLs non SEO
             locs = request.website.with_user(request.website.user_id)._enumerate_pages()
+            EXCLUDE_REGEX = re.compile(r'/website/info|/feed|/whatsapp/send')
+            locs = filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs)
+
+            pages = 0
             while True:
                 values = {
                     'locs': islice(locs, 0, LOC_PER_SITEMAP),
