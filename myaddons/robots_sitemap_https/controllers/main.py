@@ -124,11 +124,10 @@ class RobotsAndSitemapHttpsController(http.Controller):
                     post = request.env['blog.post'].sudo().search([
                         ('website_url', '=ilike', f"%{slug}")
                     ], limit=1)
-                    if post and post.website_meta_image:
-                        image_url = f"/web/image/blog.post/{post.id}/website_meta_image"
+                    if post and post.image_1024:
+                        image_url = f"/web/image/blog.post/{post.id}/image_1024"
                         loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
                         loc['title'] = post.name
-
             pages = 0
             while True:
                 values = {
