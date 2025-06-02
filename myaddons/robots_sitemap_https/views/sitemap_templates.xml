@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <!-- Bloc pour les URLs avec image -->
-  <template id="website.sitemap_locs" name="Sitemap Locations with Images">
+  <!-- Bloc pour les URLs individuelles -->
+  <template id="website.sitemap_locs" name="Sitemap Locations">
     <t t-foreach="locs" t-as="loc">
       <url>
         <loc><t t-esc="loc['loc']"/></loc>
-        <t t-if="loc.get('image')">
-          <image:image xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-            <image:loc><t t-esc="loc['image']"/></image:loc>
-            <t t-if="loc.get('title')">
-              <image:title><t t-esc="loc['title']"/></image:title>
-            </t>
-          </image:image>
-        </t>
         <t t-if="loc.get('lastmod')">
           <lastmod><t t-esc="loc['lastmod']"/></lastmod>
         </t>
@@ -21,15 +13,14 @@
   </template>
 
   <!-- Enveloppe globale du sitemap -->
-  <template id="website.sitemap_xml" name="Sitemap XML with images">
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-            xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <template id="website.sitemap_xml" name="Sitemap XML">
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <t t-raw="content"/>
     </urlset>
   </template>
 
-  <!-- Index si plusieurs fichiers sitemap -->
-  <template id="sitemap_index_xml" name="Sitemap Index">
+  <!-- Index si plusieurs pages de sitemap (peu utilisé ici) -->
+  <template id="website.sitemap_index_xml" name="Sitemap Index">
     <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <t t-foreach="pages" t-as="page">
         <sitemap>
