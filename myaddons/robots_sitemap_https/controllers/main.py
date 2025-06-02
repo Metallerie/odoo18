@@ -92,7 +92,7 @@ class RobotsAndSitemapHttpsController(http.Controller):
         if sitemap:
             create_date = fields.Datetime.from_string(sitemap.create_date)
             delta = datetime.datetime.now() - create_date
-            if delta < datetime.timedelta(seconds=0):
+            if delta < datetime.timedelta(hours=1):  # ou 12h ou 24h selon ton besoin
                 content = base64.b64decode(sitemap.datas)
 
         if not content:
