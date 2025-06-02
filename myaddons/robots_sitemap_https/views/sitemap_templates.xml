@@ -4,19 +4,26 @@
     <t t-foreach="locs" t-as="loc">
       <url>
         <loc><t t-esc="loc['loc']"/></loc>
-        <lastmod><t t-esc="loc['lastmod']"/></lastmod>
+        <t t-if="loc.get('lastmod')">
+          <lastmod><t t-esc="loc['lastmod']"/></lastmod>
+        </t>
+        <t t-if="loc.get('image')">
+          <image:image xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+            <image:loc><t t-esc="loc['image']"/></image:loc>
+            <image:title><t t-esc="loc.get('title', 'Image produit')"/></image:title>
+          </image:image>
+        </t>
       </url>
     </t>
   </template>
 
-  <template id="sitemap_xml" name="Sitemap XML" inherit_id="" xml:space="preserve">
-    <t t-name="website.sitemap_xml" t-xml="1">
-      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-        <t t-raw="content"/>
-      </urlset>
-    </t>
+  <template id="sitemap_xml" name="Sitemap XML">
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+            xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+      <t t-raw="content"/>
+    </urlset>
   </template>
-  
+
   <template id="sitemap_index_xml" name="Sitemap Index">
     <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <t t-foreach="pages" t-as="page">
