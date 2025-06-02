@@ -10,7 +10,7 @@
     'auto_install': False,
     'sequence': 99,
     'license': 'LGPL-3',
-    'data': [
+    'qweb': [
     'views/sitemap_templates.xml',
 ],
 
