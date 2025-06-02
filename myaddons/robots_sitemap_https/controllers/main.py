@@ -115,7 +115,7 @@ class RobotsAndSitemapHttpsController(http.Controller):
                         ('website_url', '=', url),
                         ('website_slug', '=', slug)
                     ], limit=1)
-              if post and post.image_banner:
+                if post and post.image_banner:
                     image_url = f"/web/image/blog.post/{post.id}/image_banner"
                     loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
                     loc['title'] = post.name
