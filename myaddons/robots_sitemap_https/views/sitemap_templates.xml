@@ -1,0 +1,29 @@
+<odoo>
+  <!-- Vue pour les blocs <url> -->
+  <template id="sitemap_locs" name="Sitemap Locations">
+    <t t-foreach="locs" t-as="loc">
+      <url>
+        <loc><t t-esc="loc['loc']"/></loc>
+        <lastmod><t t-esc="loc['lastmod']"/></lastmod>
+      </url>
+    </t>
+  </template>
+
+  <!-- Vue pour l’enveloppe <urlset> -->
+  <template id="sitemap_xml" name="Sitemap XML" xml:space="preserve">
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <t t-raw="content"/>
+    </urlset>
+  </template>
+
+  <!-- Vue pour l’index si +1 page -->
+  <template id="sitemap_index_xml" name="Sitemap Index" xml:space="preserve">
+    <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <t t-foreach="pages" t-as="page">
+        <sitemap>
+          <loc><t t-esc="url_root"/>/sitemap-<t t-esc="page"/>.xml</loc>
+        </sitemap>
+      </t>
+    </sitemapindex>
+  </template>
+</odoo>
