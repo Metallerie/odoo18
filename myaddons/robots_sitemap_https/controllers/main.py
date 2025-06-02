@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from odoo import http, fields, models
 from odoo.http import request
 import base64, datetime
@@ -11,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 LOC_PER_SITEMAP = 45000  # nombre de liens max par sitemap
 
-# Monkey patch global pour corriger url_root partout
+# Monkey patch global pour corriger url_root partout (http → https)
 from werkzeug.wrappers.request import Request as WerkzeugRequest
 _original_url_root = WerkzeugRequest.url_root.fget
 
@@ -27,10 +26,29 @@ class RobotsAndSitemapHttpsController(http.Controller):
     def robots_txt(self, **kwargs):
         https_url = request.httprequest.url_root.rstrip("/")
 
-        lines = ["User-agent: *"]
-
-        # Sitemap principal
-        lines.append(f"Sitemap: {https_url}/sitemap.xml")
+        # Bloc par défaut complet
+        lines = [
+            "User-agent: *",
+            "Disallow: /web/",
+            "Disallow: /web/login",
+            "Disallow: /web/signup",
+            "Disallow: /web/session/",
+            "Disallow: /website/info",
+            "Disallow: /website/translations",
+            "Disallow: /website/seo_sitemap",
+            "Disallow: /mail/",
+            "Disallow: /im_livechat/",
+            "Disallow: /calendar/",
+            "Disallow: /shop/cart",
+            "Disallow: /shop/checkout",
+            "Disallow: /shop/payment",
+            "Disallow: /shop/confirm_order",
+            "Disallow: /shop/address",
+            "Disallow: /shop/thankyou",
+            "Disallow: /*?*",
+            "Clean-param: unique&utm_source&utm_medium&utm_campaign&fbclid&gclid",
+            f"Sitemap: {https_url}/sitemap.xml"
+        ]
 
         # Sitemaps personnalisés via ir.config_parameter
         custom_sitemaps = request.env['ir.config_parameter'].sudo().get_param('website.sitemap_urls', '')
@@ -39,11 +57,11 @@ class RobotsAndSitemapHttpsController(http.Controller):
             if extra:
                 lines.append(f"Sitemap: {extra}")
 
-        # Lignes custom de la table website.robots (pas de website_id disponible)
+        # Lignes personnalisées depuis website.robots
         robots_model = request.env['website.robots'].sudo()
         custom_lines = robots_model.search([]).mapped('content')
         if custom_lines:
-            lines += ["##############", "#   custom   #", "##############"]
+            lines += ["", "##############", "#   custom   #", "##############"]
             lines += custom_lines
 
         lines.append("")
@@ -117,21 +135,3 @@ class RobotsAndSitemapHttpsController(http.Controller):
                 create_sitemap('%s.xml' % sitemap_base_url, content)
 
         return request.make_response(content, [('Content-Type', mimetype)])
-
-
-# fichier __init__.py
-# --------------------
-# from . import controllers
-
-# fichier __manifest__.py
-# ------------------------
-# {
-#     'name': 'Robots and Sitemap HTTPS Fix',
-#     'version': '1.0',
-#     'category': 'Website',
-#     'summary': 'Force HTTPS for robots.txt and sitemap.xml',
-#     'depends': ['website'],
-#     'installable': True,
-#     'auto_install': False,
-#     'sequence': 99,
-# }
