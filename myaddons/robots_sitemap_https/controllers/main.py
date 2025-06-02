@@ -113,7 +113,6 @@ class RobotsAndSitemapHttpsController(http.Controller):
                     product = request.env['product.template'].sudo().search([
                         '|',
                         ('website_url', '=', url),
-                        ('website_slug', '=', slug)
                     ], limit=1)
                     if product and product.image_1024:
                         image_url = f"/web/image/product.template/{product.id}/image_1024"
