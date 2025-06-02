@@ -26,7 +26,6 @@ class RobotsAndSitemapHttpsController(http.Controller):
     def robots_txt(self, **kwargs):
         https_url = request.httprequest.url_root.rstrip("/")
 
-        # Bloc par défaut complet
         lines = [
             "User-agent: *",
             "Disallow: /web/",
@@ -50,14 +49,12 @@ class RobotsAndSitemapHttpsController(http.Controller):
             f"Sitemap: {https_url}/sitemap.xml"
         ]
 
-        # Sitemaps personnalisés via ir.config_parameter
         custom_sitemaps = request.env['ir.config_parameter'].sudo().get_param('website.sitemap_urls', '')
         for extra in custom_sitemaps.split(','):
             extra = extra.strip()
             if extra:
                 lines.append(f"Sitemap: {extra}")
 
-        # Lignes personnalisées depuis website.robots
         robots_model = request.env['website.robots'].sudo()
         custom_lines = robots_model.search([]).mapped('content')
         if custom_lines:
@@ -104,10 +101,34 @@ class RobotsAndSitemapHttpsController(http.Controller):
             sitemaps = Attachment.search(dom)
             sitemaps.unlink()
 
-            # Étape clé : filtrer les URLs non SEO
             locs = request.website.with_user(request.website.user_id)._enumerate_pages()
             EXCLUDE_REGEX = re.compile(r'/website/info|/feed|/whatsapp/send')
-            locs = filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs)
+            locs = list(filter(lambda loc: not EXCLUDE_REGEX.search(loc['loc']), locs))
+
+            # Enrichissement avec les images des produits
+            for loc in locs:
+                url = loc['loc']
+                if '/shop/' in url and not '/category/' in url:
+                    slug = url.split('/shop/')[-1].split('/')[0]
+                    product = request.env['product.template'].sudo().search([
+                        '|',
+                        ('website_url', '=', url),
+                        ('website_slug', '=', slug)
+                    ], limit=1)
+                    if product and product.image_1024:
+                        image_url = f"/web/image/product.template/{product.id}/image_1024"
+                        loc['image'] = request.httprequest.url_root.rstrip("/") + image_url
+                        loc['title'] = product.name
+
+            # Enrichissement avec les images des articles de blog
+            for loc in locs:
+                url = loc['loc']
+                if '/blog/' in url:
+                    slug = url.rstrip('/').split('/')[-1]
+                    post = request.env['blog.post'].sudo().search([('slug', '=', slug)], limit=1)
+                    if post and post.cover_properties.get('image'):
+                        loc['image'] = request.httprequest.url_root.rstrip("/") + post.cover_properties['image']
+                        loc['title'] = post.name
 
             pages = 0
             while True:
