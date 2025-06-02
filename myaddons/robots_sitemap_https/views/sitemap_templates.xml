@@ -5,14 +5,16 @@
     <t t-foreach="locs" t-as="loc">
       <url>
         <loc><t t-esc="loc['loc']"/></loc>
-        <t t-if="loc.get('lastmod')">
-          <lastmod><t t-esc="loc['lastmod']"/></lastmod>
-        </t>
         <t t-if="loc.get('image')">
           <image:image xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
             <image:loc><t t-esc="loc['image']"/></image:loc>
-            <image:title><t t-esc="loc.get('title', 'Image produit')"/></image:title>
+            <t t-if="loc.get('title')">
+              <image:title><t t-esc="loc['title']"/></image:title>
+            </t>
           </image:image>
+        </t>
+        <t t-if="loc.get('lastmod')">
+          <lastmod><t t-esc="loc['lastmod']"/></lastmod>
         </t>
       </url>
     </t>
