@@ -9,12 +9,14 @@
     </t>
   </template>
 
-  <template id="sitemap_xml" name="Sitemap XML">
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      <t t-raw="content"/>
-    </urlset>
+  <template id="sitemap_xml" name="Sitemap XML" inherit_id="" xml:space="preserve">
+    <t t-name="website.sitemap_xml" t-xml="1">
+      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <t t-raw="content"/>
+      </urlset>
+    </t>
   </template>
-
+  
   <template id="sitemap_index_xml" name="Sitemap Index">
     <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <t t-foreach="pages" t-as="page">
