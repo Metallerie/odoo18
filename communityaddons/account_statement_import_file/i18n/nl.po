@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server saas~12.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-23 13:42+0000\n"
+"POT-Creation-Date: 2022-01-26 09:11+0000\n"
 "PO-Revision-Date: 2021-04-26 22:47+0000\n"
 "Last-Translator: Bosd <c5e2fd43-d292-4c90-9d1f-74ff3436329a@anonaddy.me>\n"
 "Language-Team: Dutch (https://www.transifex.com/odoo/teams/41243/nl/)\n"
@@ -29,14 +29,12 @@ msgstr ""
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid "%d transactions had already been imported and were ignored."
 msgstr "%d transacties werden reeds geïmporteerd en werden genegeerd."
 
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid "1 transaction had already been imported and was ignored."
 msgstr "1 transactie werd reeds geïmporteerd en werd genegeerd."
 
@@ -53,17 +51,12 @@ msgstr "Annuleren"
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, fuzzy, python-format
 msgid ""
 "Could not find any bank account with number '%(account_number)s'  linked to "
 "partner '%(partner_name)s'. You should create the bank account and set it on "
 "the related bank journal. If the related bank journal doesn't exist yet, you "
 "should create a new one."
 msgstr ""
-"Bankrekening '%(account_number)s' van relatie '%(partner_name)s' kan niet "
-"worden gevonden. Maak de bankrekening aan en koppel deze aan het "
-"bijbehorende dagboek. Als het gerelateerde dagboek nog niet bestaat, maak "
-"dan een nieuwe aan."
 
 #. module: account_statement_import_file
 #: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__create_uid
@@ -135,23 +128,14 @@ msgstr "Laatst bijgewerkt op"
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid "Missing currency code in the bank statement file."
 msgstr "Valutacode ontbreekt in het bankafschriftbestand."
 
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid "Missing payment_ref on a transaction."
 msgstr "Er ontbreekt een betaal referentie voor deze transactie."
-
-#. module: account_statement_import_file
-#. odoo-python
-#: code:addons/account_statement_import_file/models/account_journal.py:0
-#, fuzzy, python-format
-msgid "OCA Import"
-msgstr "Importeer"
 
 #. module: account_statement_import_file
 #: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__statement_file
@@ -171,27 +155,22 @@ msgstr "Ondersteunende formaten:"
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, fuzzy, python-format
+#, fuzzy
 msgid "The Bank Accounting Account is not set on the journal '%s'."
 msgstr "De rekening van dit afschrift is niet hetzelfde als het dagboek '%s'."
 
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, fuzzy, python-format
 msgid ""
 "The bank account with number '%(account_number)s' exists in Odoo but it is "
 "not set on any bank journal. You should set it on the related bank journal. "
 "If the related bank journal doesn't  exist yet, you should create a new one."
 msgstr ""
-"Het bankrekening met nummer '%s' bestaat reeds maar er is geen dagboek "
-"ingesteld. U dient dit in te stellen in het betreffende dagboek. Indien het "
-"dagboek nog niet bestaat, dan dient u een nieuwe aan te maken."
 
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid ""
 "The bank statement file uses currency '%s' but there is no such currency in "
 "Odoo."
@@ -202,7 +181,6 @@ msgstr ""
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid ""
 "The currency of the bank statement (%(currency_name)s) is not the same as "
 "the currency of the journal '%(journal_name)s' (%(journal_currency_name)s)."
@@ -211,7 +189,6 @@ msgstr ""
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid ""
 "The format of this bank statement file doesn't contain the bank account "
 "number, so you must start the wizard from the right bank journal in the "
@@ -224,7 +201,6 @@ msgstr ""
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid ""
 "The journal found for the file (%(journal_match)s) is different from the "
 "selected journal (%(journal_selected)s)."
@@ -233,7 +209,6 @@ msgstr ""
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid "The parsing of the statement file returned an invalid result."
 msgstr ""
 "Er is een fout opgetreden bij het verwerken van het bankafschrift bestand."
@@ -241,7 +216,6 @@ msgstr ""
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid ""
 "This bank statement file format is not supported.\n"
 "Did you install the Odoo module to support this format?"
@@ -262,13 +236,16 @@ msgstr "Upload een bankafschrift bestand"
 #. module: account_statement_import_file
 #. odoo-python
 #: code:addons/account_statement_import_file/wizard/account_statement_import.py:0
-#, python-format
 msgid ""
 "You have already imported this file, or this file only contains already "
 "imported transactions."
 msgstr ""
 "U heeft dit bestand al geimporteerd, of het bestand bevat enkel reeds "
 "geimporteerde transacties."
+
+#, python-format
+#~ msgid "Import"
+#~ msgstr "Importeer"
 
 #~ msgid "Last Modified on"
 #~ msgstr "Laatst gewijzigd op"
@@ -296,8 +273,27 @@ msgstr ""
 #~ msgid "Import ID"
 #~ msgstr "Import ID"
 
+#~ msgid ""
+#~ "Could not find any bank account with number '%s' linked to partner '%s'. "
+#~ "You should create the bank account and set it on the related bank "
+#~ "journal. If the related bank journal doesn't exist yet, you should create "
+#~ "a new one."
+#~ msgstr ""
+#~ "Bankrekening '%s' van relatie '%s' kan niet worden gevonden. Maak de "
+#~ "bankrekening aan en koppel deze aan het bijbehorende dagboek. Als het "
+#~ "gerelateerde dagboek nog niet bestaat, maak dan een nieuwe aan."
+
 #~ msgid "Partner Bank Account"
 #~ msgstr "Bankrekening van relatie"
+
+#~ msgid ""
+#~ "The bank account with number '%s' exists in Odoo but it is not set on any "
+#~ "bank journal. You should set it on the related bank journal. If the "
+#~ "related bank journal doesn't exist yet, you should create a new one."
+#~ msgstr ""
+#~ "Het bankrekening met nummer '%s' bestaat reeds maar er is geen dagboek "
+#~ "ingesteld. U dient dit in te stellen in het betreffende dagboek. Indien "
+#~ "het dagboek nog niet bestaat, dan dient u een nieuwe aan te maken."
 
 #~ msgid ""
 #~ "The currency of the bank statement (%s) is not the same as the currency "
