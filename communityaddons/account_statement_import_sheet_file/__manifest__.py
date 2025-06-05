@@ -13,7 +13,11 @@
     "license": "AGPL-3",
     "installable": True,
     "depends": [
+        'base',
+        'account',
+        'account_statement_base',
         "account_statement_import_file",
+        
     ],
     "external_dependencies": {"python": ["xlrd", "chardet"]},
     "data": [
