@@ -99,7 +99,7 @@ class AccountMove(models.Model):
                                     'list_price': unit_price,
                                     'purchase_ok': True,
                                     'sale_ok': False,
-                                    'default_code': product_code or f"NEW-{description[:10].upper()}",
+                                    'default_code': product_code or f"{description[:10].upper()}",
                                 })
                                 _logger.info(f"Produit créé : {description} avec une référence {product_code or 'générée automatiquement'}")
 
