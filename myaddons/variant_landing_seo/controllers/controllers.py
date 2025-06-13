@@ -24,30 +24,28 @@ class VariantLandingController(WebsiteSale):
             'variant': variant,
         })
 
-    @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
-    def sitemap_product_variant(self, **kwargs):
-        domain = [('website_published', '=', True)]
-        variants = request.env['product.product'].sudo().search(domain)
+    @http.route('/sitemap_product_variant.xml', type='http', auth='public', website=True)
+    def variant_sitemap(self):
+        products = request.env['product.product'].sudo().search([('website_published', '=', True)])
 
-        base_url = request.httprequest.host_url.rstrip('/')
+        xml_items = []
         today = date.today().isoformat()
 
-        urls = []
-        for variant in variants:
-            slug = variant.variant_slug or 'produit'
-            url = f"{base_url}/shop/{slug}-{variant.id}"
-            urls.append(f"""
-                <url>
-                    <loc>{html_escape(url)}</loc>
-                    <lastmod>{today}</lastmod>
-                    <changefreq>weekly</changefreq>
-                    <priority>0.8</priority>
-                </url>
-            """)
+        for product in products:
+            url = f"https://www.metallerie.xyz/shop/{product.variant_slug or product.id}"
+            xml_items.append(f"""
+    <url>
+        <loc>{url}</loc>
+        <lastmod>{today}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+""")
 
-        xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-            {''.join(urls)}
-        </urlset>"""
+        sitemap_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{''.join(xml_items)}
+</urlset>
+"""
 
-        return request.make_response(xml.strip(), headers=[('Content-Type', 'application/xml')])
+        return Response(sitemap_content, content_type='application/xml;charset=utf-8')
