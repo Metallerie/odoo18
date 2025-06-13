@@ -21,3 +21,32 @@ class VariantLandingController(WebsiteSale):
             'product': template,
             'variant': variant,
         })
+        
+     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
+     def sitemap_product_variant(self, **kwargs):
+         domain = [('website_published', '=', True)]
+         variants = request.env['product.product'].sudo().search(domain)
+
+         base_url = request.httprequest.host_url.rstrip('/')
+         today = date.today().isoformat()
+
+         urls = []
+         for variant in variants:
+             slug = variant.variant_slug or 'produit'
+             url = f"{base_url}/shop/{slug}-{variant.id}"
+             urls.append(f"""
+                 <url>
+                     <loc>{html_escape(url)}</loc>
+                     <lastmod>{today}</lastmod>
+                     <changefreq>weekly</changefreq>
+                     <priority>0.8</priority>
+                 </url>
+             """)
+
+         xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+         <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+             {''.join(urls)}
+         </urlset>"""
+
+         return request.make_response(xml.strip(), headers=[('Content-Type', 'application/xml')])
+
