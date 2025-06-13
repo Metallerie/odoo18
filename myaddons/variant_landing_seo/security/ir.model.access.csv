@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_variant_landing_seo_variant_landing_seo,variant_landing_seo.variant_landing_seo,model_variant_landing_seo_variant_landing_seo,base.group_user,1,1,1,1
