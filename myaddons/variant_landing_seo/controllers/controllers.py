@@ -7,6 +7,7 @@ from odoo.addons.website.controllers.main import Website
 from werkzeug.urls import url_encode
 
 def keep(**kwargs):
+    from werkzeug.urls import url_encode
     return '?' + url_encode(kwargs)
 
 
