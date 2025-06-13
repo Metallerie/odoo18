@@ -10,7 +10,7 @@ en suivant le format /shop/<slug>-<id>. Ajoute aussi un sitemap dédié aux vari
     "author": "Metallerie Bardina Franck & ChatGpt",
     "website": "https://www.metallerie.xyz",
     "category": "Website",
-    "depends": ["website_sale"],
+    "depends": ["website_sale", "product"],
     "data": [
         "views/templates.xml",  # À venir ou vide pour l'instant
     ],
