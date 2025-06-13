@@ -5,6 +5,12 @@ from odoo.tools import html_escape
 from datetime import date
 from odoo.addons.website.controllers.main import Website
 from odoo.addons.website.helpers import keep_query
+from werkzeug.urls import url_encode
+
+def keep(**kwargs):
+    """Simule la fonction keep_query d’Odoo pour conserver les paramètres d’URL."""
+    return '?' + url_encode(kwargs)
+
 
 
 class VariantLandingController(WebsiteSale):
@@ -31,7 +37,7 @@ class VariantLandingController(WebsiteSale):
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
-            'keep': keep_query,  # ✅ Ici on injecte proprement la méthode
+            'keep': keep,  # ✅ Ici on injecte proprement la méthode
         })
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
