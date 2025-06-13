@@ -49,6 +49,7 @@ class VariantLandingController(WebsiteSale):
 
         base_url = request.httprequest.host_url.rstrip('/')
         today = date.today().isoformat()
+        lastmod = (variant.write_date or variant.create_date).date().isoformat()
 
         urls = []
         for variant in variants:
@@ -58,7 +59,7 @@ class VariantLandingController(WebsiteSale):
             urls.append(f"""
                 <url>
                     <loc>{html_escape(url)}</loc>
-                    <lastmod>{today}</lastmod>
+                    <lastmod>{lastmod}</lastmod>
                     <changefreq>weekly</changefreq>
                     <priority>0.8</priority>
                 </url>
