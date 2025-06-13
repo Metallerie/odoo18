@@ -13,7 +13,7 @@ class ProductProduct(models.Model):
     @api.depends('product_template_attribute_value_ids.name', 'product_template_attribute_value_ids.attribute_id.name')
     def _compute_variant_slug(self):
         for variant in self:
-            parts = []
+            parts = [variant.product_tmpl_id.name]  # 👈 ajoute le nom du produit principal
             for ptav in variant.product_template_attribute_value_ids:
-                parts.append(ptav.name.replace(" ", "-"))
+                parts.append(ptav.name)
             variant.variant_slug = slugify("-".join(parts)) if parts else False
