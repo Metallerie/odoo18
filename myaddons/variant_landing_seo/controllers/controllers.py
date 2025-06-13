@@ -31,7 +31,7 @@ class VariantLandingController(WebsiteSale):
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
-            'keep': WebsiteSaleUtils().keep,  # ✅ injection propre ici
+            'keep': keep_query,  # ✅ Ici on injecte proprement la méthode
         })
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
