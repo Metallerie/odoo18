@@ -10,15 +10,10 @@ class ProductProduct(models.Model):
 
     variant_slug = fields.Char(string="Slug URL", compute="_compute_variant_slug", store=True)
 
-    @api.depends('product_tmpl_id.name', 'product_template_attribute_value_ids.name')
+    @api.depends('product_template_attribute_value_ids.name', 'product_template_attribute_value_ids.attribute_id.name')
     def _compute_variant_slug(self):
         for variant in self:
-            tmpl_name = variant.product_tmpl_id.name or ''
-            parts = [slugify(tmpl_name)]
-
-            values = variant.product_template_attribute_value_ids.sorted(
-                key=lambda val: val.attribute_id.name
-            )
-            parts += [slugify(val.name) for val in values]
-
-            variant.variant_slug = '-'.join(parts)
+            parts = []
+            for ptav in variant.product_template_attribute_value_ids:
+                parts.append(ptav.name.replace(" ", "-"))
+            variant.variant_slug = slugify("-".join(parts)) if parts else False
