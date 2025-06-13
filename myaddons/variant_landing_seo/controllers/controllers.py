@@ -11,7 +11,7 @@ from werkzeug.urls import url_encode
 class VariantLandingController(WebsiteSale):
     
     def keep(**kwargs):
-    """Simule la fonction keep_query d’Odoo pour conserver les paramètres d’URL."""
+        """Simule la fonction keep_query d’Odoo pour conserver les paramètres d’URL."""
     return '?' + url_encode(kwargs)
 
 
