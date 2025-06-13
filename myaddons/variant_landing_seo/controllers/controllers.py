@@ -6,14 +6,15 @@ from datetime import date
 from odoo.addons.website.controllers.main import Website
 from werkzeug.urls import url_encode
 
-
-
-class VariantLandingController(WebsiteSale):
-    
     def keep(**kwargs):
         """Simule la fonction keep_query d’Odoo pour conserver les paramètres d’URL."""
         return '?' + url_encode(kwargs)
 
+
+
+class VariantLandingController(WebsiteSale):
+    
+    
 
 
     @http.route(['/shop/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
