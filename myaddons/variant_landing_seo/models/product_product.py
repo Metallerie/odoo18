@@ -10,7 +10,7 @@ class ProductProduct(models.Model):
 
     variant_slug = fields.Char(string="Slug URL", compute="_compute_variant_slug", store=True)
 
-    @api.depends('product_tmpl_id.name', 'attribute_value_ids.name')
+    @api.depends('product_tmpl_id.name', 'product_template_attribute_value_ids.attribute_value_id.name')
     def _compute_variant_slug(self):
         for variant in self:
             parts = [slugify(variant.product_tmpl_id.name)]
