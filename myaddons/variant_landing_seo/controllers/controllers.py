@@ -1,6 +1,6 @@
 from odoo import http
 from odoo.http import request, Response
-from odoo.addons.website_sale.controllers.main import WebsiteSale
+from odoo.addons.website_sale.controllers.main import WebsiteSale, WebsiteSaleUtils
 from odoo.tools import html_escape
 from datetime import date
 from odoo.addons.website.controllers.main import Website
@@ -30,7 +30,7 @@ class VariantLandingController(WebsiteSale):
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
-            'keep': Website().keep,  # ← injecte la méthode keep()
+            'keep': WebsiteSaleUtils().keep,  # ✅ injection propre ici
         })
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
