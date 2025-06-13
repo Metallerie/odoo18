@@ -17,7 +17,7 @@ class VariantLandingController(WebsiteSale):
 
         template = variant.product_tmpl_id
 
-        request.context = dict(request.context, product_id=variant.id)
+        request.update_context(product_id=variant.id)
 
         return request.render("website_sale.product", {
             'product': template,
