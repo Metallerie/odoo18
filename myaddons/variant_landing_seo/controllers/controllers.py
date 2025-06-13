@@ -12,7 +12,7 @@ class VariantLandingController(WebsiteSale):
     
     def keep(**kwargs):
         """Simule la fonction keep_query d’Odoo pour conserver les paramètres d’URL."""
-    return '?' + url_encode(kwargs)
+        return '?' + url_encode(kwargs)
 
 
 
