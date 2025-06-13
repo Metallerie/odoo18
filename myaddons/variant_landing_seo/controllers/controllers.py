@@ -1,6 +1,9 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.website_sale.controllers.main import WebsiteSale
+from odoo.tools import html_escape
+from datetime import date
+
 
 class VariantLandingController(WebsiteSale):
 
