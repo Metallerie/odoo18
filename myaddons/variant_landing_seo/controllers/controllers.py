@@ -1,22 +1,23 @@
-# -*- coding: utf-8 -*-
-# from odoo import http
+from odoo import http
+from odoo.http import request
+from odoo.addons.website_sale.controllers.main import WebsiteSale
 
+class VariantLandingController(WebsiteSale):
 
-# class VariantLandingSeo(http.Controller):
-#     @http.route('/variant_landing_seo/variant_landing_seo', auth='public')
-#     def index(self, **kw):
-#         return "Hello, world"
+    @http.route(['/shop/<string:slug>-<int:variant_id>'], type='http', auth="public", website=True)
+    def variant_product_page(self, slug, variant_id, **kwargs):
+        ProductProduct = request.env['product.product'].sudo()
+        variant = ProductProduct.browse(variant_id)
 
-#     @http.route('/variant_landing_seo/variant_landing_seo/objects', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('variant_landing_seo.listing', {
-#             'root': '/variant_landing_seo/variant_landing_seo',
-#             'objects': http.request.env['variant_landing_seo.variant_landing_seo'].search([]),
-#         })
+        if not variant.exists() or not variant.website_published:
+            return request.not_found()
 
-#     @http.route('/variant_landing_seo/variant_landing_seo/objects/<model("variant_landing_seo.variant_landing_seo"):obj>', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('variant_landing_seo.object', {
-#             'object': obj
-#         })
+        template = variant.product_tmpl_id
 
+        # Injecte la variante dans le contexte pour forcer l'affichage
+        request.context = dict(request.context, product_id=variant.id)
+
+        return request.render("website_sale.product", {
+            'product': template,
+            'variant': variant,
+        })
