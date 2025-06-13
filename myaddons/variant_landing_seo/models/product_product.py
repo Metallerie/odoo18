@@ -17,3 +17,4 @@ class ProductProduct(models.Model):
             for ptav in variant.product_template_attribute_value_ids:
                 parts.append(ptav.name)
             variant.variant_slug = slugify("-".join(parts)) if parts else False
+            product.with_context(force_write=True).write({'variant_slug': slug})
