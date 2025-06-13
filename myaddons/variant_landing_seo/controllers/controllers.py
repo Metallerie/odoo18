@@ -49,13 +49,14 @@ class VariantLandingController(WebsiteSale):
 
         base_url = request.httprequest.host_url.rstrip('/')
         today = date.today().isoformat()
-        lastmod = (variant.write_date or variant.create_date).date().isoformat()
 
         urls = []
         for variant in variants:
             slug = variant.variant_slug
             template_id = variant.product_tmpl_id.id
             url = f"{base_url}/shop/{slug}-{template_id}"
+            lastmod = (variant.write_date or variant.create_date).date().isoformat()
+
             urls.append(f"""
                 <url>
                     <loc>{html_escape(url)}</loc>
