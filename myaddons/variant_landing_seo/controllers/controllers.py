@@ -6,11 +6,9 @@ from datetime import date
 from odoo.addons.website.controllers.main import Website
 from werkzeug.urls import url_encode
 
-def keep(**kwargs):
+def keep(*args, **kwargs):
     from werkzeug.urls import url_encode
     return '?' + url_encode(kwargs)
-
-
 
 
 class VariantLandingController(WebsiteSale):
