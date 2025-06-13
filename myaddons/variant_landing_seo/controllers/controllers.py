@@ -29,6 +29,7 @@ class VariantLandingController(WebsiteSale):
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
+            'keep': request.env['ir.qweb']._get_keep(),  # <- on injecte keep manuellement
         })
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
