@@ -4,7 +4,6 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.tools import html_escape
 from datetime import date
 from odoo.addons.website.controllers.main import Website
-from odoo.addons.website.helpers import keep_query
 from werkzeug.urls import url_encode
 
 def keep(**kwargs):
