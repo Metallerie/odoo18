@@ -22,7 +22,7 @@
                     // Pour les menus déroulants (select)
                     const selects = document.querySelectorAll('select[name^="attribute_"]');
                     selects.forEach(select => {
-                        for (let i = 0; i < select.options.length; i++) {
+                        for (let i = 0; i &lt; select.options.length; i++) {
                             const optText = select.options[i].text;
                             if (variantSlug.includes(optText.replace(/\s+/g, '-').toLowerCase())) {
                                 select.selectedIndex = i;
