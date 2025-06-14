@@ -1,7 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <template id="variant_product_force_variant" inherit_id="website_sale.product">
-    <xpath expr="//t[@t-call='website.layout']" position="before">
-      <t t-set="variant" t-value="variant or product.product_variant_id"/>
-    </xpath>
-  </template>
+    <template id="variant_product_force_variant" inherit_id="website_sale.product" name="Force variant selection">
+        <xpath expr="//body" position="inside">
+            <script type="text/javascript">
+                document.addEventListener("DOMContentLoaded", function () {
+                    const path = window.location.pathname;
+                    const slugMatch = path.match(/shop\/([a-zA-Z0-9\-]+)-(\d+)/);
+                    if (!slugMatch) return;
+
+                    const variantSlug = slugMatch[1];
+
+                    // Cibler tous les boutons de sélection de variante
+                    const options = document.querySelectorAll('[data-attribute_value_name]');
+                    options.forEach(option => {
+                        const text = option.getAttribute('data-attribute_value_name');
+                        if (text && variantSlug.includes(text.replace(/\s+/g, '-').toLowerCase())) {
+                            option.click();  // Simule le clic
+                        }
+                    });
+
+                    // Pour les menus déroulants (select)
+                    const selects = document.querySelectorAll('select[name^="attribute_"]');
+                    selects.forEach(select => {
+                        for (let i = 0; i < select.options.length; i++) {
+                            const optText = select.options[i].text;
+                            if (variantSlug.includes(optText.replace(/\s+/g, '-').toLowerCase())) {
+                                select.selectedIndex = i;
+                                select.dispatchEvent(new Event('change'));
+                                break;
+                            }
+                        }
+                    });
+                });
+            </script>
+        </xpath>
+    </template>
 </odoo>
