@@ -14,7 +14,7 @@
                     const options = document.querySelectorAll('[data-attribute_value_name]');
                     options.forEach(option => {
                         const text = option.getAttribute('data-attribute_value_name');
-                        if (text && variantSlug.includes(text.replace(/\s+/g, '-').toLowerCase())) {
+                        if (text  &amp;&amp;  variantSlug.includes(text.replace(/\s+/g, '-').toLowerCase())) {
                             option.click();  // Simule le clic
                         }
                     });
