@@ -10,10 +10,11 @@ class ProductProduct(models.Model):
 
     variant_slug = fields.Char(string="Slug URL", compute="_compute_variant_slug", store=True)
 
-def _compute_variant_slug(self):
-    for variant in self:
-        parts = [variant.product_tmpl_id.name]
-        for ptav in variant.product_template_attribute_value_ids:
-            parts.append(ptav.name.replace(" ", "-"))
-        slug = slugify("-".join(parts)) if parts else False
-        variant.variant_slug = slug
+    @api.depends('product_template_attribute_value_ids.name', 'product_template_attribute_value_ids.attribute_id.name', 'product_tmpl_id.name')
+    def _compute_variant_slug(self):
+        for variant in self:
+            parts = [variant.product_tmpl_id.name]
+            for ptav in variant.product_template_attribute_value_ids:
+                parts.append(ptav.name.replace(" ", "-"))
+            slug = slugify("-".join(parts)) if parts else False
+            variant.variant_slug = slug
