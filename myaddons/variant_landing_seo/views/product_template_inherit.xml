@@ -1,23 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <template id="variant_product_selector_inherit" inherit_id="website_sale.product">
-    <xpath expr="//div[@id='product_variant_form']" position="replace">
-      <div id="product_variant_form">
-        <t t-set="current_variant" t-value="variant"/>
-        <t t-foreach="product.product_template_attribute_line_ids" t-as="attribute_line">
-          <div class="form-group">
-            <label><t t-esc="attribute_line.attribute_id.name"/></label>
-            <select name="attribute_<t t-esc="attribute_line.attribute_id.id"/>" class="form-control">
-              <t t-foreach="attribute_line.value_ids" t-as="value">
-                <option t-att-value="value.id"
-                        t-att-selected="'selected' if value in current_variant.product_template_attribute_value_ids.mapped('product_attribute_value_id') else None">
-                  <t t-esc="value.name"/>
-                </option>
-              </t>
-            </select>
-          </div>
-        </t>
-      </div>
+  <template id="variant_product_force_variant" inherit_id="website_sale.product">
+    <xpath expr="//t[@t-call='website.layout']" position="before">
+      <t t-set="variant" t-value="variant or product.product_variant_id"/>
     </xpath>
   </template>
 </odoo>
