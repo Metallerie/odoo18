@@ -14,6 +14,7 @@ en suivant le format /shop/<slug>-<id>. Ajoute aussi un sitemap dédié aux vari
     "data": [
         "views/templates.xml",  # À venir ou vide pour l'instant
         "views/product_template_inherit.xml",
+    ]
     ,
     "installable": True,
     "application": False,
