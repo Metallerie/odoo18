@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <template id="variant_product_force_variant" inherit_id="website_sale.product" name="Force variant selection">
-        <xpath expr="//body" position="inside">
+        <xpath expr="product_details" position="inside">
             <script type="text/javascript">
                 document.addEventListener("DOMContentLoaded", function () {
                     const path = window.location.pathname;
