@@ -7,13 +7,14 @@
 Permet de générer des pages URL-friendly et indexables pour chaque variante de produit
 en suivant le format /shop/<slug>-<id>. Ajoute aussi un sitemap dédié aux variantes.
 """,
-    "author": "Metallerie Bardina Franck & ChatGpt",
+    "author": "La Metallerie de corneilla del vercol, Bardina Franck & ChatGpt",
     "website": "https://www.metallerie.xyz",
     "category": "Website",
     "depends": ["website","website_sale", "product"],
     "data": [
         "views/templates.xml",  # À venir ou vide pour l'instant
-    ],
+        "views/product_template_inherit.xml",
+    ,
     "installable": True,
     "application": False,
     "auto_install": False,
