@@ -1,0 +1,9 @@
+<odoo>
+  <template id="variant_product_selector_inherit" inherit_id="website_sale.product">
+    <xpath expr="//div[@id='product_variant_form']//input[@type='radio']" position="attributes">
+      <attribute name="t-att-checked">
+        "'checked' if variant and value.id in [v.id for v in variant.product_template_attribute_value_ids.mapped('product_attribute_value_id')] else None"
+      </attribute>
+    </xpath>
+  </template>
+</odoo>
