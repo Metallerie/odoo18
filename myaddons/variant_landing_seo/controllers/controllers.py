@@ -61,7 +61,6 @@ class VariantLandingController(WebsiteSale):
                 <url>
                     <loc>{html_escape(url)}</loc>
                     <lastmod>{lastmod}</lastmod>
-                    <changefreq>weekly</changefreq>
                     <priority>0.8</priority>
                 </url>
             """)
