@@ -6,6 +6,7 @@ from datetime import date
 from werkzeug.urls import url_encode
 import re
 
+
 def slug(value):
     """Transforme une chaîne en slug type URL"""
     value = str(value).lower()
@@ -13,7 +14,8 @@ def slug(value):
     value = re.sub(r'[\s_-]+', '-', value)
     value = re.sub(r'^-+|-+$', '', value)
     return value
-    
+
+
 def keep(*args, **kwargs):
     return '?' + url_encode(kwargs)
 
@@ -38,20 +40,18 @@ class VariantLandingController(WebsiteSale):
         if not variant:
             return request.not_found()
 
-        # Vérifie que le category_slug correspond à la vraie catégorie principale
         category = template.public_categ_ids[:1]
         if category and slug(category[0].name) != category_slug:
             new_url = f"/shop/{slug(category[0].name)}/{variant_slug}-{template.id}"
             return request.redirect(new_url, code=301)
 
-        # SEO context
         variant_name = variant.name or template.name
         list_price = variant.list_price
         category_name = category[0].name if category else ""
 
         request.update_context(product_id=variant.id)
 
-        seo_title = f"{template.name} > {variant_name} Prix à partir de {list_price:.2f} €"
+        seo_title = f"{template.name} {variant_name} à partir de {list_price:.2f} €"
         meta_title = f"{seo_title} | {category_name}" if category_name else seo_title
         meta_description = f"Découvrez {variant_name} dans la catégorie {category_name}. Disponible à partir de {list_price:.2f} € TTC."
 
