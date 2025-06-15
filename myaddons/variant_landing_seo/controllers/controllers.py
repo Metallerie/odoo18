@@ -45,7 +45,7 @@ class VariantLandingController(WebsiteSale):
             new_url = f"/shop/{slug(category[0].name)}/{variant_slug}-{template.id}"
             return request.redirect(new_url, code=301)
 
-        variant_name = variant.name or template.name
+        variant_name = variant_slug
         list_price = variant.list_price
         category_name = category[0].name if category else ""
 
