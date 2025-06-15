@@ -1,6 +1,6 @@
 from odoo import http
 from odoo.http import request, Response
-#import odoo.addons.website_sale.controllers.main as website_sale_main
+import odoo.addons.website_sale.controllers.main as website_sale_main
 from odoo.tools import html_escape
 from datetime import date
 from werkzeug.urls import url_encode
