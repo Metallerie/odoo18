@@ -1,14 +1,28 @@
 <odoo>
-<template id="variant_seo_view_inherit" inherit_id="website_sale.product" priority="20">
-    <xpath expr="//h1" position="replace">
-        <h1 t-if="h1_title" class="oe_structure" t-field="h1_title"/>
-        <h1 t-if="not h1_title" class="oe_structure" t-field="product.name"/>
-    </xpath>
+    <!-- H1 personnalisé dans la page produit -->
+    <template id="variant_seo_h1_inherit" inherit_id="website_sale.product" priority="20">
+        <xpath expr="//h1" position="replace">
+            <h1 t-if="h1_title" class="oe_structure" t-esc="h1_title"/>
+            <h1 t-if="not h1_title" class="oe_structure" t-field="product.name"/>
+        </xpath>
+    </template>
 
-    <xpath expr="//head" position="inside">
-        <title t-if="meta_title"><t t-esc="meta_title"/></title>
-        <meta t-if="meta_description" name="description" t-att-content="meta_description"/>
-        <link t-if="canonical_url" rel="canonical" t-att-href="canonical_url"/>
-    </xpath>
-</template>
+    <!-- Balises SEO dans <head>, en ciblant individuellement -->
+    <template id="variant_seo_meta_title" inherit_id="website.layout" priority="20">
+        <xpath expr="//head/title" position="replace">
+            <title t-if="meta_title"><t t-esc="meta_title"/></title>
+        </xpath>
+    </template>
+
+    <template id="variant_seo_meta_description" inherit_id="website.layout" priority="20">
+        <xpath expr="//head/meta[@name='description']" position="replace">
+            <meta t-if="meta_description" name="description" t-att-content="meta_description"/>
+        </xpath>
+    </template>
+
+    <template id="variant_seo_canonical_url" inherit_id="website.layout" priority="20">
+        <xpath expr="//head/link[@rel='canonical']" position="replace">
+            <link t-if="canonical_url" rel="canonical" t-att-href="canonical_url"/>
+        </xpath>
+    </template>
 </odoo>
