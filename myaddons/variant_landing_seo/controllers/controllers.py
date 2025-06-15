@@ -1,14 +1,16 @@
 from odoo import http
 from odoo.http import request, Response
-import odoo.addons.website_sale.controllers.main as website_sale_main
+from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.tools import html_escape
 from datetime import date
 from werkzeug.urls import url_encode
 
+
 def keep(*args, **kwargs):
     return '?' + url_encode(kwargs)
 
-class VariantLandingController(website_sale_main.WebsiteSale):
+
+class VariantLandingController(WebsiteSale):
 
     @http.route(['/shop/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
     def variant_product_page(self, variant_slug, template_id, **kwargs):
@@ -19,7 +21,6 @@ class VariantLandingController(website_sale_main.WebsiteSale):
         if not template.exists() or not template.website_published:
             return request.not_found()
 
-        # On cherche une variante qui correspond exactement au slug
         variant = ProductProduct.search([
             ('product_tmpl_id', '=', template.id),
             ('variant_slug', '=', variant_slug),
@@ -27,11 +28,10 @@ class VariantLandingController(website_sale_main.WebsiteSale):
         ], limit=1)
 
         if not variant:
-            # 🟡 Le slug ne correspond à aucune variante → redirection vers la page template
+            slug = request.env['ir.http']._slug
             return request.redirect(f"/shop/{slug(template)}", code=302)
 
         request.update_context(product_id=variant.id)
-
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
@@ -40,18 +40,19 @@ class VariantLandingController(website_sale_main.WebsiteSale):
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
     def variant_sitemap(self, **kwargs):
-        variants = request.env['product.product'].sudo().search([
+        ProductProduct = request.env['product.product'].sudo()
+        variants = ProductProduct.search([
             ('website_published', '=', True),
             ('variant_slug', '!=', False)
         ])
 
         base_url = request.httprequest.host_url.rstrip('/')
-
         urls = []
+
         for variant in variants:
-            slug = variant.variant_slug
+            slug_value = variant.variant_slug
             template_id = variant.product_tmpl_id.id
-            url = f"{base_url}/shop/{slug}-{template_id}"
+            url = f"{base_url}/shop/{slug_value}-{template_id}"
             lastmod = (variant.write_date or variant.create_date).date().isoformat()
 
             urls.append(f"""
