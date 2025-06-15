@@ -1,6 +1,6 @@
 from odoo import http
 from odoo.http import request, Response
-from odoo.addons.website_sale.controllers.main import WebsiteSale
+import odoo.addons.website_sale.controllers.main as website_sale_main
 from odoo.tools import html_escape
 from datetime import date
 from werkzeug.urls import url_encode
@@ -8,7 +8,7 @@ from werkzeug.urls import url_encode
 def keep(*args, **kwargs):
     return '?' + url_encode(kwargs)
 
-class VariantLandingController(WebsiteSale):
+class VariantLandingController(website_sale_main.WebsiteSale):
 
     @http.route(['/shop/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
     def variant_product_page(self, variant_slug, template_id, **kwargs):
