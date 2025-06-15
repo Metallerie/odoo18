@@ -13,7 +13,7 @@ en suivant le format /shop/<slug>-<id>. Ajoute aussi un sitemap dédié aux vari
     "depends": ["website","website_sale", "product"],
     "data": [
         "views/templates.xml",  # À venir ou vide pour l'instant
-#        "views/product_template_inherit.xml",
+        "views/variant_seo_product.xml",
     ]
     ,
     "installable": True,
