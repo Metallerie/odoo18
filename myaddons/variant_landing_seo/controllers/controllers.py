@@ -60,8 +60,8 @@ class VariantLandingController(WebsiteSale):
         meta_title = f"{template.name} > {variant_name} | {category_name}" if category_name else seo_title
         meta_description = f"Découvrez {variant_name} dans la catégorie {category_name}. Disponible à partir de {list_price:.2f} € TTC."
 
-        canonical_url = f"/shop/{slug(category[0].name)}/{variant.variant_slug}-{template.id}" if category else request.httprequest.path
-
+        canonical_url = template.website_url
+        
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
