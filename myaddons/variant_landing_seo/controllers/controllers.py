@@ -40,8 +40,8 @@ class VariantLandingController(WebsiteSale):
 
         # Vérifie que le category_slug correspond à la vraie catégorie principale
         category = template.public_categ_ids[:1]
-        if category and slug(category[0]) != category_slug:
-            new_url = f"/shop/{slug(category[0])}/{variant_slug}-{template.id}"
+        if category and slug(category[0].name) != category_slug:
+            new_url = f"/shop/{slug(category[0].name)}/{variant_slug}-{template.id}"
             return request.redirect(new_url, code=301)
 
         # SEO context
@@ -55,7 +55,7 @@ class VariantLandingController(WebsiteSale):
         meta_title = f"{seo_title} | {category_name}" if category_name else seo_title
         meta_description = f"Découvrez {variant_name} dans la catégorie {category_name}. Disponible à partir de {list_price:.2f} € TTC."
 
-        canonical_url = f"/shop/{slug(category[0])}/{variant.variant_slug}-{template.id}" if category else request.httprequest.path
+        canonical_url = f"/shop/{slug(category[0].name)}/{variant.variant_slug}-{template.id}" if category else request.httprequest.path
 
         return request.render("website_sale.product", {
             'product': template,
@@ -85,7 +85,7 @@ class VariantLandingController(WebsiteSale):
             category = template.public_categ_ids[:1]
             if not category:
                 continue
-            url = f"{base_url}/shop/{slug(category[0])}/{slug_value}-{template_id}"
+            url = f"{base_url}/shop/{slug(category[0].name)}/{slug_value}-{template_id}"
             lastmod = (variant.write_date or variant.create_date).date().isoformat()
 
             urls.append(f"""
