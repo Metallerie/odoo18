@@ -4,6 +4,7 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.tools import html_escape
 from datetime import date
 from werkzeug.urls import url_encode
+from odoo.addons.http_routing.models.ir_http import slug
 
 def keep(*args, **kwargs):
     return '?' + url_encode(kwargs)
@@ -28,7 +29,7 @@ class VariantLandingController(WebsiteSale):
 
         if not variant:
             # 🟡 Le slug ne correspond à aucune variante → redirection vers la page template
-            return request.redirect(f"/shop/{template.website_slug}", code=302)
+            return request.redirect(f"/shop/{slug(template)}", code=302)
 
         request.update_context(product_id=variant.id)
 
