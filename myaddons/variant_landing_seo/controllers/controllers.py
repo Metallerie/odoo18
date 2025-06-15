@@ -12,10 +12,12 @@ def keep(*args, **kwargs):
 
 class VariantLandingController(WebsiteSale):
 
-    @http.route(['/shop/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
-    def variant_product_page(self, variant_slug, template_id, **kwargs):
+    @http.route(['/shop/<string:category_slug>/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
+    def variant_product_page(self, category_slug, variant_slug, template_id, **kwargs):
         ProductTemplate = request.env['product.template'].sudo()
         ProductProduct = request.env['product.product'].sudo()
+        Category = request.env['product.public.category'].sudo()
+        slug = request.env['ir.http']._slug
 
         template = ProductTemplate.browse(template_id)
         if not template.exists() or not template.website_published:
@@ -28,12 +30,20 @@ class VariantLandingController(WebsiteSale):
         ], limit=1)
 
         if not variant:
-            slug = request.env['ir.http']._slug
-            # 🛑 Si on est déjà sur le slug du template, inutile de rediriger → 404
-            if variant_slug == slug(template):
-                return request.not_found()
-            return request.redirect(f"/shop/{slug(template)}", code=302)
-  
+            return request.not_found()
+
+        # Vérifie si le slug de la catégorie correspond à une des catégories réelles du template
+        category_match = False
+        for cat in template.public_categ_ids:
+            if slug(cat) == category_slug:
+                category_match = True
+                break
+
+        if not category_match:
+            # Redirection douce vers l'URL correcte avec le bon slug de catégorie
+            correct_slug = slug(template.public_categ_ids[0]) if template.public_categ_ids else 'uncategorized'
+            return request.redirect(f"/shop/{correct_slug}/{variant_slug}-{template.id}", code=302)
+
         request.update_context(product_id=variant.id)
         return request.render("website_sale.product", {
             'product': template,
@@ -44,6 +54,7 @@ class VariantLandingController(WebsiteSale):
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
     def variant_sitemap(self, **kwargs):
         ProductProduct = request.env['product.product'].sudo()
+        slug = request.env['ir.http']._slug
         variants = ProductProduct.search([
             ('website_published', '=', True),
             ('variant_slug', '!=', False)
@@ -53,9 +64,12 @@ class VariantLandingController(WebsiteSale):
         urls = []
 
         for variant in variants:
+            template = variant.product_tmpl_id
+            category = template.public_categ_ids[:1]  # prend la première catégorie s'il y en a
+            category_slug = slug(category) if category else 'uncategorized'
             slug_value = variant.variant_slug
-            template_id = variant.product_tmpl_id.id
-            url = f"{base_url}/shop/{slug_value}-{template_id}"
+            template_id = template.id
+            url = f"{base_url}/shop/{category_slug}/{slug_value}-{template_id}"
             lastmod = (variant.write_date or variant.create_date).date().isoformat()
 
             urls.append(f"""
@@ -66,8 +80,8 @@ class VariantLandingController(WebsiteSale):
                 </url>
             """)
 
-        sitemap_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        sitemap_content = f"""<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+        <urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">
             {''.join(urls)}
         </urlset>"""
 
