@@ -3,18 +3,13 @@ from odoo.http import request, Response
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.tools import html_escape
 from datetime import date
-from odoo.addons.website.controllers.main import Website
 from werkzeug.urls import url_encode
 
 def keep(*args, **kwargs):
-    from werkzeug.urls import url_encode
     return '?' + url_encode(kwargs)
 
-
 class VariantLandingController(WebsiteSale):
-    
 
-    
     @http.route(['/shop/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
     def variant_product_page(self, variant_slug, template_id, **kwargs):
         ProductTemplate = request.env['product.template'].sudo()
@@ -24,20 +19,23 @@ class VariantLandingController(WebsiteSale):
         if not template.exists() or not template.website_published:
             return request.not_found()
 
+        # On cherche une variante qui correspond exactement au slug
         variant = ProductProduct.search([
             ('product_tmpl_id', '=', template.id),
-            ('variant_slug', '=', variant_slug)
+            ('variant_slug', '=', variant_slug),
+            ('website_published', '=', True)
         ], limit=1)
 
         if not variant:
-            return request.not_found()
+            # 🟡 Le slug ne correspond à aucune variante → redirection vers la page template
+            return request.redirect(f"/shop/{template.website_slug}", code=302)
 
         request.update_context(product_id=variant.id)
 
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
-            'keep': keep,  # ✅ Ici on injecte proprement la méthode
+            'keep': keep,
         })
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
@@ -48,7 +46,6 @@ class VariantLandingController(WebsiteSale):
         ])
 
         base_url = request.httprequest.host_url.rstrip('/')
-        today = date.today().isoformat()
 
         urls = []
         for variant in variants:
