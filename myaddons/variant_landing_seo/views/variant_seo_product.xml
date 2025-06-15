@@ -1,0 +1,14 @@
+<odoo>
+<template id="variant_seo_view_inherit" inherit_id="website_sale.product" priority="20">
+    <xpath expr="//h1" position="replace">
+        <h1 t-if="h1_title" class="oe_structure" t-field="h1_title"/>
+        <h1 t-if="not h1_title" class="oe_structure" t-field="product.name"/>
+    </xpath>
+
+    <xpath expr="//head" position="inside">
+        <title t-if="meta_title"><t t-esc="meta_title"/></title>
+        <meta t-if="meta_description" name="description" t-att-content="meta_description"/>
+        <link t-if="canonical_url" rel="canonical" t-att-href="canonical_url"/>
+    </xpath>
+</template>
+</odoo>
