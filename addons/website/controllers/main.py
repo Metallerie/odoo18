@@ -67,4 +67,4 @@ class VariantLandingController(WebsiteSale):
             {''.join(urls)}
         </urlset>"""
 
-        return Response(sitemap_content.strip(), content_type='application/xm
+        return Response(sitemap_content.strip(), content_type='application/xml;charset=utf-8')
