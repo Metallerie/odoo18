@@ -34,15 +34,30 @@ class VariantLandingController(WebsiteSale):
         # Vérifie que le category_slug correspond à la vraie catégorie principale
         category = template.public_categ_ids[:1]
         if category and slug(category[0]) != category_slug:
-            # Redirection vers l’URL propre avec le bon slug de catégorie
             new_url = f"/shop/{slug(category[0])}/{variant_slug}-{template.id}"
             return request.redirect(new_url, code=301)
 
+        # SEO context
+        variant_name = variant.name or template.name
+        list_price = variant.list_price
+        category_name = category[0].name if category else ""
+
         request.update_context(product_id=variant.id)
+
+        seo_title = f"{template.name} > {variant_name} Prix à partir de {list_price:.2f} €"
+        meta_title = f"{seo_title} | {category_name}" if category_name else seo_title
+        meta_description = f"Découvrez {variant_name} dans la catégorie {category_name}. Disponible à partir de {list_price:.2f} € TTC."
+
+        canonical_url = f"/shop/{slug(category[0])}/{variant.variant_slug}-{template.id}" if category else request.httprequest.path
+
         return request.render("website_sale.product", {
             'product': template,
             'variant': variant,
             'keep': keep,
+            'meta_title': meta_title,
+            'meta_description': meta_description,
+            'canonical_url': canonical_url,
+            'h1_title': seo_title,
         })
 
     @http.route(['/sitemap_product_variant.xml'], type='http', auth='public', website=True, sitemap=False)
