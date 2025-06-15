@@ -4,7 +4,16 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.tools import html_escape
 from datetime import date
 from werkzeug.urls import url_encode
-from odoo.tools import slug
+import re
+
+def slug(value):
+    """Transforme une chaîne en slug type URL"""
+    value = str(value).lower()
+    value = re.sub(r'[^\w\s-]', '', value)
+    value = re.sub(r'[\s_-]+', '-', value)
+    value = re.sub(r'^-+|-+$', '', value)
+    return value
+    
 def keep(*args, **kwargs):
     return '?' + url_encode(kwargs)
 
