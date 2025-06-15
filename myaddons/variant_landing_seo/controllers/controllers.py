@@ -7,6 +7,10 @@ from werkzeug.urls import url_encode
 import re
 
 
+def humanize_slug(slug_value):
+    return slug_value.replace('-', ' ').capitalize()
+
+
 def slug(value):
     """Transforme une chaîne en slug type URL"""
     value = str(value).lower()
@@ -45,7 +49,7 @@ class VariantLandingController(WebsiteSale):
             new_url = f"/shop/{slug(category[0].name)}/{variant_slug}-{template.id}"
             return request.redirect(new_url, code=301)
 
-        variant_name = variant_slug
+        variant_name = humanize_slug(variant_slug)
         list_price = variant.list_price
         category_name = category[0].name if category else ""
 
