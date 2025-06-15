@@ -30,9 +30,9 @@ class VariantLandingController(WebsiteSale):
         if not variant:
             slug = request.env['ir.http']._slug
             # 🛑 Si on est déjà sur le slug du template, inutile de rediriger → 404
-           if variant_slug == slug(template):
-               return request.not_found()
-           return request.redirect(f"/shop/{slug(template)}", code=302)
+            if variant_slug == slug(template):
+                return request.not_found()
+            return request.redirect(f"/shop/{slug(template)}", code=302)
   
         request.update_context(product_id=variant.id)
         return request.render("website_sale.product", {
