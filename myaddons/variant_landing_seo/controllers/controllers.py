@@ -51,8 +51,8 @@ class VariantLandingController(WebsiteSale):
 
         request.update_context(product_id=variant.id)
 
-        seo_title = f"{template.name} {variant_name} à partir de {list_price:.2f} €"
-        meta_title = f"{seo_title} | {category_name}" if category_name else seo_title
+        seo_title = f"{variant_name} à partir de {list_price:.2f} €"
+        meta_title = f"{template.name} > {variant_name} | {category_name}" if category_name else seo_title
         meta_description = f"Découvrez {variant_name} dans la catégorie {category_name}. Disponible à partir de {list_price:.2f} € TTC."
 
         canonical_url = f"/shop/{slug(category[0].name)}/{variant.variant_slug}-{template.id}" if category else request.httprequest.path
