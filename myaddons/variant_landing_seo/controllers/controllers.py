@@ -12,13 +12,12 @@ class VariantLandingController(WebsiteSale):
 
     @http.route(['/shop/<string:variant_slug>-<int:template_id>'], type='http', auth="public", website=True)
     def variant_product_page(self, variant_slug, template_id, **kwargs):
-        from odoo.addons.website.controllers.main import QueryURL  # Import ici
-            ProductTemplate = request.env['product.template'].sudo()
-            ProductProduct = request.env['product.product'].sudo()
+        ProductTemplate = request.env['product.template'].sudo()
+        ProductProduct = request.env['product.product'].sudo()
 
-            template = ProductTemplate.browse(template_id)
-            if not template.exists() or not template.website_published:
-                return request.not_found()
+        template = ProductTemplate.browse(template_id)
+        if not template.exists() or not template.website_published:
+            return request.not_found()
 
         # On cherche une variante qui correspond exactement au slug
         variant = ProductProduct.search([
