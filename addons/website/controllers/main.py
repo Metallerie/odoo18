@@ -5,8 +5,10 @@ from odoo.tools import html_escape
 from datetime import date
 from werkzeug.urls import url_encode
 
+
 def keep(*args, **kwargs):
     return '?' + url_encode(kwargs)
+
 
 class VariantLandingController(WebsiteSale):
 
@@ -14,7 +16,7 @@ class VariantLandingController(WebsiteSale):
     def variant_product_page(self, variant_slug, template_id, **kwargs):
         ProductTemplate = request.env['product.template'].sudo()
         ProductProduct = request.env['product.product'].sudo()
-        slug = request.env['ir.http']._slug  # ✅ Fonction slug d’Odoo
+        slug = request.env['ir.http']._slug  # Import safe
 
         template = ProductTemplate.browse(template_id)
         if not template.exists() or not template.website_published:
@@ -27,7 +29,6 @@ class VariantLandingController(WebsiteSale):
         ], limit=1)
 
         if not variant:
-            # 🔁 Redirection douce vers la page template
             return request.redirect(f"/shop/{slug(template)}", code=302)
 
         request.update_context(product_id=variant.id)
