@@ -14,6 +14,7 @@
         'views/res_config_settings.xml',
         'views/product_assign_line_wizard.xml',
         'security/ir.model.access.csv',
+        'data/ir_cron.xml',
     ],
     'license': 'LGPL-3',
     'installable': True,
