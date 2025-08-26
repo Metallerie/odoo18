@@ -7,7 +7,6 @@
             <field name="code">model.import_pdf_invoices()</field>
             <field name="interval_type">minutes</field>
             <field name="interval_number">10</field>
-            <field name="numbercall">-1</field>
             <field name="active">True</field>
         </record>
     </data>
