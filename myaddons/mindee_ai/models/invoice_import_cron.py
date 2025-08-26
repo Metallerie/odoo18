@@ -12,8 +12,8 @@ class MindeeAutoImport(models.Model):
 
     @api.model
     def import_pdf_invoices(self):
-        base_path = "/data/factures_a_traiter/"
-        archive_path = "/data/factures_archive/"
+        base_path = "/data/Documents/factures_a_traiter/"
+        archive_path = "/data/Documents/factures_archive/"
 
         if not os.path.exists(base_path):
             _logger.warning(f"Dossier source introuvable : {base_path}")
