@@ -25,22 +25,33 @@ class MindeeAutoImport(models.Model):
                 try:
                     with open(full_path, "rb") as f:
                         file_data = f.read()
-                        attachment = self.env['ir.attachment'].create({
-                            'name': fname,
-                            'datas': base64.b64encode(file_data),
-                            'res_model': 'account.move',
-                            'type': 'binary',
-                            'mimetype': 'application/pdf',
-                        })
 
+                    # Créer la facture vide en brouillon
                     invoice = self.env['account.move'].create({
                         'move_type': 'in_invoice',
                         'state': 'draft',
-                        'pdf_attachment_id': attachment.id,
+                        # optionnel : tu peux mettre une journal ou partenaire ici
+                        # 'journal_id': ...,
+                        # 'partner_id': ...,
                     })
 
-                    attachment.res_id = invoice.id  # lier la pièce jointe à la facture
-                    _logger.info(f"Facture créée avec pièce jointe : {fname} -> ID {invoice.id}")
+                    # Créer la pièce jointe liée
+                    attachment = self.env['ir.attachment'].create({
+                        'name': fname,
+                        'datas': base64.b64encode(file_data),
+                        'res_model': 'account.move',
+                        'res_id': invoice.id,
+                        'type': 'binary',
+                        'mimetype': 'application/pdf',
+                    })
+
+                    # Poste un message pour loger l’action
+                    invoice.message_post(
+                        body="Facture importée automatiquement via cron.",
+                        attachment_ids=[attachment.id],
+                    )
+
+                    _logger.info(f"Facture ID {invoice.id} créée avec pièce jointe : {fname}")
 
                     # Archiver le fichier
                     archived_path = os.path.join(archive_path, fname + "_imported")
