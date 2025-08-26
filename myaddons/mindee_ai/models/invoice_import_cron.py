@@ -20,44 +20,60 @@ class MindeeAutoImport(models.Model):
             return False
 
         for fname in os.listdir(base_path):
-            if fname.lower().endswith(".pdf"):
-                full_path = os.path.join(base_path, fname)
+            if not fname.lower().endswith(".pdf"):
+                continue
+
+            full_path = os.path.join(base_path, fname)
+
+            # Vérifie s'il existe déjà une pièce jointe avec ce nom
+            existing_attachment = self.env['ir.attachment'].search([
+                ('name', '=', fname),
+                ('res_model', '=', 'account.move')
+            ], limit=1)
+
+            if existing_attachment:
+                _logger.warning(f"Fichier déjà traité (doublon) : {fname}")
                 try:
-                    with open(full_path, "rb") as f:
-                        file_data = f.read()
-
-                    # Créer la facture vide en brouillon
-                    invoice = self.env['account.move'].create({
-                        'move_type': 'in_invoice',
-                        'state': 'draft',
-                        # optionnel : tu peux mettre une journal ou partenaire ici
-                        # 'journal_id': ...,
-                        # 'partner_id': ...,
-                    })
-
-                    # Créer la pièce jointe liée
-                    attachment = self.env['ir.attachment'].create({
-                        'name': fname,
-                        'datas': base64.b64encode(file_data),
-                        'res_model': 'account.move',
-                        'res_id': invoice.id,
-                        'type': 'binary',
-                        'mimetype': 'application/pdf',
-                    })
-
-                    # Poste un message pour loger l’action
-                    invoice.message_post(
-                        body="Facture importée automatiquement via cron.",
-                        attachment_ids=[attachment.id],
-                    )
-
-                    _logger.info(f"Facture ID {invoice.id} créée avec pièce jointe : {fname}")
-
-                    # Archiver le fichier
-                    archived_path = os.path.join(archive_path, fname + "_imported")
-                    os.rename(full_path, archived_path)
-
+                    duplicate_path = os.path.join(archive_path, fname + "_duplicate")
+                    os.rename(full_path, duplicate_path)
+                    _logger.info(f"Fichier déplacé vers : {duplicate_path}")
                 except Exception as e:
-                    _logger.error(f"Erreur lors du traitement du fichier {fname} : {e}")
+                    _logger.error(f"Erreur lors du déplacement du doublon {fname} : {e}")
+                continue
+
+            try:
+                with open(full_path, "rb") as f:
+                    file_data = f.read()
+
+                # Créer la facture en brouillon
+                invoice = self.env['account.move'].create({
+                    'move_type': 'in_invoice',
+                    'state': 'draft',
+                })
+
+                # Ajouter la pièce jointe
+                attachment = self.env['ir.attachment'].create({
+                    'name': fname,
+                    'datas': base64.b64encode(file_data),
+                    'res_model': 'account.move',
+                    'res_id': invoice.id,
+                    'type': 'binary',
+                    'mimetype': 'application/pdf',
+                })
+
+                # Poster un message
+                invoice.message_post(
+                    body="Facture importée automatiquement via cron.",
+                    attachment_ids=[attachment.id],
+                )
+
+                _logger.info(f"Facture ID {invoice.id} créée avec pièce jointe : {fname}")
+
+                # Déplacer le fichier vers l'archive
+                archived_path = os.path.join(archive_path, fname + "_imported")
+                os.rename(full_path, archived_path)
+
+            except Exception as e:
+                _logger.error(f"Erreur lors du traitement du fichier {fname} : {e}")
 
         return True
