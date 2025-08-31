@@ -1,0 +1,78 @@
+<odoo>
+    <data>
+        <!-- Action serveur pour la synchronisation des partenaires -->
+        <record id="action_sync_partners" model="ir.actions.server">
+            <field name="name">Synchroniser Partenaires</field>
+            <field name="model_id" ref="model_metallerie_sync_partner"/>
+            <field name="state">code</field>
+            <field name="code">
+                env['metallerie.sync.partner'].sync_v16_to_v18_partners()
+            </field>
+        </record>
+
+        <!-- Formulaire avec bouton manuel -->
+        <record id="view_form_sync_partners" model="ir.ui.view">
+            <field name="name">view.sync.partners.form</field>
+            <field name="model">metallerie.sync.partner</field>
+            <field name="arch" type="xml">
+                <form string="Synchronisation Partenaires">
+                    <header>
+                        <button string="Lancer Synchronisation" type="object" name="sync_v16_to_v18_partners" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Vue liste pour afficher les champs synchronisés et ignorés -->
+        <record id="view_sync_field_status_tree" model="ir.ui.view">
+            <field name="name">sync.field.status.tree</field>
+            <field name="model">metallerie.sync.field.status</field>
+            <field name="arch" type="xml">
+                <tree string="Statuts des champs">
+                    <field name="field_name"/>
+                    <field name="field_type"/>
+                    <field name="field_relation"/>
+                    <field name="field_status"/>
+                    <field name="ignore_reason"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Vue formulaire pour les détails des champs -->
+        <record id="view_sync_field_status_form" model="ir.ui.view">
+            <field name="name">sync.field.status.form</field>
+            <field name="model">metallerie.sync.field.status</field>
+            <field name="arch" type="xml">
+                <form string="Statut de synchronisation des champs">
+                    <sheet>
+                        <group>
+                            <field name="field_name"/>
+                            <field name="field_type"/>
+                            <field name="field_relation"/>
+                            <field name="field_status"/>
+                            <field name="ignore_reason"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action pour afficher la liste des statuts des champs -->
+        <record id="action_sync_field_status" model="ir.actions.act_window">
+            <field name="name">Statuts des champs</field>
+            <field name="res_model">metallerie.sync.field.status</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu pour accéder à la liste des statuts des champs -->
+        <menuitem id="menu_sync_field_status" 
+                  name="Statuts des champs" 
+                  parent="menu_form_sync_partners" 
+                  action="action_sync_field_status"/>
+    </data>
+</odoo>

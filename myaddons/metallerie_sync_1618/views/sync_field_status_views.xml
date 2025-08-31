@@ -1,0 +1,50 @@
+<odoo>
+    <data>
+        <!-- Vue liste pour les statuts des champs -->
+        <record id="view_sync_field_status_tree" model="ir.ui.view">
+            <field name="name">sync.field.status.tree</field>
+            <field name="model">metallerie.sync.field.status</field>
+            <field name="arch" type="xml">
+                <tree string="Statuts des champs">
+                    <field name="field_name"/>
+                    <field name="field_type"/>
+                    <field name="field_relation"/>
+                    <field name="field_status"/>
+                    <field name="ignore_reason"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Vue formulaire pour les détails des statuts des champs -->
+        <record id="view_sync_field_status_form" model="ir.ui.view">
+            <field name="name">sync.field.status.form</field>
+            <field name="model">metallerie.sync.field.status</field>
+            <field name="arch" type="xml">
+                <form string="Détails des statuts des champs">
+                    <sheet>
+                        <group>
+                            <field name="field_name"/>
+                            <field name="field_type"/>
+                            <field name="field_relation"/>
+                            <field name="field_status"/>
+                            <field name="ignore_reason"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action pour afficher la vue des statuts des champs -->
+        <record id="action_sync_field_status" model="ir.actions.act_window">
+            <field name="name">Statuts des champs</field>
+            <field name="res_model">metallerie.sync.field.status</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu pour accéder aux statuts des champs -->
+        <menuitem id="menu_sync_field_status" 
+                  name="Statuts des champs" 
+                  parent="menu_form_sync_partners" 
+                  action="action_sync_field_status"/>
+    </data>
+</odoo>

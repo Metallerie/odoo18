@@ -57,7 +57,6 @@ export class ProductScreen extends Component {
         this._searchTriggered = false;
         onMounted(() => {
             this.pos.openOpeningControl();
-            this.pos.addPendingOrder([this.currentOrder.id]);
             // Call `reset` when the `onMounted` callback in `numberBuffer.use` is done.
             // We don't do this in the `mounted` lifecycle method because it is called before
             // the callbacks in `onMounted` hook.
@@ -72,6 +71,7 @@ export class ProductScreen extends Component {
         });
 
         this.barcodeReader = useService("barcode_reader");
+        this.sound = useService("mail.sound_effects");
 
         useBarcodeReader({
             product: this._barcodeProductAction,
@@ -238,6 +238,7 @@ export class ProductScreen extends Component {
         const product = await this._getProductByBarcode(code);
 
         if (!product) {
+            this.sound.play("error");
             this.barcodeReader.showNotFoundNotification(code);
             return;
         }
@@ -345,8 +346,7 @@ export class ProductScreen extends Component {
         if (limit_categories && iface_available_categ_ids.length > 0) {
             const productIds = new Set([]);
             for (const categ of iface_available_categ_ids) {
-                const categoryProducts =
-                    this.pos.models["product.product"].getBy("pos_categ_ids", categ.id) || [];
+                const categoryProducts = this.getProductsByCategory(categ);
                 for (const p of categoryProducts) {
                     productIds.add(p.id);
                 }
@@ -394,7 +394,7 @@ export class ProductScreen extends Component {
             }
         }
 
-        return this.searchWord === ""
+        return this.searchWord !== ""
             ? filteredList
             : filteredList.sort((a, b) => a.display_name.localeCompare(b.display_name));
     }
@@ -405,9 +405,13 @@ export class ProductScreen extends Component {
             ? this.getProductsByCategory(this.pos.selectedCategory)
             : this.products;
 
-        return products.filter((p) =>
-            unaccent(p.searchString, false).toLowerCase().includes(words)
-        );
+        const filteredProducts = products.filter((p) => unaccent(p.searchString).includes(words));
+        return filteredProducts.sort((a, b) => {
+            const nameA = unaccent(a.searchString);
+            const nameB = unaccent(b.searchString);
+            // Sort by match index, push non-matching items to the end, and use alphabetical order as a tiebreaker
+            return nameA.indexOf(words) - nameB.indexOf(words) || nameA.localeCompare(nameB);
+        });
     }
 
     addMainProductsToDisplay(products) {
@@ -494,6 +498,15 @@ export class ProductScreen extends Component {
     }
 
     async addProductToOrder(product) {
+        if (this.searchWord && product.isConfigurable()) {
+            const barcode = this.searchWord;
+            const searchedProduct = product.variants.filter(
+                (p) => p.barcode && p.barcode.includes(barcode)
+            );
+            if (searchedProduct.length === 1) {
+                product = searchedProduct[0];
+            }
+        }
         await reactive(this.pos).addLineToCurrentOrder({ product_id: product }, {});
     }
 

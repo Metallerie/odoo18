@@ -946,7 +946,7 @@ test("click on expand from chat window should close the chat window and open the
     await click("[title='Open Actions Menu']");
     await click(".o-dropdown-item", { text: "Open Form View" });
     await contains(".o-mail-ChatWindow", { count: 0 });
-    await assertSteps(["do_action"], "should have done an action to open the form view");
+    await assertSteps(["do_action"]);
 });
 
 test("preview should display last needaction message preview even if there is a more recent message that is not needaction in the thread", async () => {
@@ -1226,6 +1226,9 @@ test("Can quick search when more than 20 items", async () => {
     await insertText(".o-mail-MessagingMenu input", "admin");
     await contains(".o-mail-NotificationItem", { count: 1 });
     await contains(".o-mail-NotificationItem", { text: "Mitchell Admin" });
+    await insertText(".o-mail-MessagingMenu input", "no threads", { replace: true });
+    await contains(".o-mail-MessagingMenu div.text-muted", { text: "No thread found." });
+    expect(".o-mail-MessagingMenu-list").toHaveText("No thread found."); // list should contain only this text
 });
 
 test("keyboard navigation", async () => {

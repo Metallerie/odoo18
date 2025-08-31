@@ -14,6 +14,9 @@ class TestPoSSaleReport(TestPoSCommon):
         self.config = self.basic_config
         self.product0 = self.create_product('Product 0', self.categ_basic, 0.0, 0.0)
         self.partner_1 = self.env['res.partner'].create({'name': 'Test Partner 1'})
+        # Ensure that adding a uom to the product with a factor != 1 
+        # does not cause an error in weight and volume calculation
+        self.product0.uom_id = self.env['uom.uom'].search([('name', '=', 'Dozens')], limit=1)
 
     def test_weight_and_volume(self):
         self.product0.product_tmpl_id.weight = 3
@@ -129,7 +132,7 @@ class TestPoSSaleReport(TestPoSCommon):
 
         orders = []
 
-        orders.append(self.create_ui_order_data([(self.product0, 5)], self.partner_1))
+        orders.append(self.create_ui_order_data([(self.product0, 5, 100), (self.product0, 3)], self.partner_1))
         orders[0]['shipping_date'] = fields.Date.to_string(fields.Date.today())
 
         order = self.env['pos.order'].sync_from_ui(orders)
@@ -139,10 +142,10 @@ class TestPoSSaleReport(TestPoSCommon):
 
         report = self.env['sale.report'].sudo().search([('product_id', '=', self.product0.id)], order='id')
 
-        self.assertEqual(report.qty_to_deliver, 5)
-        self.assertEqual(report.qty_delivered, 0)
+        self.assertEqual(sum(report.mapped('qty_to_deliver')), 8)
+        self.assertEqual(sum(report.mapped('qty_delivered')), 0)
 
-        order.picking_ids.move_ids.quantity = 5.0
+        order.picking_ids.move_ids.quantity = 8.0
         order.picking_ids.button_validate()
         # flush computations and clear the cache before checking again the report
         self.env.flush_all()
@@ -150,5 +153,5 @@ class TestPoSSaleReport(TestPoSCommon):
 
         report = self.env['sale.report'].sudo().search([('product_id', '=', self.product0.id)], order='id')
 
-        self.assertEqual(report.qty_to_deliver, 0)
-        self.assertEqual(report.qty_delivered, 5)
+        self.assertEqual(sum(report.mapped('qty_to_deliver')), 0)
+        self.assertEqual(sum(report.mapped('qty_delivered')), 8)

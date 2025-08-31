@@ -620,7 +620,11 @@
                     &.o_long_title {
                         width: fit-content !important;
                         padding-right: 10px !important;
+                        flex: 1 1 auto;
                     }
+                }
+                we-button .o_switch {
+                    min-width: fit-content;
                 }
                 .highlighted-text {
                     color: white;
@@ -1402,6 +1406,9 @@
                 &::placeholder {
                     color: $o-we-sidebar-content-field-control-item-color;
                 }
+                &.datetimepicker-input.text-primary {
+                    color: inherit !important;
+                }
             }
             span {
                 flex: 0 0 auto;
@@ -1771,6 +1778,10 @@
                 }
             }
 
+            &:has(.o_long_title) we-button {
+                flex-shrink: 0;
+            }
+
             &.o_we_header_font_row > div {
                 justify-content: space-between;
 
@@ -1819,6 +1830,15 @@
             // color pickers
             .o_we_so_color_palette.o_we_user_value_widget + .o_we_user_value_widget:not(.o_we_so_color_palette) {
                 margin-left: $o-we-sidebar-content-field-multi-spacing * 4 !important;
+            }
+
+            // For layout having button-group + we-select, to avoid the long
+            // text to overflow the row.
+            &:has(div > we-button-group + we-select.o_grid) {
+                we-button-group we-selection-items {
+                    display: grid !important;
+                    grid-template-columns: auto auto;
+                }
             }
         }
 

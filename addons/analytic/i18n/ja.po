@@ -1,23 +1,23 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
 # 	* analytic
-# 
+#
 # Translators:
 # Wil Odoo, 2024
 # Junko Augias, 2025
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-19 20:36+0000\n"
+"POT-Creation-Date: 2025-08-15 18:36+0000\n"
 "PO-Revision-Date: 2024-09-25 09:41+0000\n"
 "Last-Translator: Junko Augias, 2025\n"
 "Language-Team: Japanese (https://app.transifex.com/odoo/teams/41243/ja/)\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #. module: analytic
@@ -25,6 +25,12 @@ msgstr ""
 #: code:addons/analytic/models/analytic_account.py:0
 msgid "%s (copy)"
 msgstr "%s (コピー)"
+
+#. module: analytic
+#. odoo-python
+#: code:addons/analytic/models/analytic_line.py:0
+msgid "%s analytic lines created"
+msgstr ""
 
 #. module: analytic
 #: model_terms:ir.ui.view,arch_db:analytic.account_analytic_plan_form_view
@@ -43,18 +49,19 @@ msgid ""
 "A 'Project' plan needs to exist and its id needs to be set as "
 "`analytic.project_plan` in the system variables"
 msgstr ""
-"'プロジェクト'計画は存在する必要があり、そのIDはシステム変数において`analytic.project_plan` として設定される必要があります。"
+"'プロジェクト'計画は存在する必要があり、そのIDはシステム変数において"
+"`analytic.project_plan` として設定される必要があります。"
 
 #. module: analytic
 #. odoo-javascript
 #: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.js:0
 msgid "Account field"
-msgstr "アカウントフィールド"
+msgstr "分析勘定フィールド"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_plan__account_ids
 msgid "Accounts"
-msgstr "アカウント"
+msgstr "分析勘定"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_account__message_needaction
@@ -64,12 +71,12 @@ msgstr "要アクション"
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_account__active
 msgid "Active"
-msgstr "有効化"
+msgstr "アクティブ"
 
 #. module: analytic
 #: model:account.analytic.account,name:analytic.analytic_active_account
 msgid "Active account"
-msgstr "有効なアカウント"
+msgstr "アクティブな分析勘定"
 
 #. module: analytic
 #. odoo-javascript
@@ -81,7 +88,7 @@ msgstr "明細追加"
 #: model_terms:ir.actions.act_window,help:analytic.action_account_analytic_account_form
 #: model_terms:ir.actions.act_window,help:analytic.action_analytic_account_form
 msgid "Add a new analytic account"
-msgstr "分析勘定を追加しましょう。"
+msgstr "分析勘定を追加する"
 
 #. module: analytic
 #: model:account.analytic.account,name:analytic.analytic_administratif
@@ -91,7 +98,7 @@ msgstr "総務"
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_plan__all_account_count
 msgid "All Analytic Accounts Count"
-msgstr "全ての分析勘定カウント"
+msgstr "全分析勘定数"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_line__amount
@@ -136,10 +143,11 @@ msgstr "分析勘定"
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_plan__account_count
 msgid "Analytic Accounts Count"
-msgstr "分析勘定カウント"
+msgstr "分析勘定数"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_distribution_model__analytic_distribution
+#: model:ir.model.fields,field_description:analytic.field_account_analytic_line__analytic_distribution
 #: model:ir.model.fields,field_description:analytic.field_analytic_mixin__analytic_distribution
 msgid "Analytic Distribution"
 msgstr "分析用配分"
@@ -194,12 +202,12 @@ msgstr "分析プラン"
 #. module: analytic
 #: model:ir.model,name:analytic.model_analytic_plan_fields_mixin
 msgid "Analytic Plan Fields"
-msgstr "分析計画フィールド"
+msgstr "分析プランフィールド"
 
 #. module: analytic
 #: model:ir.model,name:analytic.model_account_analytic_applicability
 msgid "Analytic Plan's Applicabilities"
-msgstr "分析計画の適用範囲"
+msgstr "分析プランの適用範囲"
 
 #. module: analytic
 #: model:ir.actions.act_window,name:analytic.account_analytic_plan_action
@@ -211,6 +219,7 @@ msgstr "分析プラン"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_distribution_model__analytic_precision
+#: model:ir.model.fields,field_description:analytic.field_account_analytic_line__analytic_precision
 #: model:ir.model.fields,field_description:analytic.field_analytic_mixin__analytic_precision
 msgid "Analytic Precision"
 msgstr "分析精度"
@@ -225,7 +234,7 @@ msgstr "分析勘定"
 #. odoo-python
 #: code:addons/analytic/models/analytic_plan.py:0
 msgid "Analytical Plans"
-msgstr "分析計画"
+msgstr "分析プラン"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_applicability__applicability
@@ -362,7 +371,9 @@ msgstr "コンフィグ設定"
 msgid ""
 "Conversion between Units of Measure can only occur if they belong to the "
 "same category. The conversion will be made based on the ratios."
-msgstr "単位間の変換は同じカテゴリに属している場合のみ可能です。変換は比率に基づいて行われます。"
+msgstr ""
+"単位間の変換は同じカテゴリに属している場合のみ可能です。変換は比率に基づいて"
+"行われます。"
 
 #. module: analytic
 #: model_terms:ir.actions.act_window,help:analytic.account_analytic_line_action
@@ -489,6 +500,12 @@ msgid "Domain"
 msgstr "ドメイン"
 
 #. module: analytic
+#. odoo-javascript
+#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.xml:0
+msgid "Don't update"
+msgstr ""
+
+#. module: analytic
 #: model:account.analytic.account,name:analytic.analytic_rd_finance
 msgid "Finance"
 msgstr "財務"
@@ -554,11 +571,13 @@ msgstr "チェックした場合は、一部のメッセージに配信エラー
 #: model_terms:ir.actions.act_window,help:analytic.account_analytic_line_action_entries
 msgid ""
 "In Odoo, sales orders and projects are implemented using\n"
-"                analytic accounts. You can track costs and revenues to analyse\n"
+"                analytic accounts. You can track costs and revenues to "
+"analyse\n"
 "                your margins easily."
 msgstr ""
 "Odooでは、販売オーダ、プロジェクトは分析勘定を使用します。\n"
-"                費用と収益を追跡して、簡単にマージンを分析することができます。"
+"                費用と収益を追跡して、簡単にマージンを分析することができま"
+"す。"
 
 #. module: analytic
 #: model:account.analytic.plan,name:analytic.analytic_plan_internal
@@ -630,6 +649,12 @@ msgid "Miscellaneous"
 msgstr "その他"
 
 #. module: analytic
+#. odoo-javascript
+#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.js:0
+msgid "Multi edit"
+msgstr ""
+
+#. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_plan__name
 #: model_terms:ir.ui.view,arch_db:analytic.view_account_analytic_account_list
 msgid "Name"
@@ -660,7 +685,7 @@ msgstr "この勘定にはまだ活動がありません"
 #. odoo-javascript
 #: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.xml:0
 msgid "No analytic plans found"
-msgstr "分析計画が見つかりません"
+msgstr "分析プランが見つかりません"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_account__message_needaction_counter
@@ -790,12 +815,15 @@ msgstr "研究開発"
 #: model_terms:ir.actions.act_window,help:analytic.account_analytic_line_action_entries
 msgid ""
 "Revenues will be created automatically when you create customer\n"
-"                invoices. Customer invoices can be created based on sales orders\n"
-"                (fixed price invoices), on timesheets (based on the work done) or\n"
+"                invoices. Customer invoices can be created based on sales "
+"orders\n"
+"                (fixed price invoices), on timesheets (based on the work "
+"done) or\n"
 "                on expenses (e.g. reinvoicing of travel costs)."
 msgstr ""
 "収益は顧客請求書の作成時に自動的に作成されます。 \n"
-"顧客請求書は、販売オーダ（固定価格の請求書）や、タイムシート（実施された作業に基づく）、\n"
+"顧客請求書は、販売オーダ（固定価格の請求書）や、タイムシート（実施された作業"
+"に基づく）、\n"
 "経費（例：顧客負担の旅費交通費の請求）に基づいて作成することができます。"
 
 #. module: analytic
@@ -837,7 +865,8 @@ msgid ""
 "create new customer invoice or Sales order if we select this company, it "
 "will automatically take this as an analytic account)"
 msgstr ""
-"分析分配の対象となる会社を選択します（例：新規顧客請求書や販売オーダを作成する際にこの会社を選択すると、自動的に分析勘定として扱われます）。"
+"分析分配の対象となる会社を選択します（例：新規顧客請求書や販売オーダを作成す"
+"る際にこの会社を選択すると、自動的に分析勘定として扱われます）。"
 
 #. module: analytic
 #: model:ir.model.fields,help:analytic.field_account_analytic_distribution_model__partner_category_id
@@ -846,7 +875,9 @@ msgid ""
 "(e.g. create new customer invoice or Sales order if we select this partner, "
 "it will automatically take this as an analytic account)"
 msgstr ""
-"分析分配の対象となるパートナーカテゴリを選択します（例：新規顧客請求書や販売オーダの作成時に、このパートナーを選択すると、自動的に分析勘定として扱われます）。"
+"分析分配の対象となるパートナーカテゴリを選択します（例：新規顧客請求書や販売"
+"オーダの作成時に、このパートナーを選択すると、自動的に分析勘定として扱われま"
+"す）。"
 
 #. module: analytic
 #: model:ir.model.fields,help:analytic.field_account_analytic_distribution_model__partner_id
@@ -855,7 +886,9 @@ msgid ""
 "create new customer invoice or Sales order if we select this partner, it "
 "will automatically take this as an analytic account)"
 msgstr ""
-"分析分配の対象となるパートナーを選択します（例：新規顧客請求書や販売オーダを作成する際に、このパートナーを選択すると、自動的に分析勘定として扱われます）。"
+"分析分配の対象となるパートナーを選択します（例：新規顧客請求書や販売オーダを"
+"作成する際に、このパートナーを選択すると、自動的に分析勘定として扱われま"
+"す）。"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_distribution_model__sequence
@@ -900,6 +933,12 @@ msgid "UoM Category"
 msgstr "単位カテゴリ"
 
 #. module: analytic
+#. odoo-javascript
+#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.xml:0
+msgid "Update"
+msgstr ""
+
+#. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_line__user_id
 msgid "User"
 msgstr "ユーザ"
@@ -908,9 +947,10 @@ msgstr "ユーザ"
 #. odoo-python
 #: code:addons/analytic/models/analytic_account.py:0
 msgid ""
-"Whoa there! Moving this account would wipe out your current data. Let's "
-"avoid that, shall we?"
-msgstr "お待ち下さい!この勘定科目を移動すると、現在のデータが消えてしまいます。それは回避しましょう。"
+"Whoa there! Making this change would wipe out your current data. Let's avoid "
+"that, shall we?"
+msgstr ""
+"この処理を続行すると、現在のデータがすべて削除されます。よろしいですか？"
 
 #. module: analytic
 #. odoo-python
@@ -918,7 +958,8 @@ msgstr "お待ち下さい!この勘定科目を移動すると、現在のデ�
 msgid ""
 "You can't set a different company on your analytic account since there are "
 "some analytic items linked to it."
-msgstr "分析勘定には分析項目が連動しているため、別の会社を設定することはできません。"
+msgstr ""
+"分析勘定には分析項目が連動しているため、別の会社を設定することはできません。"
 
 #. module: analytic
 #. odoo-python
@@ -932,7 +973,9 @@ msgstr "ベースプラン '%s' に親を追加することができません。
 msgid ""
 "You defined a distribution with analytic account(s) belonging to a specific "
 "company but a model shared between companies or with a different company"
-msgstr "特定の会社に属する分析勘定で分配を定義していますが、分配モデルは会社間または別の会社と共有されます。"
+msgstr ""
+"特定の会社に属する分析勘定で分配を定義していますが、分配モデルは会社間または"
+"別の会社と共有されます。"
 
 #. module: analytic
 #: model_terms:ir.ui.view,arch_db:analytic.view_account_analytic_account_form

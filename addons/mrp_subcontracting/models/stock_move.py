@@ -58,10 +58,6 @@ class StockMove(models.Model):
             move.show_details_visible = True
         return res
 
-    def _compute_picked(self):
-       subcontracted_moves = self.filtered(lambda m: m.is_subcontract)
-       super(StockMove, self - subcontracted_moves)._compute_picked()
-
     def _set_quantity_done(self, qty):
         to_set_moves = self
         for move in self:
@@ -305,6 +301,9 @@ class StockMove(models.Model):
             return True
         return should_bypass_reservation
 
+    def _get_available_move_lines(self, assigned_moves_ids, partially_available_moves_ids):
+        return super(StockMove, self.filtered(lambda m: not m.is_subcontract))._get_available_move_lines(assigned_moves_ids, partially_available_moves_ids)
+
     def _update_subcontract_order_qty(self, new_quantity):
         for move in self:
             quantity_to_remove = move.product_uom_qty - new_quantity
@@ -325,7 +324,7 @@ class StockMove(models.Model):
 
         # Cancel productions until reach new_quantity
         for production in (productions - wip_production):
-            if quantity_to_remove >= production.product_qty:
+            if float_compare(quantity_to_remove, production.product_qty, precision_rounding=production.product_uom_id.rounding) >= 0:
                 quantity_to_remove -= production.product_qty
                 production.with_context(skip_activity=True).action_cancel()
             else:

@@ -132,6 +132,10 @@ registerWebsitePreviewTour('test_restricted_editor_test_admin', {
         trigger: "body:not(:has(.modal))",
     },
     {
+        content: "Check that html fields are not content editable when translating",
+        trigger: ":iframe [data-oe-expression='record.website_description']:not([contenteditable='true'])",
+    },
+    {
         content: "Translate name",
         trigger: ":iframe [data-oe-expression='record.name']",
         run: "editor Nouvelle valeur",
@@ -140,6 +144,17 @@ registerWebsitePreviewTour('test_restricted_editor_test_admin', {
         content: "Translate some banner text",
         trigger: ":iframe [data-oe-expression='record.website_description'] strong.o_default_snippet_text",
         run: "editor potentiel.",
+    },
+    ...clickOnSave(),
+]);
+
+registerWebsitePreviewTour('test_restricted_editor_tester', {
+    url: '/test_model/1',
+}, () => [
+    ...clickOnEditAndWaitEditMode(),
+    {
+        content: "Footer should not be be editable for restricted user",
+        trigger: ":iframe :has(.o_editable) footer:not(.o_editable):not(:has(.o_editable))",
     },
     ...clickOnSave(),
 ]);

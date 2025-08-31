@@ -22,7 +22,7 @@ export class RenderContainer extends Component {
             // this timeout is needed in order to wait for the
             // component to arrive in it's final state
             await new Promise((r) => setTimeout(r, 100));
-            this.props.onRendered(this.ref?.el?.firstChild);
+            this.props.onRendered(this.ref?.el?.firstElementChild);
         });
     }
 }
@@ -91,6 +91,16 @@ const applyWhenMounted = async ({ el, container, callback }) => {
     return res;
 };
 
+const sanitizeNodeText = (element) => {
+    if (element.nodeType === Node.TEXT_NODE) {
+        element.textContent = element.textContent.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ""); // eslint-disable-line no-control-regex
+        return;
+    }
+    for (const child of element.childNodes) {
+        sanitizeNodeText(child);
+    }
+};
+
 /**
  * This function assumes that the `renderer` service is available.
  */
@@ -98,6 +108,7 @@ export const htmlToCanvas = async (el, options) => {
     if (options.addClass) {
         el.classList.add(...options.addClass.split(" "));
     }
+    sanitizeNodeText(el);
     return await applyWhenMounted({
         el,
         container: document.querySelector(".render-container"),

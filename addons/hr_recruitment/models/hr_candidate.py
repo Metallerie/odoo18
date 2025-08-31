@@ -105,6 +105,9 @@ class HrCandidate(models.Model):
             candidate.email_from = candidate.partner_id.email
             if not candidate.partner_phone:
                 candidate.partner_phone = candidate.partner_id.phone
+    
+    def _phone_get_number_fields(self):
+        return ['partner_phone']
 
     def _inverse_partner_email(self):
         for candidate in self:
@@ -114,7 +117,7 @@ class HrCandidate(models.Model):
                 if not candidate.partner_name:
                     raise UserError(_('You must define a Contact Name for this candidate.'))
                 candidate.partner_id = self.env['res.partner'].with_context(default_lang=self.env.lang).find_or_create(candidate.email_from)
-            if candidate.partner_name and not candidate.partner_id.name:
+            if candidate.partner_name and (not candidate.partner_id.name or candidate.partner_id.name == candidate.email_from):
                 candidate.partner_id.name = candidate.partner_name
             if tools.email_normalize(candidate.email_from) != tools.email_normalize(candidate.partner_id.email):
                 # change email on a partner will trigger other heavy code, so avoid to change the email when

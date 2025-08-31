@@ -357,9 +357,11 @@ class StockMoveLine(models.Model):
 
         mls = super().create(vals_list)
 
+        created_moves = set()
         def create_move(move_line):
             new_move = self.env['stock.move'].create(move_line._prepare_stock_move_vals())
             move_line.move_id = new_move.id
+            created_moves.add(new_move.id)
 
         # If the move line is directly create on the picking view.
         # If this picking is already done we should generate an
@@ -393,13 +395,14 @@ class StockMoveLine(models.Model):
                 reservation = not move._should_bypass_reservation()
             else:
                 reservation = product.is_storable and not location.should_bypass_reservation()
-            if move_line.quantity and reservation:
+            if move_line.quantity_product_uom and reservation:
                 self.env.context.get('reserved_quant', self.env['stock.quant'])._update_reserved_quantity(
                     product, location, move_line.quantity_product_uom, lot_id=move_line.lot_id, package_id=move_line.package_id, owner_id=move_line.owner_id)
 
                 if move:
                     move_to_recompute_state.add(move.id)
         self.env['stock.move'].browse(move_to_recompute_state)._recompute_state()
+        self.env['stock.move'].browse(created_moves)._post_process_created_moves()
 
         for ml, vals in zip(mls, vals_list):
             if ml.state == 'done':
@@ -582,6 +585,10 @@ class StockMoveLine(models.Model):
     def _sorting_move_lines(self):
         return (self.id,)
 
+    def _exclude_requiring_lot(self):
+        self.ensure_one()
+        return self.move_id.picking_type_id or self.is_inventory or self.lot_id or self.move_id.scrap_id
+
     def _action_done(self):
         """ This method is called during a move's `action_done`. It'll actually move a quant from
         the source location to the destination location, and unreserve if needed in the source
@@ -618,7 +625,7 @@ class StockMoveLine(models.Model):
                 if ml.product_id.tracking == 'none':
                     continue
                 picking_type_id = ml.move_id.picking_type_id
-                if not picking_type_id and not ml.is_inventory and not ml.lot_id:
+                if not ml._exclude_requiring_lot():
                     ml_ids_tracked_without_lot.add(ml.id)
                     continue
                 if not picking_type_id or ml.lot_id or (not picking_type_id.use_create_lots and not picking_type_id.use_existing_lots):
@@ -683,7 +690,7 @@ class StockMoveLine(models.Model):
             available_qty, in_date = ml._synchronize_quant(-ml.quantity_product_uom, ml.location_id)
             ml._synchronize_quant(ml.quantity_product_uom, ml.location_dest_id, package=ml.result_package_id, in_date=in_date)
             if available_qty < 0:
-                ml._free_reservation(
+                ml.with_context(quants_cache=None)._free_reservation(
                     ml.product_id, ml.location_id,
                     abs(available_qty), lot_id=ml.lot_id, package_id=ml.package_id,
                     owner_id=ml.owner_id, ml_ids_to_ignore=ml_ids_to_ignore)
@@ -841,10 +848,12 @@ class StockMoveLine(models.Model):
         move = move or move_line.move_id
         uom = move.product_uom or move_line.product_uom_id
         name = move.product_id.display_name
-        description = move.description_picking
-        if description == name or description == move.product_id.name:
-            description = False
+        description = move.description_picking or ""
         product = move.product_id
+        if description.startswith(name):
+            description = description.removeprefix(name).strip()
+        elif description.startswith(product.name):
+            description = description.removeprefix(product.name).strip()
         line_key = f'{product.id}_{product.display_name}_{description or ""}_{uom.id}_{move.product_packaging_id or ""}'
         return {
             'line_key': line_key,

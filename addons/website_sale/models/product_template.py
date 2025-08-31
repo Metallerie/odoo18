@@ -553,6 +553,9 @@ class ProductTemplate(models.Model):
             'taxes': taxes,  # taxes after fpos mapping
         })
 
+        if combination_info['prevent_zero_price_sale']:
+            combination_info['compare_list_price'] = 0
+
         return combination_info
 
     @api.model
@@ -921,3 +924,19 @@ class ProductTemplate(models.Model):
                 'currency_name': currency.name,
             })
         return data
+
+    @api.model
+    def _allow_publish_rating_stats(self):
+        return True
+
+    def _get_access_action(self, access_uid=None, force_website=False):
+        """ Instead of the classic form view, redirect to website if it is published. """
+        self.ensure_one()
+        if force_website or self.website_published:
+            return {
+                "type": "ir.actions.act_url",
+                "url": self.website_url,
+                "target": "self",
+                "target_type": "public",
+            }
+        return super()._get_access_action(access_uid=access_uid, force_website=force_website)

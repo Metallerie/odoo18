@@ -85,6 +85,11 @@ class ResCompany(models.Model):
     # HELPER METHODS
     # -------------------------------------------------------------------------
 
+    @api.model
+    def _check_phonenumbers_import(self):
+        if not phonenumbers:
+            raise ValidationError(_("Please install the phonenumbers library."))
+
     def _sanitize_peppol_phone_number(self, phone_number=None):
         self.ensure_one()
 
@@ -93,8 +98,7 @@ class ResCompany(models.Model):
             "For example: +32123456789, where +32 is the country code.\n"
             "Currently, only European countries are supported.")
 
-        if not phonenumbers:
-            raise ValidationError(_("Please install the phonenumbers library."))
+        self._check_phonenumbers_import()
 
         phone_number = phone_number or self.account_peppol_phone_number
         if not phone_number:
@@ -279,4 +283,5 @@ class ResCompany(models.Model):
         config_param = self.env['ir.config_parameter'].sudo().get_param('account_peppol.edi.mode')
         # by design, we can only have zero or one proxy user per company with type Peppol
         peppol_user = self.sudo().account_edi_proxy_client_ids.filtered(lambda u: u.proxy_type == 'peppol')
-        return peppol_user.edi_mode or config_param or 'prod'
+        demo_if_demo_identifier = 'demo' if self.peppol_eas == 'odemo' else False
+        return demo_if_demo_identifier or peppol_user.edi_mode or config_param or 'prod'

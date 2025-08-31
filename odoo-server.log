@@ -1,0 +1,26 @@
+2025-08-26 07:57:23,244 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_153783.pdf : [Errno 2] No such file or directory: '/data/Documents/factures_a_traiter/Facture_CCL_153783.pdf' -> '/data/Documents/factures_archive/Facture_CCL_153783.pdf_imported' 
+2025-08-26 07:57:29,370 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_153783.pdf : [Errno 2] No such file or directory: '/data/Documents/factures_a_traiter/Facture_CCL_153783.pdf' -> '/data/Documents/factures_archive/Facture_CCL_153783.pdf_imported' 
+2025-08-26 08:02:29,737 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_153783.pdf : [Errno 2] No such file or directory: '/data/Documents/factures_a_traiter/Facture_CCL_153783.pdf' -> '/data/Documents/factures_archive/Facture_CCL_153783.pdf_imported' 
+2025-08-26 08:13:04,881 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_imported' 
+2025-08-26 08:21:58,290 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_imported' 
+2025-08-26 08:22:38,814 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du déplacement du doublon Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_duplicate' 
+2025-08-26 08:31:06,678 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_imported' 
+2025-08-26 08:32:39,167 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du déplacement du doublon Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_duplicate' 
+2025-08-26 23:22:26,440 584277 ERROR metal-prod-18 odoo.addons.google_recaptcha.models.ir_http: Trial captcha verification timeout for ip address 127.0.0.1 
+2025-08-27 06:53:21,276 584277 ERROR metal-prod-18 odoo.addons.google_recaptcha.models.ir_http: Trial captcha verification timeout for ip address 127.0.0.1 
+2025-08-28 14:09:05,582 584277 ERROR metal-prod-18 odoo.addons.base.models.assetsbundle: 'Could not get content for product_metal/static/src/js/product_quantity_precision.js.' in file 'product_metal/static/src/js/product_quantity_precision.js' 
+2025-08-30 08:27:01,912 584277 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_template" WHERE id IN (112)'
+ERROR: update or delete on table "product_product" violates foreign key constraint "account_move_line_product_id_fkey" on table "account_move_line"
+DETAIL:  Key (id)=(1329) is still referenced from table "account_move_line".
+ 
+2025-08-30 13:39:04,979 1634681 ERROR metal-prod-18 odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['account_statement_base', 'account_statement_import_base', 'account_statement_import_file', 'account_statement_import_ofx'] 
+2025-08-30 15:02:17,997 1649483 ERROR metal-prod-18 odoo.osv.expression: Non-stored field account.account.group_id cannot be searched. 
+NoneType: None
+2025-08-30 15:06:11,636 1649483 ERROR metal-prod-18 odoo.sql_db: bad query: b'INSERT INTO "date_range" ("company_id", "create_date", "create_uid", "name", "write_date", "write_uid") VALUES (1, \'2025-08-30 15:06:11.635132\', 2, \'{"en_US": "01/01/2025 au 31/12/2025", "fr_FR": "01/01/2025 au 31/12/2025"}\', \'2025-08-30 15:06:11.635132\', 2) RETURNING "id"'
+ERROR: null value in column "type_id" of relation "date_range" violates not-null constraint
+DETAIL:  Failing row contains (1, null, 1, 2, 2, null, null, {"en_US": "01/01/2025 au 31/12/2025", "fr_FR": "01/01/2025 au 31..., null, 2025-08-30 15:06:11.635132, 2025-08-30 15:06:11.635132).
+ 
+2025-08-30 16:30:58,039 1662726 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "account_journal" WHERE id IN (10)'
+ERROR: update or delete on table "account_journal" violates foreign key constraint "pos_payment_method_journal_id_fkey" on table "pos_payment_method"
+DETAIL:  Key (id)=(10) is still referenced from table "pos_payment_method".
+ 

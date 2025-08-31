@@ -772,13 +772,14 @@ test("chat window: composer state conservation on toggle discuss", async () => {
     });
     // Set attachments of the composer
     await inputFiles(".o-mail-Composer-coreMain .o_input_file", [textFile1, textFile2]);
-    await contains(".o-mail-AttachmentCard .fa-check", { count: 2 });
+    await contains(".o-mail-AttachmentCard:not(.o-isUploading) .fa-check", { count: 2 });
     await openDiscuss();
     await contains(".o-mail-ChatWindow", { count: 0 });
     await openFormView("discuss.channel", channelId);
-    await contains(".o-mail-Composer-footer .o-mail-AttachmentList .o-mail-AttachmentCard", {
-        count: 2,
-    });
+    await contains(
+        ".o-mail-Composer-footer .o-mail-AttachmentList .o-mail-AttachmentCard:not(.o-isUploading)",
+        { count: 2 }
+    );
     await contains(".o-mail-Composer-input", { value: "XDU for the win !" });
 });
 
@@ -1091,4 +1092,60 @@ test("Ctrl+k opens the command palette", async () => {
     await focus(".o-mail-ChatWindow", { text: "General" });
     triggerHotkey("control+k");
     await contains(".o_command_palette");
+});
+
+test("Do not squash logged notes", async () => {
+    const pyEnv = await startServer();
+    const partnerId = pyEnv["res.partner"].create({ name: "TestPartner" });
+    const messageId = pyEnv["mail.message"].create([
+        {
+            model: "res.partner",
+            body: "Test Message",
+            author_id: partnerId,
+            needaction: true,
+            res_id: partnerId,
+        },
+        {
+            model: "res.partner",
+            body: "Message",
+            author_id: serverState.partnerId,
+            needaction: true,
+            res_id: partnerId,
+        },
+        {
+            model: "res.partner",
+            body: "Message Squashed",
+            author_id: serverState.partnerId,
+            needaction: true,
+            res_id: partnerId,
+        },
+        {
+            model: "res.partner",
+            body: "Hello",
+            author_id: serverState.partnerId,
+            needaction: true,
+            res_id: partnerId,
+            is_note: true,
+        },
+        {
+            model: "res.partner",
+            body: "World!",
+            author_id: serverState.partnerId,
+            needaction: true,
+            res_id: partnerId,
+            is_note: true,
+        },
+    ]);
+    pyEnv["mail.notification"].create({
+        mail_message_id: messageId[0],
+        notification_status: "sent",
+        notification_type: "inbox",
+        res_partner_id: serverState.partnerId,
+    });
+    await start();
+    await click(".o_menu_systray i[aria-label='Messages']");
+    await click(".o-mail-NotificationItem");
+    await contains(".o-mail-Message.o-squashed", { text: "Message Squashed" });
+    await contains(".o-mail-Message:not(.o-squashed)", { text: "Hello" });
+    await contains(".o-mail-Message:not(.o-squashed)", { text: "World!" });
 });

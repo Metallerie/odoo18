@@ -272,6 +272,23 @@ export class WebsiteSnippetsMenu extends weSnippetEditor.SnippetsMenu {
             containerWidthOptionEl.dataset.selector += ", .s_carousel .carousel-item";
         }
 
+        // TODO remove in master: add s_progress_bar_text in progress bar where it's missing, fix the previous wrong width
+        const progressBarEls = html.querySelectorAll(".progress-bar");
+        progressBarEls.forEach((el) => {
+            if (el.style.width === "45%") {
+                el.style.width = "25%";
+            }
+            if (!el.querySelector(".s_progress_bar_text")) {
+                const textEl = document.createElement("span");
+                textEl.classList.add("s_progress_bar_text", "small");
+                textEl.textContent = el.style.width;
+                if (el.closest(".s_progress_bar_label_hidden")) {
+                    textEl.classList.add("d-none");
+                }
+                el.appendChild(textEl);
+            }
+        });
+
         return super._computeSnippetTemplates(html);
     }
     /**
@@ -325,8 +342,7 @@ export class WebsiteSnippetsMenu extends weSnippetEditor.SnippetsMenu {
                 onMounted(() => this.props.onMounted(this.modalRef));
             }
             onClickSave() {
-                this.props.confirm(this.modalRef, this.state.apiKey);
-                this.props.close();
+                this.props.confirm(this.modalRef, this.state.apiKey, this.props.close);
             }
         };
 
@@ -338,7 +354,7 @@ export class WebsiteSnippetsMenu extends weSnippetEditor.SnippetsMenu {
                         applyError.call($(modalRef.el), apiKeyValidation.message);
                     }
                 },
-                confirm: async (modalRef, valueAPIKey) => {
+                confirm: async (modalRef, valueAPIKey, close = undefined) => {
                     if (!valueAPIKey) {
                         applyError.call($(modalRef.el), _t("Enter an API Key"));
                         return;
@@ -349,7 +365,11 @@ export class WebsiteSnippetsMenu extends weSnippetEditor.SnippetsMenu {
                     if (res.isValid) {
                         await this.orm.write("website", [websiteId], {google_maps_api_key: valueAPIKey});
                         invalidated = true;
-                        return true;
+                        if (close) {
+                            close();
+                        } else {
+                            resolve(true);
+                        }
                     } else {
                         applyError.call($(modalRef.el), res.message);
                     }
@@ -540,6 +560,19 @@ export class WebsiteSnippetsMenu extends weSnippetEditor.SnippetsMenu {
             selectedTextEl.classList.add(...optionClassList);
             let $snippet = null;
             try {
+                const commonAncestor = range.commonAncestorContainer;
+                const ancestorElement =
+                    commonAncestor.nodeType === 1 ? commonAncestor : commonAncestor.parentElement;
+                const backgroundColorParentEl = ancestorElement.closest(
+                    'font[style*="background-color"], font[style*="background-image"], font[class^="bg-"]'
+                );
+                if (backgroundColorParentEl?.textContent === commonAncestor.textContent) {
+                    // As long as we handle the same text content, we extend the
+                    // existing range to the `<font/>` boundaries to keep the
+                    // background color applied correctly.
+                    range.setStartBefore(backgroundColorParentEl);
+                    range.setEndAfter(backgroundColorParentEl);
+                }
                 range.surroundContents(selectedTextEl);
                 $snippet = $(selectedTextEl);
             } catch {

@@ -1,4 +1,6 @@
 import base64
+import pytz
+from datetime import date, datetime
 
 from odoo import _, api, fields, models, exceptions
 
@@ -23,7 +25,7 @@ class CardCampaign(models.Model):
 
     name = fields.Char(required=True)
     active = fields.Boolean(default=True)
-    body_html = fields.Html(related='card_template_id.body', render_engine="qweb")
+    body_html = fields.Html(related='card_template_id.body', render_engine="qweb", readonly=False)
 
     card_count = fields.Integer(compute='_compute_card_stats')
     card_click_count = fields.Integer(compute='_compute_card_stats')
@@ -49,7 +51,7 @@ class CardCampaign(models.Model):
 
     user_id = fields.Many2one('res.users', string='Responsible', default=lambda self: self.env.user, domain="[('share', '=', False)]")
 
-    reward_message = fields.Html(string='Thanks to You Message')
+    reward_message = fields.Html(string='Thank You Message')
     reward_target_url = fields.Char(string='Reward Link')
     request_title = fields.Char('Request', default=lambda self: _('Help us share the news'))
     request_description = fields.Text('Request Description')
@@ -113,7 +115,8 @@ class CardCampaign(models.Model):
             'content_header_dyn', 'content_header_path', 'content_header_color', 'content_sub_header',
             'content_sub_header_dyn', 'content_sub_header_path', 'content_section', 'content_section_dyn',
             'content_section_path', 'content_sub_section1', 'content_sub_section1_dyn', 'content_sub_header_color',
-            'content_sub_section1_path', 'content_sub_section2', 'content_sub_section2_dyn', 'content_sub_section2_path'
+            'content_sub_section1_path', 'content_sub_section2', 'content_sub_section2_dyn', 'content_sub_section2_path',
+            'card_template_id',
         ]
 
     def _check_access_right_dynamic_template(self):
@@ -236,19 +239,7 @@ class CardCampaign(models.Model):
 
     def action_preview(self):
         self.ensure_one()
-        card = self.env['card.card'].with_context(active_test=False).search([
-            ('campaign_id', '=', self.id),
-            ('res_id', '=', self.preview_record_ref.id),
-        ])
-        if card:
-            card.image = self.image_preview
-        else:
-            card = self.env['card.card'].create({
-                'campaign_id': self.id,
-                'res_id': self.preview_record_ref.id,
-                'image': self.image_preview,
-                'active': False,
-            })
+        card = self._fetch_or_create_preview_card()
         return {'type': 'ir.actions.act_url', 'url': card._get_path('preview'), 'target': 'new'}
 
     def action_share(self):
@@ -261,7 +252,42 @@ class CardCampaign(models.Model):
                 'default_subject': self.name,
                 'default_card_campaign_id': self.id,
                 'default_mailing_model_id': self.env['ir.model']._get_id(self.res_model),
-                'default_body_arch': f"""
+                'default_body_arch': self._action_share_get_default_body(),
+            },
+            'views': [[False, 'form']],
+            'target': 'new',
+        }
+
+    def _fetch_or_create_preview_card(self):
+        """Fetch the card corresponding to the preview record, or create one if none exists.
+
+        The image also gets the preview render if it has none. It is also archived to ensure
+        it is rerendered later if sent.
+        """
+        self.ensure_one()
+        card = self.env['card.card'].with_context(active_test=False).search([
+            ('campaign_id', '=', self.id),
+            ('res_id', '=', self.preview_record_ref.id),
+        ])
+        image = self.image_preview
+        if card:
+            card.write({
+                'image': image,
+                'active': False,
+            })
+        else:
+            card = self.env['card.card'].create({
+                'campaign_id': self.id,
+                'res_id': self.preview_record_ref.id,
+                'image': image,
+                'active': False,
+            })
+        return card
+
+    def _action_share_get_default_body(self):
+        # try to pick a relevant card if users try to visit during preview/test mailings
+        preview_card = self._fetch_or_create_preview_card() if self else self.env['card.card']
+        return f"""
 <div class="o_layout oe_unremovable oe_unmovable bg-200 o_empty_theme" data-name="Mailing">
 <style id="design-element"></style>
 <div class="container o_mail_wrapper o_mail_regular oe_unremovable">
@@ -270,10 +296,10 @@ class CardCampaign(models.Model):
 
 <div class="s_text_block o_mail_snippet_general pt24 pb24" style="padding-left: 15px; padding-right: 15px;" data-snippet="s_text_block" data-name="Text">
     <div class="container s_allow_columns">
-        <p class="o_default_snippet_text">Hello everyone</p>
-        <p class="o_default_snippet_text">Here's the link to advertise your participation.
-        <br> Your help with this promotion would be greatly appreciated!`</p>
-        <p class="o_default_snippet_text">Many thanks</p>
+        <p class="o_default_snippet_text">{_("Hello everyone")}</p>
+        <p class="o_default_snippet_text">{_("Here's the link to advertise your participation.")}
+        <br>{_("Your help with this promotion would be greatly appreciated!")}</p>
+        <p class="o_default_snippet_text">{_("Many thanks")}</p>
     </div>
 </div>
 
@@ -282,8 +308,8 @@ class CardCampaign(models.Model):
         <tbody>
             <tr>
                 <td align="center">
-                    <a href="/cards/{self.id}/preview" style="padding-left: 3px !important; padding-right: 3px !important">
-                        <img src="/web/image/card.campaign/{self.id}/image_preview" alt="Card Preview" class="img-fluid" style="width: 540px;"/>
+                    <a href="/cards/{preview_card.id or 0}/preview" style="padding-left: 3px !important; padding-right: 3px !important">
+                        <img src="/web/image/card.campaign/{self.id or 0}/image_preview" alt="{_("Card Preview")}" class="img-fluid" style="width: 540px;"/>
                     </a>
                 </td>
             </tr>
@@ -292,11 +318,7 @@ class CardCampaign(models.Model):
 </div>
 
 </div></div></div></div>
-""",
-            },
-            'views': [[False, 'form']],
-            'target': 'new',
-        }
+"""
 
     # ==========================================================================
     # Image generation
@@ -373,8 +395,8 @@ class CardCampaign(models.Model):
         """Helper to get the right value for dynamic fields."""
         self.ensure_one()
         result = {
-            'image1': images[0] if (images := self.content_image1_path and record.mapped(self.content_image1_path)) else False,
-            'image2': images[0] if (images := self.content_image2_path and record.mapped(self.content_image2_path)) else False,
+            'image1': images[0] if (images := self.content_image1_path and self.content_image1_path in record and record.mapped(self.content_image1_path)) else False,
+            'image2': images[0] if (images := self.content_image2_path and self.content_image2_path in record and record.mapped(self.content_image2_path)) else False,
         }
         campaign_text_element_fields = (
             ('header', 'content_header', 'content_header_dyn', 'content_header_path'),
@@ -386,11 +408,24 @@ class CardCampaign(models.Model):
         for el, text_field, dyn_field, path_field in campaign_text_element_fields:
             if not self[dyn_field]:
                 result[el] = self[text_field]
+            elif not (field_path := self[path_field]):
+                result[el] = record
             else:
+                fnames = field_path.split('.')
                 try:
-                    m = record.mapped(self[path_field])
+                    value = record
+                    while fnames and (fname := fnames.pop(0)):
+                        value.fetch([fname])
+                        value = value[fname]
+                    m = record.mapped(field_path)
                     result[el] = m and m[0] or False
-                except (AttributeError, KeyError):
+                except (AttributeError, ValueError):
                     # for generic image, or if field incorrect, return name of field
-                    result[el] = self[path_field]
+                    result[el] = field_path
+                # force dates to their relevant timezone as that's what is usually wanted
+                if (
+                    isinstance(result[el], (date, datetime))
+                    and (tz := record._mail_get_timezone_with_default(default_tz=None))
+                ):
+                    result[el] = pytz.utc.localize(result[el]).astimezone(pytz.timezone(tz)).replace(tzinfo=None)
         return result

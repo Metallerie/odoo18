@@ -4,10 +4,8 @@ import * as tourUtils from '@website_sale/js/tours/tour_utils';
 
 registry.category('web_tour.tours').add('website_sale_collect_buy_product', {
     url: '/shop',
-    checkDelay: 50,
     steps: () => [
-        ...tourUtils.searchProduct("Test CAC Product"),
-        clickOnElement("Test Product", 'a:contains("Test CAC Product")'),
+        ...tourUtils.searchProduct("Test CAC Product", { select: true }),
         clickOnElement("Open Location selector", '.o_click_and_collect_availability'),
         clickOnElement("Choose location", '#submit_location_large'),
         clickOnElement('Add to cart', '#add_to_cart'),
@@ -61,7 +59,7 @@ registry.category('web_tour.tours').add('website_sale_collect_buy_product', {
             trigger: 'input[name="o_payment_radio"][data-payment-method-code="pay_on_site"]',
             run: 'click',
         },
-        tourUtils.pay(),
+        ...tourUtils.pay({ expectUnloadPage: true, waitFinalizeYourPayment: true }),
         {
             content: "Check payment status confirmation window",
             trigger: '.oe_website_sale_tx_status[data-order-tracking-info]',

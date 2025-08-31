@@ -1,30 +1,40 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* analytic
-# 
+# * analytic
+#
 # Translators:
 # Wil Odoo, 2024
 # Manon Rondou, 2025
-# 
+#
+# "Manon Rondou (ronm)" <ronm@odoo.com>, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-19 20:36+0000\n"
-"PO-Revision-Date: 2024-09-25 09:41+0000\n"
-"Last-Translator: Manon Rondou, 2025\n"
-"Language-Team: French (https://app.transifex.com/odoo/teams/41243/fr/)\n"
+"POT-Creation-Date: 2025-08-15 18:36+0000\n"
+"PO-Revision-Date: 2025-08-20 09:39+0000\n"
+"Last-Translator: \"Manon Rondou (ronm)\" <ronm@odoo.com>\n"
+"Language-Team: French <https://translate.odoo.com/projects/odoo-18/analytic/"
+"fr/>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Language: fr\n"
-"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : ((n != 0 && n % "
+"1000000 == 0) ? 1 : 2);\n"
+"X-Generator: Weblate 5.12.2\n"
 
 #. module: analytic
 #. odoo-python
 #: code:addons/analytic/models/analytic_account.py:0
 msgid "%s (copy)"
 msgstr "%s (copie)"
+
+#. module: analytic
+#. odoo-python
+#: code:addons/analytic/models/analytic_line.py:0
+msgid "%s analytic lines created"
+msgstr "%s écritures analytiques créées"
 
 #. module: analytic
 #: model_terms:ir.ui.view,arch_db:analytic.account_analytic_plan_form_view
@@ -141,9 +151,10 @@ msgstr "Nombre de comptes analytiques"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_distribution_model__analytic_distribution
+#: model:ir.model.fields,field_description:analytic.field_account_analytic_line__analytic_distribution
 #: model:ir.model.fields,field_description:analytic.field_analytic_mixin__analytic_distribution
 msgid "Analytic Distribution"
-msgstr "Distribution analytique"
+msgstr "Répartition analytique"
 
 #. module: analytic
 #. odoo-javascript
@@ -152,12 +163,12 @@ msgstr "Distribution analytique"
 #: model_terms:ir.ui.view,arch_db:analytic.account_analytic_distribution_model_form_view
 #: model_terms:ir.ui.view,arch_db:analytic.account_analytic_distribution_model_tree_view
 msgid "Analytic Distribution Model"
-msgstr "Modèle de distribution analytique "
+msgstr "Modèle de répartition analytique "
 
 #. module: analytic
 #: model:ir.actions.act_window,name:analytic.action_analytic_distribution_model
 msgid "Analytic Distribution Models"
-msgstr "Modèles de distribution analytique "
+msgstr "Modèles de répartition analytique "
 
 #. module: analytic
 #: model_terms:ir.ui.view,arch_db:analytic.view_account_analytic_line_form
@@ -212,6 +223,7 @@ msgstr "Dimensions analytiques"
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_distribution_model__analytic_precision
+#: model:ir.model.fields,field_description:analytic.field_account_analytic_line__analytic_precision
 #: model:ir.model.fields,field_description:analytic.field_analytic_mixin__analytic_precision
 msgid "Analytic Precision"
 msgstr "Précision analytique"
@@ -364,8 +376,8 @@ msgid ""
 "Conversion between Units of Measure can only occur if they belong to the "
 "same category. The conversion will be made based on the ratios."
 msgstr ""
-"Il est possible de convertir deux unités de mesures si elles appartiennent à"
-" la même catégorie. Cette conversion utilise les facteurs définis pour ces "
+"Il est possible de convertir deux unités de mesures si elles appartiennent à "
+"la même catégorie. Cette conversion utilise les facteurs définis pour ces "
 "unités."
 
 #. module: analytic
@@ -376,7 +388,7 @@ msgid ""
 "                invoices, expenses or timesheets."
 msgstr ""
 "Les coûts seront générés automatiquement quand vous enregistrerez des "
-"factures fournisseurs, des notes de frais ou des feuilles de temps."
+"factures fournisseurs, des dépenses ou des feuilles de temps."
 
 #. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_account__create_uid
@@ -480,7 +492,7 @@ msgstr "Nom d'affichage"
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_distribution_model__distribution_analytic_account_ids
 #: model:ir.model.fields,field_description:analytic.field_analytic_mixin__distribution_analytic_account_ids
 msgid "Distribution Analytic Account"
-msgstr "Compte analytique de distribution"
+msgstr "Compte analytique de répartition"
 
 #. module: analytic
 #: model_terms:ir.ui.view,arch_db:analytic.account_analytic_distribution_model_form_view
@@ -491,6 +503,12 @@ msgstr "Distribution à appliquer"
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_applicability__business_domain
 msgid "Domain"
 msgstr "Domaine"
+
+#. module: analytic
+#. odoo-javascript
+#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.xml:0
+msgid "Don't update"
+msgstr "Ne pas mettre à jour"
 
 #. module: analytic
 #: model:account.analytic.account,name:analytic.analytic_rd_finance
@@ -558,11 +576,14 @@ msgstr "Si coché, certains messages ont une erreur de livraison."
 #: model_terms:ir.actions.act_window,help:analytic.account_analytic_line_action_entries
 msgid ""
 "In Odoo, sales orders and projects are implemented using\n"
-"                analytic accounts. You can track costs and revenues to analyse\n"
+"                analytic accounts. You can track costs and revenues to "
+"analyse\n"
 "                your margins easily."
 msgstr ""
-"Dans Odoo, les commandes clients et les projets sont implémentés en utilisant les\n"
-"                comptes analytiques. Vous pouvez suivre les coûts et les revenus pour analyser\n"
+"Dans Odoo, les commandes clients et les projets sont implémentés en "
+"utilisant les\n"
+"                comptes analytiques. Vous pouvez suivre les coûts et les "
+"revenus pour analyser\n"
 "                vos marges facilement."
 
 #. module: analytic
@@ -635,6 +656,12 @@ msgid "Miscellaneous"
 msgstr "Divers"
 
 #. module: analytic
+#. odoo-javascript
+#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.js:0
+msgid "Multi edit"
+msgstr "Modification multiple"
+
+#. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_plan__name
 #: model_terms:ir.ui.view,arch_db:analytic.view_account_analytic_account_list
 msgid "Name"
@@ -692,7 +719,7 @@ msgstr "Nombre de messages avec des erreurs d'envoi"
 #: code:addons/analytic/models/analytic_mixin.py:0
 msgid "One or more lines require a 100% analytic distribution."
 msgstr ""
-"Une ou plusieurs lignes nécessitent une distribution analytique à 100 %."
+"Une ou plusieurs lignes nécessitent une répartition analytique à 100 %."
 
 #. module: analytic
 #: model:account.analytic.account,name:analytic.analytic_internal
@@ -796,13 +823,17 @@ msgstr "Recherche & Développement"
 #: model_terms:ir.actions.act_window,help:analytic.account_analytic_line_action_entries
 msgid ""
 "Revenues will be created automatically when you create customer\n"
-"                invoices. Customer invoices can be created based on sales orders\n"
-"                (fixed price invoices), on timesheets (based on the work done) or\n"
+"                invoices. Customer invoices can be created based on sales "
+"orders\n"
+"                (fixed price invoices), on timesheets (based on the work "
+"done) or\n"
 "                on expenses (e.g. reinvoicing of travel costs)."
 msgstr ""
 "Les revenus seront créés automatiquement quand vous créerez des factures\n"
-" clients. Les factures clients peuvent être créées en fonction des commandes clients\n"
-" (factures au forfait), des feuilles de temps (sur la base du travail effectué) ou\n"
+" clients. Les factures clients peuvent être créées en fonction des commandes "
+"clients\n"
+" (factures au forfait), des feuilles de temps (sur la base du travail "
+"effectué) ou\n"
 " des dépenses (par ex. la refacturation des frais de déplacement)."
 
 #. module: analytic
@@ -819,7 +850,7 @@ msgstr "Plan de base"
 #. odoo-javascript
 #: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.xml:0
 msgid "Save as new analytic distribution model"
-msgstr "Enregistrer comme nouveau modèle de distribution analytique"
+msgstr "Enregistrer comme nouveau modèle de répartition analytique"
 
 #. module: analytic
 #: model:account.analytic.account,name:analytic.analytic_seagate_p2
@@ -844,7 +875,7 @@ msgid ""
 "create new customer invoice or Sales order if we select this company, it "
 "will automatically take this as an analytic account)"
 msgstr ""
-"Sélectionnez une société pour laquelle la distribution analytique sera "
+"Sélectionnez une société pour laquelle la répartition analytique sera "
 "utilisée (par exemple, pour créer une nouvelle facture client ou une "
 "nouvelle commande client, si nous sélectionnons cette société, elle sera "
 "automatiquement considérée comme un compte analytique)."
@@ -856,10 +887,10 @@ msgid ""
 "(e.g. create new customer invoice or Sales order if we select this partner, "
 "it will automatically take this as an analytic account)"
 msgstr ""
-"Sélectionnez une catégorie de partenaires pour laquelle la distribution "
+"Sélectionnez une catégorie de partenaires pour laquelle la répartition "
 "analytique sera utilisée (par exemple, pour créer une nouvelle facture "
-"client ou une nouvelle commande client, si nous sélectionnons ce partenaire,"
-" il sera automatiquement considéré comme un compte analytique)."
+"client ou une nouvelle commande client, si nous sélectionnons ce partenaire, "
+"il sera automatiquement considéré comme un compte analytique)."
 
 #. module: analytic
 #: model:ir.model.fields,help:analytic.field_account_analytic_distribution_model__partner_id
@@ -868,7 +899,7 @@ msgid ""
 "create new customer invoice or Sales order if we select this partner, it "
 "will automatically take this as an analytic account)"
 msgstr ""
-"Sélectionnez un partenaire pour lequel la distribution analytique sera "
+"Sélectionnez un partenaire pour lequel la répartition analytique sera "
 "utilisée (par exemple, pour créer une nouvelle facture client ou une "
 "nouvelle commande client, si nous sélectionnons ce partenaire, il sera "
 "automatiquement considéré comme un compte analytique)."
@@ -916,6 +947,12 @@ msgid "UoM Category"
 msgstr "Catégorie d'UdM"
 
 #. module: analytic
+#. odoo-javascript
+#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.xml:0
+msgid "Update"
+msgstr "Mettre à jour"
+
+#. module: analytic
 #: model:ir.model.fields,field_description:analytic.field_account_analytic_line__user_id
 msgid "User"
 msgstr "Utilisateur"
@@ -924,11 +961,11 @@ msgstr "Utilisateur"
 #. odoo-python
 #: code:addons/analytic/models/analytic_account.py:0
 msgid ""
-"Whoa there! Moving this account would wipe out your current data. Let's "
-"avoid that, shall we?"
+"Whoa there! Making this change would wipe out your current data. Let's avoid "
+"that, shall we?"
 msgstr ""
-"Attention ! Déplacer ce compte effacerait vos données actuelles. Il vaut "
-"mieux éviter cela, n'est-ce pas ?"
+"Attention ! Cette modification entraînerait l'effacement de vos données "
+"actuelles. Faisons en sorte d'éviter cela !"
 
 #. module: analytic
 #. odoo-python

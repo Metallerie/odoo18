@@ -312,6 +312,11 @@ patch(PosOrder.prototype, {
             ) {
                 continue;
             }
+
+            //If there is only one possible reward we try to claim the most possible out of it
+            if (claimedReward.reward.reward_product_ids?.length === 1) {
+                delete claimedReward.args["quantity"];
+            }
             this._applyReward(claimedReward.reward, claimedReward.coupon_id, claimedReward.args);
         }
     },
@@ -443,7 +448,7 @@ patch(PosOrder.prototype, {
             return false;
         });
         for (const line of this.get_orderlines()) {
-            if (line.is_reward_line && line.coupon_id.id === coupon_id) {
+            if (line.is_reward_line && line.coupon_id?.id === coupon_id) {
                 points -= line.points_cost;
             }
         }
@@ -488,6 +493,10 @@ patch(PosOrder.prototype, {
         }
         return true;
     },
+    isLineValidForLoyaltyPoints(line) {
+        // This method should be overriden in other modules
+        return true;
+    },
     /**
      * Computes how much points each program gives.
      *
@@ -496,7 +505,7 @@ patch(PosOrder.prototype, {
      */
     pointsForPrograms(programs) {
         pointsForProgramsCountedRules = {};
-        const orderLines = this.get_orderlines();
+        const orderLines = this.get_orderlines().filter((line) => !line.combo_parent_id);
         const linesPerRule = {};
         for (const line of orderLines) {
             const reward = line.reward_id;
@@ -504,6 +513,9 @@ patch(PosOrder.prototype, {
             const rewardProgram = reward && reward.program_id;
             // Skip lines for automatic discounts.
             if (isDiscount && rewardProgram.trigger === "auto") {
+                continue;
+            }
+            if (!this.isLineValidForLoyaltyPoints(line)) {
                 continue;
             }
             for (const program of programs) {
@@ -535,11 +547,19 @@ patch(PosOrder.prototype, {
                 }
                 const linesForRule = linesPerRule[rule.id] ? linesPerRule[rule.id] : [];
                 const amountWithTax = linesForRule.reduce(
-                    (sum, line) => sum + line.get_price_with_tax(),
+                    (sum, line) =>
+                        sum +
+                        (line.combo_line_ids.length > 0
+                            ? line.getComboTotalPrice()
+                            : line.get_price_with_tax()),
                     0
                 );
                 const amountWithoutTax = linesForRule.reduce(
-                    (sum, line) => sum + line.get_price_without_tax(),
+                    (sum, line) =>
+                        sum +
+                        (line.combo_line_ids.length > 0
+                            ? line.getComboTotalPriceWithoutTax()
+                            : line.get_price_without_tax()),
                     0
                 );
                 const amountCheck =
@@ -580,7 +600,10 @@ patch(PosOrder.prototype, {
                             qtyPerProduct[line._reward_product_id?.id || line.get_product().id] =
                                 lineQty;
                         }
-                        orderedProductPaid += line.get_price_with_tax();
+                        orderedProductPaid +=
+                            line.combo_line_ids.length > 0
+                                ? line.getComboTotalPrice()
+                                : line.get_price_with_tax();
                         if (!line.is_reward_line) {
                             totalProductQty += lineQty;
                         }
@@ -880,7 +903,9 @@ patch(PosOrder.prototype, {
     processGiftCard(newGiftCardCode, points, expirationDate) {
         const partner_id = this.partner_id?.id || false;
         const product_id = this.get_selected_orderline().product_id.id;
-        const program = this.models["loyalty.program"].find((p) => p.program_type === "gift_card");
+        const program =
+            this.get_selected_orderline()._e_wallet_program_id ||
+            this.models["loyalty.program"].find((p) => p.program_type === "gift_card");
 
         let couponId;
         const couponData = {
@@ -1171,7 +1196,7 @@ patch(PosOrder.prototype, {
 
             lst.push({
                 product_id: discountProduct,
-                price_unit: -(entry[1] * discountFactor),
+                price_unit: -(Math.min(this.get_total_with_tax(), entry[1]) * discountFactor),
                 qty: 1,
                 reward_id: reward,
                 is_reward_line: true,

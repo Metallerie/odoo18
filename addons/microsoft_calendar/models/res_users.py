@@ -40,28 +40,10 @@ class User(models.Model):
 
     def _refresh_microsoft_calendar_token(self, service='calendar'):
         self.ensure_one()
-        ICP_sudo = self.env['ir.config_parameter'].sudo()
-        client_id = self.env['microsoft.service']._get_microsoft_client_id('calendar')
-        client_secret = microsoft_service._get_microsoft_client_secret(ICP_sudo, 'calendar')
-
-        if not client_id or not client_secret:
-            raise UserError(_("The account for the Outlook Calendar service is not configured."))
-
-        headers = {"content-type": "application/x-www-form-urlencoded"}
-        data = {
-            'refresh_token': self.sudo().microsoft_calendar_rtoken,
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'grant_type': 'refresh_token',
-        }
-
         try:
-            dummy, response, dummy = self.env['microsoft.service']._do_request(
-                microsoft_service.DEFAULT_MICROSOFT_TOKEN_ENDPOINT, params=data, headers=headers, method='POST', preuri=''
-            )
-            ttl = response.get('expires_in')
+            access_token, ttl = self.env['microsoft.service']._refresh_microsoft_token('calendar', self.sudo().microsoft_calendar_rtoken)
             self.sudo().write({
-                'microsoft_calendar_token': response.get('access_token'),
+                'microsoft_calendar_token': access_token,
                 'microsoft_calendar_token_validity': fields.Datetime.now() + timedelta(seconds=ttl),
             })
         except requests.HTTPError as error:
@@ -181,7 +163,7 @@ class User(models.Model):
         sync_status = 'missing_credentials'
         if credentials_status.get('microsoft_calendar'):
             sync_status = self._get_microsoft_sync_status()
-            if sync_status == 'sync_active' and not self.microsoft_calendar_token:
+            if sync_status == 'sync_active' and not self.sudo().microsoft_calendar_token:
                 sync_status = 'sync_stopped'
         res['microsoft_calendar'] = sync_status
         return res

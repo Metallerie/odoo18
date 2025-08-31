@@ -3139,7 +3139,7 @@ class TestStockValuationWithCOA(AccountTestInvoicingCommon):
     def test_invoice_first_receipt_later_with_multicurrency_different_dates(self):
         """Ensure sure that use currency rate at bill date rather than the current date when invoice before receipt"""
         company = self.env.user.company_id
-        company.anglo_saxon_accounting = False
+        company.anglo_saxon_accounting = True
         company.currency_id = self.usd_currency
 
         self.product1.is_storable = True
@@ -3147,7 +3147,6 @@ class TestStockValuationWithCOA(AccountTestInvoicingCommon):
 
         self.product1.with_company(company).categ_id.property_cost_method = 'fifo'
         self.product1.with_company(company).categ_id.property_valuation = 'real_time'
-
 
         po_date = '2023-10-01'
         bill_date = '2023-10-15'
@@ -3206,25 +3205,20 @@ class TestStockValuationWithCOA(AccountTestInvoicingCommon):
             receipt.move_ids.write({'quantity': 1.0})
             receipt.button_validate()
 
-        product_accounts = self.product1.product_tmpl_id.get_product_accounts()
         payable_id = self.company_data['default_account_payable'].id
-        stock_in_id = product_accounts['stock_input'].id
-        expense_id = product_accounts['expense'].id
-        stock_valuation = product_accounts['stock_valuation'].id
+        stock_in_id = self.stock_input_account.id
+        stock_valuation = self.stock_valuation_account.id
 
         # 1 Units invoiced at rate 2 and unit price 100 = 50
-        self.assertRecordValues(bill.line_ids, [
+        amls = self.env["account.move.line"].search([('parent_state', '=', 'posted')], order="id asc")
+        self.assertRecordValues(amls, [
             # pylint: disable=bad-whitespace
-            {'debit': 50.0,    'credit': 0,    'account_id': expense_id,   'reconciled': False,    'amount_currency':  100.0},
-            {'debit': 0,        'credit': 50.0,  'account_id': payable_id,   'reconciled': False,    'amount_currency': -100.0},
-        ])
-
-        layer_receipt = receipt.move_ids.stock_valuation_layer_ids
-
-        self.assertRecordValues(layer_receipt.account_move_id.line_ids, [
-            # pylint: disable=bad-whitespace
-            {'debit': 0,   'credit': 50.0,    'account_id': stock_in_id,  'reconciled': False, 'amount_currency': -110.0},
-            {'debit': 50.0,   'credit': 0,    'account_id': stock_valuation,  'reconciled': False, 'amount_currency': 110.0},
+            # Bill Lines
+            {'debit': 50.0, 'credit': 0,    'reconciled': True,  'amount_currency': 100.0, 'account_id': stock_in_id},
+            {'debit': 0,    'credit': 50.0, 'reconciled': False, 'amount_currency': -100.0, 'account_id': payable_id},
+            # Receipt Lines
+            {'debit': 0,    'credit': 50.0, 'reconciled': True,  'amount_currency': -100.0, 'account_id': stock_in_id},
+            {'debit': 50.0, 'credit': 0,    'reconciled': False, 'amount_currency': 100.0,  'account_id': stock_valuation},
         ])
 
     def test_analytic_distribution_propagation_with_exchange_difference(self):
@@ -3758,3 +3752,24 @@ class TestStockValuationWithCOA(AccountTestInvoicingCommon):
                 {'account_id': account_payable_account.id,   'debit': 0.0,      'credit': 1380.0},
             ]
         )
+
+    def test_100_percent_discount(self):
+        product = self.product_a
+        product.categ_id.write({'property_cost_method': 'average', 'property_valuation': 'real_time'})
+        purchase_order = self.env['purchase.order'].create({
+            'partner_id': self.partner_a.id,
+            'order_line': [Command.create({
+                'product_id': product.id,
+                'product_qty': 2,
+                'discount': 100,
+            })],
+        })
+        purchase_order.button_confirm()
+        receipt = purchase_order.picking_ids
+        receipt.button_validate()
+        purchase_order.action_create_invoice()
+        bill = purchase_order.invoice_ids
+        bill.invoice_date = fields.Date.today()
+        bill.action_post()
+        svls = self.env['stock.valuation.layer'].search([])
+        self.assertRecordValues(svls, [{'value': 0, 'quantity': 2}])

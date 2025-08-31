@@ -42,9 +42,10 @@ export class ProductProduct extends Base {
 
     needToConfigure() {
         return (
-            this.isConfigurable() &&
-            this.attribute_line_ids.length > 0 &&
-            !this.attribute_line_ids.every((l) => l.attribute_id.create_variant === "always")
+            this.isCombo() ||
+            (this.isConfigurable() &&
+                this.attribute_line_ids.length > 0 &&
+                !this.attribute_line_ids.every((l) => l.attribute_id.create_variant === "always"))
         );
     }
 
@@ -255,6 +256,9 @@ export class ProductProduct extends Base {
     }
     get canBeDisplayed() {
         return this.active && this.available_in_pos;
+    }
+    get variants() {
+        return this.product_tmpl_id?.["<-product.product.product_tmpl_id"];
     }
 }
 registry.category("pos_available_models").add(ProductProduct.pythonModel, ProductProduct);

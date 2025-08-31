@@ -4396,7 +4396,7 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:event.view_registration_search
 msgid "Show all records which has next action date is before today"
 msgstr ""
-"Mostrar todas as inscrições cuja próxima data de ação seja anterior a hoje"
+"Mostrar todos os registros cuja próxima data de ação seja anterior a hoje"
 
 #. module: event
 #: model:ir.model.fields,field_description:event.field_event_event__event_registrations_sold_out
@@ -5177,7 +5177,7 @@ msgstr "ex: \"Azure Interior\""
 #: model_terms:ir.ui.view,arch_db:event.event_question_view_form
 #: model_terms:ir.ui.view,arch_db:event.view_event_form
 msgid "e.g. \"Do you have any diet restrictions?\""
-msgstr "ex., “você tem restrições alimentares?”"
+msgstr "ex.: “Você tem restrições alimentares?”"
 
 #. module: event
 #: model_terms:ir.ui.view,arch_db:event.event_stage_view_form

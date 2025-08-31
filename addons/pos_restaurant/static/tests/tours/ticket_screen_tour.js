@@ -6,9 +6,9 @@ import * as FloorScreen from "@pos_restaurant/../tests/tours/utils/floor_screen_
 import * as TicketScreen from "@point_of_sale/../tests/tours/utils/ticket_screen_util";
 import * as Chrome from "@point_of_sale/../tests/tours/utils/chrome_util";
 import { registry } from "@web/core/registry";
+import * as DeviceSynchronization from "@pos_restaurant/../tests/tours/utils/devices_synchronization";
 
 registry.category("web_tour.tours").add("PosResTicketScreenTour", {
-    checkDelay: 50,
     steps: () =>
         [
             Chrome.startPoS(),
@@ -27,7 +27,6 @@ registry.category("web_tour.tours").add("PosResTicketScreenTour", {
             Chrome.clickMenuOption("Orders"),
             TicketScreen.deleteOrder("-0001"),
             Dialog.confirm(),
-            TicketScreen.clickDiscard(),
             Chrome.clickPlanButton(),
             FloorScreen.isShown(),
             FloorScreen.clickTable("5"),
@@ -36,7 +35,6 @@ registry.category("web_tour.tours").add("PosResTicketScreenTour", {
 });
 
 registry.category("web_tour.tours").add("OrderNumberConflictTour", {
-    checkDelay: 50,
     steps: () =>
         [
             Chrome.startPoS(),
@@ -50,5 +48,26 @@ registry.category("web_tour.tours").add("OrderNumberConflictTour", {
             TicketScreen.nthColumnContains(2, 2, "Self-Order"),
             TicketScreen.nthColumnContains(2, 3, "S"),
             TicketScreen.nthColumnContains(2, 3, "1"),
+        ].flat(),
+});
+
+registry.category("web_tour.tours").add("OrderSynchronisationTour", {
+    steps: () =>
+        [
+            Chrome.startPoS(),
+            Dialog.confirm("Open Register"),
+            DeviceSynchronization.createNewOrderOnTable("4", [
+                ["Coca-Cola", 50],
+                ["Water", 30],
+            ]),
+            FloorScreen.clickTable("4"),
+            ProductScreen.orderLineHas("Coca-Cola", "50.0"),
+            DeviceSynchronization.markOrderAsPaid(),
+            ProductScreen.isShown(),
+            Chrome.clickMenuOption("Orders"),
+            TicketScreen.selectFilter("Paid"),
+            TicketScreen.checkStatus("device_sync", "Paid"),
+            TicketScreen.selectOrder("device_sync"),
+            TicketScreen.confirmRefund(),
         ].flat(),
 });

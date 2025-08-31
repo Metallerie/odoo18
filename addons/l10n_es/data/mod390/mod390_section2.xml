@@ -940,7 +940,7 @@
                                         </field>
                                     </record>
                                     <record id="mod_390_casilla_763" model="account.report.line">
-                                        <field name="name">[763] Base imponible 5%</field>
+                                        <field name="name">[763] Base imponible 7.5%</field>
                                         <field name="code">aeat_mod_390_763</field>
                                         <field name="expression_ids">
                                             <record id="mod_390_casilla_763_balance" model="account.report.expression">
@@ -951,7 +951,7 @@
                                         </field>
                                     </record>
                                     <record id="mod_390_casilla_764" model="account.report.line">
-                                        <field name="name">[764] Cuota 5%</field>
+                                        <field name="name">[764] Cuota 7.5%</field>
                                         <field name="code">aeat_mod_390_764</field>
                                         <field name="expression_ids">
                                             <record id="mod_390_casilla_764_balance" model="account.report.expression">
@@ -1587,9 +1587,9 @@
                                 <field name="expression_ids">
                                     <record id="mod_390_casilla_639_balance" model="account.report.expression">
                                         <field name="label">balance</field>
-                                        <field name="engine">aggregation</field>
-                                        <field name="formula">aeat_mod_303_40.balance</field>
-                                        <field name="subformula">cross_report</field>
+                                        <field name="engine">external</field>
+                                        <field name="formula">sum</field>
+                                        <field name="subformula">editable;rounding=2</field>
                                     </record>
                                 </field>
                             </record>
@@ -1599,9 +1599,9 @@
                                 <field name="expression_ids">
                                     <record id="mod_390_casilla_62_balance" model="account.report.expression">
                                         <field name="label">balance</field>
-                                        <field name="engine">aggregation</field>
-                                        <field name="formula">aeat_mod_303_41.balance</field>
-                                        <field name="subformula">cross_report</field>
+                                        <field name="engine">external</field>
+                                        <field name="formula">sum</field>
+                                        <field name="subformula">editable;rounding=2</field>
                                     </record>
                                 </field>
                             </record>
@@ -1670,8 +1670,9 @@
                             aeat_mod_390_53.balance + aeat_mod_390_55.balance +
                             aeat_mod_390_57.balance + aeat_mod_390_59.balance +
                             aeat_mod_390_598.balance + aeat_mod_390_61.balance +
-                            aeat_mod_390_62.balance + aeat_mod_390_652.balance +
-                            aeat_mod_390_63.balance + aeat_mod_390_522.balance
+                            aeat_mod_390_652.balance + aeat_mod_390_63.balance +
+                            aeat_mod_390_522.balance + aeat_mod_390_661.balance +
+                            aeat_mod_390_62.balance
                         </field>
                     </record>
                     <record id="mod_390_casilla_65" model="account.report.line">

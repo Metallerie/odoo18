@@ -11,6 +11,7 @@ from odoo.tools import float_round
 
 from odoo.addons.payment import utils as payment_utils
 from odoo.addons.payment_xendit import const
+from odoo.addons.payment_xendit.controllers.main import XenditController
 
 
 _logger = logging.getLogger(__name__)
@@ -73,7 +74,13 @@ class PaymentTransaction(models.Model):
         :rtype: dict
         """
         base_url = self.provider_id.get_base_url()
-        redirect_url = urls.url_join(base_url, '/payment/status')
+        redirect_url = urls.url_join(base_url, XenditController._return_url)
+        access_token = payment_utils.generate_access_token(self.reference, self.amount)
+        success_url_params = urls.url_encode({
+            'tx_ref': self.reference,
+            'access_token': access_token,
+            'success': 'true',
+        })
         payload = {
             'external_id': self.reference,
             'amount': self.amount,
@@ -81,7 +88,7 @@ class PaymentTransaction(models.Model):
             'customer': {
                 'given_names': self.partner_name,
             },
-            'success_redirect_url': redirect_url,
+            'success_redirect_url': f'{redirect_url}?{success_url_params}',
             'failure_redirect_url': redirect_url,
             'payment_methods': [const.PAYMENT_METHODS_MAPPING.get(
                 self.payment_method_code, self.payment_method_code.upper())
@@ -126,10 +133,11 @@ class PaymentTransaction(models.Model):
 
         self._xendit_create_charge(self.token_id.provider_ref)
 
-    def _xendit_create_charge(self, token_ref):
+    def _xendit_create_charge(self, token_ref, auth_id=None):
         """ Create a charge on Xendit using the `credit_card_charges` endpoint.
 
         :param str token_ref: The reference of the Xendit token to use to make the payment.
+        :param str auth_id: The authentication id to use to make the payment.
         :return: None
         """
         if self.currency_id.name in const.CURRENCY_DECIMALS:
@@ -143,6 +151,13 @@ class PaymentTransaction(models.Model):
             'amount': rounded_amount,
             'currency': self.currency_id.name,
         }
+
+        if auth_id:  # The payment goes through an authentication.
+            payload['authentication_id'] = auth_id
+
+        if self.token_id or self.tokenize:  # The tx uses a token or is tokenized.
+            payload['is_recurring'] = True  # Ensure that next payments will not require 3DS.
+
         charge_notification_data = self.provider_id._xendit_make_request(
             'credit_card_charges', payload=payload
         )

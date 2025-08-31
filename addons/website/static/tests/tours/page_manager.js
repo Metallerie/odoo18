@@ -96,7 +96,10 @@ const homePage = 'tr:contains("Home")';
 const refreshPage = [
     {
         trigger: "body",
-        run() {window.location.reload();},
+        run() {
+            window.location.reload();
+        },
+        expectUnloadPage: true,
     },
 ];
 const duplicateSinglePage = [
@@ -258,5 +261,8 @@ registerWebsitePreviewTour(
         },
         ...duplicateSinglePage,
         ...duplicateMultiplePage,
+        {
+            trigger: "td:contains('/test-duplicate-2-1')",
+        },
     ]
 );
