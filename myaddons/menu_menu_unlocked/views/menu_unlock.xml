@@ -1,0 +1,15 @@
+<odoo>
+  <data>
+
+    <!-- On force le menu des éléments de menu -->
+    <menuitem
+        id="menu_ir_ui_menu"
+        name="Éléments de menu"
+        parent="base.menu_custom"
+        action="base.action_menu"
+        groups="base.group_system"
+        sequence="20"/>
+
+  </data>
+</odoo>
+
