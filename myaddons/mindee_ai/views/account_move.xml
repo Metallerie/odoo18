@@ -82,20 +82,20 @@
         </field>
     </record>
 
-    <!-- Action pour afficher les règles OCR -->
+    <!-- Action pour afficher les règles OCR >
     <record id="action_ocr_rule" model="ir.actions.act_window">
         <field name="name">OCR Configuration Rules</field>
         <field name="res_model">ocr.configuration.rule</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_ocr_rule_list"/>
-    </record>
+    </record-->
 
-    <!-- Menu : OCR Configuration Rule -->
+    <!-- Menu : OCR Configuration Rule >
     <menuitem id="menu_ocr_rule"
               name="OCR Configuration Rules"
               parent="account.menu_account_supplier"
               action="action_ocr_rule"
               sequence="50"
-    />
+    /-->
 
 </odoo>
