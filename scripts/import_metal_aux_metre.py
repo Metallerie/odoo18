@@ -98,8 +98,8 @@ try:
             'product_diameter':  diameter,
             'product_length':    length,
             'product_width':     width,
-            'product_height':    height,     # on conserve la valeur source
-            'product_thickness': thickness,  # utilisé par l'IHM/rapports
+            'product_height':    height,
+            'product_thickness': thickness,
         }
         dimensions_by_code[code] = {'variant_label': label, **dims}
         label_by_code[code] = label
@@ -161,14 +161,17 @@ try:
             continue
 
         info = dimensions_by_code.get(code, {})
-        label = info.get('variant_label', '').strip()
-        # On utilise le nom du template stocké au début !
-        new_name = f"{template_name} {label}".strip()
+        # On récupère la vraie valeur d'attribut associée
+        attr_value = env['product.attribute.value'].browse(val_id)
+        attr_value_label = attr_value.name if attr_value and attr_value.exists() else info.get('variant_label', '').strip()
+
+        # Nom = template_name + valeur d'attribut
+        new_name = f"{template_name} {attr_value_label}".strip()
 
         variant.write({
             'default_code': code,
             'name': new_name,
-            **dims
+            **info  # Les dimensions sont déjà dans info
         })
         updated += 1
         print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
