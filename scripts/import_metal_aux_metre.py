@@ -159,8 +159,7 @@ try:
 
         info = dimensions_by_code.get(code, {})
         dims = {k: info[k] for k in ['product_diameter', 'product_length', 'product_width', 'product_height', 'product_thickness'] if k in info}
-        new_name = f"{template.name} {info.get('variant_label','')}".strip()
-
+        new_name = f"{template.name} {row['name']}".strip()
         variant.write({
             'default_code': code,
             'name': new_name,
