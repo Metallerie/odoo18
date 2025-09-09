@@ -165,7 +165,7 @@ try:
         if template.name in label:
             new_name = label.strip()
         else:
-        new_name = f"{template.name} {label}".strip()
+            new_name = f"{template.name} {label}".strip()
 
         variant.write({
             'default_code': code,
