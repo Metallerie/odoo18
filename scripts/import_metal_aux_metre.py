@@ -168,11 +168,15 @@ try:
         # Nom = template_name + valeur d'attribut
         new_name = f"{template_name} {attr_value_label}".strip()
 
+        # CORRECTION ICI
+        dims_only = {k: v for k, v in info.items() if k != 'variant_label'}
+
         variant.write({
             'default_code': code,
             'name': new_name,
-            **info  # Les dimensions sont déjà dans info
+            **dims_only
         })
+
         updated += 1
         print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
 
