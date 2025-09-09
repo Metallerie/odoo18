@@ -148,8 +148,8 @@ try:
 
     updated = 0
     for variant in template.product_variant_ids:
-    pvals = variant.product_template_attribute_value_ids
-    v_ids = [pv.product_attribute_value_id.id for pv in pvals if pv.attribute_id.id == attribute.id]
+        pvals = variant.product_template_attribute_value_ids
+        v_ids = [pv.product_attribute_value_id.id for pv in pvals if pv.attribute_id.id == attribute.id]
     if not v_ids:
         continue
     val_id = v_ids[0]
