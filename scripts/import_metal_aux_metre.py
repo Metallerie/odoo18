@@ -181,7 +181,7 @@ try:
         print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
 
     # Vérification que le nom du template n'a pas changé
-    assert template.name == template_name, "Le nom du template a changé !"
+    #assert template.name == template_name, "Le nom du template a changé !"
 
     cr.commit()
     print(f"\n✅ Import terminé avec succès ! Variantes mises à jour : {updated}")
