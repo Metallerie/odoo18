@@ -162,6 +162,9 @@ try:
             'product_diameter', 'product_length', 'product_width', 'product_height', 'product_thickness'
         ]}
         label = info.get('variant_label', '').strip()
+        if template.name in label:
+            new_name = label.strip()
+        else:
         new_name = f"{template.name} {label}".strip()
 
         variant.write({
