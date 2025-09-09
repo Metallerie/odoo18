@@ -54,8 +54,8 @@ try:
     if not template or not template.exists():
         raise Exception("❌ Template introuvable.")
 
-    # On stocke le nom du template au début et on ne le touche plus
-    template_name = template.name
+    # Stockage du vrai nom du template AVANT toute modification
+    template_name = template.read(['name'])[0]['name']
 
     # 🔍 Attribut
     all_attributes = env['product.attribute'].search([])
@@ -166,7 +166,7 @@ try:
         attr_value = env['product.attribute.value'].browse(val_id)
         attr_value_label = attr_value.name if attr_value and attr_value.exists() else info.get('variant_label', '').strip()
 
-        # Nom = template_name + valeur d'attribut (du CSV)
+        # Nom = template_name (stocké au début, jamais modifié) + valeur d'attribut (du CSV)
         new_name = f"{template_name} {attr_value_label}".strip()
 
         # On enlève le champ 'variant_label'
@@ -180,9 +180,9 @@ try:
         updated += 1
         print(f"✅ Variante mise à jour : [{code}] {new_name} → {code}")
 
-    # Restaurer le nom du template à sa valeur d'origine
+    # Restaurer le nom du template à sa valeur d'origine (sécurité)
     template.write({'name': template_name})
-    print(f"\nNom du template restauré : {template.name}")
+    print(f"\nNom du template restauré : {template_name}")
 
     cr.commit()
     print(f"\n✅ Import terminé avec succès ! Variantes mises à jour : {updated}")
