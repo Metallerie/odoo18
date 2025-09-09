@@ -9,6 +9,7 @@ os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 import odoo
 from odoo import api, tools, sql_db
 
+
 def safe_float(x, default=0.0):
     try:
         if x is None:
@@ -17,6 +18,7 @@ def safe_float(x, default=0.0):
         return float(s) if s else default
     except Exception:
         return default
+
 
 # ⚙️ Initialisation Odoo
 tools.config.parse_config([])
@@ -82,21 +84,21 @@ try:
         label = str(row.get('name', '')).strip()
 
         diameter = safe_float(row.get('diameter', 0.0))
-        length   = safe_float(row.get('length',   0.0))
-        width    = safe_float(row.get('width',    0.0))
-        height   = safe_float(row.get('height',   0.0))
-        thickness= safe_float(row.get('thickness',0.0))
+        length = safe_float(row.get('length', 0.0))
+        width = safe_float(row.get('width', 0.0))
+        height = safe_float(row.get('height', 0.0))
+        thickness = safe_float(row.get('thickness', 0.0))
 
         # 🟢 Fer plat : l'épaisseur vient de 'height' si 'thickness' vaut 0
         if thickness == 0.0 and height > 0.0:
             thickness = height
 
         dims = {
-            'product_diameter':  diameter,
-            'product_length':    length,
-            'product_width':     width,
-            'product_height':    height,     # on conserve la valeur source
-            'product_thickness': thickness,  # utilisé par l'IHM/rapports
+            'product_diameter': diameter,
+            'product_length': length,
+            'product_width': width,
+            'product_height': height,       # on conserve la valeur source
+            'product_thickness': thickness  # utilisé par l'IHM/rapports
         }
         dimensions_by_code[code] = {'variant_label': label, **dims}
         label_by_code[code] = label
@@ -113,7 +115,7 @@ try:
             value = env['product.attribute.value'].create({
                 'name': label,
                 'attribute_id': attribute.id,
-                'sequence': index
+                'sequence': int(index)
             })
 
         # Conserver le mapping quoi qu'il arrive
@@ -150,24 +152,33 @@ try:
     for variant in template.product_variant_ids:
         pvals = variant.product_template_attribute_value_ids
         v_ids = [pv.product_attribute_value_id.id for pv in pvals if pv.attribute_id.id == attribute.id]
-    if not v_ids:
-        continue
-    val_id = v_ids[0]
-    code = val_to_code.get(val_id)
-    if not code:
-        continue
+        if not v_ids:
+            continue
+        val_id = v_ids[0]
+        code = val_to_code.get(val_id)
+        if not code:
+            continue
 
-    info = dimensions_by_code.get(code, {})
-    label = info.get('variant_label', '').strip()
-    new_name = f"{template.name} {label}".strip()
+        info = dimensions_by_code.get(code, {})
+        label = info.get('variant_label', '').strip()
 
-    variant.write({
-        'default_code': code,
-        'name': new_name,
-        **dims
-    })
-    updated += 1
-    print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
+        dims_to_write = {
+            'product_diameter': info.get('product_diameter', 0.0),
+            'product_length': info.get('product_length', 0.0),
+            'product_width': info.get('product_width', 0.0),
+            'product_height': info.get('product_height', 0.0),
+            'product_thickness': info.get('product_thickness', 0.0),
+        }
+
+        new_name = f"{template.name} {label}".strip()
+
+        variant.write({
+            'default_code': code,
+            'name': new_name,
+            **dims_to_write
+        })
+        updated += 1
+        print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
 
     cr.commit()
     print(f"\n✅ Import terminé avec succès ! Variantes mises à jour : {updated}")
