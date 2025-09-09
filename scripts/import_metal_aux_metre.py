@@ -40,7 +40,7 @@ try:
     csv_filename = input("\n📄 Nom du fichier CSV à importer : ").strip()
     CSV_PATH = os.path.join(CSV_DIR, csv_filename)
 
-    # 💼 Produits catégorie 6
+    # 💼 Templates catégorie 6
     products = env['product.template'].search([('categ_id', '=', 6)])
     if not products:
         raise Exception("❌ Aucun produit trouvé dans la catégorie 'Métal au mètre'.")
@@ -67,11 +67,11 @@ try:
 
     # 🔖 Lecture CSV
     df = pd.read_csv(CSV_PATH)
-    # Normalise noms de colonnes (évite casse)
-    df.columns = [c.strip() for c in df.columns]
+    df.columns = [c.strip() for c in df.columns]  # normalise
 
-    value_links = []  # [(default_code, attr_value_id)]
-    dimensions_by_code = {}
+    value_links = []           # [(default_code, attr_value_id)]
+    dimensions_by_code = {}    # code -> dims + label
+    label_by_code = {}         # code -> "40x4 mm"
 
     for index, row in df.iterrows():
         code = str(row.get('default_code', '')).strip()
@@ -79,35 +79,39 @@ try:
             print(f"⚠️ Ligne {index}: default_code manquant → ignorée")
             continue
 
-        name = str(row.get('name', '')).strip()
+        label = str(row.get('name', '')).strip()
 
         diameter = safe_float(row.get('diameter', 0.0))
-        length = safe_float(row.get('length', 0.0))
-        width = safe_float(row.get('width', 0.0))
-        height = safe_float(row.get('height', 0.0))
-        thickness = safe_float(row.get('thickness', 0.0))
+        length   = safe_float(row.get('length',   0.0))
+        width    = safe_float(row.get('width',    0.0))
+        height   = safe_float(row.get('height',   0.0))
+        thickness= safe_float(row.get('thickness',0.0))
+
+        # 🟢 Fer plat : l'épaisseur vient de 'height' si 'thickness' vaut 0
+        if thickness == 0.0 and height > 0.0:
+            thickness = height
 
         dims = {
-            # ne pas inclure 'name' ici pour éviter d’écraser le nom du template
-            'product_diameter': diameter,
-            'product_length': length,
-            'product_width': width,
-            'product_height': height,
-            'product_thickness': thickness,
+            'product_diameter':  diameter,
+            'product_length':    length,
+            'product_width':     width,
+            'product_height':    height,     # on conserve la valeur source
+            'product_thickness': thickness,  # utilisé par l'IHM/rapports
         }
-        dimensions_by_code[code] = {'variant_label': name, **dims}
+        dimensions_by_code[code] = {'variant_label': label, **dims}
+        label_by_code[code] = label
 
-        # 🔄 Existant → update + garder le lien code<->valeur attribut
+        # 🔄 Existant → update dimensions
         existing = env['product.product'].search([('default_code', '=', code)], limit=1)
 
-        # ➕ Cherche/crée la valeur d'attribut
+        # ➕ valeur d'attribut (cherche ou crée)
         value = env['product.attribute.value'].search([
-            ('name', '=', name),
+            ('name', '=', label),
             ('attribute_id', '=', attribute.id)
         ], limit=1)
         if not value:
             value = env['product.attribute.value'].create({
-                'name': name,
+                'name': label,
                 'attribute_id': attribute.id,
                 'sequence': index
             })
@@ -133,33 +137,33 @@ try:
                 })]
             })
 
-    # (Ré)générer les variantes si besoin (Odoo le fait sur write ci-dessus, mais on force le refresh)
+    # Force refresh (variants auto-générées par Odoo à l'écriture des lignes d'attribut)
     template.invalidate_recordset()
 
     # 🔄 Mise à jour des variantes (code + nom + dimensions)
-    # Prépare un index inverse valeur_attribut_id -> default_code
+    # index inverse valeur_attribut_id -> default_code
     val_to_code = {}
     for code, v_id in value_links:
-        # Si plusieurs lignes mappent la même valeur d’attribut, garde la première
         val_to_code.setdefault(v_id, code)
 
     updated = 0
     for variant in template.product_variant_ids:
-        # Récupère l'id de la valeur d'attribut pour l'attribut choisi
         pvals = variant.product_template_attribute_value_ids
         v_ids = [pv.product_attribute_value_id.id for pv in pvals if pv.attribute_id.id == attribute.id]
         if not v_ids:
             continue
-        # On prend la première valeur liée à cet attribut
         val_id = v_ids[0]
         code = val_to_code.get(val_id)
         if not code:
-            # Pas de mapping code pour cette valeur -> skip
             continue
 
         info = dimensions_by_code.get(code, {})
-        dims = {k: info[k] for k in ['product_diameter', 'product_length', 'product_width', 'product_height', 'product_thickness'] if k in info}
-        new_name = f"{template.name} {row['name']}".strip()
+        dims = {k: info.get(k, 0.0) for k in [
+            'product_diameter', 'product_length', 'product_width', 'product_height', 'product_thickness'
+        ]}
+        label = info.get('variant_label', '').strip()
+        new_name = f"{template.name} {label}".strip()
+
         variant.write({
             'default_code': code,
             'name': new_name,
