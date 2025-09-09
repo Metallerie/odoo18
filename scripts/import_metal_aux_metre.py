@@ -144,28 +144,22 @@ try:
     # index inverse valeur_attribut_id -> default_code
     val_to_code = {}
     for code, v_id in value_links:
-        val_to_code.setdefault(v_id, code)
+        val_to_code[v_id] = code  # ← pas setdefault, mais une vraie assignation
 
     updated = 0
     for variant in template.product_variant_ids:
-        pvals = variant.product_template_attribute_value_ids
-        v_ids = [pv.product_attribute_value_id.id for pv in pvals if pv.attribute_id.id == attribute.id]
-        if not v_ids:
-            continue
-        val_id = v_ids[0]
-        code = val_to_code.get(val_id)
-        if not code:
-            continue
+    pvals = variant.product_template_attribute_value_ids
+    v_ids = [pv.product_attribute_value_id.id for pv in pvals if pv.attribute_id.id == attribute.id]
+    if not v_ids:
+        continue
+    val_id = v_ids[0]
+    code = val_to_code.get(val_id)
+    if not code:
+        continue
 
-        info = dimensions_by_code.get(code, {})
-        dims = {k: info.get(k, 0.0) for k in [
-            'product_diameter', 'product_length', 'product_width', 'product_height', 'product_thickness'
-        ]}
-        label = info.get('variant_label', '').strip()
-        if template.name in label:
-            new_name = label.strip()
-        else:
-            new_name = f"{template.name} {label}".strip()
+    info = dimensions_by_code.get(code, {})
+    label = info.get('variant_label', '').strip()
+    new_name = f"{template.name} {label}".strip()
 
         variant.write({
             'default_code': code,
