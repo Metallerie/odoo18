@@ -148,7 +148,7 @@ try:
     # index inverse valeur_attribut_id -> default_code
     val_to_code = {}
     for code, v_id in value_links:
-        val_to_code[v_id] = code  # Correction ici !
+        val_to_code[v_id] = code
 
     updated = 0
     for variant in template.product_variant_ids:
@@ -166,7 +166,7 @@ try:
         attr_value = env['product.attribute.value'].browse(val_id)
         attr_value_label = attr_value.name if attr_value and attr_value.exists() else info.get('variant_label', '').strip()
 
-        # Nom = template_name + valeur d'attribut
+        # Nom = template_name + valeur d'attribut (du CSV)
         new_name = f"{template_name} {attr_value_label}".strip()
 
         # On enlève le champ 'variant_label'
@@ -178,10 +178,11 @@ try:
             **dims_only
         })
         updated += 1
-        print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
+        print(f"✅ Variante mise à jour : [{code}] {new_name} → {code}")
 
-    # Vérification que le nom du template n'a pas changé
-    #assert template.name == template_name, "Le nom du template a changé !"
+    # Restaurer le nom du template à sa valeur d'origine
+    template.write({'name': template_name})
+    print(f"\nNom du template restauré : {template.name}")
 
     cr.commit()
     print(f"\n✅ Import terminé avec succès ! Variantes mises à jour : {updated}")
