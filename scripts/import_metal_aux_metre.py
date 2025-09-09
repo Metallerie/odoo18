@@ -101,6 +101,7 @@ try:
             'product_height':    height,
             'product_thickness': thickness,
         }
+        # On stocke le label juste pour le mapping, mais on ne le passe pas à .write()
         dimensions_by_code[code] = {'variant_label': label, **dims}
         label_by_code[code] = label
 
@@ -168,7 +169,7 @@ try:
         # Nom = template_name + valeur d'attribut
         new_name = f"{template_name} {attr_value_label}".strip()
 
-        # CORRECTION ICI
+        # On enlève le champ 'variant_label'
         dims_only = {k: v for k, v in info.items() if k != 'variant_label'}
 
         variant.write({
@@ -176,9 +177,11 @@ try:
             'name': new_name,
             **dims_only
         })
-
         updated += 1
         print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
+
+    # Vérification que le nom du template n'a pas changé
+    assert template.name == template_name, "Le nom du template a changé !"
 
     cr.commit()
     print(f"\n✅ Import terminé avec succès ! Variantes mises à jour : {updated}")
