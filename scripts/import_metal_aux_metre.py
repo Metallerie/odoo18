@@ -161,13 +161,13 @@ try:
     label = info.get('variant_label', '').strip()
     new_name = f"{template.name} {label}".strip()
 
-        variant.write({
-            'default_code': code,
-            'name': new_name,
-            **dims
-        })
-        updated += 1
-        print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
+    variant.write({
+        'default_code': code,
+        'name': new_name,
+        **dims
+    })
+    updated += 1
+    print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
 
     cr.commit()
     print(f"\n✅ Import terminé avec succès ! Variantes mises à jour : {updated}")
