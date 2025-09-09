@@ -9,7 +9,6 @@ os.environ['ODOO_RC'] = '/data/odoo/metal-odoo18-p8179/odoo18.conf'
 import odoo
 from odoo import api, tools, sql_db
 
-
 def safe_float(x, default=0.0):
     try:
         if x is None:
@@ -18,7 +17,6 @@ def safe_float(x, default=0.0):
         return float(s) if s else default
     except Exception:
         return default
-
 
 # ⚙️ Initialisation Odoo
 tools.config.parse_config([])
@@ -56,6 +54,9 @@ try:
     if not template or not template.exists():
         raise Exception("❌ Template introuvable.")
 
+    # On stocke le nom du template au début et on ne le touche plus
+    template_name = template.name
+
     # 🔍 Attribut
     all_attributes = env['product.attribute'].search([])
     print("\n🎛️ Attributs disponibles :")
@@ -84,21 +85,21 @@ try:
         label = str(row.get('name', '')).strip()
 
         diameter = safe_float(row.get('diameter', 0.0))
-        length = safe_float(row.get('length', 0.0))
-        width = safe_float(row.get('width', 0.0))
-        height = safe_float(row.get('height', 0.0))
-        thickness = safe_float(row.get('thickness', 0.0))
+        length   = safe_float(row.get('length',   0.0))
+        width    = safe_float(row.get('width',    0.0))
+        height   = safe_float(row.get('height',   0.0))
+        thickness= safe_float(row.get('thickness',0.0))
 
         # 🟢 Fer plat : l'épaisseur vient de 'height' si 'thickness' vaut 0
         if thickness == 0.0 and height > 0.0:
             thickness = height
 
         dims = {
-            'product_diameter': diameter,
-            'product_length': length,
-            'product_width': width,
-            'product_height': height,       # on conserve la valeur source
-            'product_thickness': thickness  # utilisé par l'IHM/rapports
+            'product_diameter':  diameter,
+            'product_length':    length,
+            'product_width':     width,
+            'product_height':    height,     # on conserve la valeur source
+            'product_thickness': thickness,  # utilisé par l'IHM/rapports
         }
         dimensions_by_code[code] = {'variant_label': label, **dims}
         label_by_code[code] = label
@@ -115,7 +116,7 @@ try:
             value = env['product.attribute.value'].create({
                 'name': label,
                 'attribute_id': attribute.id,
-                'sequence': int(index)
+                'sequence': index
             })
 
         # Conserver le mapping quoi qu'il arrive
@@ -146,7 +147,7 @@ try:
     # index inverse valeur_attribut_id -> default_code
     val_to_code = {}
     for code, v_id in value_links:
-        val_to_code[v_id] = code  # ← pas setdefault, mais une vraie assignation
+        val_to_code[v_id] = code  # Correction ici !
 
     updated = 0
     for variant in template.product_variant_ids:
@@ -161,21 +162,13 @@ try:
 
         info = dimensions_by_code.get(code, {})
         label = info.get('variant_label', '').strip()
-
-        dims_to_write = {
-            'product_diameter': info.get('product_diameter', 0.0),
-            'product_length': info.get('product_length', 0.0),
-            'product_width': info.get('product_width', 0.0),
-            'product_height': info.get('product_height', 0.0),
-            'product_thickness': info.get('product_thickness', 0.0),
-        }
-
-        new_name = f"{template.name} {label}".strip()
+        # On utilise le nom du template stocké au début !
+        new_name = f"{template_name} {label}".strip()
 
         variant.write({
             'default_code': code,
             'name': new_name,
-            **dims_to_write
+            **dims
         })
         updated += 1
         print(f"✅ Variante mise à jour : {variant.display_name} → {code}")
