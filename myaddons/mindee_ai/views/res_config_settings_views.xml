@@ -3,49 +3,21 @@
     <record id="view_res_config_settings_mindee_ai" model="ir.ui.view">
       <field name="name">res.config.settings.mindee.ai</field>
       <field name="model">res.config.settings</field>
-      <!-- >> Cet ID existe sur 16/17/18 -->
+      <!-- essaie cet inherit_id -->
       <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+      <field name="priority" eval="90"/>
       <field name="arch" type="xml">
-        <!-- >> Cible robuste : le container des réglages -->
+        <!-- on insère directement dans le <form> principal -->
         <xpath expr="//form[@js_class='base_settings']" position="inside">
-          <div class="app_settings_block" name="mindee_ai_block" string="OCR &amp; Factures">
-            <h2>Extraction de factures</h2>
-            <div class="row mt16">
-              <div class="col-12 col-lg-6">
-                <div class="o_setting_box">
-                  <div class="o_setting_left">
-                    <field name="mindee_backend"/>
-                  </div>
-                  <div class="o_setting_right">
-                    <label for="mindee_backend"/>
-                    <div class="text-muted">Choisis le moteur (docTR local ou Mindee v2).</div>
-                  </div>
-                </div>
-
-                <div class="o_setting_box" attrs="{'invisible': [('mindee_backend','!=','doctr')]}">
-                  <div class="o_setting_left">
-                    <field name="mindee_doctr_url"/>
-                  </div>
-                  <div class="o_setting_right">
-                    <label for="mindee_doctr_url"/>
-                    <div class="text-muted">URL du service FastAPI docTR.</div>
-                  </div>
-                </div>
-
-                <div class="o_setting_box" attrs="{'invisible': [('mindee_backend','!=','mindee_v2')]}">
-                  <div class="o_setting_left">
-                    <field name="mindee_api_key" password="True"/>
-                    <field name="mindee_model_id"/>
-                  </div>
-                  <div class="o_setting_right">
-                    <label for="mindee_api_key"/>
-                    <div class="text-muted">Clé &amp; Model ID Mindee v2.</div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
+          <group string="OCR &amp; Factures" name="group_mindee_ai">
+            <field name="mindee_backend"/>
+            <field name="mindee_doctr_url"
+                   attrs="{'invisible':[('mindee_backend','!=','doctr')]}"/>
+            <field name="mindee_api_key"
+                   attrs="{'invisible':[('mindee_backend','!=','mindee_v2')]}"/>
+            <field name="mindee_model_id"
+                   attrs="{'invisible':[('mindee_backend','!=','mindee_v2')]}"/>
+          </group>
         </xpath>
       </field>
     </record>
