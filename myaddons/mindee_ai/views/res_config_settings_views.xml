@@ -1,20 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
   <data>
-    <record id="view_res_config_settings_mindee_ai" model="ir.ui.view">
-      <field name="name">res.config.settings.mindee.ai</field>
+    <!-- Inhérence sur la vue Settings "base_setup" -->
+    <record id="view_res_config_settings_inherit_mindee_ai" model="ir.ui.view">
+      <field name="name">res.config.settings.inherit.mindee.ai</field>
       <field name="model">res.config.settings</field>
-      <!-- adapte si besoin à l'ID exact chez toi -->
-      <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+      <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
       <field name="arch" type="xml">
-        <!-- ta vue parente a <form js_class="base_settings"> -->
-        <xpath expr="//form[@js_class='base_settings']" position="inside">
-          <group string="OCR &amp; Factures" name="mindee_ai_block">
-            <field name="mindee_backend"/>
-            <field name="mindee_doctr_url"/>
-            <field name="mindee_api_key" password="True"/>
-            <field name="mindee_model_id"/>
-            <label string="• 'docTR' utilise l’URL ci-dessus • 'Mindee v2' utilise API Key  Model ID"/>
-          </group>
+        <!-- Ta vue parente a <form js_class="base_settings"> : on injecte dedans -->
+        <xpath expr="//form" position="inside">
+
+          <block title="OCR &amp; Factures" name="mindee_ai_block">
+            <setting id="mindee_backend_setting">
+              <field name="mindee_backend" string="Moteur d'analyse"/>
+            </setting>
+
+            <setting id="mindee_doctr_url_setting">
+              <field name="mindee_doctr_url" string="URL docTR (FastAPI)"/>
+            </setting>
+
+            <setting id="mindee_api_key_setting">
+              <field name="mindee_api_key" string="Mindee API Key" password="True"/>
+            </setting>
+
+            <setting id="mindee_model_id_setting">
+              <field name="mindee_model_id" string="Mindee Model ID"/>
+            </setting>
+          </block>
+
         </xpath>
       </field>
     </record>
