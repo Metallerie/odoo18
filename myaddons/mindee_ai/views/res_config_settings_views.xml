@@ -13,7 +13,7 @@
             <field name="mindee_doctr_url"/>
             <field name="mindee_api_key" password="True"/>
             <field name="mindee_model_id"/>
-            <label string="• 'docTR' utilise l’URL ci-dessus • 'Mindee v2' utilise API Key & Model ID"/>
+            <label string="• 'docTR' utilise l’URL ci-dessus • 'Mindee v2' utilise API Key  Model ID"/>
           </group>
         </xpath>
       </field>
