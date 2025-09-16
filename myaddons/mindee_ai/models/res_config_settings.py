@@ -1,17 +1,24 @@
-from odoo import api, fields, models, api
+from odoo import models, fields, api
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    mindee_api_key = fields.Char(string="Clé API Mindee")
+    mindee_backend = fields.Selection([
+        ('doctr', 'docTR (local)'),
+        ('mindee_v2', 'Mindee v2 (SaaS)'),
+    ], string="Moteur OCR", config_parameter='mindee_ai.backend', default='doctr')
 
-    @api.model
-    def set_values(self):
-        super(ResConfigSettings, self).set_values()
-        self.env['ir.config_parameter'].sudo().set_param('mindee_ai.mindee_api_key', self.mindee_api_key)
+    mindee_doctr_url = fields.Char(
+        string="docTR URL",
+        config_parameter='mindee_ai.doctr_url',
+        default='http://127.0.0.1:1998/ocr'
+    )
 
-    @api.model
-    def get_values(self):
-        res = super(ResConfigSettings, self).get_values()
-        res['mindee_api_key'] = self.env['ir.config_parameter'].sudo().get_param('mindee_ai.mindee_api_key', default='')
-        return res
+    mindee_api_key = fields.Char(
+        string="Mindee API Key",
+        config_parameter='mindee_ai.mindee_api_key'
+    )
+    mindee_model_id = fields.Char(
+        string="Mindee Model ID",
+        config_parameter='mindee_ai.model_id'
+    )
