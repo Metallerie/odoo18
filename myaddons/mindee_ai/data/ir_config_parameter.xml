@@ -15,11 +15,11 @@
     <!-- Si tu gardes Mindee v2 en option -->
     <record id="param_mindee_api_key" model="ir.config_parameter">
       <field name="key">mindee_ai.mindee_api_key</field>
-      <field name="value"></field>
+      <field name="value">md_OHDAUAPdNBcshUu9lg4enlG58ylP8B2E</field>
     </record>
     <record id="param_mindee_model_id" model="ir.config_parameter">
       <field name="key">mindee_ai.model_id</field>
-      <field name="value"></field>
+      <field name="value">V2</field>
     </record>
   </data>
 </odoo>
