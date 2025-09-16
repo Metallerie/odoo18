@@ -3,20 +3,17 @@
     <record id="view_res_config_settings_mindee_ai" model="ir.ui.view">
       <field name="name">res.config.settings.mindee.ai</field>
       <field name="model">res.config.settings</field>
-      <!-- essaie cet inherit_id -->
+      <!-- adapte si besoin à l'ID exact chez toi -->
       <field name="inherit_id" ref="base.res_config_settings_view_form"/>
-      <field name="priority" eval="90"/>
       <field name="arch" type="xml">
-        <!-- on insère directement dans le <form> principal -->
+        <!-- ta vue parente a <form js_class="base_settings"> -->
         <xpath expr="//form[@js_class='base_settings']" position="inside">
-          <group string="OCR &amp; Factures" name="group_mindee_ai">
+          <group string="OCR &amp; Factures" name="mindee_ai_block">
             <field name="mindee_backend"/>
-            <field name="mindee_doctr_url"
-                   attrs="{'invisible':[('mindee_backend','!=','doctr')]}"/>
-            <field name="mindee_api_key"
-                   attrs="{'invisible':[('mindee_backend','!=','mindee_v2')]}"/>
-            <field name="mindee_model_id"
-                   attrs="{'invisible':[('mindee_backend','!=','mindee_v2')]}"/>
+            <field name="mindee_doctr_url"/>
+            <field name="mindee_api_key" password="True"/>
+            <field name="mindee_model_id"/>
+            <label string="• 'docTR' utilise l’URL ci-dessus • 'Mindee v2' utilise API Key & Model ID"/>
           </group>
         </xpath>
       </field>
