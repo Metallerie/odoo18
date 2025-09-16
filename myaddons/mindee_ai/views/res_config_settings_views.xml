@@ -6,7 +6,7 @@
       <field name="inherit_id" ref="base.view_res_config_settings"/>
       <field name="arch" type="xml">
         <xpath expr="//div[hasclass('settings')]" position="inside">
-          <div class="app_settings_block" data-string="OCR & Factures" string="OCR & Factures" name="mindee_ai_block">
+          <div class="app_settings_block" data-string="OCR  Factures" string="OCR  Factures" name="mindee_ai_block">
             <h2>Extraction de factures</h2>
             <div class="row mt16 o_settings_container">
               <div class="col-12 col-lg-6">
