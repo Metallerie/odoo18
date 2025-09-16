@@ -3,7 +3,7 @@
     <record id="view_res_config_settings_mindee_ai" model="ir.ui.view">
       <field name="name">res.config.settings.mindee.ai</field>
       <field name="model">res.config.settings</field>
-      <field name="inherit_id" ref="base.view_res_config_settings"/>
+  <field name="inherit_id" ref="base.res_config_settings_view_form"/>
       <field name="arch" type="xml">
         <xpath expr="//div[hasclass('settings')]" position="inside">
           <div class="app_settings_block" data-string="OCR  Factures" string="OCR  Factures" name="mindee_ai_block">
