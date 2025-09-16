@@ -1,0 +1,25 @@
+<odoo>
+  <data noupdate="1">
+    <!-- backend par défaut : doctr ou mindee_v2 -->
+    <record id="param_mindee_backend" model="ir.config_parameter">
+      <field name="key">mindee_ai.backend</field>
+      <field name="value">doctr</field>
+    </record>
+
+    <!-- URL du service docTR -->
+    <record id="param_mindee_doctr_url" model="ir.config_parameter">
+      <field name="key">mindee_ai.doctr_url</field>
+      <field name="value">http://127.0.0.1:1998/ocr</field>
+    </record>
+
+    <!-- Si tu gardes Mindee v2 en option -->
+    <record id="param_mindee_api_key" model="ir.config_parameter">
+      <field name="key">mindee_ai.mindee_api_key</field>
+      <field name="value"></field>
+    </record>
+    <record id="param_mindee_model_id" model="ir.config_parameter">
+      <field name="key">mindee_ai.model_id</field>
+      <field name="value"></field>
+    </record>
+  </data>
+</odoo>
