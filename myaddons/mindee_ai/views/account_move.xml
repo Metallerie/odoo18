@@ -11,7 +11,7 @@
                 <button name="action_assign_product"
                         string="Affecter produit"
                         type="object"
-                        class="btn-secondary"
+                        class="btn-secondary"/>
             </xpath>
         </field>
     </record>
@@ -26,7 +26,7 @@
                 <button name="action_ocr_fetch"
                         string="Scan From Attachment"
                         class="btn-secondary"
-                        type="object"
+                        type="object" />
             </xpath>
         </field>
     </record>
