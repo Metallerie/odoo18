@@ -28,11 +28,11 @@
                    type="object"
                    invisible="state != 'draft'"/>
     
-                 <button name="action_open_pdf_viewer"
-                  string="📄 Voir le PDF"
-                 type="object"
-                 class="btn btn-secondary"
-                 visible="show_pdf_button"/>
+                <button name="action_ocr_fetch"
+                            type="object"
+                            string="OCR Mindee"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
 
 
                 </xpath>
