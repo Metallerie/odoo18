@@ -12,7 +12,7 @@
                         string="Affecter produit"
                         type="object"
                         class="btn-secondary"
-                        attrs="{'invisible': [('show_assign_button', '=', False)]}"/>
+                        invisible="not show_assign_button"/>           
             </xpath>
         </field>
     </record>
@@ -28,7 +28,7 @@
                         string="OCR Mindee"
                         class="btn-secondary"
                         type="object"
-                        attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        invisible="not show_assign_button"/>  
             </xpath>
         </field>
     </record>
