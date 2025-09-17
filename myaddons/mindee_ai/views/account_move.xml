@@ -44,7 +44,7 @@
                 <field name="operator"/>
                 <field name="value"/>
                 <field name="active"/>
-            </liste>
+            </list>
         </field>
     </record>
 
