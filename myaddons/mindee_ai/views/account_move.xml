@@ -36,7 +36,7 @@
         <field name="name">ocr.configuration.rule.list</field>
         <field name="model">ocr.configuration.rule</field>
         <field name="arch" type="xml">
-            <tree string="Rules">
+            <list string="Rules">
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="global_rule"/>
@@ -44,7 +44,7 @@
                 <field name="operator"/>
                 <field name="value"/>
                 <field name="active"/>
-            </tree>
+            </liste>
         </field>
     </record>
 
