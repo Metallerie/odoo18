@@ -1,115 +1,76 @@
-# -*- coding: utf-8 -*-
+# ✅ Nouveau script complet : mindee_ai/models/account_move.py
+# Fonctionne avec Mindee local (http://127.0.0.1:1998/ocr) et attache la réponse JSON brut en pièce jointe
+
 import base64
-import os
-import tempfile
-import logging
 import json
-from datetime import datetime
-from odoo import models, fields
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
+import logging
 import requests
+from odoo import models, fields
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
-    show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button', store=True)
-
-    def _compute_show_pdf_button(self):
-        for move in self:
-            move.show_pdf_button = bool(move.pdf_attachment_id)
-
-    def action_open_pdf_viewer(self):
-        self.ensure_one()
-        if self.pdf_attachment_id:
-            return {
-                'type': 'ir.actions.act_url',
-                'url': f'/web/content/{self.pdf_attachment_id.id}?download=false',
-                'target': 'new',
-            }
-        return False
-
-    def _write_tmp_from_attachment(self, attachment):
-        try:
-            raw = base64.b64decode(attachment.datas or b"")
-            suffix = ".pdf"
-            name = (attachment.display_name or "document.pdf").lower()
-            if name.endswith(".jpg") or name.endswith(".jpeg"):
-                suffix = ".jpg"
-            elif name.endswith(".png"):
-                suffix = ".png"
-            fd, tmp_path = tempfile.mkstemp(prefix=f"mindee_{attachment.id}_", suffix=suffix)
-            with os.fdopen(fd, "wb") as f:
-                f.write(raw)
-            return tmp_path
-        except Exception as e:
-            _logger.error(f"Erreur lors de l'écriture du fichier temporaire: {e}")
-            return None
+    mindee_local_response = fields.Text(string="Réponse OCR (Mindee)", readonly=True)
 
     def action_ocr_fetch(self):
         for move in self:
-            for message in move.message_ids:
-                for attachment in message.attachment_ids:
-                    if "pdf" not in (attachment.display_name or "").lower():
-                        continue
+            if not move.attachment_ids:
+                raise UserError("Aucune pièce jointe trouvée sur cette facture.")
 
-                    tmp_path = self._write_tmp_from_attachment(attachment)
-                    if not tmp_path:
-                        continue
+            attachment = move.attachment_ids[0]
+            file_path = "/tmp/ocr_temp_file.pdf"
+            with open(file_path, 'wb') as f:
+                f.write(base64.b64decode(attachment.datas))
 
-                    try:
-                        with open(tmp_path, 'rb') as f:
-                            response = requests.post(
-                                "http://127.0.0.1:1998/ocr",
-                                files={"file": f},
-                                timeout=30
-                            )
-                        os.remove(tmp_path)
-                        if response.status_code != 200:
-                            _logger.error(f"Mindee v2 erreur pour {attachment.display_name}: {response.text}")
-                            continue
+            try:
+                response = requests.post(
+                    "http://127.0.0.1:1998/ocr",
+                    files={"file": open(file_path, "rb")},
+                    timeout=30
+                )
+                response.raise_for_status()
+                result = response.json()
+            except Exception as e:
+                _logger.error("Mindee v2 erreur pour %s: %s", attachment.name, str(e))
+                raise UserError(f"Erreur OCR : {e}")
 
-                        result_json = response.json()
-                        fields_dict = result_json.get("data", {}).get("fields", {})
+            _logger.info("Mindee v2 réponse pour %s : %s", attachment.name, result)
 
-                        # Log dans fichier JSON pour debug
-                        try:
-                            log_path = f"/tmp/mindee_debug_{attachment.id}.json"
-                            with open(log_path, "w") as f:
-                                json.dump(fields_dict, f, indent=2, ensure_ascii=False)
-                            _logger.info(f"📄 Résultat OCR sauvegardé dans {log_path}")
-                        except Exception as e:
-                            _logger.warning(f"Échec d'enregistrement debug JSON: {e}")
+            # Écriture dans le champ + log
+            move.mindee_local_response = json.dumps(result, indent=2, ensure_ascii=False)
 
-                        # Lien vers pièce jointe
-                        move.pdf_attachment_id = attachment
+            # Pièce jointe JSON
+            self.env['ir.attachment'].create({
+                'name': f"OCR_{attachment.name}.json",
+                'res_model': 'account.move',
+                'res_id': move.id,
+                'type': 'binary',
+                'mimetype': 'application/json',
+                'datas': base64.b64encode(json.dumps(result, indent=2).encode('utf-8')),
+            })
 
-                        partner_name = fields_dict.get("supplier_name") or "Nom Inconnu"
-                        partner = self.env['res.partner'].search([("name", "ilike", partner_name)], limit=1)
-                        if not partner:
-                            partner = self.env['res.partner'].create({"name": partner_name})
+            # Formatage sécurisé pour les champs de la facture
+            fields_map = result.get("data", {}).get("fields", {})
 
-                        # Correction date au format Odoo
-                        def parse_date(date_str):
-                            try:
-                                return datetime.strptime(date_str, "%d/%m/%Y").strftime(DATE_FORMAT)
-                            except Exception as e:
-                                _logger.warning(f"Date invalide: {date_str} - {e}")
-                                return False
+            def safe_date(date_str):
+                try:
+                    return fields.Date.to_date(date_str)
+                except Exception:
+                    return None
 
-                        vals = {
-                            "partner_id": partner.id,
-                            "invoice_date": parse_date(fields_dict.get("date")),
-                            "invoice_date_due": parse_date(fields_dict.get("due_date")),
-                            "ref": fields_dict.get("invoice_number") or "Référence inconnue",
-                        }
+            move.write({
+                'invoice_date': safe_date(fields_map.get("date")),
+                'invoice_date_due': safe_date(fields_map.get("due_date")),
+                'invoice_origin': fields_map.get("invoice_number"),
+                'amount_untaxed': fields_map.get("total_net"),
+                'amount_tax': fields_map.get("total_tax"),
+                'amount_total': fields_map.get("total_amount"),
+                # On ne touche pas aux lignes pour l'instant
+            })
 
-                        _logger.info(f"🧾 Mise à jour de {move.name} avec {vals}")
-                        move.write(vals)
-
-                    except Exception as e:
-                        _logger.error(f"Erreur lors du traitement Mindee v2: {e}")
+            _logger.info("Facture %s mise à jour avec les données OCR Mindee local", move.name)
 
         return True
