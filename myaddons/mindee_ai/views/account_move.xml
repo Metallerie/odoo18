@@ -74,7 +74,35 @@
             </form>
         </field>
     </record>
+    
+<!-- Inherit vue formulaire des factures pour ajouter le champ + l’onglet OCR -->
+    <record id="view_move_form_inherit_ocr_json" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.ocr.json</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
 
+                <!-- ✅ Onglet OCR JSON -->
+                <page string="OCR JSON">
+                    <field name="attachment_ids" widget="many2many_binary">
+                        <tree>
+                            <field name="name"/>
+                            <field name="mimetype"/>
+                            <field name="datas_fname"/>
+                        </tree>
+                        <domain>[('mimetype', '=', 'application/json')]</domain>
+                    </field>
+                </page>
+
+                <!-- ✅ Onglet brut pour debug -->
+                <page string="OCR brut (debug)">
+                    <field name="mindee_local_response" widget="text" readonly="1"/>
+                </page>
+
+            </xpath>
+        </field>
+    </record>
     <!-- Action OCR rules -->
     <record id="action_ocr_rule" model="ir.actions.act_window">
         <field name="name">OCR Configuration Rules</field>
