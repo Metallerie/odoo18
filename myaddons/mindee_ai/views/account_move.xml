@@ -85,13 +85,8 @@
 
                 <!-- ✅ Onglet OCR JSON -->
                 <page string="OCR JSON">
-                    <field name="attachment_ids" widget="many2many_binary">
-                        <tree>
-                            <field name="name"/>
-                            <field name="mimetype"/>
-                            <field name="datas_fname"/>
-                        </tree>
-                        <domain>[('mimetype', '=', 'application/json')]</domain>
+                    <field name="attachment_ids" widget="json" readonly="1">
+                        
                     </field>
                 </page>
 
