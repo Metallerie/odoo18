@@ -12,7 +12,6 @@
                         string="Affecter produit"
                         type="object"
                         class="btn-secondary"
-                        invisible="state != 'draft'"/>   
             </xpath>
         </field>
     </record>
@@ -28,7 +27,6 @@
                         string="Scan From Attachment"
                         class="btn-secondary"
                         type="object"
-                     invisible="state != 'draft'"/>
             </xpath>
         </field>
     </record>
