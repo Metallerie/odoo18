@@ -14,7 +14,8 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    mindee_local_response = fields.Text(string="Réponse OCR (Mindee)", readonly=True)
+    mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True)
+        
 
     def action_ocr_fetch(self):
         for move in self:
