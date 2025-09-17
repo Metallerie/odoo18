@@ -5,7 +5,8 @@ import base64
 import json
 import logging
 import requests
-from odoo import models, fields
+
+from odoo import models, fields, api
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -61,16 +62,19 @@ class AccountMove(models.Model):
                 except Exception:
                     return None
 
-            move.write({
-                'invoice_date': safe_date(fields_map.get("date")),
-                'invoice_date_due': safe_date(fields_map.get("due_date")),
-                'invoice_origin': fields_map.get("invoice_number"),
-                'amount_untaxed': fields_map.get("total_net"),
-                'amount_tax': fields_map.get("total_tax"),
-                'amount_total': fields_map.get("total_amount"),
-                # On ne touche pas aux lignes pour l'instant
-            })
-
-            _logger.info("Facture %s mise à jour avec les données OCR Mindee local", move.name)
+            try:
+                move.write({
+                    'invoice_date': safe_date(fields_map.get("date")),
+                    'invoice_date_due': safe_date(fields_map.get("due_date")),
+                    'invoice_origin': fields_map.get("invoice_number"),
+                    'amount_untaxed': fields_map.get("total_net"),
+                    'amount_tax': fields_map.get("total_tax"),
+                    'amount_total': fields_map.get("total_amount"),
+                    # Pas de modif sur les lignes produits pour l’instant
+                })
+                _logger.info("Facture %s mise à jour avec les données OCR Mindee local", move.name)
+            except Exception as e:
+                _logger.error("Erreur d’écriture dans la facture %s : %s", move.name, str(e))
+                raise UserError(f"Erreur d’écriture dans la facture : {e}")
 
         return True
