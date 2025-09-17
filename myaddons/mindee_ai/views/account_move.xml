@@ -12,7 +12,7 @@
                         string="Affecter produit"
                         type="object"
                         class="btn-secondary"
-                        invisible="not show_assign_button"/>           
+                        invisible="state != 'draft'"/>   
             </xpath>
         </field>
     </record>
@@ -25,10 +25,10 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button name="action_ocr_fetch"
-                        string="OCR Mindee"
+                        string="Scan From Attachment"
                         class="btn-secondary"
                         type="object"
-                        invisible="not show_assign_button"/>  
+                     invisible="state != 'draft'"/>
             </xpath>
         </field>
     </record>
