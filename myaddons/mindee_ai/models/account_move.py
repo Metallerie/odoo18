@@ -6,7 +6,102 @@ import logging
 from datetime import datetime
 from odoo import models, fields
 
-# --- Mindee v2 (MLA) ---
+# --- Mindee v2 (MLA) ---# -*- coding: utf-8 -*-
+import base64
+import os
+import tempfile
+import logging
+from datetime import datetime
+from odoo import models, fields
+import requests
+
+_logger = logging.getLogger(__name__)
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
+    show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button', store=True)
+
+    def _compute_show_pdf_button(self):
+        for move in self:
+            move.show_pdf_button = bool(move.pdf_attachment_id)
+
+    def action_open_pdf_viewer(self):
+        self.ensure_one()
+        if self.pdf_attachment_id:
+            return {
+                'type': 'ir.actions.act_url',
+                'url': f'/web/content/{self.pdf_attachment_id.id}?download=false',
+                'target': 'new',
+            }
+        return False
+
+    def _write_tmp_from_attachment(self, attachment):
+        try:
+            raw = base64.b64decode(attachment.datas or b"")
+            suffix = ".pdf" if attachment.mimetype == 'application/pdf' else ".bin"
+            fd, tmp_path = tempfile.mkstemp(suffix=suffix)
+            with os.fdopen(fd, "wb") as f:
+                f.write(raw)
+            return tmp_path
+        except Exception as e:
+            _logger.error(f"Erreur lors de la création du fichier temporaire : {e}")
+            return None
+
+    def _convert_date(self, value):
+        try:
+            return datetime.strptime(value, '%d/%m/%Y').date()
+        except Exception as e:
+            _logger.warning(f"Date invalide '{value}' : {e}")
+            return False
+
+    def action_ocr_fetch(self):
+        for move in self:
+            for message in move.message_ids:
+                for attachment in message.attachment_ids:
+                    if "pdf" not in (attachment.display_name or "").lower():
+                        continue
+
+                    tmp_path = self._write_tmp_from_attachment(attachment)
+                    if not tmp_path:
+                        continue
+
+                    try:
+                        files = {'file': open(tmp_path, 'rb')}
+                        response = requests.post("http://127.0.0.1:1998/ocr", files=files)
+                        if response.status_code != 200:
+                            _logger.error(f"Mindee local OCR failed: {response.text}")
+                            continue
+                        data = response.json().get("data", {})
+
+                        # Log complet JSON
+                        _logger.info("[MINDEE JSON] %s", data)
+
+                        partner_name = data.get("supplier_name") or "Nom Inconnu"
+                        partner_addr = data.get("supplier_address")
+                        partner = self.env['res.partner'].search([("name", "ilike", partner_name)], limit=1)
+                        if not partner:
+                            partner_vals = {"name": partner_name, "street": partner_addr or False}
+                            partner = self.env['res.partner'].create(partner_vals)
+
+                        move.write({
+                            "partner_id": partner.id,
+                            "invoice_date": self._convert_date(data.get("date")),
+                            "invoice_date_due": self._convert_date(data.get("due_date")),
+                            "ref": data.get("invoice_number"),
+                            "pdf_attachment_id": attachment.id,
+                        })
+                    except Exception as e:
+                        _logger.error(f"Erreur OCR: {e}")
+                    finally:
+                        try:
+                            os.remove(tmp_path)
+                        except Exception:
+                            pass
+
+        return True
+
 from mindee import ClientV2, InferenceParameters, PathInput
 
 _logger = logging.getLogger(__name__)
