@@ -92,7 +92,7 @@
 
                 <!-- ✅ Onglet brut pour debug -->
                 <page string="OCR brut (debug)">
-                    <field name="mindee_local_response" widget="text" readonly="1" store="True"/>
+                    <field name="mindee_local_response" widget="text" readonly="1"  store=True/>
                 </page>
 
             </xpath>
