@@ -1,9 +1,11 @@
 # ✅ Nouveau script complet : mindee_ai/models/account_move.py
 # Fonctionne avec Mindee local (http://127.0.0.1:1998/ocr) et attache la réponse JSON brut en pièce jointe
+# ⚠️ Correction : filtre uniquement les pièces jointes PDF (évite d’envoyer les .json par erreur)
 
 import base64
 import json
 import logging
+import os
 import requests
 
 from odoo import models, fields, api
@@ -15,17 +17,27 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True)
-        
 
     def action_ocr_fetch(self):
         for move in self:
-            if not move.attachment_ids:
-                raise UserError("Aucune pièce jointe trouvée sur cette facture.")
+            # Filtrer uniquement les PDFs
+            pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == 'application/pdf')
+            if not pdf_attachments:
+                raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
 
-            attachment = move.attachment_ids[0]
+            attachment = pdf_attachments[0]
+
+            # Sauvegarde temporaire
             file_path = "/tmp/ocr_temp_file.pdf"
             with open(file_path, 'wb') as f:
                 f.write(base64.b64decode(attachment.datas))
+
+            # Vérification taille fichier avant envoi
+            file_size = os.path.getsize(file_path)
+            if file_size == 0:
+                raise UserError(f"Le fichier {attachment.name} est vide, impossible de l’envoyer à l’OCR.")
+
+            _logger.info("Envoi OCR du fichier %s (taille : %d octets)", attachment.name, file_size)
 
             try:
                 response = requests.post(
