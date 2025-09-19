@@ -7,7 +7,7 @@ from odoo import models, fields
 
 # --- Mindee v2 (MLA) ---
 from mindee import ClientV2, InferenceParameters, PathInput  # v2 SDK :contentReference[oaicite:2]{index=2}
-    _logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
