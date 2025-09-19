@@ -1,5 +1,7 @@
 # ✅ Nouveau script complet : mindee_ai/models/account_move.py
-# Fonctionne avec Mindee local (http://127.0.0.1:1998/ocr) et attache la réponse JSON brut en pièce jointe
+# Fonctionne avec Mindee local (http://127.0.0.1:1998/ocr)
+# - Crée une pièce jointe JSON
+# - Met à jour le fournisseur, la date et le numéro de facture
 
 import base64
 import json
@@ -14,15 +16,19 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True)
-        
+    mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True, store=True)
 
     def action_ocr_fetch(self):
         for move in self:
             if not move.attachment_ids:
                 raise UserError("Aucune pièce jointe trouvée sur cette facture.")
 
-            attachment = move.attachment_ids[0]
+            # ⚠️ Ici on devrait filtrer les PDF, sinon tu risques d’envoyer le JSON
+            attachment = move.attachment_ids.filtered(lambda a: a.mimetype == 'application/pdf')[:1]
+            if not attachment:
+                raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
+            attachment = attachment[0]
+
             file_path = "/tmp/ocr_temp_file.pdf"
             with open(file_path, 'wb') as f:
                 f.write(base64.b64decode(attachment.datas))
@@ -63,16 +69,32 @@ class AccountMove(models.Model):
                 except Exception:
                     return None
 
+            vals = {
+                'invoice_date': safe_date(fields_map.get("date")),
+                'invoice_date_due': safe_date(fields_map.get("due_date")),
+                'invoice_origin': fields_map.get("invoice_number"),
+                'amount_untaxed': fields_map.get("total_net"),
+                'amount_tax': fields_map.get("total_tax"),
+                'amount_total': fields_map.get("total_amount"),
+            }
+
+            # ✅ Détection du fournisseur par son nom
+            supplier_name = fields_map.get("supplier_name")
+            if supplier_name:
+                partner = self.env['res.partner'].search([('name', 'ilike', supplier_name)], limit=1)
+                if partner:
+                    vals['partner_id'] = partner.id
+                else:
+                    # Si le fournisseur n’existe pas → on le crée automatiquement
+                    partner = self.env['res.partner'].create({
+                        'name': supplier_name,
+                        'supplier_rank': 1,
+                    })
+                    vals['partner_id'] = partner.id
+                _logger.info("Fournisseur détecté/assigné : %s (id=%s)", supplier_name, vals['partner_id'])
+
             try:
-                move.write({
-                    'invoice_date': safe_date(fields_map.get("date")),
-                    'invoice_date_due': safe_date(fields_map.get("due_date")),
-                    'invoice_origin': fields_map.get("invoice_number"),
-                    'amount_untaxed': fields_map.get("total_net"),
-                    'amount_tax': fields_map.get("total_tax"),
-                    'amount_total': fields_map.get("total_amount"),
-                    # Pas de modif sur les lignes produits pour l’instant
-                })
+                move.write(vals)
                 _logger.info("Facture %s mise à jour avec les données OCR Mindee local", move.name)
             except Exception as e:
                 _logger.error("Erreur d’écriture dans la facture %s : %s", move.name, str(e))
