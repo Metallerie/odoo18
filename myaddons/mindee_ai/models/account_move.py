@@ -7,11 +7,11 @@ from odoo import models, fields
 
 # --- Mindee v2 (MLA) ---
 from mindee import ClientV2, InferenceParameters, PathInput  # v2 SDK :contentReference[oaicite:2]{index=2}
-    mindee_local_response = fields.Text(string="Réponse OCR (Mindee)", readonly=True)
     _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    mindee_local_response = fields.Text(string="Réponse OCR (Mindee)", readonly=True)
 
     pdf_attachment_id = fields.Many2one('ir.attachment', string="PDF OCR")
     show_pdf_button = fields.Boolean(compute='_compute_show_pdf_button', store=True)
