@@ -102,7 +102,7 @@ result = model(doc)
 predictions = []
 
 for page in result.pages:
-    if hasattr(page, "predictions"):
+    if hasattr(page, "predictions"):  # KIE predictor
         for word in page.predictions:
             if isinstance(word, tuple) and len(word) == 2:
                 value, bbox = word
@@ -110,12 +110,15 @@ for page in result.pages:
                     'value': value,
                     'bbox': bbox,
                 })
-            else:
+            elif isinstance(word, str):  # fallback si juste du texte (très rare)
                 predictions.append({
-                    'value': word.value,
-                    'bbox': word.bbox,
+                    'value': word,
+                    'bbox': ((0.0, 0.0), (0.0, 0.0)),  # fake bbox si absent
                 })
-    else:
+            else:
+                raise TypeError(f"Type inattendu pour 'word': {type(word)}")
+
+    else:  # OCR predictor
         for block in page.blocks:
             for line in block.lines:
                 for word in line.words:
