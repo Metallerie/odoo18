@@ -6,7 +6,7 @@ from doctr.models import kie_predictor
 # Model
 model = kie_predictor(det_arch='db_resnet50', reco_arch='crnn_vgg16_bn', pretrained=True)
 # PDF
-#doc = DocumentFile.from_pdf("/data/Documents/factures_archive/3259598_trenois.pdf_imported")
+doc = DocumentFile.from_pdf("/data/Documents/factures_archive/3259598_trenois.pdf_imported")
 # Analyze
 result = model(doc)
 
