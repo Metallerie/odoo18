@@ -1,9 +1,8 @@
-# scripts/kie_predictor.py
-
 from doctr.models import kie_predictor
 from doctr.io import DocumentFile
 import sys
 import json
+
 
 # ----------- 🔧 Fonctions ----------------
 
@@ -81,16 +80,23 @@ for page_idx, page in enumerate(result.pages):
             "confidence": getattr(pred, "confidence", None),
         })
 
+# ✅ Séparation des prédictions
+valid_predictions = [p for p in predictions if p["bbox"] is not None]
+invalid_predictions = [p for p in predictions if p["bbox"] is None]
+
 # 📐 Reconstruction des lignes
-lines = group_predictions_into_lines(predictions, y_thresh=0.01)
+lines = group_predictions_into_lines(valid_predictions, y_thresh=0.01)
 phrases = [line_to_phrase(line) for line in lines]
 
 # 🛒 Extraction des produits
 produits = extract_product_lines(lines)
 
 # 📦 Export JSON
-print(json.dumps({
+output = {
     "phrases": phrases,
     "produits": produits,
-    "extractions": predictions
-}, ensure_ascii=False, indent=2))
+    "extractions_valides": valid_predictions,
+    "extractions_sans_bbox": invalid_predictions,
+}
+
+print(json.dumps(output, ensure_ascii=False, indent=2))
