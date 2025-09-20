@@ -3,11 +3,10 @@ from doctr.io import DocumentFile
 import sys
 import json
 
-
 # ----------- 🔧 Fonctions ----------------
 
 def group_predictions_into_lines(predictions, y_thresh=0.01):
-    """Regroupe les prédictions KIE par ligne en fonction de leur coordonnée Y."""
+    """Regroupe les prédictions par ligne en fonction de leur coordonnée Y."""
     lines = []
     for pred in sorted(predictions, key=lambda x: (x['bbox'][0][1] + x['bbox'][1][1]) / 2):
         cy = (pred['bbox'][0][1] + pred['bbox'][1][1]) / 2
@@ -67,25 +66,20 @@ model = kie_predictor(pretrained=True)
 
 print("🔎 Prédiction KIE en cours...")
 result = model(doc)
-print("📝 Debug brut du modèle KIE:")
-for page_idx, page in enumerate(result.pages):
-    print(f"--- Page {page_idx+1} ---")
-    print(page.predictions)
 
-
-# 🔎 Extraction des prédictions brutes
+# 🔎 Extraction des mots
 predictions = []
 for page_idx, page in enumerate(result.pages):
-    for pred in page.predictions:
-        predictions.append({
-            "page": page_idx + 1,
-            "label": getattr(pred, "label", None),
-            "value": getattr(pred, "value", None),
-            "bbox": getattr(pred, "geometry", None),
-            "confidence": getattr(pred, "confidence", None),
-        })
+    if isinstance(page.predictions, dict) and "words" in page.predictions:
+        for w in page.predictions["words"]:
+            predictions.append({
+                "page": page_idx + 1,
+                "value": w.value,
+                "bbox": w.geometry,
+                "confidence": w.confidence,
+            })
 
-# ✅ Séparation des prédictions
+# ✅ Séparation bbox valides / invalides
 valid_predictions = [p for p in predictions if p["bbox"] is not None]
 invalid_predictions = [p for p in predictions if p["bbox"] is None]
 
