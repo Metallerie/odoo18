@@ -67,6 +67,11 @@ model = kie_predictor(pretrained=True)
 
 print("🔎 Prédiction KIE en cours...")
 result = model(doc)
+print("📝 Debug brut du modèle KIE:")
+for page_idx, page in enumerate(result.pages):
+    print(f"--- Page {page_idx+1} ---")
+    print(page.predictions)
+
 
 # 🔎 Extraction des prédictions brutes
 predictions = []
