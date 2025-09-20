@@ -93,9 +93,9 @@ produits = extract_product_lines(lines)
 # 📦 Export JSON
 output = {
     "phrases": phrases,
-    "produits": produits,
-    "extractions_valides": valid_predictions,
-    "extractions_sans_bbox": invalid_predictions,
+#   "produits": produits,
+#    "extractions_valides": valid_predictions,
+#    "extractions_sans_bbox": invalid_predictions,
 }
 
 print(json.dumps(output, ensure_ascii=False, indent=2))
