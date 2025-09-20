@@ -1,5 +1,3 @@
-# scripts/kie_predictor.py
-
 from doctr.models import kie_predictor
 from doctr.io import DocumentFile
 import sys
@@ -100,8 +98,9 @@ model = kie_predictor(pretrained=True)
 print("🔎 Prédiction OCR en cours...")
 result = model(doc)
 
-# Extraire toutes les prédictions
+# Extraire les prédictions selon le modèle utilisé
 predictions = []
+
 for page in result.pages:
     if hasattr(page, "predictions"):
         for word in page.predictions:
@@ -124,7 +123,9 @@ for page in result.pages:
                         'value': word.value,
                         'bbox': word.geometry,
                     })
-print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
+
+# -------- Affichage -------- #
+print("\n🧠 Reconstruction des phrases à partir des coordonnées :\n")
 print_ocr_sentences(predictions)
 
 print("\n🧠 🔎 Appariement positionnel des données clés :\n")
