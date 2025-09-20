@@ -75,10 +75,10 @@ for page_idx, page in enumerate(result.pages):
     for pred in page.predictions:
         predictions.append({
             "page": page_idx + 1,
-            "label": pred["label"],
-            "value": pred["value"],
-            "bbox": pred["geometry"],
-            "confidence": pred["confidence"],
+            "label": getattr(pred, "label", None),
+            "value": getattr(pred, "value", None),
+            "bbox": getattr(pred, "geometry", None),
+            "confidence": getattr(pred, "confidence", None),
         })
 
 # 📐 Reconstruction des lignes
