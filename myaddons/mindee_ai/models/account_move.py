@@ -29,19 +29,38 @@ class AccountMove(models.Model):
                 continue
         return None
 
+    def group_words_into_lines(self, predictions, y_thresh=0.01):
+        lines = []
+        for word in sorted(predictions, key=lambda x: (x['bbox'][0][1] + x['bbox'][1][1]) / 2):
+            cy = (word['bbox'][0][1] + word['bbox'][1][1]) / 2
+            placed = False
+            for line in lines:
+                ly = (line[0]['bbox'][0][1] + line[0]['bbox'][1][1]) / 2
+                if abs(ly - cy) <= y_thresh:
+                    line.append(word)
+                    placed = True
+                    break
+            if not placed:
+                lines.append([word])
+        return lines
+
+    def line_to_phrase(self, line):
+        line = sorted(line, key=lambda x: x['bbox'][0][0])
+        phrase = " ".join([word['value'] for word in line])
+        return phrase
+
     def action_ocr_fetch(self):
         for move in self:
-            # 1. Prendre le PDF attaché
+            # Lecture du PDF attaché
             pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
             if not pdf_attachments:
                 raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
             attachment = pdf_attachments[0]
-
             file_path = "/tmp/ocr_temp_file.pdf"
             with open(file_path, "wb") as f:
                 f.write(base64.b64decode(attachment.datas))
 
-            # 2. Appel du script OCR dans le venv doctr
+            # Appel du script OCR dans venv Doctr
             doctr_venv_python = "/data/venv_doctr/bin/python3"
             doctr_script_path = "/data/venv_doctr/kie_predictor_runner.py"
             try:
@@ -59,8 +78,12 @@ class AccountMove(models.Model):
                 _logger.error("Erreur OCR kie_predictor pour %s: %s", attachment.name, str(e))
                 raise UserError(f"Erreur OCR avec kie_predictor : {e}\n{result.stderr if 'result' in locals() else ''}")
 
-            # 3. Sauvegarde du JSON brut
-            move.doctr_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
+            # Construction des lignes et des phrases dans Odoo (pas dans le script OCR)
+            predictions = ocr_data.get("words", [])
+            lines = self.group_words_into_lines(predictions, y_thresh=0.01)
+            phrases = [self.line_to_phrase(line) for line in lines]
+
+            move.doctr_response = json.dumps({"phrases": phrases}, indent=2, ensure_ascii=False)
 
             self.env["ir.attachment"].create({
                 "name": f"KIE_{attachment.name}.json",
@@ -68,11 +91,10 @@ class AccountMove(models.Model):
                 "res_id": move.id,
                 "type": "binary",
                 "mimetype": "application/json",
-                "datas": base64.b64encode(json.dumps(ocr_data, indent=2).encode("utf-8")),
+                "datas": base64.b64encode(json.dumps({"phrases": phrases}, indent=2).encode("utf-8")),
             })
 
-            # 4. Analyse des phrases pour remplir la facture
-            phrases = ocr_data.get("phrases", [])
+            # Analyse des phrases pour extraire les infos de la facture
             invoice_date = None
             invoice_number = None
             amount_total = None
