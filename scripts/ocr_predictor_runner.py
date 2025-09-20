@@ -96,7 +96,7 @@ produits = extract_product_lines(lines)
 output = {
     "phrases": phrases,
    # "produits": produits,
-  #"valid_predictions": valid_predictions,
+   #"valid_predictions": valid_predictions,
    # "invalid_predictions": invalid_predictions,
 }
 
