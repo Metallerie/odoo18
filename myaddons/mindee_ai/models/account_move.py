@@ -38,8 +38,8 @@ class AccountMove(models.Model):
                 f.write(base64.b64decode(attachment.datas))
 
             # 2. Appel du script OCR dans le venv doctr
-            doctr_venv_python = "/data/venv_doctr/bin/python3"
-            doctr_script_path = "/data/venv_doctr/kie_predictor_runner.py"
+            doctr_venv_python = "/data/doctr-venv/bin/python3"
+            doctr_script_path = "/data/doctr-venv/kie_predictor_runner.py"
             try:
                 result = subprocess.run(
                     [doctr_venv_python, doctr_script_path, file_path],
