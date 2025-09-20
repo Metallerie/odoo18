@@ -1,3 +1,5 @@
+# scripts/kie_predictor.py
+
 from doctr.models import kie_predictor
 from doctr.io import DocumentFile
 import sys
@@ -98,37 +100,18 @@ model = kie_predictor(pretrained=True)
 print("🔎 Prédiction OCR en cours...")
 result = model(doc)
 
-# Extraire les prédictions selon le modèle utilisé
+# Extraire toutes les prédictions
 predictions = []
-
 for page in result.pages:
-    if hasattr(page, "predictions"):  # KIE predictor
-        for word in page.predictions:
-            if isinstance(word, tuple) and len(word) == 2:
-                value, bbox = word
+    for block in page.blocks:
+        for line in block.lines:
+            for word in line.words:
                 predictions.append({
-                    'value': value,
-                    'bbox': bbox,
+                    'value': word.value,
+                    'bbox': word.geometry,
                 })
-            elif isinstance(word, str):  # fallback si juste du texte (très rare)
-                predictions.append({
-                    'value': word,
-                    'bbox': ((0.0, 0.0), (0.0, 0.0)),  # fake bbox si absent
-                })
-            else:
-                raise TypeError(f"Type inattendu pour 'word': {type(word)}")
 
-    else:  # OCR predictor
-        for block in page.blocks:
-            for line in block.lines:
-                for word in line.words:
-                    predictions.append({
-                        'value': word.value,
-                        'bbox': word.geometry,
-                    })
-
-# -------- Affichage -------- #
-print("\n🧠 Reconstruction des phrases à partir des coordonnées :\n")
+print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
 print_ocr_sentences(predictions)
 
 print("\n🧠 🔎 Appariement positionnel des données clés :\n")
