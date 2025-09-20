@@ -2,8 +2,8 @@ import base64
 import json
 import logging
 import os
-import re
 import requests
+from datetime import datetime
 
 from odoo import models, fields
 from odoo.exceptions import UserError
@@ -13,23 +13,27 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True, store=True)
+    mindee_local_response = fields.Text(
+        string="Réponse OCR JSON (Mindee)",
+        readonly=True,
+        store=True
+    )
 
+    # --- Normalisation des dates ---
     def _normalize_date(self, date_str):
-        """Accepte plusieurs formats de date (04-07-2025, 04/07/2025, 2025-07-04, etc.)"""
+        """Convertit une date OCR en format YYYY-MM-DD utilisable par Odoo."""
         if not date_str:
             return None
-        # Uniformiser séparateurs
-        date_str = date_str.replace("-", "/").replace(".", "/")
+        date_str = date_str.strip().replace("-", "/").replace(".", "/")
         for fmt in ("%d/%m/%Y", "%Y/%m/%d", "%d/%m/%y"):
             try:
-                return fields.Date.to_date(date_str, fmt)
+                return datetime.strptime(date_str, fmt).date()
             except Exception:
                 continue
         return None
 
+    # --- Application des règles partenaires ---
     def _apply_partner_rules(self, ocr_data):
-        """Applique les règles OCR pour trouver le fournisseur"""
         PartnerRule = self.env["ocr.configuration.rule.partner"]
         rules = PartnerRule.search([("active", "=", True)], order="sequence asc")
 
@@ -46,8 +50,10 @@ class AccountMove(models.Model):
                 return rule.partner_id
         return None
 
+    # --- Action principale OCR ---
     def action_ocr_fetch(self):
         for move in self:
+            # On prend uniquement les PDFs
             pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
             if not pdf_attachments:
                 raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
@@ -69,9 +75,10 @@ class AccountMove(models.Model):
                 _logger.error("Mindee v2 erreur pour %s: %s", attachment.name, str(e))
                 raise UserError(f"Erreur OCR : {e}")
 
-            # Sauvegarde du JSON OCR
+            # Sauvegarde JSON brut
             move.mindee_local_response = json.dumps(result, indent=2, ensure_ascii=False)
 
+            # Création d'une pièce jointe JSON
             self.env["ir.attachment"].create({
                 "name": f"OCR_{attachment.name}.json",
                 "res_model": "account.move",
@@ -86,23 +93,24 @@ class AccountMove(models.Model):
             vals = {
                 "invoice_date": self._normalize_date(fields_map.get("date")),
                 "invoice_date_due": self._normalize_date(fields_map.get("due_date")),
-                "invoice_origin": fields_map.get("invoice_number"),
+                "ref": fields_map.get("invoice_number"),   # ✅ Numéro de facture fournisseur
                 "amount_untaxed": fields_map.get("total_net"),
                 "amount_tax": fields_map.get("total_tax"),
                 "amount_total": fields_map.get("total_amount"),
             }
 
-            # Appliquer les règles partenaires
+            # Attribution du partenaire via règles OCR
             partner = self._apply_partner_rules(result.get("data", {}))
             if partner:
                 vals["partner_id"] = partner.id
                 _logger.info("Partenaire assigné via règles OCR : %s", partner.name)
             elif fields_map.get("supplier_name"):
-                # fallback → créer un partenaire si inexistant
-                partner = self.env["res.partner"].search([("name", "ilike", fields_map["supplier_name"])], limit=1)
+                # Fallback : création/recherche par supplier_name
+                supplier_name = fields_map["supplier_name"]
+                partner = self.env["res.partner"].search([("name", "ilike", supplier_name)], limit=1)
                 if not partner:
                     partner = self.env["res.partner"].create({
-                        "name": fields_map["supplier_name"],
+                        "name": supplier_name,
                         "supplier_rank": 1,
                     })
                 vals["partner_id"] = partner.id
@@ -110,6 +118,12 @@ class AccountMove(models.Model):
             else:
                 _logger.warning("Aucun partenaire détecté pour la facture %s", move.name)
 
-            move.write(vals)
+            # Mise à jour de la facture
+            try:
+                move.write(vals)
+                _logger.info("Facture %s mise à jour avec les données OCR", move.name)
+            except Exception as e:
+                _logger.error("Erreur d’écriture dans la facture %s : %s", move.name, str(e))
+                raise UserError(f"Erreur d’écriture dans la facture : {e}")
 
         return True
