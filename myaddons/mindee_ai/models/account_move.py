@@ -51,9 +51,15 @@ class AccountMove(models.Model):
                 )
                 ocr_json = result.stdout
                 ocr_data = json.loads(ocr_json)
-            except Exception as e:
-                _logger.error("Erreur OCR kie_predictor pour %s: %s", attachment.name, str(e))
-                raise UserError(f"Erreur OCR avec kie_predictor : {e}\n{result.stderr if 'result' in locals() else ''}")
+           except subprocess.CalledProcessError as e:
+                _logger.error("OCR error for %s", attachment.name)
+                _logger.error("stdout: %s", e.stdout)
+                _logger.error("stderr: %s", e.stderr)
+                raise UserError(f"Erreur OCR avec kie_predictor :\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}")
+
+except Exception as e:
+    _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
+    raise UserError(f"Erreur OCR avec kie_predictor : {e}")
 
             # 3. Sauvegarde du JSON brut
             move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
