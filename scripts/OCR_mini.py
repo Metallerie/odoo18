@@ -7,7 +7,7 @@ from doctr.io import DocumentFile
 model = ocr_predictor(pretrained=True)
 
 # Charger ton PDF (remplace par ton chemin facture)
-doc = DocumentFile.from_pdf("/data/Documents/factures_archive/Facture_CCL_161372.pdf")
+doc = DocumentFile.from_pdf("/data/Documents/factures_archive/Facture_CCL_153880.pdf")
 
 # OCR
 result = model(doc)
