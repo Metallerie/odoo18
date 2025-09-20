@@ -1,15 +1,11 @@
-#doc = DocumentFile.from_pdf("/data/Documents/factures_archive/3259598_trenois.pdf_imported")
-
-# scripts/kie_predictor.py
-
 from doctr.models import ocr_predictor
 from doctr.io import DocumentFile
 import sys
+import json  # Ajout pour le format JSON
 
 # ----------- 🔧 Fonctions OCR reconstruction ----------------
 
 def group_words_into_lines(predictions, y_thresh=0.01):
-    """Regroupe les mots sur des lignes selon leur coordonnée Y moyenne."""
     lines = []
     for word in sorted(predictions, key=lambda x: (x['bbox'][0][1] + x['bbox'][1][1]) / 2):
         cy = (word['bbox'][0][1] + word['bbox'][1][1]) / 2
@@ -25,7 +21,6 @@ def group_words_into_lines(predictions, y_thresh=0.01):
     return lines
 
 def merge_words_in_line(line, x_gap_thresh=0.02):
-    """Fusionne les mots proches horizontalement en phrases."""
     line = sorted(line, key=lambda x: x['bbox'][0][0])
     sentence = []
     current_phrase = line[0]['value']
@@ -41,13 +36,14 @@ def merge_words_in_line(line, x_gap_thresh=0.02):
     sentence.append(current_phrase)
     return sentence
 
-def print_ocr_sentences(predictions, y_thresh=0.01, x_gap_thresh=0.02):
-    """Affiche les phrases reconstituées à partir des prédictions OCR."""
+def get_ocr_sentences(predictions, y_thresh=0.01, x_gap_thresh=0.02):
+    """Retourne les phrases reconstituées à partir des prédictions OCR."""
+    sentences = []
     lines = group_words_into_lines(predictions, y_thresh=y_thresh)
     for line in lines:
         phrases = merge_words_in_line(line, x_gap_thresh=x_gap_thresh)
-        for phrase in phrases:
-            print("📝", phrase)
+        sentences.extend(phrases)
+    return sentences
 
 # ----------- 📄 Chargement du fichier ----------------
 
@@ -81,4 +77,7 @@ for page in result.pages:
                 })
 
 print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
-print_ocr_sentences(predictions)
+sentences = get_ocr_sentences(predictions)
+
+# Affichage en JSON
+print(json.dumps({"phrases": sentences}, ensure_ascii=False, indent=2))
