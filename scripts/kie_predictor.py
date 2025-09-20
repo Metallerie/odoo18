@@ -72,11 +72,13 @@ result = model(doc)
 
 predictions = []
 for page in result.pages:
-    for word in page.predictions:
-        predictions.append({
-            'value': word.value,
-            'bbox': word.bbox,
-        })
+    for block in page.blocks:
+        for line in block.lines:
+            for word in line.words:
+                predictions.append({
+                    'value': word.value,
+                    'bbox': word.geometry,
+                })
 
 print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
 print_ocr_sentences(predictions)
