@@ -103,13 +103,20 @@ result = model(doc)
 # Extraire toutes les prédictions
 predictions = []
 for page in result.pages:
-    if hasattr(page, "predictions"):  # KIE
+    if hasattr(page, "predictions"):
         for word in page.predictions:
-            predictions.append({
-                'value': word.value,
-                'bbox': word.bbox,
-            })
-    else:  # OCR
+            if isinstance(word, tuple) and len(word) == 2:
+                value, bbox = word
+                predictions.append({
+                    'value': value,
+                    'bbox': bbox,
+                })
+            else:
+                predictions.append({
+                    'value': word.value,
+                    'bbox': word.bbox,
+                })
+    else:
         for block in page.blocks:
             for line in block.lines:
                 for word in line.words:
@@ -117,7 +124,6 @@ for page in result.pages:
                         'value': word.value,
                         'bbox': word.geometry,
                     })
-
 print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
 print_ocr_sentences(predictions)
 
