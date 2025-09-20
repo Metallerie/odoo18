@@ -9,7 +9,7 @@
     <!-- Menu Configuration → OCR Partenaires -->
     <menuitem id="menu_ocr_partner_rules"
               name="Règles Partenaires OCR"
-              parent="menu_finance_configuration"
+              parent="account.menu_finance_configuration"
               action="action_ocr_partner_rules"
               sequence="50"/>
     
