@@ -18,49 +18,30 @@ def group_words_into_lines(predictions, y_thresh=0.01):
             lines.append([word])
     return lines
 
-def merge_words_in_line(line, x_gap_thresh=0.02):
+def line_to_phrase(line):
+    # Fusionne les mots d'une ligne en une phrase
     line = sorted(line, key=lambda x: x['bbox'][0][0])
-    sentence = []
-    current_phrase = line[0]['value']
-    for i in range(1, len(line)):
-        prev_right = line[i-1]['bbox'][1][0]
-        cur_left = line[i]['bbox'][0][0]
-        gap = cur_left - prev_right
-        if gap < x_gap_thresh:
-            current_phrase += ' ' + line[i]['value']
-        else:
-            sentence.append(current_phrase)
-            current_phrase = line[i]['value']
-    sentence.append(current_phrase)
-    return sentence
+    phrase = " ".join([word['value'] for word in line])
+    return phrase
 
-def get_ocr_sentences(predictions, y_thresh=0.01, x_gap_thresh=0.02):
-    sentences = []
-    lines = group_words_into_lines(predictions, y_thresh=y_thresh)
-    for line in lines:
-        phrases = merge_words_in_line(line, x_gap_thresh=x_gap_thresh)
-        sentences.extend(phrases)
-    return sentences
+def possible_product_line(line):
+    # Heuristique simple : au moins un nombre et un prix
+    words = [w['value'] for w in line]
+    has_number = any(w.replace('.', '', 1).isdigit() for w in words)
+    has_price = any("," in w or "." in w for w in words)
+    # On exclue les lignes d'entête et de total
+    exclude = ["Réf.", "Désignation", "Qté", "Unité", "Montant", "TVA", "TOTAL", "Base HT", "FRAIS FIXES", "NET A PAYER", "T.V.A."]
+    if any(w in exclude for w in words):
+        return False
+    return has_number and has_price and len(words) >= 3
 
-def extract_produit_lines(sentences):
+def extract_product_lines(lines):
     produits = []
-    # Trouver l'entête probable du tableau produits
-    try:
-        idx_ref = sentences.index("Réf.")
-    except ValueError:
-        return produits
-    # On cherche la fin probable du tableau
-    stopwords = ["TOTAL", "Base HT", "FRAIS FIXES", "TVA", "NET A PAYER", "TOTAL T.V.A.", "TOTAL ECO-PART.", "TOTALI BRUT H.T."]
-    i = idx_ref + 1
-    while i < len(sentences):
-        phrase = sentences[i]
-        if any(phrase.startswith(sw) for sw in stopwords):
-            break
-        # Heuristique simple : une ligne produit commence souvent par un code/réf numérique
-        first = phrase.split()[0]
-        if first.isdigit() or (first.replace('.', '', 1).isdigit() and len(first) > 2):
-            produits.append(phrase)
-        i += 1
+    for line in lines:
+        if possible_product_line(line):
+            # On essaie de deviner les colonnes (très basique : on prend tous les mots)
+            produit = {"ligne": [w['value'] for w in sorted(line, key=lambda x: x['bbox'][0][0])]}
+            produits.append(produit)
     return produits
 
 if len(sys.argv) != 2:
@@ -88,12 +69,11 @@ for page in result.pages:
                     'bbox': word.geometry,
                 })
 
-print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
-sentences = get_ocr_sentences(predictions)
-produits = extract_produit_lines(sentences)
+lines = group_words_into_lines(predictions, y_thresh=0.01)
+phrases = [line_to_phrase(line) for line in lines]
+produits = extract_product_lines(lines)
 
-# Affichage en JSON
 print(json.dumps({
-    "phrases": sentences,
+    "phrases": phrases,
     "produits": produits
 }, ensure_ascii=False, indent=2))
