@@ -54,7 +54,7 @@ print("📥 Lecture du fichier :", pdf_path)
 doc = DocumentFile.from_pdf(pdf_path)
 
 print("📚 Chargement du modèle Doctr...")
-model = ocr_predictor(pretrained=True)
+model = kie_predictor(pretrained=True)
 
 print("🔎 Prédiction OCR en cours...")
 result = model(doc)
