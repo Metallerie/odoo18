@@ -3,7 +3,7 @@
     <record id="action_ocr_partner_rules" model="ir.actions.act_window">
         <field name="name">Règles Partenaires OCR</field>
         <field name="res_model">ocr.configuration.rule.partner</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- Menu Configuration → OCR Partenaires -->
@@ -14,18 +14,18 @@
               sequence="50"/>
     
     <!-- Vue liste -->
-    <record id="view_ocr_partner_rule_tree" model="ir.ui.view">
-        <field name="name">ocr.configuration.rule.partner.tree</field>
+    <record id="view_ocr_partner_rule_list" model="ir.ui.view">
+        <field name="name">ocr.configuration.rule.partner.list</field>
         <field name="model">ocr.configuration.rule.partner</field>
         <field name="arch" type="xml">
-            <tree default_order="sequence asc">
+            <list default_order="sequence asc">
                 <field name="sequence"/>
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="keyword"/>
                 <field name="search_in"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 
