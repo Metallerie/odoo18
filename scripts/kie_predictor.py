@@ -1,9 +1,7 @@
 from doctr.models import ocr_predictor
 from doctr.io import DocumentFile
 import sys
-import json  # Ajout pour le format JSON
-
-# ----------- 🔧 Fonctions OCR reconstruction ----------------
+import json
 
 def group_words_into_lines(predictions, y_thresh=0.01):
     lines = []
@@ -37,7 +35,6 @@ def merge_words_in_line(line, x_gap_thresh=0.02):
     return sentence
 
 def get_ocr_sentences(predictions, y_thresh=0.01, x_gap_thresh=0.02):
-    """Retourne les phrases reconstituées à partir des prédictions OCR."""
     sentences = []
     lines = group_words_into_lines(predictions, y_thresh=y_thresh)
     for line in lines:
@@ -45,15 +42,32 @@ def get_ocr_sentences(predictions, y_thresh=0.01, x_gap_thresh=0.02):
         sentences.extend(phrases)
     return sentences
 
-# ----------- 📄 Chargement du fichier ----------------
+def extract_produit_lines(sentences):
+    produits = []
+    # Trouver l'entête probable du tableau produits
+    try:
+        idx_ref = sentences.index("Réf.")
+    except ValueError:
+        return produits
+    # On cherche la fin probable du tableau
+    stopwords = ["TOTAL", "Base HT", "FRAIS FIXES", "TVA", "NET A PAYER", "TOTAL T.V.A.", "TOTAL ECO-PART.", "TOTALI BRUT H.T."]
+    i = idx_ref + 1
+    while i < len(sentences):
+        phrase = sentences[i]
+        if any(phrase.startswith(sw) for sw in stopwords):
+            break
+        # Heuristique simple : une ligne produit commence souvent par un code/réf numérique
+        first = phrase.split()[0]
+        if first.isdigit() or (first.replace('.', '', 1).isdigit() and len(first) > 2):
+            produits.append(phrase)
+        i += 1
+    return produits
 
 if len(sys.argv) != 2:
     print("Usage: python3 kie_predictor.py <chemin_du_fichier_PDF>")
     sys.exit(1)
 
 pdf_path = sys.argv[1]
-
-# ----------- 🔍 Lancement OCR doctr -------------------
 
 print("📥 Lecture du fichier :", pdf_path)
 doc = DocumentFile.from_pdf(pdf_path)
@@ -63,8 +77,6 @@ model = ocr_predictor(pretrained=True)
 
 print("🔎 Prédiction OCR en cours...")
 result = model(doc)
-
-# ----------- 📦 Extraction et regroupement -------------
 
 predictions = []
 for page in result.pages:
@@ -78,6 +90,10 @@ for page in result.pages:
 
 print("🧠 Reconstruction des phrases à partir des coordonnées :\n")
 sentences = get_ocr_sentences(predictions)
+produits = extract_produit_lines(sentences)
 
 # Affichage en JSON
-print(json.dumps({"phrases": sentences}, ensure_ascii=False, indent=2))
+print(json.dumps({
+    "phrases": sentences,
+    "produits": produits
+}, ensure_ascii=False, indent=2))
