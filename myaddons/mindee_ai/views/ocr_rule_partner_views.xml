@@ -1,23 +1,18 @@
 <odoo>
-    <!-- Menu OCR -->
-    <menuitem id="menu_ocr_root"
-              name="OCR"
-              sequence="100"
-              parent="account.menu_finance" />
-
-    <!-- Sous-menu Règles Partenaires -->
-    <menuitem id="menu_ocr_partner_rules"
-              name="Règles Partenaires"
-              parent="menu_ocr_root"
-              action="action_ocr_partner_rules" />
-
-    <!-- Action -->
+    <!-- Action pour ouvrir les règles partenaires -->
     <record id="action_ocr_partner_rules" model="ir.actions.act_window">
-        <field name="name">Règles OCR - Partenaires</field>
+        <field name="name">Règles Partenaires OCR</field>
         <field name="res_model">ocr.configuration.rule.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">tree,form</field>
     </record>
 
+    <!-- Menu Configuration → OCR Partenaires -->
+    <menuitem id="menu_ocr_partner_rules"
+              name="Règles Partenaires OCR"
+              parent="menu_finance_configuration"
+              action="action_ocr_partner_rules"
+              sequence="50"/>
+    
     <!-- Vue liste -->
     <record id="view_ocr_partner_rule_tree" model="ir.ui.view">
         <field name="name">ocr.configuration.rule.partner.tree</field>
@@ -53,44 +48,6 @@
                     </group>
                 </sheet>
             </form>
-        </field>
-    </record>
-
-    <!-- Vue Kanban -->
-    <record id="view_ocr_partner_rule_kanban" model="ir.ui.view">
-        <field name="name">ocr.configuration.rule.partner.kanban</field>
-        <field name="model">ocr.configuration.rule.partner</field>
-        <field name="arch" type="xml">
-            <kanban default_group_by="active">
-                <field name="name"/>
-                <field name="partner_id"/>
-                <field name="keyword"/>
-                <field name="search_in"/>
-                <field name="sequence"/>
-                <templates>
-                    <t t-name="kanban-box">
-                        <div class="o_kanban_record">
-                            <strong><field name="name"/></strong>
-                            <div>
-                                <span class="o_label">Partenaire :</span>
-                                <field name="partner_id"/>
-                            </div>
-                            <div>
-                                <span class="o_label">Mot-clé :</span>
-                                <field name="keyword"/>
-                            </div>
-                            <div>
-                                <span class="o_label">Champ :</span>
-                                <field name="search_in"/>
-                            </div>
-                            <div>
-                                <span class="o_label">Ordre :</span>
-                                <field name="sequence"/>
-                            </div>
-                        </div>
-                    </t>
-                </templates>
-            </kanban>
         </field>
     </record>
 </odoo>
