@@ -1,4 +1,4 @@
-    import base64
+import base64
 import json
 import logging
 import subprocess
@@ -11,10 +11,16 @@ _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-    mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True, store=True)
-   # doctr_response = fields.Text(string="Réponse OCR JSON (kie_predictor)", readonly=True,store=True )
+
+    mindee_local_response = fields.Text(
+        string="Réponse OCR JSON (Mindee)",
+        readonly=True,
+        store=True
+    )
+    # doctr_response = fields.Text(string="Réponse OCR JSON (kie_predictor)", readonly=True, store=True)
 
     def _normalize_date(self, date_str):
+        """Convertit une chaîne en date si possible."""
         if not date_str:
             return None
         date_str = date_str.strip().replace("-", "/").replace(".", "/")
@@ -40,26 +46,29 @@ class AccountMove(models.Model):
             # 2. Appel du script OCR dans le venv doctr
             doctr_venv_python = "/data/doctr-venv/bin/python3"
             doctr_script_path = "/data/doctr-venv/kie_predictor_runner.py"
+
             try:
                 result = subprocess.run(
                     [doctr_venv_python, doctr_script_path, file_path],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    timeout=90,
+                    timeout=120,
                     check=True,
                     encoding="utf-8"
                 )
                 ocr_json = result.stdout
                 ocr_data = json.loads(ocr_json)
-           except subprocess.CalledProcessError as e:
-                _logger.error("OCR error for %s", attachment.name)
+
+            except subprocess.CalledProcessError as e:
+                _logger.error("OCR failed for %s", attachment.name)
                 _logger.error("stdout: %s", e.stdout)
                 _logger.error("stderr: %s", e.stderr)
-                raise UserError(f"Erreur OCR avec kie_predictor :\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}")
-
-           except Exception as e:
-               _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
-               raise UserError(f"Erreur OCR avec kie_predictor : {e}")
+                raise UserError(
+                    f"Erreur OCR avec kie_predictor :\n\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}"
+                )
+            except Exception as e:
+                _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
+                raise UserError(f"Erreur OCR avec kie_predictor : {e}")
 
             # 3. Sauvegarde du JSON brut
             move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
@@ -73,30 +82,45 @@ class AccountMove(models.Model):
                 "datas": base64.b64encode(json.dumps(ocr_data, indent=2).encode("utf-8")),
             })
 
-            # 4. Analyse des phrases pour remplir la facture
-            phrases = ocr_data.get("phrases", [])
+            # 4. Reconstruction des phrases depuis words
+            phrases = []
+            for page in ocr_data.get("pages", []):
+                words = page.get("predictions", {}).get("words", [])
+                line = " ".join([w.get("value", "") for w in words])
+                if line:
+                    phrases.append(line)
+
             invoice_date = None
             invoice_number = None
             amount_total = None
             supplier_name = None
 
             for phrase in phrases:
-                if not invoice_date and ("date" in phrase.lower() or "facture" in phrase.lower()):
+                low = phrase.lower()
+
+                if not invoice_date and ("date" in low or "facture" in low):
                     possible_dates = [p for p in phrase.split() if "/" in p or "-" in p or "." in p]
                     if possible_dates:
                         invoice_date = self._normalize_date(possible_dates[0])
-                if not invoice_number and ("facture" in phrase.lower() or "n°" in phrase.lower()):
+
+                if not invoice_number and ("facture" in low or "n°" in low):
                     nums = [p for p in phrase.split() if p.isdigit()]
                     if nums:
                         invoice_number = nums[0]
-                if not amount_total and ("total" in phrase.lower()):
-                    nums = [p.replace(",", ".") for p in phrase.split() if p.replace(",", ".").replace(".", "").isdigit()]
+
+                if not amount_total and "total" in low:
+                    nums = [
+                        p.replace(",", ".")
+                        for p in phrase.split()
+                        if p.replace(",", ".").replace(".", "").isdigit()
+                    ]
                     if nums:
                         try:
                             amount_total = float(nums[-1])
                         except Exception:
                             pass
-                if not supplier_name and ("sarl" in phrase.lower() or "sas" in phrase.lower() or "eurl" in phrase.lower()):
+
+                if not supplier_name and any(soc in low for soc in ("sarl", "sas", "eurl")):
                     supplier_name = phrase
 
             vals = {
@@ -118,4 +142,5 @@ class AccountMove(models.Model):
                 move.write(vals)
             except Exception as e:
                 raise UserError(f"Erreur d’écriture dans la facture : {e}")
+
         return True
