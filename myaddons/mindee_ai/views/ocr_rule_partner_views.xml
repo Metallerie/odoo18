@@ -11,6 +11,7 @@
               name="Règles Partenaires OCR"
               parent="account.menu_finance_configuration"
               action="action_ocr_partner_rules"
+              groups="account.group_account_readonly,account.group_account_invoice"
               sequence="50"/>
     
     <!-- Vue liste -->
