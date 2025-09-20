@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 mindee_ai.access_ocr_configuration_rule,Access OCR Configuration Rule,mindee_ai.model_ocr_configuration_rule,base.group_user,1,1,1,1
 mindee_ai.access_product_assign_line_wizard,access_product_assign_line_wizard,model_product_assign_line_wizard,base.group_user,1,1,1,1
+access_ocr_rule_partner_readonly,access.ocr.rule.partner.readonly,model_ocr_configuration_rule_partner,account.group_account_readonly,1,0,0,0
+access_ocr_rule_partner_invoice,access.ocr.rule.partner.invoice,model_ocr_configuration_rule_partner,account.group_account_invoice,1,1,1,0
