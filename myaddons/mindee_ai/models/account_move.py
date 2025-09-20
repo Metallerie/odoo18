@@ -11,12 +11,8 @@ _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
-
-    doctr_response = fields.Text(
-        string="Réponse OCR JSON (kie_predictor)",
-        readonly=True,
-        store=True
-    )
+    mindee_local_response = fields.Text(string="Réponse OCR JSON (Mindee)", readonly=True, store=True)
+   # doctr_response = fields.Text(string="Réponse OCR JSON (kie_predictor)", readonly=True,store=True )
 
     def _normalize_date(self, date_str):
         if not date_str:
@@ -60,7 +56,7 @@ class AccountMove(models.Model):
                 raise UserError(f"Erreur OCR avec kie_predictor : {e}\n{result.stderr if 'result' in locals() else ''}")
 
             # 3. Sauvegarde du JSON brut
-            move.doctr_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
+            move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
 
             self.env["ir.attachment"].create({
                 "name": f"KIE_{attachment.name}.json",
