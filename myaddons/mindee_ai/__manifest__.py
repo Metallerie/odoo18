@@ -10,8 +10,8 @@
     'company': 'Source Bussiness Solutions',
     'depends': ['base', 'account','product'],
     'data': [
-        'views/account_move.xml',
         'views/res_config_settings.xml',
+        'views/account_move.xml',
         'views/product_assign_line_wizard.xml',
         'views/res_config_settings_views.xml',
         'security/ir.model.access.csv',
