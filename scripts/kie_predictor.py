@@ -71,9 +71,7 @@ for page in result.pages:
 
 lines = group_words_into_lines(predictions, y_thresh=0.01)
 phrases = [line_to_phrase(line) for line in lines]
-produits = extract_product_lines(lines)
 
 print(json.dumps({
     "phrases": phrases,
-    "produits": produits
 }, ensure_ascii=False, indent=2))
