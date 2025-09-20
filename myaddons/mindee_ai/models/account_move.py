@@ -9,15 +9,15 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
     mindee_local_response = fields.Text(
-        string="Réponse OCR JSON (Mindee)",
+        string="Réponse OCR JSON (Doctr KIE)",
         readonly=True,
         store=True
     )
-    # doctr_response = fields.Text(string="Réponse OCR JSON (kie_predictor)", readonly=True, store=True)
 
     def _normalize_date(self, date_str):
         """Convertit une chaîne en date si possible."""
@@ -82,14 +82,23 @@ class AccountMove(models.Model):
                 "datas": base64.b64encode(json.dumps(ocr_data, indent=2).encode("utf-8")),
             })
 
-            # 4. Reconstruction des phrases depuis words
+            # 4. Reconstruction des phrases depuis les mots bruts
             phrases = []
-            for page in ocr_data.get("pages", []):
-                words = page.get("predictions", {}).get("words", [])
-                line = " ".join([w.get("value", "") for w in words])
-                if line:
-                    phrases.append(line)
+            current_page = 1
+            line = []
 
+            for w in ocr_data:
+                if w.get("page") != current_page:
+                    if line:
+                        phrases.append(" ".join(line))
+                        line = []
+                    current_page = w.get("page")
+                line.append(w.get("value", ""))
+
+            if line:
+                phrases.append(" ".join(line))
+
+            # 5. Extraction heuristique basique
             invoice_date = None
             invoice_number = None
             amount_total = None
@@ -103,7 +112,7 @@ class AccountMove(models.Model):
                     if possible_dates:
                         invoice_date = self._normalize_date(possible_dates[0])
 
-                if not invoice_number and ("facture" in low or "n°" in low):
+                if not invoice_number and ("facture" in low or "n°" in low or "no" in low):
                     nums = [p for p in phrase.split() if p.isdigit()]
                     if nums:
                         invoice_number = nums[0]
@@ -120,9 +129,10 @@ class AccountMove(models.Model):
                         except Exception:
                             pass
 
-                if not supplier_name and any(soc in low for soc in ("sarl", "sas", "eurl")):
+                if not supplier_name and any(soc in low for soc in ("sarl", "sas", "eurl", "sa", "sci", "scop")):
                     supplier_name = phrase
 
+            # 6. Mise à jour de la facture
             vals = {
                 "invoice_date": invoice_date,
                 "ref": invoice_number,
