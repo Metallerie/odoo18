@@ -1,4 +1,4 @@
-from doctr.models import ocr_predictor
+from doctr.models import kie_predictor
 from doctr.io import DocumentFile
 import sys
 import json
