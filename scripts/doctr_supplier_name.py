@@ -5,7 +5,7 @@ from doctr.io import DocumentFile
 model = ocr_predictor(pretrained=True)
 
 # 2. Charger ton PDF (ici ta facture CCL)
-doc = DocumentFile.from_pdf("Facture_CCL_161372.pdf")
+doc = DocumentFile.from_pdf("/data/Documents/factures_archive/Facture_CCL_153880.pdf")
 
 # 3. Prédire
 result = model(doc)
