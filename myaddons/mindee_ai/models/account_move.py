@@ -14,7 +14,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     mindee_local_response = fields.Text(
-        string="Réponse OCR JSON (Doctr KIE)",
+        string="Réponse OCR JSON (Doctr OCR)",
         readonly=True,
         store=True
     )
@@ -33,7 +33,7 @@ class AccountMove(models.Model):
 
     def action_ocr_fetch(self):
         for move in self:
-            # 1. Prendre le PDF attaché
+            # 1. Récupérer le PDF attaché
             pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
             if not pdf_attachments:
                 raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
@@ -43,16 +43,16 @@ class AccountMove(models.Model):
             with open(file_path, "wb") as f:
                 f.write(base64.b64decode(attachment.datas))
 
-            # 2. Appel du script OCR dans le venv doctr
+            # 2. Lancer le script OCR (ocr_predictor_runner.py) dans le venv Doctr
             doctr_venv_python = "/data/doctr-venv/bin/python3"
-            doctr_script_path = "/data/doctr-venv/kie_predictor_runner.py"
+            doctr_script_path = "/data/doctr-venv/ocr_predictor_runner.py"
 
             try:
                 result = subprocess.run(
                     [doctr_venv_python, doctr_script_path, file_path],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    timeout=120,
+                    timeout=180,
                     check=True,
                     encoding="utf-8"
                 )
@@ -61,20 +61,18 @@ class AccountMove(models.Model):
 
             except subprocess.CalledProcessError as e:
                 _logger.error("OCR failed for %s", attachment.name)
-                _logger.error("stdout: %s", e.stdout)
-                _logger.error("stderr: %s", e.stderr)
                 raise UserError(
-                    f"Erreur OCR avec kie_predictor :\n\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}"
+                    f"Erreur OCR avec Doctr :\n\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}"
                 )
             except Exception as e:
                 _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
-                raise UserError(f"Erreur OCR avec kie_predictor : {e}")
+                raise UserError(f"Erreur OCR avec Doctr : {e}")
 
-            # 3. Sauvegarde du JSON brut
+            # 3. Sauvegarder le JSON brut dans le champ + pièce jointe
             move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
 
             self.env["ir.attachment"].create({
-                "name": f"KIE_{attachment.name}.json",
+                "name": f"OCR_{attachment.name}.json",
                 "res_model": "account.move",
                 "res_id": move.id,
                 "type": "binary",
@@ -82,23 +80,9 @@ class AccountMove(models.Model):
                 "datas": base64.b64encode(json.dumps(ocr_data, indent=2).encode("utf-8")),
             })
 
-            # 4. Reconstruction des phrases depuis les mots bruts
-            phrases = []
-            current_page = 1
-            line = []
+            # 4. Exploiter directement les phrases extraites par le runner OCR
+            phrases = ocr_data.get("phrases", [])
 
-            for w in ocr_data:
-                if w.get("page") != current_page:
-                    if line:
-                        phrases.append(" ".join(line))
-                        line = []
-                    current_page = w.get("page")
-                line.append(w.get("value", ""))
-
-            if line:
-                phrases.append(" ".join(line))
-
-            # 5. Extraction heuristique basique
             invoice_date = None
             invoice_number = None
             amount_total = None
@@ -132,7 +116,7 @@ class AccountMove(models.Model):
                 if not supplier_name and any(soc in low for soc in ("sarl", "sas", "eurl", "sa", "sci", "scop")):
                     supplier_name = phrase
 
-            # 6. Mise à jour de la facture
+            # 5. Mise à jour de la facture avec les infos détectées
             vals = {
                 "invoice_date": invoice_date,
                 "ref": invoice_number,
