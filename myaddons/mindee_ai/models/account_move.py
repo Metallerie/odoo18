@@ -1,4 +1,4 @@
-import base64
+    import base64
 import json
 import logging
 import subprocess
@@ -57,9 +57,9 @@ class AccountMove(models.Model):
                 _logger.error("stderr: %s", e.stderr)
                 raise UserError(f"Erreur OCR avec kie_predictor :\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}")
 
-except Exception as e:
-    _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
-    raise UserError(f"Erreur OCR avec kie_predictor : {e}")
+           except Exception as e:
+               _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
+               raise UserError(f"Erreur OCR avec kie_predictor : {e}")
 
             # 3. Sauvegarde du JSON brut
             move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
