@@ -130,7 +130,7 @@ class AccountMove(models.Model):
                 f.write(base64.b64decode(attachment.datas))
 
             # 2. Appel du script Tesseract runner
-            venv_python = "/data/odoo/metal-odoo18-p8179/odoo18-venv/bin/python3"
+            venv_python = "/data/odoo/odoo18-venv/bin/python3"
             tesseract_script_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/scripts/tesseract_runner.py"
 
             try:
