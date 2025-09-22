@@ -6,6 +6,11 @@ from datetime import datetime
 
 from odoo import models, fields
 from odoo.exceptions import UserError
+import os
+from odoo import modules
+
+module_path = modules.get_module_path("mindee_ai")
+tesseract_script_path = os.path.join(module_path, "scripts", "tesseract_runner.py")
 
 _logger = logging.getLogger(__name__)
 
