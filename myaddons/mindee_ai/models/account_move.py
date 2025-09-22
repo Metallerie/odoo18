@@ -49,7 +49,7 @@ class AccountMove(models.Model):
 
             try:
                 result = subprocess.run(
-                    [doctr_venv_python, tesseract_script_path, file_path],
+                    [odoo_venv_python, tesseract_script_path, file_path],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     timeout=180,
