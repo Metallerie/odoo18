@@ -44,7 +44,7 @@ class AccountMove(models.Model):
                 f.write(base64.b64decode(attachment.datas))
 
             # 2. Appel du script Tesseract runner
-            doctr_venv_python = "/data/odoo18-venv/bin/python3"
+            odoo_venv_python = "/data/odoo/odoo18-venv/bin/python3"
             tesseract_script_path = "/data/odoo/metal-odoo18-p8179/scripts/tesseract_runner.py"
 
             try:
