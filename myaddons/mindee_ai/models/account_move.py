@@ -61,8 +61,15 @@ class AccountMove(models.Model):
                 # 🔍 Debug log de la sortie brute
                 _logger.error("OCR RAW OUTPUT for %s: %s", attachment.name, ocr_json[:500])
 
+                # ✅ Extraction uniquement de la partie JSON
+                start_idx = ocr_json.find("{")
+                if start_idx != -1:
+                    ocr_json_clean = ocr_json[start_idx:]
+                else:
+                    ocr_json_clean = ocr_json
+
                 try:
-                    ocr_data = json.loads(ocr_json)
+                    ocr_data = json.loads(ocr_json_clean)
                 except json.JSONDecodeError:
                     raise UserError(
                         f"OCR n'a pas renvoyé de JSON valide pour {attachment.name}.\n\n"
