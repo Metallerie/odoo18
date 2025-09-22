@@ -14,7 +14,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     mindee_local_response = fields.Text(
-        string="Réponse OCR JSON (Doctr OCR)",
+        string="Réponse OCR JSON (Tesseract)",
         readonly=True,
         store=True
     )
@@ -43,13 +43,13 @@ class AccountMove(models.Model):
             with open(file_path, "wb") as f:
                 f.write(base64.b64decode(attachment.datas))
 
-            # 2. Lancer le script OCR (ocr_predictor_runner.py) dans le venv Doctr
+            # 2. Appel du script Tesseract runner
             doctr_venv_python = "/data/doctr-venv/bin/python3"
-            doctr_script_path = "/data/doctr-venv/ocr_predictor_runner.py"
+            tesseract_script_path = "/data/odoo/metal-odoo18-p8179/scripts/tesseract_runner.py"
 
             try:
                 result = subprocess.run(
-                    [doctr_venv_python, doctr_script_path, file_path],
+                    [doctr_venv_python, tesseract_script_path, file_path],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     timeout=180,
@@ -62,11 +62,11 @@ class AccountMove(models.Model):
             except subprocess.CalledProcessError as e:
                 _logger.error("OCR failed for %s", attachment.name)
                 raise UserError(
-                    f"Erreur OCR avec Doctr :\n\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}"
+                    f"Erreur OCR avec Tesseract :\n\nSTDERR:\n{e.stderr}\n\nSTDOUT:\n{e.stdout}"
                 )
             except Exception as e:
                 _logger.error("Unexpected OCR error for %s: %s", attachment.name, str(e))
-                raise UserError(f"Erreur OCR avec Doctr : {e}")
+                raise UserError(f"Erreur OCR avec Tesseract : {e}")
 
             # 3. Sauvegarder le JSON brut dans le champ + pièce jointe
             move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
@@ -80,43 +80,23 @@ class AccountMove(models.Model):
                 "datas": base64.b64encode(json.dumps(ocr_data, indent=2).encode("utf-8")),
             })
 
-            # 4. Exploiter directement les phrases extraites par le runner OCR
-            phrases = ocr_data.get("phrases", [])
+            # 4. Exploiter les données structurées si présentes
+            parsed = {}
+            if "pages" in ocr_data and len(ocr_data["pages"]) > 0:
+                parsed = ocr_data["pages"][0].get("parsed", {})
 
-            invoice_date = None
-            invoice_number = None
+            invoice_date = self._normalize_date(parsed.get("invoice_date")) if parsed.get("invoice_date") else None
+            invoice_number = parsed.get("invoice_number")
             amount_total = None
-            supplier_name = None
+            if parsed.get("totals", {}).get("net_a_payer"):
+                try:
+                    amount_total = float(parsed["totals"]["net_a_payer"])
+                except Exception:
+                    pass
 
-            for phrase in phrases:
-                low = phrase.lower()
+            supplier_name = parsed.get("supplier")
 
-                if not invoice_date and ("date" in low or "facture" in low):
-                    possible_dates = [p for p in phrase.split() if "/" in p or "-" in p or "." in p]
-                    if possible_dates:
-                        invoice_date = self._normalize_date(possible_dates[0])
-
-                if not invoice_number and ("facture" in low or "n°" in low or "no" in low):
-                    nums = [p for p in phrase.split() if p.isdigit()]
-                    if nums:
-                        invoice_number = nums[0]
-
-                if not amount_total and "total" in low:
-                    nums = [
-                        p.replace(",", ".")
-                        for p in phrase.split()
-                        if p.replace(",", ".").replace(".", "").isdigit()
-                    ]
-                    if nums:
-                        try:
-                            amount_total = float(nums[-1])
-                        except Exception:
-                            pass
-
-                if not supplier_name and any(soc in low for soc in ("sarl", "sas", "eurl", "sa", "sci", "scop")):
-                    supplier_name = phrase
-
-            # 5. Mise à jour de la facture avec les infos détectées
+            # 5. Mise à jour de la facture
             vals = {
                 "invoice_date": invoice_date,
                 "ref": invoice_number,
