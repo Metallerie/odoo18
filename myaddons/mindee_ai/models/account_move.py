@@ -8,7 +8,6 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-print("⚡ account_move.py LOADED")
 
 class AccountMove(models.Model):
     _inherit = "account.move"
@@ -35,7 +34,9 @@ class AccountMove(models.Model):
     # ---------------- Main action ----------------
 
     def action_ocr_fetch(self):
+        
         for move in self:
+            print("⚡ OCR CALLED on", move.id)
             _logger.warning("[OCR] Start OCR for move id=%s name=%s", move.id, move.name)
 
             # 1️⃣ Récup PDF
