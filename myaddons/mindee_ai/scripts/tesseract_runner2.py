@@ -1,89 +1,103 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import sys, os, json, re
+import sys
+import json
 from pdf2image import convert_from_path
 import pytesseract
+import re
 
-# ---------------- Détection des zones ----------------
-HEADER_KEYWORDS = [
-    "réf", "reference", "code",
-    "désign", "article", "produit",
-    "qté", "quantité",
-    "unité", "poids",
-    "prix", "pu", "unitaire",
-    "montant", "total",
-    "tva"
-]
+def extract_text_from_pdf(pdf_path):
+    pages = convert_from_path(pdf_path)
+    results = []
+    for page_number, page in enumerate(pages, start=1):
+        text = pytesseract.image_to_string(page, lang="fra")
+        phrases = [line.strip() for line in text.splitlines() if line.strip()]
+        results.append({
+            "page": page_number,
+            "phrases": phrases
+        })
+    return results
 
-FOOT_RE = re.compile(r"total|net\s*[àa]\s*payer|base\s*ht", re.I)
+def looks_like_reference(text):
+    """Détecte si une ligne commence par une référence produit (ex: alphanum ou chiffres)."""
+    return bool(re.match(r"^[A-Z0-9]{2,}", text))
 
-def is_header_line(line: str) -> bool:
-    """Détecte une ligne d'entête si au moins 2 mots-clés sont présents."""
-    l = line.lower()
-    hits = sum(1 for k in HEADER_KEYWORDS if k in l)
-    return hits >= 2
+def clean_table(headers, lines):
+    clean_headers = [h for h in headers if h != "|"]  # 🔹 supprime les barres verticales
 
-def run(pdf_path):
-    pages = []
-    images = convert_from_path(pdf_path)
+    structured_lines = []
+    current_line = None
 
-    for idx, img in enumerate(images, start=1):
-        text = pytesseract.image_to_string(img, lang="fra")
-        phrases = [p.strip() for p in text.split("\n") if p.strip()]
+    for raw in lines:
+        # Supprime les barres verticales dans les données
+        cols = [c.strip() for c in raw.split(" ") if c.strip() and c != "|"]
 
-        # Cherche l'entête élargie
-        header_i = None
-        for i, ph in enumerate(phrases):
-            if is_header_line(ph):
-                header_i = i
-                break
+        # Reconstitue une phrase pour vérifier
+        phrase = " ".join(cols)
 
-        footer_i = None
-        if header_i is not None:
-            for j in range(header_i + 1, len(phrases)):
-                if FOOT_RE.search(phrases[j]):
-                    footer_i = j
-                    break
-
-        # Construction des zones
-        if header_i is not None:
-            headers = phrases[header_i].split()
-            table_lines = phrases[header_i + 1:footer_i] if footer_i else phrases[header_i + 1:]
-            normal_before = phrases[:header_i]
-            normal_after = phrases[footer_i:] if footer_i else []
-        else:
-            headers = []
-            table_lines = []
-            normal_before = phrases
-            normal_after = []
-
-        pages.append({
-            "page": idx,
-            "normal_phrases": normal_before + normal_after,
-            "table": {
-                "headers": headers,
-                "lines": table_lines
+        if looks_like_reference(phrase):
+            # Si on a une ref → on commence une nouvelle ligne
+            if current_line:
+                structured_lines.append(current_line)
+            current_line = {
+                "ref": cols[0],
+                "description": " ".join(cols[1:]),
+                "quantity": "",
+                "unit_price": "",
+                "total_ht": "",
+                "tva": ""
             }
+        elif current_line:
+            # Ligne sans ref → ajout à la désignation
+            current_line["description"] += " " + phrase
+        else:
+            # Bruit → ignoré
+            continue
+
+    if current_line:
+        structured_lines.append(current_line)
+
+    return {
+        "headers": clean_headers,
+        "lines": structured_lines
+    }
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python3 tesseract_runner2.py <pdf_file>")
+        sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    raw_pages = extract_text_from_pdf(pdf_path)
+
+    output = {"pages": []}
+    for page in raw_pages:
+        phrases = page["phrases"]
+
+        # Cherche une entête de tableau
+        headers = []
+        table_lines = []
+        in_table = False
+
+        for phrase in phrases:
+            if any(word in phrase for word in ["Désignation", "Réf", "Prix Unitaire", "Montant"]):
+                headers = [h for h in re.split(r"\s+", phrase) if h]
+                in_table = True
+                continue
+
+            if in_table:
+                if len(phrase.split()) < 2:  # trop court = fin probable du tableau
+                    in_table = False
+                else:
+                    table_lines.append(phrase)
+
+        table = clean_table(headers, table_lines)
+
+        output["pages"].append({
+            "page": page["page"],
+            "normal_phrases": [p for p in phrases if p not in table_lines and p not in headers],
+            "table": table
         })
 
-    return {"pages": pages}
+    print(json.dumps(output, indent=2, ensure_ascii=False))
 
-
-# ---------------- CLI ----------------
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("❌ Usage: python3 tesseract_runner2.py <file.pdf>")
-        sys.exit(1)
-
-    pdf = sys.argv[1]
-    if not os.path.exists(pdf):
-        print(json.dumps({"error": f"file not found: {pdf}"}))
-        sys.exit(1)
-
-    try:
-        data = run(pdf)
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-    except Exception as e:
-        print(json.dumps({"error": str(e)}))
-        sys.exit(1)
+    main()
