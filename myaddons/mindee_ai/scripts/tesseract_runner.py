@@ -2,195 +2,123 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import os
 import json
 import re
 from pdf2image import convert_from_path
 import pytesseract
-
-# ---------- 🔧 Fonctions utilitaires ----------------
-
-def merge_invoice_number_phrases(phrases):
-    """Fusionne les phrases type 'Facture n°' + '2025/1680'"""
-    merged = []
-    skip_next = False
-    invoice_keywords = [
-        "facture",
-        "facture d'acompte",
-        "facture n°",
-        "facture d’acompte",
-        "facture numero",
-        "facture no",
-    ]
-    for i, phrase in enumerate(phrases):
-        if skip_next:
-            skip_next = False
-            continue
-        lower_phrase = phrase.lower()
-        if any(k in lower_phrase for k in invoice_keywords) and i + 1 < len(phrases):
-            next_phrase = phrases[i + 1].strip()
-            if re.match(r"^[A-Za-z0-9/\-]+$", next_phrase):
-                merged_phrase = f"{phrase.strip()} {next_phrase}"
-                merged.append(merged_phrase)
-                skip_next = True
-                continue
-        merged.append(phrase)
-    return merged
+import pandas as pd
 
 
-def extract_invoice_data(phrases):
-    """Extrait numéro et date de facture"""
-    data = {}
-    invoice_patterns = [r"facture\s*(?:d['’]acompte)?\s*[n°:\-]?\s*([A-Za-z0-9/\-]+)"]
-    date_patterns = [r"(\d{2}[/-]\d{2}[/-]\d{4})"]
-    for phrase in phrases:
-        for pat in invoice_patterns:
-            m = re.search(pat, phrase, flags=re.IGNORECASE)
-            if m:
-                data["invoice_number"] = m.group(1)
-                break
-        for pat in date_patterns:
-            m = re.search(pat, phrase)
-            if m:
-                data["invoice_date"] = m.group(1)
-                break
-    return data
+# ---------- 🔧 Extraction OCR avec coordonnées ----------------
+
+def extract_words_with_positions(image):
+    """Renvoie un DataFrame avec texte + coordonnées"""
+    df = pytesseract.image_to_data(image, lang="fra", output_type=pytesseract.Output.DATAFRAME)
+    df = df.dropna().reset_index(drop=True)
+    df = df[df['text'].str.strip() != ""]
+    return df
 
 
-# ---------- 🔧 Extraction du tableau ----------------
+# ---------- 🔧 Détection du tableau ----------------
 
-def detect_table_headers(phrases):
-    """Détecte les entêtes du tableau"""
-    headers = []
-    for phrase in phrases:
-        low = phrase.lower()
-        if any(k in low for k in ["réf", "reference", "référence", "code", "article n°"]):
-            headers.append("ref")
-        if any(k in low for k in ["désignation", "article", "produit"]):
-            headers.append("description")
-        if any(k in low for k in ["qté", "quantité"]):
-            headers.append("quantity")
-        if any(k in low for k in ["pu", "prix unitaire", "prix unit."]):
-            headers.append("unit_price")
-        if any(k in low for k in ["tva", "%"]):
-            headers.append("tva")
-        if any(k in low for k in ["total ht", "net ht"]):
-            headers.append("total_ht")
-        if any(k in low for k in ["total", "montant", "ttc"]):
-            headers.append("total")
-    return list(set(headers))
+def find_table_zone(df):
+    """Repère l’en-tête du tableau et retourne les lignes en dessous"""
+    header = df[df['text'].str.contains("désignation|qté|quantité|prix|montant|tva", case=False, na=False)]
+    if header.empty:
+        return None
+
+    # Position Y de l’en-tête
+    y_header = header.iloc[0]['top']
+
+    # On prend tout ce qui est sous l’en-tête
+    rows = df[df['top'] > y_header + 5].copy()
+
+    # Stop quand on croise "TOTAL"
+    stop_idx = rows[rows['text'].str.contains("total|net à payer|base ht", case=False, na=False)].index.min()
+    if not pd.isna(stop_idx):
+        rows = rows.loc[:stop_idx-1]
+
+    return rows
 
 
-def extract_invoice_lines(phrases):
-    """Détecte les lignes du tableau produits/services"""
-    headers = detect_table_headers(phrases)
-    lines = []
-    in_table = False
+def group_rows(df, y_thresh=10):
+    """Regroupe les mots en lignes selon leur coordonnée Y"""
+    rows = []
+    current_row = []
+    last_y = None
 
-    for phrase in phrases:
-        low = phrase.lower()
+    for _, word in df.sort_values("top").iterrows():
+        if last_y is None or abs(word['top'] - last_y) <= y_thresh:
+            current_row.append(word)
+        else:
+            rows.append(current_row)
+            current_row = [word]
+        last_y = word['top']
 
-        # Début du tableau
-        if not in_table and any(k in low for k in ["réf", "désignation", "qté", "quantité", "prix", "montant", "tva"]):
-            in_table = True
-            continue
+    if current_row:
+        rows.append(current_row)
+    return rows
 
-        # Fin du tableau
-        if in_table and any(k in low for k in [
-            "total", "net à payer", "net a payer", "tva", "base ht", "total net", "merci de votre confiance"
-        ]):
-            break
 
-        if in_table:
-            parts = phrase.split()
-            nums = [p for p in parts if any(c.isdigit() for c in p) or "%" in p]
+def detect_columns(rows, x_thresh=40):
+    """Détecte les colonnes à partir des coordonnées X"""
+    x_positions = []
+    for row in rows:
+        for word in row:
+            x_positions.append(word['left'])
+    x_positions = sorted(list(set(x_positions)))
 
-            # Ignore lignes bruit (moins de 2 chiffres → pas une ligne produit)
-            if len(nums) < 2:
-                continue
+    # Regroupe les colonnes proches
+    columns = []
+    for x in x_positions:
+        if not columns or abs(x - columns[-1]) > x_thresh:
+            columns.append(x)
+    return columns
 
-            line = {}
-            try:
-                # ✅ REF
-                if "ref" in headers and re.match(r"^[A-Za-z0-9\-]+$", parts[0]):
-                    line["ref"] = parts[0]
-                    parts = parts[1:]
 
-                # ✅ Quantité
-                if "quantity" in headers:
-                    for p in parts:
-                        if re.match(r"^\d+([.,]\d+)?$", p):
-                            line["quantity"] = float(p.replace(",", "."))
-                            break
-
-                # ✅ PU
-                if "unit_price" in headers:
-                    for p in parts:
-                        if re.match(r"^\d+([.,]\d+)?$", p):
-                            val = float(p.replace(",", "."))
-                            if val > 0:
-                                line["unit_price"] = val
-                                break
-
-                # ✅ TVA
-                if "tva" in headers:
-                    for p in parts:
-                        if "%" in p:
-                            line["tva"] = p.replace(",", ".")
-                            break
-
-                # ✅ Total HT
-                if "total_ht" in headers:
-                    match = [p for p in parts if re.match(r"^\d+([.,]\d+)?$", p)]
-                    if match:
-                        line["total_ht"] = float(match[-1].replace(",", "."))
-
-                # ✅ Total TTC
-                if "total" in headers:
-                    match = [p for p in parts if re.match(r"^\d+([.,]\d+)?$", p)]
-                    if match:
-                        line["total"] = float(match[-1].replace(",", "."))
-            except Exception:
-                continue
-
-            # ✅ Description = tout sauf les nombres
-            desc = " ".join([p for p in parts if not re.match(r"^[0-9\.,%]+$", p)])
-            line["description"] = desc
-
-            lines.append(line)
-
-    return {"headers": headers, "lines": lines}
+def align_table(rows, columns):
+    """Reconstruit le tableau en alignant texte sur les colonnes"""
+    table = []
+    for row in rows:
+        line = [""] * len(columns)
+        for word in row:
+            # Trouver la colonne la plus proche
+            col_idx = min(range(len(columns)), key=lambda i: abs(columns[i] - word['left']))
+            line[col_idx] += (" " + word['text']).strip()
+        table.append(line)
+    return table
 
 
 # ---------- 🔧 OCR principal ----------------
 
 def run_ocr(pdf_path):
-    pages_data = []
-    print(f"📄 Conversion PDF → images…")
     images = convert_from_path(pdf_path)
+    pages_data = []
 
     for idx, img in enumerate(images, start=1):
         print(f"🔎 OCR page {idx}…")
-        text = pytesseract.image_to_string(img, lang="fra")
+        df = extract_words_with_positions(img)
 
-        phrases = [p.strip() for p in text.split("\n") if p.strip()]
-        phrases = merge_invoice_number_phrases(phrases)
+        table_zone = find_table_zone(df)
+        if table_zone is None or table_zone.empty:
+            continue
 
-        parsed = extract_invoice_data(phrases)
-        table = extract_invoice_lines(phrases)
+        rows = group_rows(table_zone)
+        columns = detect_columns(rows)
+        table = align_table(rows, columns)
 
         pages_data.append({
             "page": idx,
-            "phrases": phrases,
-            "parsed": parsed,
-            "table": table,
+            "table": {
+                "columns": columns,
+                "rows": table
+            }
         })
 
-    print("🎉 OCR terminé")
     return {"pages": pages_data}
 
 
-# ---------- 🚀 Lancement script ----------------
+# ---------- 🚀 Lancement ----------------
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -200,6 +128,5 @@ if __name__ == "__main__":
     pdf_path = sys.argv[1]
     print(f"🔎 OCR lancé sur : {pdf_path}")
     data = run_ocr(pdf_path)
-
-    # On affiche le JSON proprement
+    print("🎉 OCR terminé")
     print(json.dumps(data, indent=2, ensure_ascii=False))
