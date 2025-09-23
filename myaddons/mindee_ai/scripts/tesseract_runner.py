@@ -11,6 +11,7 @@ import pytesseract
 # ---------- 🔧 Fonctions utilitaires ----------------
 
 def merge_invoice_number_phrases(phrases):
+    """Fusionne les phrases type 'Facture n°' + '2025/1680'"""
     merged = []
     skip_next = False
     invoice_keywords = [
@@ -38,9 +39,10 @@ def merge_invoice_number_phrases(phrases):
 
 
 def extract_invoice_data(phrases):
+    """Extrait numéro et date de facture"""
     data = {}
     invoice_patterns = [r"facture\s*(?:d['’]acompte)?\s*[n°:\-]?\s*([A-Za-z0-9/\-]+)"]
-    date_patterns = [r"(\d{2}[/-]\d{2}[/-]\d{4})"]  # 17/09/2025 ou 17-09-2025
+    date_patterns = [r"(\d{2}[/-]\d{2}[/-]\d{4})"]
     for phrase in phrases:
         for pat in invoice_patterns:
             m = re.search(pat, phrase, flags=re.IGNORECASE)
@@ -58,6 +60,7 @@ def extract_invoice_data(phrases):
 # ---------- 🔧 Extraction du tableau ----------------
 
 def detect_table_headers(phrases):
+    """Détecte les entêtes du tableau"""
     headers = []
     for phrase in phrases:
         low = phrase.lower()
@@ -69,79 +72,92 @@ def detect_table_headers(phrases):
             headers.append("quantity")
         if any(k in low for k in ["pu", "prix unitaire", "prix unit."]):
             headers.append("unit_price")
-        if any(k in low for k in ["total ht", "net ht"]):
-            headers.append("total_ht")
         if any(k in low for k in ["tva", "%"]):
             headers.append("tva")
+        if any(k in low for k in ["total ht", "net ht"]):
+            headers.append("total_ht")
         if any(k in low for k in ["total", "montant", "ttc"]):
             headers.append("total")
     return list(set(headers))
 
 
 def extract_invoice_lines(phrases):
+    """Détecte les lignes du tableau produits/services"""
     headers = detect_table_headers(phrases)
     lines = []
     in_table = False
 
     for phrase in phrases:
-        if any(h in phrase.lower() for h in ["réf", "désignation", "qté", "quantité", "prix", "montant", "tva"]):
+        low = phrase.lower()
+
+        # Début du tableau
+        if not in_table and any(k in low for k in ["réf", "désignation", "qté", "quantité", "prix", "montant", "tva"]):
             in_table = True
             continue
+
+        # Fin du tableau
+        if in_table and any(k in low for k in [
+            "total", "net à payer", "net a payer", "tva", "base ht", "total net", "merci de votre confiance"
+        ]):
+            break
 
         if in_table:
             parts = phrase.split()
             nums = [p for p in parts if any(c.isdigit() for c in p) or "%" in p]
 
-            if len(nums) >= 2:
-                line = {}
-                try:
-                    # ✅ REF si alphanumérique en 1er élément
-                    if "ref" in headers and re.match(r"^[A-Za-z0-9\-]+$", parts[0]):
-                        line["ref"] = parts[0]
-                        parts = parts[1:]  # on retire la ref
+            # Ignore lignes bruit (moins de 2 chiffres → pas une ligne produit)
+            if len(nums) < 2:
+                continue
 
-                    # ✅ Quantité
-                    if "quantity" in headers:
-                        for p in parts:
-                            if re.match(r"^\d+([.,]\d+)?$", p):
-                                line["quantity"] = float(p.replace(",", "."))
+            line = {}
+            try:
+                # ✅ REF
+                if "ref" in headers and re.match(r"^[A-Za-z0-9\-]+$", parts[0]):
+                    line["ref"] = parts[0]
+                    parts = parts[1:]
+
+                # ✅ Quantité
+                if "quantity" in headers:
+                    for p in parts:
+                        if re.match(r"^\d+([.,]\d+)?$", p):
+                            line["quantity"] = float(p.replace(",", "."))
+                            break
+
+                # ✅ PU
+                if "unit_price" in headers:
+                    for p in parts:
+                        if re.match(r"^\d+([.,]\d+)?$", p):
+                            val = float(p.replace(",", "."))
+                            if val > 0:
+                                line["unit_price"] = val
                                 break
 
-                    # ✅ Prix unitaire
-                    if "unit_price" in headers:
-                        for p in parts:
-                            if re.match(r"^\d+([.,]\d+)?$", p):
-                                val = float(p.replace(",", "."))
-                                if val > 0:
-                                    line["unit_price"] = val
-                                    break
+                # ✅ TVA
+                if "tva" in headers:
+                    for p in parts:
+                        if "%" in p:
+                            line["tva"] = p.replace(",", ".")
+                            break
 
-                    # ✅ TVA (%)
-                    if "tva" in headers:
-                        for p in parts:
-                            if "%" in p:
-                                line["tva"] = p.replace(",", ".")
-                                break
+                # ✅ Total HT
+                if "total_ht" in headers:
+                    match = [p for p in parts if re.match(r"^\d+([.,]\d+)?$", p)]
+                    if match:
+                        line["total_ht"] = float(match[-1].replace(",", "."))
 
-                    # ✅ Total HT
-                    if "total_ht" in headers:
-                        match = [p for p in parts if re.match(r"^\d+([.,]\d+)?$", p)]
-                        if match:
-                            line["total_ht"] = float(match[-1].replace(",", "."))
+                # ✅ Total TTC
+                if "total" in headers:
+                    match = [p for p in parts if re.match(r"^\d+([.,]\d+)?$", p)]
+                    if match:
+                        line["total"] = float(match[-1].replace(",", "."))
+            except Exception:
+                continue
 
-                    # ✅ Total TTC / général
-                    if "total" in headers:
-                        match = [p for p in parts if re.match(r"^\d+([.,]\d+)?$", p)]
-                        if match:
-                            line["total"] = float(match[-1].replace(",", "."))
-                except Exception:
-                    continue
+            # ✅ Description = tout sauf les nombres
+            desc = " ".join([p for p in parts if not re.match(r"^[0-9\.,%]+$", p)])
+            line["description"] = desc
 
-                # ✅ Description = tout sauf les nombres / pourcentages
-                desc = " ".join([p for p in parts if not re.match(r"^[0-9\.,%]+$", p)])
-                line["description"] = desc
-
-                lines.append(line)
+            lines.append(line)
 
     return {"headers": headers, "lines": lines}
 
@@ -159,35 +175,4 @@ def run_ocr(pdf_path):
         phrases = merge_invoice_number_phrases(phrases)
 
         parsed = extract_invoice_data(phrases)
-        table = extract_invoice_lines(phrases)
-
-        pages_data.append({
-            "page": idx,
-            "content": text,
-            "phrases": phrases,
-            "parsed": parsed,
-            "table": table,
-        })
-
-    return {"pages": pages_data}
-
-
-# ---------- 🔧 Exécution CLI ----------------
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python tesseract_runner.py <pdf_file>")
-        sys.exit(1)
-
-    pdf_file = sys.argv[1]
-
-    if not os.path.exists(pdf_file):
-        print(json.dumps({"error": f"File not found: {pdf_file}"}))
-        sys.exit(1)
-
-    try:
-        result = run_ocr(pdf_file)
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    except Exception as e:
-        print(json.dumps({"error": str(e)}))
-        sys.exit(1)
+        table = extract
