@@ -166,4 +166,11 @@ def run_ocr(pdf_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("❌ Usage: python3 tesseract_runner.py <fichier.pdf>"_
+        print("❌ Usage: python3 tesseract_runner.py <fichier.pdf>")
+        sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    print(f"🔎 OCR lancé sur : {pdf_path}")
+    data = run_ocr(pdf_path)
+    print("🎉 OCR terminé")
+    print(json.dumps(data, indent=2, ensure_ascii=False))
