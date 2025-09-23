@@ -115,6 +115,39 @@ def is_product_row(row):
     return True
 
 
+def normalize_headers(headers):
+    """Nettoie et normalise les intitulés de colonnes OCR"""
+    clean = []
+    skip_next = False
+
+    for i, h in enumerate(headers):
+        if skip_next:
+            skip_next = False
+            continue
+
+        h_low = h.lower().replace("|", "").strip()
+
+        if h_low in ["réf", "réf.", "reference", "code"]:
+            clean.append("Réf.")
+        elif "désign" in h_low or "article" in h_low:
+            clean.append("Désignation")
+        elif "qté" in h_low or "quantité" in h_low:
+            clean.append("Qté")
+        elif "unit" in h_low and "prix" not in h_low:
+            clean.append("Unité")
+        elif "prix" in h_low and i + 1 < len(headers) and "unit" in headers[i+1].lower():
+            clean.append("Prix Unitaire")
+            skip_next = True
+        elif "prix unitaire" in h_low:
+            clean.append("Prix Unitaire")
+        elif "montant" in h_low or "total" in h_low:
+            clean.append("Montant")
+        elif "tva" in h_low or "%" in h_low:
+            clean.append("TVA")
+
+    return clean
+
+
 def map_rows_to_headers(table, headers):
     """Associe chaque ligne aux intitulés de colonnes"""
     mapped = []
@@ -147,7 +180,8 @@ def run_ocr(pdf_path):
         rows = group_rows(table_zone)
         columns = simplify_columns(detect_columns(rows))
         header_row = group_rows(header_line)[0]
-        headers = [w['text'] for w in header_row]
+        headers_raw = [w['text'] for w in header_row]
+        headers = normalize_headers(headers_raw)
 
         # Aligne et mappe
         table = align_table(rows, columns)
