@@ -22,6 +22,7 @@ db = sql_db.db_connect(DB)
 cr = db.cursor()
 env = api.Environment(cr, 1, {})
 
+
 # -------- Utils ----------
 def normalize_text(val):
     return (val or "").strip().lower()
@@ -55,16 +56,17 @@ def test_rules(pdf_path):
     partner_name_ocr = parsed.get("supplier_name", "")
 
     print("🔎 OCR PARSED:", parsed)
-    print("🔎 supplier_name:", partner_name_ocr)
-    print("🔎 raw_text:", raw_text[:200], "…")  # affiche les 200 premiers caractères
+    print("🔎 supplier_name:", partner_name_ocr or "(vide)")
+    print("🔎 raw_text preview:", raw_text[:200], "…\n")  # affiche les 200 premiers caractères
 
     # Charger règles actives
     rules = env["ocr.configuration.rule"].search([("active", "=", True)], order="sequence")
-    print(f"📌 {len(rules)} règles trouvées")
+    print(f"📌 {len(rules)} règles trouvées\n")
 
     for rule in rules:
-        value = None
+        value = ""
         if rule.variable == "partner_name":
+            # si supplier_name vide → on prend raw_text
             value = partner_name_ocr or raw_text
         elif rule.variable == "invoice_number":
             value = invoice_number
@@ -76,19 +78,26 @@ def test_rules(pdf_path):
             val = normalize_text(value)
             cmp = normalize_text(rule.value_text)
 
-            if rule.operator == "contains" and cmp in val:
-                matched = True
-            elif rule.operator == "==" and val == cmp:
-                matched = True
-            elif rule.operator == "startswith" and val.startswith(cmp):
-                matched = True
-            elif rule.operator == "endswith" and val.endswith(cmp):
-                matched = True
+            if rule.operator == "contains":
+                matched = cmp in val
+            elif rule.operator == "==":
+                matched = val == cmp
+            elif rule.operator == "startswith":
+                matched = val.startswith(cmp)
+            elif rule.operator == "endswith":
+                matched = val.endswith(cmp)
 
-        print(f"➡️ Règle {rule.name} ({rule.variable} {rule.operator} {rule.value_text}) sur '{value}' → {matched}")
+            # 🔥 fallback auto pour les partenaires
+            if rule.variable == "partner_name" and not matched:
+                if cmp in val:
+                    matched = True
+                    print(f"⚡ fallback contains appliqué pour {rule.name}")
+
+        print(f"➡️ Règle {rule.name} ({rule.variable} {rule.operator} {rule.value_text}) "
+              f"sur '{(value or '')[:80]}' → {matched}")
 
         if matched and rule.partner_id:
-            print(f"✅ PARTNER CHOISI : {rule.partner_id.name} (ID={rule.partner_id.id})")
+            print(f"\n✅ PARTNER CHOISI : {rule.partner_id.name} (ID={rule.partner_id.id})\n")
             break
 
 
