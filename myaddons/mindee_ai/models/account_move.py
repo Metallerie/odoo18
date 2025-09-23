@@ -98,8 +98,8 @@ class AccountMove(models.Model):
             if parsed.get("invoice_number"):
                 vals["ref"] = parsed["invoice_number"]
 
-            # 5️⃣ Application des règles partenaires
-            rules = self.env["ocr.configuration.rule.partner"].search(
+            # 5️⃣ Application des règles OCR (ocr.configuration.rule)
+            rules = self.env["ocr.configuration.rule"].search(
                 [("active", "=", True)], order="sequence"
             )
 
@@ -110,17 +110,39 @@ class AccountMove(models.Model):
             partner_name_ocr = parsed.get("supplier_name", "")
 
             for rule in rules:
-                haystack = ""
-                if rule.search_in == "raw_text":
-                    haystack = raw_text
-                elif rule.search_in == "invoice_number":
-                    haystack = invoice_number
-                elif rule.search_in == "partner_name":
-                    haystack = partner_name_ocr
+                value = None
+                if rule.variable == "partner_name":
+                    value = partner_name_ocr or raw_text
+                elif rule.variable == "invoice_number":
+                    value = invoice_number
+                elif rule.variable == "invoice_date":
+                    value = parsed.get("invoice_date", "")
 
-                if haystack and rule.keyword.lower() in haystack.lower():
-                    vals["partner_id"] = rule.partner_id.id
-                    break  # stop au premier match
+                if not value:
+                    continue
+
+                matched = False
+                if rule.condition_type == "text" and rule.value_text:
+                    val = value.lower()
+                    cmp = rule.value_text.lower()
+                    if rule.operator == "contains" and cmp in val:
+                        matched = True
+                    elif rule.operator == "==" and val == cmp:
+                        matched = True
+                    elif rule.operator == "startswith" and val.startswith(cmp):
+                        matched = True
+                    elif rule.operator == "endswith" and val.endswith(cmp):
+                        matched = True
+
+                if matched:
+                    if rule.partner_id:
+                        vals["partner_id"] = rule.partner_id.id
+                        _logger.info(
+                            "OCR Rule matched: %s → Partner %s",
+                            rule.name,
+                            rule.partner_id.name,
+                        )
+                        break  # stop at first match
 
             # 6️⃣ Mise à jour de la facture
             if vals:
