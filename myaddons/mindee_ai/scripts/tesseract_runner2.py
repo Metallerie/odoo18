@@ -1,114 +1,106 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 import sys, os, json, re, unicodedata
 from pdf2image import convert_from_path
 import pytesseract
 
-# ---------------- Utils ----------------
-def normalize_text(s: str) -> str:
-    if not s:
-        return ""
+# ============== Utils texte ==============
+
+def norm(s: str) -> str:
+    if not s: return ""
     s = s.replace("\u2019", "'").replace("\u00A0", " ")
     return re.sub(r"\s+", " ", s).strip()
 
-def fold_for_match(s: str) -> str:
-    if not s:
-        return ""
-    s = normalize_text(s)
+def fold(s: str) -> str:
+    if not s: return ""
+    s = norm(s)
     s = unicodedata.normalize("NFD", s)
-    return "".join(ch for ch in s if not unicodedata.combining(ch)).lower()
+    return "".join(c for c in s if not unicodedata.combining(c)).lower()
 
-# ---------------- OCR mots ----------------
-def ocr_words(pdf_path):
-    images = convert_from_path(pdf_path)
-    pages = []
-    for img in images:
-        data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, lang="fra")
-        words = []
-        for i, txt in enumerate(data["text"]):
-            if txt.strip():
-                words.append({
-                    "text": normalize_text(txt),
-                    "left": data["left"][i],
-                    "top": data["top"][i],
-                    "width": data["width"][i],
-                    "height": data["height"][i]
-                })
-        pages.append(words)
-    return pages
+def to_float(s: str):
+    if not s: return None
+    s = s.replace("€","").replace("\u202f"," ").replace(" ", "")
+    s = s.replace(",", ".")
+    m = re.search(r"-?\d+(?:\.\d+)?", s)
+    return float(m.group(0)) if m else None
 
-# ---------------- Reconstruction par lignes ----------------
-def group_words_into_lines(words, y_thresh=10):
-    lines, current_line = [], []
-    sorted_words = sorted(words, key=lambda w: (w["top"], w["left"]))
-    current_y = None
-    for w in sorted_words:
-        if current_y is None or abs(w["top"] - current_y) <= y_thresh:
-            current_line.append(w)
-            if current_y is None:
-                current_y = w["top"]
-        else:
-            lines.append(current_line)
-            current_line = [w]
-            current_y = w["top"]
-    if current_line:
-        lines.append(current_line)
-    return lines
+# ============== OCR ==============
 
-def line_to_text(line):
-    return " ".join(sorted([w["text"] for w in line], key=lambda x: x))
+def ocr_page_words(img):
+    """Retourne les mots avec positions + le texte brut + les phrases."""
+    text = pytesseract.image_to_string(img, lang="fra")
+    phrases = [norm(l) for l in text.split("\n") if norm(l)]
+    data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, lang="fra")
+    words = []
+    for i, t in enumerate(data["text"]):
+        if str(t).strip():
+            words.append({
+                "text": norm(t),
+                "left": int(data["left"][i]),
+                "top": int(data["top"][i]),
+                "width": int(data["width"][i]),
+                "height": int(data["height"][i]),
+            })
+    return text, phrases, words, img.width, img.height
 
-# ---------------- Extraction tableau ----------------
-def extract_table(words):
-    lines = group_words_into_lines(words)
-    headers, bounds = [], []
+# ============== Détection zone tableau (coords) ==============
 
-    # Cherche l'entête
-    for line in lines:
-        line_txt = " ".join(w["text"] for w in line).lower()
-        if "réf" in line_txt and "désignation" in line_txt:
-            headers = [w["text"] for w in line]
-            bounds = [w["left"] for w in line] + [line[-1]["left"] + line[-1]["width"]]
+HEAD_RE = re.compile(r"ref|réf|designation|désignation|qt[eé]|quantit|prix|montant|tva", re.I)
+FOOT_RE = re.compile(r"total|net\s*[àa]\s*payer|base\s*ht|total\s*t\.?v\.?a\.?", re.I)
+
+def find_table_bbox(words, img_w, img_h):
+    """Trouve y_top (entête) et y_bot (pied TOTAL/NET A PAYER)."""
+    header_y = None
+    footer_y = None
+
+    # approx par lignes : groupe par top proche
+    lines = {}
+    for w in sorted(words, key=lambda x: x["top"]):
+        y = w["top"]
+        # snap Y dans des "bandes" de 8px
+        band = y // 8
+        lines.setdefault(band, []).append(w)
+
+    # cherche entête
+    for band in sorted(lines.keys()):
+        line_txt = " ".join(w["text"] for w in sorted(lines[band], key=lambda x: x["left"]))
+        if HEAD_RE.search(line_txt) and ("désign" in fold(line_txt) or "ref" in fold(line_txt) or "réf" in fold(line_txt)):
+            header_y = min(w["top"] for w in lines[band])
             break
 
-    if not headers:
-        return [], []
+    # cherche pied (premier total sous l'entête)
+    if header_y is not None:
+        for band in sorted(lines.keys()):
+            ly = min(w["top"] for w in lines[band])
+            if ly <= header_y: 
+                continue
+            line_txt = " ".join(w["text"] for w in sorted(lines[band], key=lambda x: x["left"]))
+            if FOOT_RE.search(line_txt):
+                footer_y = ly
+                break
 
-    # Associe chaque ligne aux colonnes
-    rows = []
-    for line in lines:
-        row = {h: "" for h in headers}
-        for w in line:
-            for i, h in enumerate(headers):
-                if i < len(bounds)-1 and bounds[i] <= w["left"] < bounds[i+1]:
-                    row[h] += " " + w["text"]
-                    break
-        if any(v.strip() for v in row.values()):
-            rows.append({k: v.strip() for k, v in row.items()})
+    if header_y is None:
+        # fallback : haut de page (mais on garde les produits via phrases)
+        header_y = 0
+    if footer_y is None:
+        footer_y = img_h
 
-    return headers, rows
+    return {"x1": 0, "y1": int(header_y), "x2": int(img_w), "y2": int(footer_y)}
 
-# ---------------- Main ----------------
-def run(pdf_path):
-    pages_words = ocr_words(pdf_path)
-    result = {"pages": []}
-    for i, words in enumerate(pages_words, 1):
-        headers, rows = extract_table(words)
-        result["pages"].append({
-            "page": i,
-            "headers": headers,
-            "products": rows
-        })
-    return result
+# ============== Parsing produits depuis les PHRASES ==============
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python tesseract_runner2.py <file.pdf>")
-        sys.exit(1)
+IGNORE_LINE = re.compile(r"bon\s+de\s+livraison|commande|ventilation|frais\s+fixes", re.I)
 
-    pdf = sys.argv[1]
-    if not os.path.exists(pdf):
-        print(json.dumps({"error": "file not found"}))
-        sys.exit(1)
+UNITS = {"KG","PI","PCE","U","UN","M","ML","L","PAQ","MM"}
 
-    print(json.dumps(run(pdf), indent=2, ensure_ascii=False))
+def default_vat_from_phrases(phrases):
+    rates = re.findall(r"(\d{1,2}(?:[.,]\d)?)\s*%", " ".join(phrases))
+    if not rates: 
+        return None
+    # garde le plus fréquent
+    from collections import Counter
+    r = Counter([r.replace(",", ".") for r in rates]).most_common(1)[0][0]
+    return f"{r}%"
+
+def is_number(tok):_
