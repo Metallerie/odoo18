@@ -1,106 +1,114 @@
-import sys
-import json
-import pytesseract
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys, os, json, re, unicodedata
 from pdf2image import convert_from_path
-import re
+import pytesseract
 
-def ocr_page(pdf_path):
+# ---------------- Utils ----------------
+def normalize_text(s: str) -> str:
+    if not s:
+        return ""
+    s = s.replace("\u2019", "'").replace("\u00A0", " ")
+    return re.sub(r"\s+", " ", s).strip()
+
+def fold_for_match(s: str) -> str:
+    if not s:
+        return ""
+    s = normalize_text(s)
+    s = unicodedata.normalize("NFD", s)
+    return "".join(ch for ch in s if not unicodedata.combining(ch)).lower()
+
+# ---------------- OCR mots ----------------
+def ocr_words(pdf_path):
     images = convert_from_path(pdf_path)
-    results = []
+    pages = []
     for img in images:
         data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, lang="fra")
         words = []
-        for i in range(len(data["text"])):
-            if data["text"][i].strip():
+        for i, txt in enumerate(data["text"]):
+            if txt.strip():
                 words.append({
-                    "text": data["text"][i],
+                    "text": normalize_text(txt),
                     "left": data["left"][i],
                     "top": data["top"][i],
                     "width": data["width"][i],
-                    "height": data["height"][i],
+                    "height": data["height"][i]
                 })
-        results.append(words)
-    return results
+        pages.append(words)
+    return pages
 
-def get_column_bounds(words):
-    headers = {}
-    for w in words:
-        txt = w["text"].lower()
-        if "réf" in txt:
-            headers["Réf."] = w["left"]
-        elif "désign" in txt:
-            headers["Désignation"] = w["left"]
-        elif "qté" in txt:
-            headers["Qté"] = w["left"]
-        elif "unité" in txt:
-            headers["Unité"] = w["left"]
-        elif "prix" in txt:
-            headers["Prix Unitaire"] = w["left"]
-        elif "montant" in txt:
-            headers["Montant"] = w["left"]
-        elif "tva" in txt:
-            headers["TVA"] = w["left"]
+# ---------------- Reconstruction par lignes ----------------
+def group_words_into_lines(words, y_thresh=10):
+    lines, current_line = [], []
+    sorted_words = sorted(words, key=lambda w: (w["top"], w["left"]))
+    current_y = None
+    for w in sorted_words:
+        if current_y is None or abs(w["top"] - current_y) <= y_thresh:
+            current_line.append(w)
+            if current_y is None:
+                current_y = w["top"]
+        else:
+            lines.append(current_line)
+            current_line = [w]
+            current_y = w["top"]
+    if current_line:
+        lines.append(current_line)
+    return lines
 
-    headers_sorted = dict(sorted(headers.items(), key=lambda x: x[1]))
-    return list(headers_sorted.keys()), list(headers_sorted.values())
+def line_to_text(line):
+    return " ".join(sorted([w["text"] for w in line], key=lambda x: x))
 
-def map_row_to_columns(words, headers, bounds):
-    row = {h: "" for h in headers}
-    for w in words:
-        x = w["left"]
-        for i, h in enumerate(headers):
-            if i == len(bounds) - 1 or (x >= bounds[i] and x < bounds[i+1]):
-                row[h] += " " + w["text"]
-                break
-    return {k: v.strip() for k, v in row.items()}
-
+# ---------------- Extraction tableau ----------------
 def extract_table(words):
+    lines = group_words_into_lines(words)
+    headers, bounds = [], []
+
     # Cherche l'entête
-    header_words = [w for w in words if re.search(r"(Réf|Désign|Qté|Montant|TVA)", w["text"], re.I)]
-    if not header_words:
+    for line in lines:
+        line_txt = " ".join(w["text"] for w in line).lower()
+        if "réf" in line_txt and "désignation" in line_txt:
+            headers = [w["text"] for w in line]
+            bounds = [w["left"] for w in line] + [line[-1]["left"] + line[-1]["width"]]
+            break
+
+    if not headers:
         return [], []
 
-    headers, bounds = get_column_bounds(header_words)
-
-    # Trie les mots par ligne
-    words_sorted = sorted(words, key=lambda x: (x["top"], x["left"]))
+    # Associe chaque ligne aux colonnes
     rows = []
-    current_line_y = None
-    current_words = []
-
-    for w in words_sorted:
-        if current_line_y is None:
-            current_line_y = w["top"]
-        if abs(w["top"] - current_line_y) > 15:  # saut de ligne
-            if current_words:
-                rows.append(map_row_to_columns(current_words, headers, bounds))
-            current_words = [w]
-            current_line_y = w["top"]
-        else:
-            current_words.append(w)
-    if current_words:
-        rows.append(map_row_to_columns(current_words, headers, bounds))
+    for line in lines:
+        row = {h: "" for h in headers}
+        for w in line:
+            for i, h in enumerate(headers):
+                if i < len(bounds)-1 and bounds[i] <= w["left"] < bounds[i+1]:
+                    row[h] += " " + w["text"]
+                    break
+        if any(v.strip() for v in row.values()):
+            rows.append({k: v.strip() for k, v in row.items()})
 
     return headers, rows
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python tesseract_runner2.py <file.pdf>")
-        return
-
-    pdf_path = sys.argv[1]
-    pages = ocr_page(pdf_path)
-
-    output = {"pages": []}
-    for i, words in enumerate(pages, start=1):
+# ---------------- Main ----------------
+def run(pdf_path):
+    pages_words = ocr_words(pdf_path)
+    result = {"pages": []}
+    for i, words in enumerate(pages_words, 1):
         headers, rows = extract_table(words)
-        output["pages"].append({
+        result["pages"].append({
             "page": i,
             "headers": headers,
             "products": rows
         })
-
-    print(json.dumps(output, indent=2, ensure_ascii=False))
+    return result
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Usage: python tesseract_runner2.py <file.pdf>")
+        sys.exit(1)
+
+    pdf = sys.argv[1]
+    if not os.path.exists(pdf):
+        print(json.dumps({"error": "file not found"}))
+        sys.exit(1)
+
+    print(json.dumps(run(pdf), indent=2, ensure_ascii=False))
