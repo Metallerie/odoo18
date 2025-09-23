@@ -8,7 +8,7 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-
+print("⚡ mindee_ai/account_move.py LOADED")
 class AccountMove(models.Model):
     _inherit = "account.move"
 
