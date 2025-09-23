@@ -166,13 +166,40 @@ def extract_invoice_lines(phrases):
 
 def run_ocr(pdf_path):
     pages_data = []
+    print(f"📄 Conversion PDF → images…")
     images = convert_from_path(pdf_path)
 
     for idx, img in enumerate(images, start=1):
+        print(f"🔎 OCR page {idx}…")
         text = pytesseract.image_to_string(img, lang="fra")
 
         phrases = [p.strip() for p in text.split("\n") if p.strip()]
         phrases = merge_invoice_number_phrases(phrases)
 
         parsed = extract_invoice_data(phrases)
-        table = extract
+        table = extract_invoice_lines(phrases)
+
+        pages_data.append({
+            "page": idx,
+            "phrases": phrases,
+            "parsed": parsed,
+            "table": table,
+        })
+
+    print("🎉 OCR terminé")
+    return {"pages": pages_data}
+
+
+# ---------- 🚀 Lancement script ----------------
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("❌ Usage: python3 tesseract_runner.py <fichier.pdf>")
+        sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    print(f"🔎 OCR lancé sur : {pdf_path}")
+    data = run_ocr(pdf_path)
+
+    # On affiche le JSON proprement
+    print(json.dumps(data, indent=2, ensure_ascii=False))
