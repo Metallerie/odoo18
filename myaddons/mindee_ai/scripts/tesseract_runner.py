@@ -1,12 +1,13 @@
+#!/usr/bin/env python3
 import sys
 import os
 import json
 import re
-import tempfile
 from pdf2image import convert_from_path
 import pytesseract
 
-# ---------- 🔧 Fonctions utilitaires ----------------
+
+# ---------- 🔧 Fusionner les phrases liées ----------------
 
 def merge_invoice_number_phrases(phrases):
     """
@@ -40,18 +41,20 @@ def merge_invoice_number_phrases(phrases):
     return merged
 
 
+# ---------- 🔧 Extraction des données ----------------
+
 def extract_invoice_data(phrases):
     """
-    Extrait les données principales (n° facture, date) à partir des phrases
+    Extrait le numéro de facture et la date depuis les phrases.
     """
     data = {}
 
-    # Regex génériques
+    # Regex numéro de facture
     invoice_patterns = [
         r"facture\s*(?:d['’]acompte)?\s*[n°:\-]?\s*([A-Za-z0-9/\-]+)",
     ]
     date_patterns = [
-        r"(\d{2}[/-]\d{2}[/-]\d{4})",  # 17/09/2025 ou 17-09-2025
+        r"(\d{2}[/-]\d{2}[/-]\d{4})",  # 17/09/2025
     ]
 
     for phrase in phrases:
@@ -60,14 +63,12 @@ def extract_invoice_data(phrases):
             m = re.search(pat, phrase, flags=re.IGNORECASE)
             if m:
                 data["invoice_number"] = m.group(1)
-                break
 
         # Date
         for pat in date_patterns:
             m = re.search(pat, phrase)
             if m:
                 data["invoice_date"] = m.group(1)
-                break
 
     return data
 
