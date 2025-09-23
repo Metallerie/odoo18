@@ -8,7 +8,7 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-print("⚡ mindee_ai/account_move.py LOADED")
+
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -19,7 +19,6 @@ class AccountMove(models.Model):
     )
 
     # ---------------- Utils ----------------
-
     def _normalize_date(self, date_str):
         if not date_str:
             return None
@@ -31,13 +30,13 @@ class AccountMove(models.Model):
                 continue
         return None
 
-    # ---------------- Main action ----------------
+    def _normalize_text(self, val):
+        return (val or "").strip().lower()
 
+    # ---------------- Main action ----------------
     def action_ocr_fetch(self):
-        
         for move in self:
-            print("⚡ OCR CALLED on", move.id)
-            _logger.warning("[OCR] Start OCR for move id=%s name=%s", move.id, move.name)
+            _logger.warning("⚡ [OCR] Start OCR for move id=%s name=%s", move.id, move.name)
 
             # 1️⃣ Récup PDF
             pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
@@ -114,21 +113,28 @@ class AccountMove(models.Model):
                 elif rule.variable == "invoice_date":
                     value = invoice_date
 
-                _logger.warning("[OCR][RULE] Testing rule '%s' (var=%s, op=%s, val_text=%s, val_date=%s) on value='%s'",
-                                rule.name, rule.variable, rule.operator, rule.value_text, rule.value_date, value)
-
                 matched = False
                 if rule.condition_type == "text" and rule.value_text:
-                    val = (value or "").lower()
-                    cmp = rule.value_text.lower()
-                    if rule.operator == "contains" and cmp in val:
-                        matched = True
-                    elif rule.operator == "==" and val == cmp:
-                        matched = True
-                    elif rule.operator == "startswith" and val.startswith(cmp):
-                        matched = True
-                    elif rule.operator == "endswith" and val.endswith(cmp):
-                        matched = True
+                    val = self._normalize_text(value)
+                    cmp = self._normalize_text(rule.value_text)
+
+                    if rule.operator == "contains":
+                        matched = cmp in val
+                    elif rule.operator == "==":
+                        matched = val == cmp
+                    elif rule.operator == "startswith":
+                        matched = val.startswith(cmp)
+                    elif rule.operator == "endswith":
+                        matched = val.endswith(cmp)
+
+                    # 🔥 fallback contains pour les partenaires
+                    if rule.variable == "partner_name" and not matched:
+                        if cmp in val:
+                            matched = True
+                            _logger.warning("[OCR][RULE] Fallback contains appliqué pour '%s'", rule.name)
+
+                _logger.warning("[OCR][RULE] Testing rule '%s' (var=%s, op=%s, val_text=%s) → %s",
+                                rule.name, rule.variable, rule.operator, rule.value_text, matched)
 
                 if matched and rule.partner_id:
                     vals["partner_id"] = rule.partner_id.id
