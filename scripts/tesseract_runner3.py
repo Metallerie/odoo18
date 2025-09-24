@@ -7,7 +7,7 @@ from pdf2image import convert_from_path
 import pytesseract
 
 # Charger la librairie regex CCL
-from mindee_ai.regex.ccl_regex import ccl_regex
+from myaddons.mindee_ai.regex.ccl_regex import ccl_regex
 
 
 def normalize_amount(val):
