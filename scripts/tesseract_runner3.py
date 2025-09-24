@@ -6,8 +6,10 @@ from datetime import datetime
 from pdf2image import convert_from_path
 import pytesseract
 
-# Charger la librairie regex CCL
-from myaddons.mindee_ai.regex.ccl_regex import ccl_regex
+# Ajouter le chemin vers ton dossier myaddons
+sys.path.append("/data/odoo/metal-odoo18-p8179/myaddons")
+
+from mindee_ai.regex.ccl_regex import ccl_regex
 
 
 def normalize_amount(val):
