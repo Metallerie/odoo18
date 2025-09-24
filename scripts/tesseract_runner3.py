@@ -6,9 +6,7 @@ from datetime import datetime
 from pdf2image import convert_from_path
 import pytesseract
 
-# Ajouter le chemin vers ton dossier myaddons
-sys.path.append("/data/odoo/metal-odoo18-p8179/myaddons")
-
+# Charger la librairie regex CCL
 from mindee_ai.regex.ccl_regex import ccl_regex
 
 
@@ -65,7 +63,7 @@ def update_library(field, new_regex):
     ccl_regex["meta"]["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Sauvegarde dans le fichier
-    with open("myaddons/mindee_ai/regex/ccl_regex.py", "w", encoding="utf-8") as f:
+    with open("mindee_ai/regex/ccl_regex.py", "w", encoding="utf-8") as f:
         f.write("ccl_regex = " + json.dumps(ccl_regex, indent=2, ensure_ascii=False))
 
 
