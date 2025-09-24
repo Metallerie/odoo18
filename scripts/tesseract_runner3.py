@@ -6,10 +6,10 @@ from datetime import datetime
 from pdf2image import convert_from_path
 import pytesseract
 
-# Charger la librairie regex CCL
-from mindee_ai.regex.ccl_regex import ccl_regex
+import sys
+sys.path.append("/data/odoo/metal-odoo18-p8179/regex_lib")
 
-
+from ccl_regex import ccl_regex
 def normalize_amount(val):
     """Nettoie un montant : supprime espaces, €, remplace virgule par point"""
     val = val.replace("€", "").replace(" ", "").replace(",", ".")
