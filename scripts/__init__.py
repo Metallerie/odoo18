@@ -1,1 +1,1 @@
-from. import ccl_regex
+from . import ccl_regex
