@@ -31,11 +31,17 @@ regex_file = os.path.join(
 )
 with open(regex_file, "r", encoding="utf-8") as f:
     regex_patterns = json.load(f)
-
+    
 def parse_fields(text, data):
     """Extrait les champs via regex (retourne valeurs + y pour zonage)"""
     parsed = {}
     for key, pattern in regex_patterns.items():
+        # si c'est un dict → on prend pattern["pattern"]
+        if isinstance(pattern, dict):
+            pattern = pattern.get("pattern", "")
+        if not isinstance(pattern, str):
+            continue  # sécurité
+        
         match = re.search(pattern, text, re.MULTILINE)
         if match:
             value = match.group(1).strip()
@@ -47,6 +53,7 @@ def parse_fields(text, data):
                     break
             parsed[key] = {"value": value, "y": y_coord}
     return parsed
+
 
 def classify_zone(y, page_height):
     """Classe une donnée selon sa position Y en pourcentage"""
