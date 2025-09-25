@@ -35,29 +35,34 @@ with open(regex_file, "r", encoding="utf-8") as f:
 def parse_fields(text, data):
     """Extrait les champs via regex (valeur + coord y pour zonage)"""
     parsed = {}
-    for key, pattern in regex_patterns.items():
-        if isinstance(pattern, dict):
-            pattern = pattern.get("pattern", "")
-        if not isinstance(pattern, str):
-            continue
+    for key, patterns in regex_patterns.get("fields", {}).items():
+        if not isinstance(patterns, list):
+            patterns = [patterns]  # sécurité
 
-        match = re.search(pattern, text, re.MULTILINE)
-        if match:
-            # ✅ Sécurité : si pas de groupe capturant, on prend group(0)
-            if match.lastindex and match.lastindex >= 1:
-                value = match.group(1).strip()
-            else:
-                value = match.group(0).strip()
+        value, y_coord = None, None
+        for pattern in patterns:
+            match = re.search(pattern, text, re.MULTILINE)
+            if match:
+                print(f"[DEBUG] {key} → trouvé : {value} (regex: {pattern})")
 
-            # retrouver la coordonnée Y correspondant à la valeur
-            y_coord = None
-            for i, word in enumerate(data["text"]):
-                if value in word:
-                    y_coord = data["top"][i]
-                    break
+                # ✅ Sécurité sur group()
+                if match.lastindex and match.lastindex >= 1:
+                    value = match.group(1).strip()
+                else:
+                    value = match.group(0).strip()
 
+                # retrouver coord Y
+                for i, word in enumerate(data["text"]):
+                    if value in word:
+                        y_coord = data["top"][i]
+                        break
+                break  # on arrête dès qu’un pattern matche
+
+        if value:
             parsed[key] = {"value": value, "y": y_coord}
+
     return parsed
+
 
 def classify_zone(y, page_height):
     """Classe une donnée selon sa position Y en pourcentage"""
