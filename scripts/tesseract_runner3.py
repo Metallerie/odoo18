@@ -1,74 +1,84 @@
+#!/usr/bin/env python3
 import sys
 import os
 import json
 import re
-from datetime import datetime
 from pdf2image import convert_from_path
 import pytesseract
 
-import sys
-sys.path.append("/data/odoo/metal-odoo18-p8179/regex_lib")
+# 📂 Chemin vers la bibliothèque regex JSON
+REGEX_JSON_PATH = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/regex/ccl_regex.json"
 
-from ccl_regex import ccl_regex
-def normalize_amount(val):
-    """Nettoie un montant : supprime espaces, €, remplace virgule par point"""
-    val = val.replace("€", "").replace(" ", "").replace(",", ".")
-    try:
-        return float(val)
-    except:
-        return val
+# ----------- 🔧 Charger les regex ----------------
+def load_regex_library():
+    if not os.path.exists(REGEX_JSON_PATH):
+        print("⚠️ Aucune bibliothèque trouvée, création d'un fichier neuf.")
+        return {"update_count": 0, "fields": {}}
+    with open(REGEX_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
 
+# ----------- 💾 Sauvegarder ----------------
+def save_regex_library(lib):
+    with open(REGEX_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(lib, f, ensure_ascii=False, indent=2)
 
-def apply_regex(text, regex_dict):
-    """Applique les regex définies dans la bibliothèque."""
-    results = {"line_items": []}
-
-    for field, data in regex_dict["fields"].items():
-        # Cas spécial : line_item
-        if field == "line_item":
-            regex = re.compile(data["patterns"][0]["regex"])
-            matches = regex.findall(text)
-            results["line_items"] = [" ".join(m) if isinstance(m, tuple) else m for m in matches]
-            continue
-
-        # Champs institutionnels → comparer tous les patterns
-        found = None
-        for pattern in data["patterns"]:
-            regex = re.compile(pattern["regex"])
-            match = regex.search(text)
+# ----------- 🔍 Appliquer regex ----------------
+def apply_regex(text, regex_library):
+    results = {}
+    for field, patterns in regex_library["fields"].items():
+        for pat in patterns:
+            match = re.search(pat, text, re.IGNORECASE)
             if match:
-                found = match.group(1) if match.groups() else match.group(0)
+                results[field] = match.group(1) if match.groups() else match.group(0)
                 break
-        results[field] = found
-
     return results
 
+# ----------- 🛠️ Mettre à jour JSON ----------------
+def update_library(lib, extracted):
+    updated = False
+    for key, value in extracted.items():
+        if not value:
+            continue
+        if key not in lib["fields"]:
+            lib["fields"][key] = []
+        # Vérifie si déjà présent
+        if not any(value in p for p in lib["fields"][key]):
+            lib["fields"][key].append(value)
+            updated = True
+    if updated:
+        lib["update_count"] += 1
+    return lib
 
-def update_library(field, new_regex):
-    """Ajoute un nouveau regex dans la bibliothèque si nécessaire (hors line_item)."""
-    global ccl_regex
-    if field == "line_item":
-        return  # on n'évolue pas les regex produits
+# ----------- 📑 Parsing OCR ----------------
+def parse_invoice_text(text, regex_library):
+    data = {
+        "invoice_number": None,
+        "invoice_date": None,
+        "siren": None,
+        "siret": None,
+        "tva_intracom": None,
+        "iban": None,
+        "bic": None,
+        "total_ht": None,
+        "total_tva": None,
+        "total_ttc": None,
+        "line_items": []
+    }
 
-    patterns = ccl_regex["fields"][field]["patterns"]
+    # Appliquer les regex de la bibliothèque
+    extracted = apply_regex(text, regex_library)
+    for key in data:
+        if key in extracted:
+            data[key] = extracted[key]
 
-    # Vérifier si déjà présent
-    for p in patterns:
-        if p["regex"] == new_regex:
-            return
+    # Détection simple des lignes produits
+    for line in text.splitlines():
+        if re.search(r"\b(CORNIERE|TUBE|PLAT|FER|ECO\-PART)\b", line, re.IGNORECASE):
+            data["line_items"].append(line.strip())
 
-    new_id = str(len(patterns) + 1)
-    patterns.append({"id": new_id, "regex": new_regex, "validated": False})
-    ccl_regex["meta"]["update_count"] += 1
-    ccl_regex["meta"]["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return data, extracted
 
-    # Sauvegarde dans le fichier
-    with open("mindee_ai/regex/ccl_regex.py", "w", encoding="utf-8") as f:
-        f.write("ccl_regex = " + json.dumps(ccl_regex, indent=2, ensure_ascii=False))
-
-
-# ----------- 🚀 Script principal ----------------
-
+# ----------- 🚀 Main ----------------
 if len(sys.argv) != 2:
     print("Usage: python3 tesseract_runner3.py <chemin_du_fichier_PDF>")
     sys.exit(1)
@@ -76,24 +86,31 @@ if len(sys.argv) != 2:
 pdf_path = sys.argv[1]
 print("📥 Lecture du fichier :", pdf_path)
 
+# Charger bibliothèque regex
+regex_library = load_regex_library()
+
 # Conversion PDF -> images
 print("🖼️ Conversion PDF -> PNG...")
 images = convert_from_path(pdf_path)
 
 pages_output = []
-custom_config = r'--psm 6'
 
 for i, img in enumerate(images, start=1):
     print(f"🔎 OCR avec Tesseract sur page {i}...")
-    raw_text = pytesseract.image_to_string(img, lang="fra", config=custom_config)
+    raw_text = pytesseract.image_to_string(img, lang="fra")
 
-    extracted = apply_regex(raw_text, ccl_regex)
-
+    structured, extracted = parse_invoice_text(raw_text, regex_library)
     pages_output.append({
         "page": i,
         "content": raw_text,
-        "parsed": extracted
+        "parsed": structured
     })
+
+    # Mettre à jour bibliothèque si besoin
+    regex_library = update_library(regex_library, extracted)
+
+# Sauvegarder la bibliothèque enrichie
+save_regex_library(regex_library)
 
 print("✅ OCR terminé")
 print(json.dumps({"pages": pages_output}, ensure_ascii=False, indent=2))
