@@ -8,31 +8,31 @@
       "(?:Date facture|Date)\\s*[:\\-]?\\s*(\\d{2}[\\/\\-]\\d{2}[\\/\\-]\\d{4})"
     ],
     "siren": [
-      "\\b\\d{9}\\b"
+      "(?:SIREN|RCS)\\s*:?\\s*(\\d{9})"
     ],
     "siret": [
-      "\\b\\d{14}\\b"
+      "(?:SIRET)\\s*:?\\s*(\\d{14})"
     ],
     "tva_intracom": [
-      "\\bFR[0-9]{2}\\s?\\d{9}\\b"
+      "(?:TVA|Intracom|N°\\s*INTRACOM)\\s*[:\\-]?\\s*(FR[0-9]{2}\\s?\\d{9})"
     ],
     "iban": [
-      "\\bFR\\d{2}(?:\\s?\\d{4}){5}(?:\\s?[A-Z0-9]{2,})?\\b"
+      "\\bFR\\d{2}(?:\\s?[0-9]{4}){5}\\s?[0-9]{3}\\b"
     ],
     "bic": [
-      "\\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b"
+      "\\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})\\b"
     ],
     "total_ht": [
-      "(?:TOTAL\\s+HT|Net\\s+HT|TOTAL\\s+BRUT\\s+HT)\\s*[:\\-]?\\s*([0-9.,]+)"
+      "(?:TOTAL\\s+NET\\s+HT|TOTAL\\s+BRUT\\s+HT|TOTAL\\s+HT)\\s*[:\\-]?\\s*([0-9.,]+)"
     ],
     "total_tva": [
-      "(?:TOTAL\\s+T\\.V\\.A\\.|TOTAL\\s+TVA|TVA)\\s*[:\\-]?\\s*([0-9.,]+)"
+      "(?:TOTAL\\s+T\\.V\\.A\\.|TOTAL\\s+TVA)\\s*[:\\-]?\\s*([0-9.,]+)"
     ],
     "total_ttc": [
-      "(?:TOTAL\\s+TTC|Net\\s+à\\s+payer|NET\\s+À\\s+PAYER)\\s*[:\\-]?\\s*([0-9.,]+)"
+      "(?:NET\\s+À\\s+PAYER|TOTAL\\s+TTC)\\s*[:\\-]?\\s*([0-9.,]+)"
     ],
     "line_items": [
-      ".*(CORNIERE|TUBE|PLAT|FER|ECO\\-PART).*"
+      "^(\\d{5,})\\s+([A-Z0-9ÉÈÀÙÂÊÎÔÛÇ\\s\\-]+)\\s+([0-9.,]+)\\s+(ML|KG|PI|Pl)\\s+([0-9.,]+)\\s+([0-9.,]+)(?:\\s+(\\d+))?$"
     ]
   }
 }
