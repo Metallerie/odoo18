@@ -62,7 +62,7 @@ def parse_invoice_text(text, regex_library):
         "total_ht": None,
         "total_tva": None,
         "total_ttc": None,
-        "line_items": []
+        "line_items": []   # ✅ LISTE (correction)
     }
 
     # Appliquer les regex de la bibliothèque
