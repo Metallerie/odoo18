@@ -62,14 +62,20 @@ def parse_invoice_text(text, regex_library):
         "total_ht": None,
         "total_tva": None,
         "total_ttc": None,
-        "line_items": []   # ✅ LISTE (correction)
+        "line_items": []   # ✅ toujours liste
     }
 
     # Appliquer les regex de la bibliothèque
     extracted = apply_regex(text, regex_library)
     for key in data:
         if key in extracted:
-            data[key] = extracted[key]
+            if key == "line_items":   # ⚡ sécurisation
+                if isinstance(extracted[key], list):
+                    data[key] = extracted[key]
+                else:
+                    data[key] = [extracted[key]]
+            else:
+                data[key] = extracted[key]
 
     # Détection simple des lignes produits
     for line in text.splitlines():
