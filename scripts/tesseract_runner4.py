@@ -1,115 +1,100 @@
 #!/usr/bin/env python3
 import sys
+import os
 import pytesseract
-from pytesseract import Output
 from pdf2image import convert_from_path
 import re
 import json
+import cv2
+import numpy as np
 
-def ocr_with_structure(pdf_path):
-    # Convertir PDF -> images
-    pages = convert_from_path(pdf_path)
-    results = []
+# 📥 Vérifie l'argument
+if len(sys.argv) < 2:
+    print("❌ Usage: python3 tesseract_runner4.py <fichier.pdf>")
+    sys.exit(1)
 
-    for page_num, page in enumerate(pages, start=1):
-        data = pytesseract.image_to_data(page, output_type=Output.DICT, lang="fra")
-        width, height = page.size
-        header, body, footer = [], [], []
+pdf_path = sys.argv[1]
+if not os.path.exists(pdf_path):
+    print(f"❌ Fichier introuvable : {pdf_path}")
+    sys.exit(1)
 
-        for i, text in enumerate(data["text"]):
-            if not text.strip():
-                continue
-            x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
-            box = {"text": text, "x": x, "y": y, "w": w, "h": h}
-            if y < height * 0.25:
-                header.append(box)
-            elif y > height * 0.75:
-                footer.append(box)
-            else:
-                body.append(box)
+print(f"📥 Lecture du fichier : {pdf_path}")
 
-        results.append({
-            "page": page_num,
-            "header": " ".join([b["text"] for b in header]),
-            "body": " ".join([b["text"] for b in body]),
-            "footer": " ".join([b["text"] for b in footer])
-        })
-    return results
+# 📄 Conversion PDF → images
+images = convert_from_path(pdf_path)
+results = []
 
+# --- Chargement regex depuis ton fichier JSON ---
+regex_file = os.path.join(
+    os.path.dirname(__file__),
+    "../odoo18/myaddons/mindee_ai/regex/ccl_regex.json"
+)
+with open(regex_file, "r", encoding="utf-8") as f:
+    regex_patterns = json.load(f)
 
-def parse_invoice(zones):
+def parse_fields(text, data):
+    """Extrait les champs via regex (retourne valeurs + y pour zonage)"""
     parsed = {}
-    header = zones["header"]
-    body = zones["body"]
-    footer = zones["footer"]
-
-    # --- HEADER ---
-    if m := re.search(r"FACTURE\s*N°\s*[: ]\s*(\d+)", header, re.I):
-        parsed["invoice_number"] = m.group(1)
-
-    if m := re.search(r"Date facture\s*[: ]\s*([\d/]+)", header, re.I):
-        parsed["invoice_date"] = m.group(1)
-
-    if m := re.search(r"Client\s*[: ]\s*(\d+)", header, re.I):
-        parsed["client_id"] = m.group(1)
-
-    if m := re.search(r"MR\s+([A-Z ]+)", header, re.I):
-        parsed["client_name"] = m.group(0)
-
-    # --- FOOTER ---
-    if m := re.search(r"SIREN\s+(\d+)", footer):
-        parsed["siren"] = m.group(1)
-
-    if m := re.search(r"IBAN\s+([A-Z0-9 ]+)", footer):
-        parsed["iban"] = m.group(1).replace(" ", "")
-
-    if m := re.search(r"BIC\s*[: ]\s*([A-Z0-9]+)", footer):
-        parsed["bic"] = m.group(1)
-
-    if m := re.search(r"NET À PAYER\s+([\d,.]+)", footer, re.I):
-        parsed["total_ttc"] = m.group(1)
-
-    if m := re.search(r"TOTAL NET HT\s+([\d,.]+)", footer, re.I):
-        parsed["total_ht"] = m.group(1)
-
-    if m := re.search(r"TOTAL T\.V\.A\.\s+([\d,.]+)", footer, re.I):
-        parsed["total_tva"] = m.group(1)
-
-    if "Comptoir Commercial du Languedoc" in footer:
-        parsed["fournisseur"] = "Comptoir Commercial du Languedoc"
-
-    # --- BODY (simplifié : on découpe par motif "ref + texte + prix") ---
-    line_items = []
-    lines = re.findall(r"(\d{4,})\s+([A-Z0-9\- ]+)\s+(\d+)\s+PI\s+([\d,.]+)\s+([\d,.]+)", body)
-    for ref, designation, qty, pu, montant in lines:
-        line_items.append({
-            "ref": ref,
-            "designation": designation.strip(),
-            "qty": int(qty),
-            "unit_price": pu,
-            "amount": montant
-        })
-
-    if line_items:
-        parsed["line_items"] = line_items
-
+    for key, pattern in regex_patterns.items():
+        match = re.search(pattern, text, re.MULTILINE)
+        if match:
+            value = match.group(1).strip()
+            # retrouver la coordonnée Y correspondant à la valeur
+            y_coord = None
+            for i, word in enumerate(data["text"]):
+                if value in word:
+                    y_coord = data["top"][i]
+                    break
+            parsed[key] = {"value": value, "y": y_coord}
     return parsed
 
+def classify_zone(y, page_height):
+    """Classe une donnée selon sa position Y en pourcentage"""
+    if y is None:
+        return "body"  # fallback
+    if y < page_height * 0.2:
+        return "header"
+    elif y < page_height * 0.8:
+        return "body"
+    else:
+        return "footer"
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 tesseract_runner4.py <fichier.pdf>")
-        sys.exit(1)
+# --- OCR et parsing ---
+for i, pil_img in enumerate(images, start=1):
+    img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+    height, width = img.shape[:2]
 
-    pdf_path = sys.argv[1]
-    print(f"📥 Lecture du fichier : {pdf_path}")
+    # OCR avec bbox
+    data = pytesseract.image_to_data(img, lang="fra", output_type=pytesseract.Output.DICT)
+    text = " ".join(data["text"])
 
-    structured = ocr_with_structure(pdf_path)
+    # Extraction regex + Y coord
+    parsed_with_y = parse_fields(text, data)
 
-    enriched = []
-    for page in structured:
-        parsed = parse_invoice(page)
-        enriched.append({"page": page["page"], "parsed": parsed})
+    # Version brute (valeurs uniquement)
+    parsed = {k: v["value"] for k, v in parsed_with_y.items()}
 
-    print("✅ OCR + parsing terminé")
-    print(json.dumps(enriched, indent=2, ensure_ascii=False))
+    # Classement dynamique en zones
+    zones = {"header": {}, "body": {}, "footer": {}}
+    for key, field in parsed_with_y.items():
+        zone = classify_zone(field["y"], height)
+        zones[zone][key] = field["value"]
+
+    results.append({
+        "page": i,
+        "parsed": parsed,   # JSON brut (valeurs uniquement)
+        "zones": zones      # classé par zones dynamiques
+    })
+
+# --- Affichage final ---
+print("✅ OCR + parsing terminé")
+
+# JSON brut
+print("\n📊 Résultat brut")
+print(json.dumps([{"page": r["page"], "parsed": r["parsed"]} for r in results],
+                 indent=2, ensure_ascii=False))
+
+# JSON réorganisé par zones dynamiques
+print("\n🗂️ Données classées par zones (header/body/footer dynamiques)")
+for page in results:
+    print(json.dumps(page["zones"], indent=2, ensure_ascii=False))
