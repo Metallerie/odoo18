@@ -27,7 +27,7 @@ results = []
 # --- Chargement regex depuis ton fichier JSON ---
 regex_file = os.path.join(
     os.path.dirname(__file__),
-    "../odoo18/myaddons/mindee_ai/regex/ccl_regex.json"
+    "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/regex/ccl_regex.json"
 )
 with open(regex_file, "r", encoding="utf-8") as f:
     regex_patterns = json.load(f)
