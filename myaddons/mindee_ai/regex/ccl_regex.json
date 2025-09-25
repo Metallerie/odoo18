@@ -1,11 +1,17 @@
 {
-  "update_count": 0,
+  "update_count": 1,
   "fields": {
     "invoice_number": [
       "(?:FACTURE|Facture)\\s*(?:N°|No|Numéro)?\\s*[:\\-]?\\s*([A-Z0-9\\-\\/]+)"
     ],
     "invoice_date": [
       "(?:Date facture|Date)\\s*[:\\-]?\\s*(\\d{2}[\\/\\-]\\d{2}[\\/\\-]\\d{4})"
+    ],
+    "client_id": [
+      "Client\\s*:?\\s*([0-9]+)"
+    ],
+    "client_name": [
+      "Client\\s*:?\\s*[0-9]+\\s+([A-ZÉÈÀÙÂÊÎÔÛÇ\\s\\-]+)"
     ],
     "siren": [
       "(?:SIREN|RCS)\\s*:?\\s*(\\d{9})"
@@ -30,6 +36,16 @@
     ],
     "total_ttc": [
       "(?:NET\\s+À\\s+PAYER|TOTAL\\s+TTC)\\s*[:\\-]?\\s*([0-9.,]+)"
+    ],
+    "fournisseur": [
+      "(Comptoir Commercial du Languedoc)",
+      "([A-ZÉÈÀÙÂÊÎÔÛÇ\\s\\-]+)\\s+-\\s+SIÈGE SOCIAL"
+    ],
+    "fournisseur_address": [
+      "SIÈGE SOCIAL\\s*:\\s*([A-Z0-9ÉÈÀÙÂÊÎÔÛÇ\\s,\\-]+)"
+    ],
+    "capital": [
+      "Capital\\s+de\\s+([0-9.,]+)"
     ],
     "line_items": [
       "^(\\d{5,})\\s+([A-Z0-9ÉÈÀÙÂÊÎÔÛÇ\\s\\-]+)\\s+([0-9.,]+)\\s+(ML|KG|PI|Pl)\\s+([0-9.,]+)\\s+([0-9.,]+)(?:\\s+(\\d+))?$"
