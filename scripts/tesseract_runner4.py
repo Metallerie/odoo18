@@ -78,6 +78,11 @@ for i, pil_img in enumerate(images, start=1):
     # OCR avec bbox
     data = pytesseract.image_to_data(img, lang="fra", output_type=pytesseract.Output.DICT)
     text = " ".join(data["text"])
+    
+    print("\n📄 Texte OCR brut (page", i, "):\n")
+    print(text)
+    print("\n"+"-"*80+"\n")
+
 
     # Extraction regex + Y coord
     parsed_with_y = parse_fields(text, data)
