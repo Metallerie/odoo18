@@ -27,33 +27,37 @@ results = []
 # --- Chargement regex depuis ton fichier JSON ---
 regex_file = os.path.join(
     os.path.dirname(__file__),
-    "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/regex/ccl_regex.json"
+    "../odoo18/myaddons/mindee_ai/regex/ccl_regex.json"
 )
 with open(regex_file, "r", encoding="utf-8") as f:
     regex_patterns = json.load(f)
-    
+
 def parse_fields(text, data):
-    """Extrait les champs via regex (retourne valeurs + y pour zonage)"""
+    """Extrait les champs via regex (valeur + coord y pour zonage)"""
     parsed = {}
     for key, pattern in regex_patterns.items():
-        # si c'est un dict → on prend pattern["pattern"]
         if isinstance(pattern, dict):
             pattern = pattern.get("pattern", "")
         if not isinstance(pattern, str):
-            continue  # sécurité
-        
+            continue
+
         match = re.search(pattern, text, re.MULTILINE)
         if match:
-            value = match.group(1).strip()
+            # ✅ Sécurité : si pas de groupe capturant, on prend group(0)
+            if match.lastindex and match.lastindex >= 1:
+                value = match.group(1).strip()
+            else:
+                value = match.group(0).strip()
+
             # retrouver la coordonnée Y correspondant à la valeur
             y_coord = None
             for i, word in enumerate(data["text"]):
                 if value in word:
                     y_coord = data["top"][i]
                     break
+
             parsed[key] = {"value": value, "y": y_coord}
     return parsed
-
 
 def classify_zone(y, page_height):
     """Classe une donnée selon sa position Y en pourcentage"""
@@ -89,8 +93,8 @@ for i, pil_img in enumerate(images, start=1):
 
     results.append({
         "page": i,
-        "parsed": parsed,   # JSON brut (valeurs uniquement)
-        "zones": zones      # classé par zones dynamiques
+        "parsed": parsed,   # JSON brut
+        "zones": zones      # JSON zones
     })
 
 # --- Affichage final ---
