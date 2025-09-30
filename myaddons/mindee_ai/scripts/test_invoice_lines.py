@@ -22,46 +22,63 @@ def run_ocr(pdf_path: Path):
         sys.exit(1)
     return json.loads(result.stdout.strip())
 
-def parse_invoice_lines(ocr_data):
-    """Extrait les lignes de facture depuis OCR JSON (phrases)."""
+# ---------------- Extraction des lignes de tableau ----------------
+
+def extract_table_lines(phrases):
+    """Récupère uniquement les lignes du tableau (entre en-tête et TOTAL)."""
     lines = []
+    in_table = False
+    buffer = ""
 
-    for page in ocr_data.get("pages", []):
-        print(f"\n📄 --- Page {page['page']} ---")
-        for i, phrase in enumerate(page.get("phrases", []), 1):
-            print(f"{i:02d}: {phrase}")
+    for ph in phrases:
+        if "Réf. Désignation" in ph:  # début tableau
+            in_table = True
+            continue
+        if in_table and (ph.startswith("Ventilation") or ph.startswith("TOTAL")):
+            break
 
-        text = "\n".join(page.get("phrases", []))
+        if in_table:
+            buffer += " " + ph.strip()
+            nums = re.findall(r"\d+[,.]?\d*", buffer)
 
-        # Regex adaptée : Qté | PU | Total (ex: "2,00  15,30  30,60")
-        regex = re.compile(
-            r"(?P<product>.+?)\s+"
-            r"(?P<qty>\d+[,.]?\d*)\s+"
-            r"(?P<pu>\d+[,.]?\d*)\s+"
-            r"(?P<total>\d+[,.]?\d*)"
-        )
-
-        print("\n🔎 Matches trouvés :")
-        for m in regex.finditer(text):
-            qty = float(m.group("qty").replace(",", "."))
-            pu = float(m.group("pu").replace(",", "."))
-            total = float(m.group("total").replace(",", "."))
-            product = m.group("product").strip()
-
-            print(f"👉 {product} | Qté={qty} | PU={pu} | Total={total}")
-
-            if abs((qty * pu) - total) < 0.05:
-                lines.append({
-                    "product": product,
-                    "qty": qty,
-                    "price_unit": pu,
-                    "subtotal": total,
-                    "tax": 0.0,
-                })
-            else:
-                print(f"⚠️ Incohérence: {qty}*{pu} != {total}")
+            # On valide une ligne quand on a au moins 4 nombres (Qté, PU, Montant, TVA)
+            if len(nums) >= 4:
+                lines.append(buffer.strip())
+                buffer = ""
 
     return lines
+
+def parse_table_line(line):
+    """Découpe une ligne en colonnes (Réf, Désignation, Qté, PU, Montant, TVA)."""
+    parts = line.split()
+    ref = parts[0]
+
+    # Récupère les 4 derniers nombres (Qté, PU, Montant, TVA)
+    nums = re.findall(r"\d+[,.]?\d*", line)
+    if len(nums) < 4:
+        return None
+
+    qty = nums[-4]
+    pu = nums[-3]
+    montant = nums[-2]
+    tva = nums[-1]
+
+    # Désignation = tout entre réf et le premier nombre trouvé
+    desig_zone = line.replace(ref, "", 1)
+    for n in [qty, pu, montant, tva]:
+        desig_zone = desig_zone.replace(n, "")
+    designation = desig_zone.strip()
+
+    return {
+        "ref": ref,
+        "designation": designation,
+        "qty": qty.replace(",", "."),
+        "price_unit": pu.replace(",", "."),
+        "total": montant.replace(",", "."),
+        "tva": tva,
+    }
+
+# ---------------- Main ----------------
 
 def main():
     if len(sys.argv) < 2:
@@ -74,10 +91,17 @@ def main():
         sys.exit(1)
 
     ocr_data = run_ocr(pdf_path)
-    invoice_lines = parse_invoice_lines(ocr_data)
 
-    print("\n✅ Lignes extraites :")
-    print(json.dumps(invoice_lines, indent=2, ensure_ascii=False))
+    all_lines = []
+    for page in ocr_data.get("pages", []):
+        table_lines = extract_table_lines(page.get("phrases", []))
+        for l in table_lines:
+            parsed = parse_table_line(l)
+            if parsed:
+                all_lines.append(parsed)
+
+    print("\n✅ Lignes de facture extraites :")
+    print(json.dumps(all_lines, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()
