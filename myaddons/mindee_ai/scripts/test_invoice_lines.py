@@ -41,41 +41,64 @@ def extract_table_lines(phrases):
             buffer += " " + ph.strip()
             nums = re.findall(r"\d+[,.]?\d*", buffer)
 
-            # On valide une ligne quand on a au moins 4 nombres (Qté, PU, Montant, TVA)
-            if len(nums) >= 4:
+            # On valide une ligne quand on a au moins 3 nombres (Qté, PU, Total)
+            if len(nums) >= 3:
                 lines.append(buffer.strip())
                 buffer = ""
 
     return lines
 
-def parse_table_line(line):
-    """Découpe une ligne en colonnes (Réf, Désignation, Qté, PU, Montant, TVA)."""
+def parse_table_line(line, debug=False):
+    """Découpe une ligne en colonnes (Réf, Désignation, Qté, PU, Montant)."""
     parts = line.split()
     ref = parts[0]
 
-    # Récupère les 4 derniers nombres (Qté, PU, Montant, TVA)
-    nums = re.findall(r"\d+[,.]?\d*", line)
-    if len(nums) < 4:
+    # 1️⃣ Vérifie que le "ref" ressemble à un code article
+    if not re.match(r"^[A-Za-z0-9\-]+$", ref):
+        if debug:
+            print(f"⚠️ Ignorée (pas de réf valide) → {line}")
         return None
 
-    qty = nums[-4]
-    pu = nums[-3]
-    montant = nums[-2]
-    tva = nums[-1]
+    # 2️⃣ Récupère les nombres
+    nums = re.findall(r"\d+[,.]?\d*", line)
+    if len(nums) < 3:
+        if debug:
+            print(f"⚠️ Ignorée (pas assez de nombres) → {line}")
+        return None
 
-    # Désignation = tout entre réf et le premier nombre trouvé
+    qty, pu, montant = nums[-3], nums[-2], nums[-1]
+
+    # 3️⃣ Convertit en float
+    try:
+        qty_f = float(qty.replace(",", "."))
+        pu_f = float(pu.replace(",", "."))
+        montant_f = float(montant.replace(",", "."))
+    except ValueError:
+        if debug:
+            print(f"⚠️ Ignorée (conversion impossible) → {line}")
+        return None
+
+    # 4️⃣ Vérifie cohérence PU * Qté ≈ Montant
+    if not (abs((qty_f * pu_f) - montant_f) < max(0.05, 0.01 * montant_f)):
+        if debug:
+            print(f"⚠️ Ignorée (incohérence: {qty_f}*{pu_f} != {montant_f}) → {line}")
+        return None
+
+    # 5️⃣ Désignation = tout entre ref et qty
     desig_zone = line.replace(ref, "", 1)
-    for n in [qty, pu, montant, tva]:
+    for n in [qty, pu, montant]:
         desig_zone = desig_zone.replace(n, "")
     designation = desig_zone.strip()
+
+    if debug:
+        print(f"✅ Acceptée → Ref={ref} | Désignation={designation} | Qté={qty_f} | PU={pu_f} | Total={montant_f}")
 
     return {
         "ref": ref,
         "designation": designation,
-        "qty": qty.replace(",", "."),
-        "price_unit": pu.replace(",", "."),
-        "total": montant.replace(",", "."),
-        "tva": tva,
+        "qty": qty_f,
+        "price_unit": pu_f,
+        "total": montant_f,
     }
 
 # ---------------- Main ----------------
@@ -94,13 +117,14 @@ def main():
 
     all_lines = []
     for page in ocr_data.get("pages", []):
+        print(f"\n📄 --- Analyse page {page['page']} ---")
         table_lines = extract_table_lines(page.get("phrases", []))
         for l in table_lines:
-            parsed = parse_table_line(l)
+            parsed = parse_table_line(l, debug=True)
             if parsed:
                 all_lines.append(parsed)
 
-    print("\n✅ Lignes de facture extraites :")
+    print("\n✅ Lignes de facture retenues :")
     print(json.dumps(all_lines, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
