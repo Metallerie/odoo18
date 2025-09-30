@@ -21,14 +21,32 @@ class AccountMove(models.Model):
 
     # ---------------- Utils ----------------
     def _normalize_date(self, date_str):
+        """Normalise les formats de date issus de l'OCR"""
         if not date_str:
             return None
-        s = str(date_str).strip().replace("-", "/").replace(".", "/")
-        for fmt in ("%d/%m/%Y", "%Y/%m/%d", "%d-%m-%Y", "%Y-%m-%d", "%d/%m/%y", "%d %B %Y", "%d %b %Y"):
+
+        s = str(date_str).strip()
+
+        # 🔧 Corrections fréquentes OCR
+        s = s.replace("O", "0")  # O majuscule en 0
+        s = s.replace("-", "/").replace(".", "/")
+
+        # 🔧 Formats classiques
+        formats = [
+            "%d/%m/%Y",
+            "%d/%m/%y",
+            "%Y/%m/%d",
+            "%d %B %Y",   # ex: 02 Avril 2025
+            "%d %b %Y",   # ex: 02 Avr 2025
+        ]
+
+        for fmt in formats:
             try:
                 return datetime.strptime(s, fmt).date()
             except Exception:
                 continue
+
+        _logger.warning("[OCR][DATE] Impossible de parser la date: %s", date_str)
         return None
 
     def _normalize_text(self, val):
@@ -89,17 +107,19 @@ class AccountMove(models.Model):
 
             # 🔎 Regex détection numéro + date
             raw_text = " ".join(sum([p.get("phrases", []) for p in ocr_data.get("pages", [])], []))
+
             invoice_regex = re.compile(
                 r"(?:n[°ºo]\s*(?P<invoice_number>[\w\-\/]+)).{0,40}?"
-                r"(?P<invoice_date>\d{1,2}[\/\-\.\s]?\w+[\/\-\.\s]?\d{2,4})",
+                r"(?P<invoice_date>\d{1,2}\s*(?:janv|févr|fevr|mars|avr|mai|juin|juil|août|aout|sept|oct|nov|déc|dec|[A-Za-z]+|[0-9]{1,2})[\s\.\/\-]*\d{2,4})",
                 re.IGNORECASE,
             )
+
             m = invoice_regex.search(raw_text)
             if m:
                 parsed.setdefault("invoice_number", m.group("invoice_number"))
                 parsed.setdefault("invoice_date", m.group("invoice_date"))
                 _logger.warning("[OCR][REGEX] Found invoice_number=%s, invoice_date=%s",
-                                parsed["invoice_number"], parsed["invoice_date"])
+                                parsed.get("invoice_number"), parsed.get("invoice_date"))
 
             vals = {}
             if parsed.get("invoice_date"):
