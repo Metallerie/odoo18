@@ -1,14 +1,33 @@
+# -*- coding: utf-8 -*-
 import base64
 import json
 import logging
 import re
 import subprocess
-from datetime import datetime
+import unicodedata
+from datetime import date, datetime
+
 from odoo import models, fields
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+
+MONTHS_FR_MAP = {
+    # sans accents
+    "janvier": "01", "janv": "01", "jan": "01",
+    "fevrier": "02", "fevr": "02", "fev": "02",
+    "mars": "03",
+    "avril": "04", "avr": "04",
+    "mai": "05",
+    "juin": "06",
+    "juillet": "07", "juil": "07",
+    "aout": "08",
+    "septembre": "09", "sept": "09",
+    "octobre": "10", "oct": "10",
+    "novembre": "11", "nov": "11",
+    "decembre": "12", "dec": "12",
+}
 
 class AccountMove(models.Model):
     _inherit = "account.move"
@@ -20,37 +39,137 @@ class AccountMove(models.Model):
     )
 
     # ---------------- Utils ----------------
+    def _strip_accents(self, s):
+        if not s:
+            return s
+        return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+
+    def _preclean_text(self, s):
+        """Corrige les confusions OCR courantes et normalise l'espace."""
+        if not s:
+            return s
+        # normalisation espace
+        s = " ".join(str(s).split())
+
+        # remplacements ciblés chiffres/lettres
+        #  O -> 0 lorsqu'il est au début d'un jour/mois (ex: 'O2 Avril 2025')
+        s = re.sub(r"\bO(?=\d)", "0", s)
+        # I/l entre chiffres -> 1 (ex: '2l' -> '21')
+        s = re.sub(r"(?<=\d)[Il](?=\d)", "1", s)
+        # tirets/points -> slash pour simplifier le parsing
+        s = s.replace("-", "/").replace(".", "/")
+
+        return s
+
     def _normalize_date(self, date_str):
-        """Normalise les formats de date issus de l'OCR"""
+        """Normalise une date FR (texte ou numérique) vers un objet date.
+        Ne dépend PAS du locale. Gère 'O2 Avril 2025', '02/04/2025', '2/4/25', etc.
+        """
         if not date_str:
             return None
 
-        s = str(date_str).strip()
+        raw = str(date_str).strip()
+        cleaned = self._preclean_text(raw)
+        cleaned_lc = cleaned.lower()
+        cleaned_lc_noacc = self._strip_accents(cleaned_lc)
 
-        # 🔧 Corrections fréquentes OCR
-        s = s.replace("O", "0")  # O majuscule en 0
-        s = s.replace("-", "/").replace(".", "/")
-
-        # 🔧 Formats classiques
-        formats = [
-            "%d/%m/%Y",
-            "%d/%m/%y",
-            "%Y/%m/%d",
-            "%d %B %Y",   # ex: 02 Avril 2025
-            "%d %b %Y",   # ex: 02 Avr 2025
-        ]
-
-        for fmt in formats:
+        # 1) formats numériques :  dd/mm/yyyy  | d/m/yy
+        m = re.search(
+            r"(?P<d>[0-9O]{1,2})\s*[\/]\s*(?P<m>[0-9O]{1,2})\s*[\/]\s*(?P<y>\d{2,4})",
+            cleaned_lc_noacc,
+        )
+        if m:
+            d = m.group("d").replace("O", "0")
+            mth = m.group("m").replace("O", "0")
+            y = m.group("y")
             try:
-                return datetime.strptime(s, fmt).date()
+                dd = int(d)
+                mm = int(mth)
+                yy = int(y)
+                if yy < 100:
+                    yy = 2000 + yy if yy <= 69 else 1900 + yy
+                return date(yy, mm, dd)
             except Exception:
-                continue
+                pass  # tente le format texte
 
-        _logger.warning("[OCR][DATE] Impossible de parser la date: %s", date_str)
+        # 2) formats texte : dd <mois fr> yyyy
+        #    accepte '02 Avril 2025', '2 avr 25', '02 decembre 2025'...
+        m2 = re.search(
+            r"(?P<d>[0-9O]{1,2})\s+"
+            r"(?P<mon>[a-zA-Z\u00C0-\u017F\.]+)\s+"
+            r"(?P<y>\d{2,4})",
+            cleaned_lc,
+        )
+        if m2:
+            d = m2.group("d").replace("O", "0")
+            mon_raw = m2.group("mon").replace(".", "")
+            mon_key = self._strip_accents(mon_raw.lower())
+            y = m2.group("y")
+
+            mm = MONTHS_FR_MAP.get(mon_key)
+            if mm:
+                try:
+                    dd = int(d)
+                    yy = int(y)
+                    if yy < 100:
+                        yy = 2000 + yy if yy <= 69 else 1900 + yy
+                    return date(yy, int(mm), dd)
+                except Exception:
+                    pass
+
+        _logger.warning("[OCR][DATE] Parse KO: '%s' -> cleaned='%s'", date_str, cleaned)
         return None
 
     def _normalize_text(self, val):
         return (val or "").strip().lower()
+
+    def _extract_number_and_date(self, text, window=140):
+        """Ancre sur 'n°' et essaie de trouver une date dans une fenêtre proche."""
+        if not text:
+            return (None, None)
+
+        t = self._preclean_text(text)
+
+        # n° / nº / no / n°°
+        num_pat = re.compile(
+            r"\bn(?:[°ºo]|um(?:ero)?)\s*(?P<num>[A-Za-z0-9][\w\-\/\.]*)",
+            re.IGNORECASE,
+        )
+
+        # dates possibles (numérique ou texte FR), tolérance 'O' en tête
+        date_num_pat = re.compile(
+            r"(?P<d>[0-9O]{1,2})\s*[\/\-\.]\s*(?P<m>[0-9O]{1,2})\s*[\/\-\.]\s*(?P<y>\d{2,4})"
+        )
+        date_txt_pat = re.compile(
+            r"(?P<d>[0-9O]{1,2})\s+(?P<mon>[A-Za-z\u00C0-\u017F\.]+)\s+(?P<y>\d{2,4})",
+            re.IGNORECASE,
+        )
+
+        for m in num_pat.finditer(t):
+            inv_num = m.group("num")
+            start = m.end()
+            zone = t[start : start + window]
+
+            # priorité : motif "du <date>" si présent
+            m_du = re.search(r"\bdu\s+(?P<rest>.+)", zone, re.IGNORECASE)
+            zone_scan = m_du.group("rest") if m_du else zone
+
+            m_dn = date_num_pat.search(zone_scan)
+            m_dt = date_txt_pat.search(zone_scan)
+
+            if m_dn:
+                d = m_dn.group("d"); mth = m_dn.group("m"); y = m_dn.group("y")
+                candidate = f"{d}/{mth}/{y}"
+                return (inv_num, candidate)
+
+            if m_dt:
+                d = m_dt.group("d")
+                mon = m_dt.group("mon")
+                y = m_dt.group("y")
+                candidate = f"{d} {mon} {y}"
+                return (inv_num, candidate)
+
+        return (None, None)
 
     # ---------------- Main action ----------------
     def action_ocr_fetch(self):
@@ -103,27 +222,33 @@ class AccountMove(models.Model):
             # 4️⃣ Lecture des données extraites
             parsed = {}
             if ocr_data.get("pages"):
-                parsed = ocr_data["pages"][0].get("parsed", {})
+                parsed = ocr_data["pages"][0].get("parsed", {}) or {}
 
-            # 🔎 Regex détection numéro + date
-            raw_text = " ".join(sum([p.get("phrases", []) for p in ocr_data.get("pages", [])], []))
+            # 🔎 Texte brut (phrases concaténées) + pré-nettoyage
+            phrases = []
+            for p in ocr_data.get("pages", []):
+                phrases.extend(p.get("phrases", []))
+            raw_text = " ".join(phrases)
+            raw_text_clean = self._preclean_text(raw_text)
 
-            invoice_regex = re.compile(
-                r"(?:n[°ºo]\s*(?P<invoice_number>[\w\-\/]+)).{0,40}?"
-                r"(?P<invoice_date>\d{1,2}\s*(?:janv|févr|fevr|mars|avr|mai|juin|juil|août|aout|sept|oct|nov|déc|dec|[A-Za-z]+|[0-9]{1,2})[\s\.\/\-]*\d{2,4})",
-                re.IGNORECASE,
-            )
-
-            m = invoice_regex.search(raw_text)
-            if m:
-                parsed.setdefault("invoice_number", m.group("invoice_number"))
-                parsed.setdefault("invoice_date", m.group("invoice_date"))
-                _logger.warning("[OCR][REGEX] Found invoice_number=%s, invoice_date=%s",
-                                parsed.get("invoice_number"), parsed.get("invoice_date"))
+            # 🔎 Extraction ancrée n° + date dans la zone proche
+            if not parsed.get("invoice_number") or not parsed.get("invoice_date"):
+                inv_num, inv_date_raw = self._extract_number_and_date(raw_text_clean, window=160)
+                if inv_num and not parsed.get("invoice_number"):
+                    parsed["invoice_number"] = inv_num
+                if inv_date_raw and not parsed.get("invoice_date"):
+                    parsed["invoice_date"] = inv_date_raw
+                _logger.warning("[OCR][ANCHOR] num=%s date_raw=%s", inv_num, inv_date_raw)
 
             vals = {}
+            # 🗓 normalisation date robuste FR
             if parsed.get("invoice_date"):
-                vals["invoice_date"] = self._normalize_date(parsed["invoice_date"])
+                norm = self._normalize_date(parsed["invoice_date"])
+                if norm:
+                    vals["invoice_date"] = norm
+                else:
+                    _logger.warning("[OCR] Date non normalisée: '%s'", parsed["invoice_date"])
+
             if parsed.get("invoice_number"):
                 vals["ref"] = parsed["invoice_number"]
 
@@ -132,16 +257,16 @@ class AccountMove(models.Model):
             # 5️⃣ Application des règles OCR
             rules = self.env["ocr.configuration.rule"].search([("active", "=", True)], order="sequence")
 
-            invoice_number = parsed.get("invoice_number", "")
-            invoice_date = parsed.get("invoice_date", "")
-            partner_name_ocr = parsed.get("supplier_name", "")
+            invoice_number = parsed.get("invoice_number", "") or ""
+            invoice_date = parsed.get("invoice_date", "") or ""
+            partner_name_ocr = parsed.get("supplier_name", "") or ""
 
             _logger.warning("[OCR] Checking %s rules", len(rules))
 
             for rule in rules:
                 value = None
                 if rule.variable == "partner_name":
-                    value = partner_name_ocr or raw_text
+                    value = partner_name_ocr or raw_text_clean
                 elif rule.variable == "invoice_number":
                     value = invoice_number
                 elif rule.variable == "invoice_date":
@@ -161,17 +286,20 @@ class AccountMove(models.Model):
                     elif rule.operator == "endswith":
                         matched = val.endswith(cmp)
 
+                    # fallback contains pour les partenaires
                     if rule.variable == "partner_name" and not matched:
                         if cmp in val:
                             matched = True
                             _logger.warning("[OCR][RULE] Fallback contains appliqué pour '%s'", rule.name)
 
-                _logger.warning("[OCR][RULE] Testing rule '%s' (var=%s, op=%s, val_text=%s) → %s",
-                                rule.name, rule.variable, rule.operator, rule.value_text, matched)
+                _logger.warning(
+                    "[OCR][RULE] Testing '%s' (var=%s, op=%s, val_text=%s) → %s",
+                    rule.name, rule.variable, rule.operator, rule.value_text, matched
+                )
 
                 if matched and rule.partner_id:
                     vals["partner_id"] = rule.partner_id.id
-                    _logger.warning("[OCR][RULE] MATCHED: rule '%s' → partner '%s'",
+                    _logger.warning("[OCR][RULE] MATCHED: '%s' → partner '%s'",
                                     rule.name, rule.partner_id.name)
                     break
 
