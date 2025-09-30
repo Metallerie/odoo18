@@ -49,22 +49,22 @@ def extract_table_lines(phrases):
     return lines
 
 def parse_table_line(line, debug=False):
-    """Découpe une ligne en colonnes (Réf, Désignation, Qté, PU, Montant, TVA)."""
+    """Découpe une ligne en colonnes, retourne facture OU commentaire."""
     parts = line.split()
     ref = parts[0]
 
     # 1️⃣ Vérifie que le "ref" ressemble à un code article
     if not re.match(r"^[A-Za-z0-9\-]+$", ref):
         if debug:
-            print(f"⚠️ Ignorée (pas de réf valide) → {line}")
-        return None
+            print(f"ℹ️ Commentaire (pas de réf valide) → {line}")
+        return {"type": "commentaire", "raw": line}
 
     # 2️⃣ Récupère les nombres
     nums = re.findall(r"\d+[,.]?\d*", line)
     if len(nums) < 4:
         if debug:
-            print(f"⚠️ Ignorée (pas assez de nombres) → {line}")
-        return None
+            print(f"ℹ️ Commentaire (pas assez de nombres) → {line}")
+        return {"type": "commentaire", "raw": line}
 
     qty, pu, montant, tva = nums[-4], nums[-3], nums[-2], nums[-1]
 
@@ -76,14 +76,14 @@ def parse_table_line(line, debug=False):
         tva_f = float(tva.replace(",", "."))
     except ValueError:
         if debug:
-            print(f"⚠️ Ignorée (conversion impossible) → {line}")
-        return None
+            print(f"ℹ️ Commentaire (conversion impossible) → {line}")
+        return {"type": "commentaire", "raw": line}
 
     # 4️⃣ Vérifie cohérence PU * Qté ≈ Montant
     if not (abs((qty_f * pu_f) - montant_f) < max(0.05, 0.01 * montant_f)):
         if debug:
-            print(f"⚠️ Ignorée (incohérence: {qty_f}*{pu_f} != {montant_f}) → {line}")
-        return None
+            print(f"ℹ️ Commentaire (incohérence: {qty_f}*{pu_f} != {montant_f}) → {line}")
+        return {"type": "commentaire", "raw": line}
 
     # 5️⃣ Désignation = tout entre ref et qty
     desig_zone = line.replace(ref, "", 1)
@@ -92,9 +92,10 @@ def parse_table_line(line, debug=False):
     designation = desig_zone.strip()
 
     if debug:
-        print(f"✅ Acceptée → Ref={ref} | Désignation={designation} | Qté={qty_f} | PU={pu_f} | Total={montant_f} | TVA={tva_f}")
+        print(f"✅ Facture → Ref={ref} | Désignation={designation} | Qté={qty_f} | PU={pu_f} | Total={montant_f} | TVA={tva_f}")
 
     return {
+        "type": "facture",
         "ref": ref,
         "designation": designation,
         "qty": qty_f,
@@ -117,17 +118,16 @@ def main():
 
     ocr_data = run_ocr(pdf_path)
 
-    all_lines = []
+    results = []
     for page in ocr_data.get("pages", []):
         print(f"\n📄 --- Analyse page {page['page']} ---")
         table_lines = extract_table_lines(page.get("phrases", []))
         for l in table_lines:
             parsed = parse_table_line(l, debug=True)
-            if parsed:
-                all_lines.append(parsed)
+            results.append(parsed)
 
-    print("\n✅ Lignes de facture retenues :")
-    print(json.dumps(all_lines, indent=2, ensure_ascii=False))
+    print("\n📊 Résultat final (factures + commentaires) :")
+    print(json.dumps(results, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()
