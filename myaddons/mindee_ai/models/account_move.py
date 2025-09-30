@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import re
 import subprocess
 from datetime import datetime
 from odoo import models, fields
@@ -23,7 +24,7 @@ class AccountMove(models.Model):
         if not date_str:
             return None
         s = str(date_str).strip().replace("-", "/").replace(".", "/")
-        for fmt in ("%d/%m/%Y", "%Y/%m/%d", "%d-%m-%Y", "%Y-%m-%d", "%d/%m/%y"):
+        for fmt in ("%d/%m/%Y", "%Y/%m/%d", "%d-%m-%Y", "%Y-%m-%d", "%d/%m/%y", "%d %B %Y", "%d %b %Y"):
             try:
                 return datetime.strptime(s, fmt).date()
             except Exception:
@@ -86,6 +87,20 @@ class AccountMove(models.Model):
             if ocr_data.get("pages"):
                 parsed = ocr_data["pages"][0].get("parsed", {})
 
+            # 🔎 Regex détection numéro + date
+            raw_text = " ".join(sum([p.get("phrases", []) for p in ocr_data.get("pages", [])], []))
+            invoice_regex = re.compile(
+                r"(?:n[°ºo]\s*(?P<invoice_number>[\w\-\/]+)).{0,40}?"
+                r"(?P<invoice_date>\d{1,2}[\/\-\.\s]?\w+[\/\-\.\s]?\d{2,4})",
+                re.IGNORECASE,
+            )
+            m = invoice_regex.search(raw_text)
+            if m:
+                parsed.setdefault("invoice_number", m.group("invoice_number"))
+                parsed.setdefault("invoice_date", m.group("invoice_date"))
+                _logger.warning("[OCR][REGEX] Found invoice_number=%s, invoice_date=%s",
+                                parsed["invoice_number"], parsed["invoice_date"])
+
             vals = {}
             if parsed.get("invoice_date"):
                 vals["invoice_date"] = self._normalize_date(parsed["invoice_date"])
@@ -97,7 +112,6 @@ class AccountMove(models.Model):
             # 5️⃣ Application des règles OCR
             rules = self.env["ocr.configuration.rule"].search([("active", "=", True)], order="sequence")
 
-            raw_text = " ".join(sum([p.get("phrases", []) for p in ocr_data.get("pages", [])], []))
             invoice_number = parsed.get("invoice_number", "")
             invoice_date = parsed.get("invoice_date", "")
             partner_name_ocr = parsed.get("supplier_name", "")
@@ -127,7 +141,6 @@ class AccountMove(models.Model):
                     elif rule.operator == "endswith":
                         matched = val.endswith(cmp)
 
-                    # 🔥 fallback contains pour les partenaires
                     if rule.variable == "partner_name" and not matched:
                         if cmp in val:
                             matched = True
