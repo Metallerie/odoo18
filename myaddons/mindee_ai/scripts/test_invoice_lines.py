@@ -2,51 +2,55 @@
 import json
 import re
 import sys
+import subprocess
 from pathlib import Path
 from pprint import pprint
 
-def load_ocr_json(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+# ⚙️ Config chemins
+VENV_PYTHON = "/data/odoo/odoo18-venv/bin/python3"
+TESSERACT_SCRIPT = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/scripts/tesseract_runner.py"
+
+def run_ocr(pdf_path: Path):
+    """Lance tesseract_runner.py sur un PDF et retourne le JSON"""
+    result = subprocess.run(
+        [VENV_PYTHON, TESSERACT_SCRIPT, str(pdf_path)],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        timeout=180, encoding="utf-8"
+    )
+    if result.returncode != 0:
+        print("❌ Erreur OCR:", result.stderr)
+        sys.exit(1)
+    return json.loads(result.stdout.strip())
 
 def parse_invoice_lines(ocr_data):
-    """Essaie d’extraire les lignes de facture depuis OCR JSON ou raw_text"""
+    """Extrait les lignes de facture depuis OCR JSON"""
     lines = []
 
-    # 1️⃣ Si déjà présent dans le JSON (cas Mindee)
+    # 🔎 Récupère tout le texte brut OCR
+    phrases = []
     for page in ocr_data.get("pages", []):
-        if "line_items" in page:
-            for item in page["line_items"]:
-                line = {
-                    "product": item.get("description") or item.get("label"),
-                    "qty": float(item.get("quantity") or 1),
-                    "price_unit": float(item.get("unit_price") or 0),
-                    "tax": float(item.get("tax_amount") or 0),
-                    "subtotal": float(item.get("total") or 0),
-                }
-                lines.append(line)
+        phrases.extend(page.get("phrases", []))
+    text = " ".join(phrases)
 
-    # 2️⃣ Sinon → parser dans le raw_text
-    if not lines:
-        phrases = []
-        for page in ocr_data.get("pages", []):
-            phrases.extend(page.get("phrases", []))
-        text = " ".join(phrases)
+    # 📝 Regex adaptée aux factures type CCL (Qté | PU | Montant)
+    regex = re.compile(
+        r"(?P<product>[A-Za-z0-9\s\-\.,]+?)\s+"
+        r"(?P<qty>\d+[,.]?\d*)\s+"
+        r"(?P<pu>\d+[,.]?\d*)\s+"
+        r"(?P<total>\d+[,.]?\d*)",
+        re.MULTILINE,
+    )
 
-        # Regex simple : "Désignation Qté PU Total TVA"
-        regex = re.compile(
-            r"(?P<product>[A-Za-z0-9\s\-]+)\s+"
-            r"(?P<qty>\d+[,.]?\d*)\s+"
-            r"(?P<pu>\d+[,.]?\d*)\s+"
-            r"(?P<total>\d+[,.]?\d*)",
-            re.MULTILINE,
-        )
-        for m in regex.finditer(text):
-            qty = float(m.group("qty").replace(",", "."))
-            pu = float(m.group("pu").replace(",", "."))
-            total = float(m.group("total").replace(",", "."))
+    for m in regex.finditer(text):
+        qty = float(m.group("qty").replace(",", "."))
+        pu = float(m.group("pu").replace(",", "."))
+        total = float(m.group("total").replace(",", "."))
+        product = m.group("product").strip()
+
+        # ⚖️ Vérifie cohérence PU * Qté ≈ Total
+        if abs((qty * pu) - total) < 0.05:
             lines.append({
-                "product": m.group("product").strip(),
+                "product": product,
                 "qty": qty,
                 "price_unit": pu,
                 "subtotal": total,
@@ -57,15 +61,22 @@ def parse_invoice_lines(ocr_data):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 test_invoice_lines.py <ocr_json_file>")
+        print("Usage: python3 test_invoice_lines.py <facture.pdf>")
         sys.exit(1)
 
-    path = Path(sys.argv[1])
-    ocr_data = load_ocr_json(path)
+    pdf_path = Path(sys.argv[1])
+    if not pdf_path.exists():
+        print(f"❌ Fichier introuvable : {pdf_path}")
+        sys.exit(1)
 
+    # 1️⃣ OCR
+    ocr_data = run_ocr(pdf_path)
+
+    # 2️⃣ Parsing des lignes
     invoice_lines = parse_invoice_lines(ocr_data)
 
-    print("✅ Lignes extraites :")
+    # 3️⃣ Résultat
+    print("\n✅ Lignes extraites :")
     pprint(invoice_lines)
 
 if __name__ == "__main__":
