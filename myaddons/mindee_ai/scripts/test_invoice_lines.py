@@ -41,15 +41,15 @@ def extract_table_lines(phrases):
             buffer += " " + ph.strip()
             nums = re.findall(r"\d+[,.]?\d*", buffer)
 
-            # On valide une ligne quand on a au moins 3 nombres (Qté, PU, Total)
-            if len(nums) >= 3:
+            # On valide une ligne quand on a au moins 4 nombres (Qté, PU, Montant, TVA)
+            if len(nums) >= 4:
                 lines.append(buffer.strip())
                 buffer = ""
 
     return lines
 
 def parse_table_line(line, debug=False):
-    """Découpe une ligne en colonnes (Réf, Désignation, Qté, PU, Montant)."""
+    """Découpe une ligne en colonnes (Réf, Désignation, Qté, PU, Montant, TVA)."""
     parts = line.split()
     ref = parts[0]
 
@@ -61,18 +61,19 @@ def parse_table_line(line, debug=False):
 
     # 2️⃣ Récupère les nombres
     nums = re.findall(r"\d+[,.]?\d*", line)
-    if len(nums) < 3:
+    if len(nums) < 4:
         if debug:
             print(f"⚠️ Ignorée (pas assez de nombres) → {line}")
         return None
 
-    qty, pu, montant = nums[-3], nums[-2], nums[-1]
+    qty, pu, montant, tva = nums[-4], nums[-3], nums[-2], nums[-1]
 
     # 3️⃣ Convertit en float
     try:
         qty_f = float(qty.replace(",", "."))
         pu_f = float(pu.replace(",", "."))
         montant_f = float(montant.replace(",", "."))
+        tva_f = float(tva.replace(",", "."))
     except ValueError:
         if debug:
             print(f"⚠️ Ignorée (conversion impossible) → {line}")
@@ -86,12 +87,12 @@ def parse_table_line(line, debug=False):
 
     # 5️⃣ Désignation = tout entre ref et qty
     desig_zone = line.replace(ref, "", 1)
-    for n in [qty, pu, montant]:
+    for n in [qty, pu, montant, tva]:
         desig_zone = desig_zone.replace(n, "")
     designation = desig_zone.strip()
 
     if debug:
-        print(f"✅ Acceptée → Ref={ref} | Désignation={designation} | Qté={qty_f} | PU={pu_f} | Total={montant_f}")
+        print(f"✅ Acceptée → Ref={ref} | Désignation={designation} | Qté={qty_f} | PU={pu_f} | Total={montant_f} | TVA={tva_f}")
 
     return {
         "ref": ref,
@@ -99,6 +100,7 @@ def parse_table_line(line, debug=False):
         "qty": qty_f,
         "price_unit": pu_f,
         "total": montant_f,
+        "tva": tva_f,
     }
 
 # ---------------- Main ----------------
