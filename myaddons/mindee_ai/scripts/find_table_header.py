@@ -1,5 +1,5 @@
 # find_table_header.py
-# Étape 4 : détecter en-tête, isoler tableau, clusteriser les colonnes
+# Étape stable : détecter en-tête et isoler tableau (lignes brutes)
 
 import sys, io, unicodedata, re
 import fitz  # PyMuPDF
@@ -87,44 +87,6 @@ def extract_table(lines, header_idx):
             break
     return table
 
-# ---------- Column clustering ----------
-def cluster_columns(xs, tol=50):
-    """Regroupe les X proches dans la même colonne"""
-    xs = sorted(xs)
-    clusters = []
-    for x in xs:
-        if not clusters:
-            clusters.append([x])
-        elif abs(x - sum(clusters[-1]) / len(clusters[-1])) <= tol:
-            clusters[-1].append(x)
-        else:
-            clusters.append([x])
-    return [int(sum(c) / len(c)) for c in clusters]
-
-def detect_columns(lines, tol=50, max_cols=8):
-    xs = []
-    for L in lines:
-        for w in L["words"]:
-            xs.append(w["x"])
-    if not xs:
-        return []
-    clusters = cluster_columns(xs, tol=tol)
-    # réduire si trop de colonnes
-    if len(clusters) > max_cols:
-        merged = []
-        for x in clusters:
-            if not merged or abs(x - merged[-1]) > tol:
-                merged.append(x)
-        clusters = merged
-    return clusters
-
-def assign_to_columns(line, col_positions):
-    cells = {i: [] for i in range(len(col_positions))}
-    for w in line["words"]:
-        idx = min(range(len(col_positions)), key=lambda i: abs(w["x"] - col_positions[i]))
-        cells[idx].append(w["text"])
-    return [" ".join(cells[i]) for i in range(len(col_positions))]
-
 # ---------- Main ----------
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -147,14 +109,9 @@ if __name__ == "__main__":
             print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
             print(f"   {lines[idx]['text']}")
 
-            # extraire bloc tableau
+            # Extraire bloc tableau brut
             table_zone = extract_table(lines, idx)
 
-            # détecter colonnes avec clustering
-            col_positions = detect_columns(table_zone, tol=50, max_cols=8)
-            print(f"\n   Colonnes détectées ({len(col_positions)}): {col_positions}")
-
-            print("\n   --- Tableau structuré ---")
-            for L in table_zone:
-                cells = assign_to_columns(L, col_positions) if col_positions else [L["text"]]
-                print(" | ".join(cells))
+            print("\n   --- Tableau brut ---")
+            for j, L in enumerate(table_zone, start=idx):
+                print(f" [{j:>3}] {L['text']}")
