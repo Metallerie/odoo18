@@ -7,17 +7,6 @@ import re
 from pdf2image import convert_from_path
 import pytesseract
 
-# ---------------- Config ----------------
-# Liste des unités connues (tu peux enrichir)
-KNOWN_UNITS = {
-    "m", "ml", "ml-o", "mm", "cm", "km",
-    "m2", "m³", "m3", "ft", "ft²", "ft³", "yd", "in", "in³",
-    "kg", "kg-o", "g", "lb", "oz", "t",
-    "l", "litre", "ml", "cl", "dl", "gal", "qt",
-    "pi", "u", "unité", "unités", "douzaines",
-    "jours", "heures"
-}
-
 # ---------------- OCR ----------------
 def run_ocr(pdf_path):
     pages_data = []
@@ -32,60 +21,43 @@ def run_ocr(pdf_path):
 # ---------------- Parsing ----------------
 def parse_invoice_line(line):
     tokens = line.split()
-    if not tokens:
-        return None
+    nums = []
 
-    result = {"raw": line}
+    # Normaliser séparateurs
+    for t in tokens:
+        tok = t.replace(",", ".")
+        if re.match(r"^\d+(\.\d+)?$", tok):
+            nums.append(tok)
 
-    # Ref = premier token alphanumérique long
-    ref = None
-    if re.match(r"^[A-Za-z0-9]{4,}$", tokens[0]):
-        ref = tokens[0]
-        tokens = tokens[1:]
+    result = {"raw": line, "type": "commentaire"}
 
-    result["ref"] = ref
-    qty = price_unit = total = tva = None
-    designation_parts = []
-    unit = None
+    if len(nums) >= 3:
+        # On prend les 3-4 derniers nombres comme qty, pu, total, (tva)
+        qty = float(nums[-4]) if len(nums) >= 4 else float(nums[-3])
+        price_unit = float(nums[-3]) if len(nums) >= 3 else None
+        total = float(nums[-2]) if len(nums) >= 2 else None
+        tva = float(nums[-1]) if len(nums) >= 1 else None
 
-    for tok in tokens:
-        clean_tok = tok.replace(",", ".")
-        if re.match(r"^\d+(\.\d+)?$", clean_tok):
-            val = float(clean_tok)
-            if qty is None:
-                qty = val
-            elif price_unit is None:
-                price_unit = val
-            elif total is None:
-                total = val
-            elif tva is None:
-                tva = val
-        elif tok.lower() in KNOWN_UNITS:
-            unit = tok
-        else:
-            designation_parts.append(tok)
+        # Désignation = tout avant les nombres de fin
+        split_idx = max(line.rfind(nums[-3]), line.rfind(nums[-2]))
+        designation = line[:split_idx].strip()
 
-    designation = " ".join(designation_parts)
+        result.update({
+            "designation": designation,
+            "qty": qty,
+            "price_unit": price_unit,
+            "total": total,
+            "tva": tva,
+            "type": "facture"
+        })
 
-    result.update({
-        "designation": designation.strip(),
-        "qty": qty,
-        "unit": unit,
-        "price_unit": price_unit,
-        "total": total,
-        "tva": tva
-    })
-
-    # Vérification cohérence
-    if qty is not None and price_unit is not None and total is not None:
-        if abs(qty * price_unit - total) < 0.5:  # tolérance
-            result["type"] = "facture"
-        else:
-            result["type"] = "commentaire"
-            result["reason"] = f"incohérence: {qty}*{price_unit} != {total}"
+        # Vérif cohérence
+        if qty and price_unit and total:
+            if abs(qty * price_unit - total) > 0.5:  # tolérance
+                result["type"] = "facture_suspecte"
+                result["reason"] = f"incohérence: {qty}*{price_unit} != {total}"
     else:
-        result["type"] = "commentaire"
-        result["reason"] = "données incomplètes"
+        result["reason"] = "moins de 3 nombres en fin de ligne"
 
     return result
 
@@ -108,18 +80,14 @@ if __name__ == "__main__":
         print(f"📄 --- Analyse page {page_idx} ---")
         for line in lines:
             parsed = parse_invoice_line(line)
-            if not parsed:
-                continue
-
             if parsed["type"] == "facture":
-                print(f"✅ Facture → Ref={parsed.get('ref')} | Désignation={parsed.get('designation')} "
-                      f"| Qté={parsed.get('qty')} {parsed.get('unit') or ''} | PU={parsed.get('price_unit')} "
-                      f"| Total={parsed.get('total')} | TVA={parsed.get('tva')}")
+                print(f"✅ Facture → {parsed}")
+            elif parsed["type"] == "facture_suspecte":
+                print(f"⚠️ Facture suspecte → {parsed}")
             else:
-                reason = parsed.get("reason", "autre")
-                print(f"ℹ️ Commentaire ({reason}) → {parsed['raw']}")
+                print(f"ℹ️ Commentaire → {parsed['raw']}")
 
             all_results.append(parsed)
 
-    print("\n📊 Résultat final (factures + commentaires) :")
+    print("\n📊 Résultat final :")
     print(json.dumps(all_results, indent=2, ensure_ascii=False))
