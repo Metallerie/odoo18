@@ -1,133 +1,125 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys
+import os
 import json
 import re
-import sys
-import subprocess
-from pathlib import Path
+from pdf2image import convert_from_path
+import pytesseract
 
-# ⚙️ Config chemins
-VENV_PYTHON = "/data/odoo/odoo18-venv/bin/python3"
-TESSERACT_SCRIPT = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/scripts/tesseract_runner.py"
+# ---------------- Config ----------------
+# Liste des unités connues (tu peux enrichir)
+KNOWN_UNITS = {
+    "m", "ml", "ml-o", "mm", "cm", "km",
+    "m2", "m³", "m3", "ft", "ft²", "ft³", "yd", "in", "in³",
+    "kg", "kg-o", "g", "lb", "oz", "t",
+    "l", "litre", "ml", "cl", "dl", "gal", "qt",
+    "pi", "u", "unité", "unités", "douzaines",
+    "jours", "heures"
+}
 
-def run_ocr(pdf_path: Path):
-    """Lance tesseract_runner.py sur un PDF et retourne le JSON"""
-    print(f"⚡ OCR lancé sur : {pdf_path}")
-    result = subprocess.run(
-        [VENV_PYTHON, TESSERACT_SCRIPT, str(pdf_path)],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        timeout=180, encoding="utf-8"
-    )
-    if result.returncode != 0:
-        print("❌ Erreur OCR:", result.stderr)
-        sys.exit(1)
-    return json.loads(result.stdout.strip())
+# ---------------- OCR ----------------
+def run_ocr(pdf_path):
+    pages_data = []
+    images = convert_from_path(pdf_path)
 
-# ---------------- Extraction des lignes de tableau ----------------
+    for idx, img in enumerate(images, start=1):
+        text = pytesseract.image_to_string(img, lang="fra")
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        pages_data.append((idx, lines))
+    return pages_data
 
-def extract_table_lines(phrases):
-    """Récupère uniquement les lignes du tableau (entre en-tête et TOTAL)."""
-    lines = []
-    in_table = False
-    buffer = ""
+# ---------------- Parsing ----------------
+def parse_invoice_line(line):
+    tokens = line.split()
+    if not tokens:
+        return None
 
-    for ph in phrases:
-        if "Réf. Désignation" in ph:  # début tableau
-            in_table = True
-            continue
-        if in_table and (ph.startswith("Ventilation") or ph.startswith("TOTAL")):
-            break
+    result = {"raw": line}
 
-        if in_table:
-            buffer += " " + ph.strip()
-            nums = re.findall(r"\d+[,.]?\d*", buffer)
+    # Ref = premier token alphanumérique long
+    ref = None
+    if re.match(r"^[A-Za-z0-9]{4,}$", tokens[0]):
+        ref = tokens[0]
+        tokens = tokens[1:]
 
-            # On valide une ligne quand on a au moins 4 nombres (Qté, PU, Montant, TVA)
-            if len(nums) >= 4:
-                lines.append(buffer.strip())
-                buffer = ""
+    result["ref"] = ref
+    qty = price_unit = total = tva = None
+    designation_parts = []
+    unit = None
 
-    return lines
+    for tok in tokens:
+        clean_tok = tok.replace(",", ".")
+        if re.match(r"^\d+(\.\d+)?$", clean_tok):
+            val = float(clean_tok)
+            if qty is None:
+                qty = val
+            elif price_unit is None:
+                price_unit = val
+            elif total is None:
+                total = val
+            elif tva is None:
+                tva = val
+        elif tok.lower() in KNOWN_UNITS:
+            unit = tok
+        else:
+            designation_parts.append(tok)
 
-def parse_table_line(line, debug=False):
-    """Découpe une ligne en colonnes, retourne facture OU commentaire."""
-    parts = line.split()
-    ref = parts[0]
+    designation = " ".join(designation_parts)
 
-    # 1️⃣ Vérifie que le "ref" ressemble à un code article
-    if not re.match(r"^[A-Za-z0-9\-]+$", ref):
-        if debug:
-            print(f"ℹ️ Commentaire (pas de réf valide) → {line}")
-        return {"type": "commentaire", "raw": line}
+    result.update({
+        "designation": designation.strip(),
+        "qty": qty,
+        "unit": unit,
+        "price_unit": price_unit,
+        "total": total,
+        "tva": tva
+    })
 
-    # 2️⃣ Récupère les nombres
-    nums = re.findall(r"\d+[,.]?\d*", line)
-    if len(nums) < 4:
-        if debug:
-            print(f"ℹ️ Commentaire (pas assez de nombres) → {line}")
-        return {"type": "commentaire", "raw": line}
+    # Vérification cohérence
+    if qty is not None and price_unit is not None and total is not None:
+        if abs(qty * price_unit - total) < 0.5:  # tolérance
+            result["type"] = "facture"
+        else:
+            result["type"] = "commentaire"
+            result["reason"] = f"incohérence: {qty}*{price_unit} != {total}"
+    else:
+        result["type"] = "commentaire"
+        result["reason"] = "données incomplètes"
 
-    qty, pu, montant, tva = nums[-4], nums[-3], nums[-2], nums[-1]
+    return result
 
-    # 3️⃣ Convertit en float
-    try:
-        qty_f = float(qty.replace(",", "."))
-        pu_f = float(pu.replace(",", "."))
-        montant_f = float(montant.replace(",", "."))
-        tva_f = float(tva.replace(",", "."))
-    except ValueError:
-        if debug:
-            print(f"ℹ️ Commentaire (conversion impossible) → {line}")
-        return {"type": "commentaire", "raw": line}
-
-    # 4️⃣ Vérifie cohérence PU * Qté ≈ Montant
-    if not (abs((qty_f * pu_f) - montant_f) < max(0.05, 0.01 * montant_f)):
-        if debug:
-            print(f"ℹ️ Commentaire (incohérence: {qty_f}*{pu_f} != {montant_f}) → {line}")
-        return {"type": "commentaire", "raw": line}
-
-    # 5️⃣ Désignation = tout entre ref et qty
-    desig_zone = line.replace(ref, "", 1)
-    for n in [qty, pu, montant, tva]:
-        desig_zone = desig_zone.replace(n, "")
-    designation = desig_zone.strip()
-
-    if debug:
-        print(f"✅ Facture → Ref={ref} | Désignation={designation} | Qté={qty_f} | PU={pu_f} | Total={montant_f} | TVA={tva_f}")
-
-    return {
-        "type": "facture",
-        "ref": ref,
-        "designation": designation,
-        "qty": qty_f,
-        "price_unit": pu_f,
-        "total": montant_f,
-        "tva": tva_f,
-    }
-
-# ---------------- Main ----------------
-
-def main():
+# ---------------- CLI ----------------
+if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 test_invoice_lines.py <facture.pdf>")
+        print("Usage: python test_invoice_lines.py <pdf_file>")
         sys.exit(1)
 
-    pdf_path = Path(sys.argv[1])
-    if not pdf_path.exists():
-        print(f"❌ Fichier introuvable : {pdf_path}")
+    pdf_file = sys.argv[1]
+    if not os.path.exists(pdf_file):
+        print(json.dumps({"error": f"File not found: {pdf_file}"}))
         sys.exit(1)
 
-    ocr_data = run_ocr(pdf_path)
+    print(f"⚡ OCR lancé sur : {pdf_file}\n")
+    pages = run_ocr(pdf_file)
 
-    results = []
-    for page in ocr_data.get("pages", []):
-        print(f"\n📄 --- Analyse page {page['page']} ---")
-        table_lines = extract_table_lines(page.get("phrases", []))
-        for l in table_lines:
-            parsed = parse_table_line(l, debug=True)
-            results.append(parsed)
+    all_results = []
+    for page_idx, lines in pages:
+        print(f"📄 --- Analyse page {page_idx} ---")
+        for line in lines:
+            parsed = parse_invoice_line(line)
+            if not parsed:
+                continue
+
+            if parsed["type"] == "facture":
+                print(f"✅ Facture → Ref={parsed.get('ref')} | Désignation={parsed.get('designation')} "
+                      f"| Qté={parsed.get('qty')} {parsed.get('unit') or ''} | PU={parsed.get('price_unit')} "
+                      f"| Total={parsed.get('total')} | TVA={parsed.get('tva')}")
+            else:
+                reason = parsed.get("reason", "autre")
+                print(f"ℹ️ Commentaire ({reason}) → {parsed['raw']}")
+
+            all_results.append(parsed)
 
     print("\n📊 Résultat final (factures + commentaires) :")
-    print(json.dumps(results, indent=2, ensure_ascii=False))
-
-if __name__ == "__main__":
-    main()
+    print(json.dumps(all_results, indent=2, ensure_ascii=False))
