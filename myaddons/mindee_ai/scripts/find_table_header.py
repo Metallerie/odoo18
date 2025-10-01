@@ -1,8 +1,7 @@
 # find_table_header.py
-# Étape 1bis : détecter la ligne d’en-tête du tableau
-# + supprimer tout ce qui est au-dessus
+# Étape 2 : détecter la ligne d’en-tête et fermer le tableau dès que la structure casse
 
-import sys, io, unicodedata
+import sys, io, unicodedata, re
 import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
@@ -10,18 +9,14 @@ from PIL import Image
 # ---------- Utils ----------
 def pdf_to_images(pdf_path, dpi=300):
     doc = fitz.open(pdf_path)
-    pages = []
-    for p in doc:
-        pix = p.get_pixmap(dpi=dpi)
-        pages.append(Image.open(io.BytesIO(pix.tobytes("png"))))
-    return pages
+    return [Image.open(io.BytesIO(p.get_pixmap(dpi=dpi).tobytes("png"))) for p in doc]
 
 def ocr_words(img):
     d = pytesseract.image_to_data(img, lang="fra", output_type=pytesseract.Output.DICT)
     words = []
     for i in range(len(d["text"])):
         txt = (d["text"][i] or "").strip()
-        if not txt: 
+        if not txt:
             continue
         x, y, w, h = d["left"][i], d["top"][i], d["width"][i], d["height"][i]
         words.append({"text": txt, "x": x, "y": y, "cx": x + w/2, "cy": y + h/2})
@@ -39,7 +34,6 @@ def group_into_lines(words, y_thresh=10):
                 break
         if not placed:
             lines.append({"cy": w["cy"], "words": [w]})
-    # texte par ligne (ordre gauche→droite)
     for L in lines:
         L["words"].sort(key=lambda a: a["x"])
         L["text"] = " ".join(a["text"] for a in L["words"]).strip()
@@ -53,7 +47,7 @@ def norm(s: str) -> str:
     s = " ".join(s.split())  # condense espaces
     return s
 
-# Tokens d’en-tête
+# ---------- Détection en-tête ----------
 HEADER_TOKENS = {
     "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
     "prix", "prix unitaire", "montant", "tva"
@@ -61,11 +55,7 @@ HEADER_TOKENS = {
 
 def header_score(text: str) -> int:
     t = norm(text)
-    score = 0
-    for tok in HEADER_TOKENS:
-        if tok in t:
-            score += 1
-    return score
+    return sum(1 for tok in HEADER_TOKENS if tok in t)
 
 def find_header_line(lines, min_tokens=2):
     best_idx, best_score = None, 0
@@ -76,6 +66,28 @@ def find_header_line(lines, min_tokens=2):
     if best_idx is not None and best_score >= min_tokens:
         return best_idx, best_score
     return None, 0
+
+# ---------- Détection lignes produits ----------
+def looks_like_product_line(text: str) -> bool:
+    t = text.strip()
+    if not t:
+        return False
+    has_word = re.search(r"[A-Za-z]", t) is not None
+    has_number = re.search(r"\d", t) is not None
+    has_price = re.search(r"\d+[.,]\d{2}", t) is not None
+    return has_word and (has_number or has_price)
+
+def extract_table(lines, header_idx):
+    table = []
+    for L in lines[header_idx:]:
+        if header_score(L["text"]) > 0:  # en-tête
+            table.append(L)
+            continue
+        if looks_like_product_line(L["text"]):
+            table.append(L)
+        else:
+            break  # on arrête dès que ça ne ressemble plus à une ligne produit
+    return table
 
 # ---------- Main ----------
 if __name__ == "__main__":
@@ -95,18 +107,11 @@ if __name__ == "__main__":
         print(f"\n📄 Page {pageno}")
         if idx is None:
             print("❌ Aucun en-tête détecté.")
-            candidates = sorted(
-                [(i, header_score(L['text']), L['text']) for i, L in enumerate(lines)],
-                key=lambda x: x[1], reverse=True
-            )[:5]
-            for i, sc, txt in candidates:
-                print(f"  ? score={sc:>2} | idx={i:>3} | {txt}")
         else:
             print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
             print(f"   {lines[idx]['text']}")
 
-            # On garde uniquement à partir de l’en-tête
-            table_zone = lines[idx:]
-            print("\n   --- Bloc tableau (nettoyé) ---")
+            table_zone = extract_table(lines, idx)
+            print("\n   --- Tableau extrait ---")
             for j, L in enumerate(table_zone, start=idx):
                 print(f" [{j:>3}] {L['text']}")
