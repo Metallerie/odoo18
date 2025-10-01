@@ -2,67 +2,102 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-import json
 import re
+import json
 from pdf2image import convert_from_path
 import pytesseract
 
+# ---------------- Utils ----------------
+def normalize_text(s: str) -> str:
+    if not s:
+        return ""
+    s = s.replace("\u2019", "'").replace("\u00A0", " ")
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+def safe_float(s):
+    try:
+        return float(str(s).replace(",", "."))
+    except:
+        return None
+
+# ---------------- Extraction ----------------
+EXCLUDE_KEYWORDS = [
+    "siren", "rcs", "iban", "bic", "capital", "intracom",
+    "total", "net", "ht", "tva", "eco-part", "merci",
+    "facture", "bon de livraison", "base", "ventilation",
+    "attention", "comptoir", "au capital", "sas",
+]
+
+def parse_line(line):
+    raw = normalize_text(line)
+    tokens = raw.split()
+
+    # Vérif exclu mots-clés
+    for kw in EXCLUDE_KEYWORDS:
+        if kw in raw.lower():
+            return {"raw": raw, "type": "commentaire", "reason": f"mot-clé {kw}"}
+
+    # Vérif au moins 4 tokens (Ref + désignation + 3 nombres)
+    if len(tokens) < 4:
+        return {"raw": raw, "type": "commentaire", "reason": "trop court"}
+
+    # Réf candidate (doit être alpha-numérique sans espace)
+    ref = tokens[0]
+    if not re.match(r"^[A-Z0-9\-]+$", ref, re.IGNORECASE):
+        return {"raw": raw, "type": "commentaire", "reason": "pas de ref valide"}
+
+    # Extraire les nombres en fin de ligne
+    nums = [safe_float(t) for t in tokens if re.match(r"^[0-9]+([.,][0-9]+)?$", t)]
+    if len(nums) < 3:
+        return {"raw": raw, "type": "commentaire", "reason": "moins de 3 nombres"}
+
+    qty, pu, total, *rest = nums[-3:]  # on prend les 3 derniers
+    tva = rest[0] if rest else None
+
+    # Vérif cohérence simple
+    if qty and pu and total:
+        expected = round(qty * pu, 2)
+        if abs(expected - total) > 1.0:  # tolérance 1€
+            return {
+                "raw": raw,
+                "type": "commentaire",
+                "reason": f"incohérence: {qty}*{pu} != {total}"
+            }
+
+    designation = " ".join(tokens[1:-3]) if len(tokens) > 4 else ""
+
+    return {
+        "raw": raw,
+        "type": "facture",
+        "ref": ref,
+        "designation": designation,
+        "qty": qty,
+        "price_unit": pu,
+        "total": total,
+        "tva": tva,
+    }
+
 # ---------------- OCR ----------------
 def run_ocr(pdf_path):
-    pages_data = []
+    results = []
     images = convert_from_path(pdf_path)
-
+    print(f"⚡ OCR lancé sur : {pdf_path}\n")
     for idx, img in enumerate(images, start=1):
         text = pytesseract.image_to_string(img, lang="fra")
-        lines = [l.strip() for l in text.split("\n") if l.strip()]
-        pages_data.append((idx, lines))
-    return pages_data
-
-# ---------------- Parsing ----------------
-def parse_invoice_line(line):
-    tokens = line.split()
-    nums = []
-
-    # Normaliser séparateurs
-    for t in tokens:
-        tok = t.replace(",", ".")
-        if re.match(r"^\d+(\.\d+)?$", tok):
-            nums.append(tok)
-
-    result = {"raw": line, "type": "commentaire"}
-
-    if len(nums) >= 3:
-        # On prend les 3-4 derniers nombres comme qty, pu, total, (tva)
-        qty = float(nums[-4]) if len(nums) >= 4 else float(nums[-3])
-        price_unit = float(nums[-3]) if len(nums) >= 3 else None
-        total = float(nums[-2]) if len(nums) >= 2 else None
-        tva = float(nums[-1]) if len(nums) >= 1 else None
-
-        # Désignation = tout avant les nombres de fin
-        split_idx = max(line.rfind(nums[-3]), line.rfind(nums[-2]))
-        designation = line[:split_idx].strip()
-
-        result.update({
-            "designation": designation,
-            "qty": qty,
-            "price_unit": price_unit,
-            "total": total,
-            "tva": tva,
-            "type": "facture"
-        })
-
-        # Vérif cohérence
-        if qty and price_unit and total:
-            if abs(qty * price_unit - total) > 0.5:  # tolérance
-                result["type"] = "facture_suspecte"
-                result["reason"] = f"incohérence: {qty}*{price_unit} != {total}"
-    else:
-        result["reason"] = "moins de 3 nombres en fin de ligne"
-
-    return result
+        lines = [normalize_text(p) for p in text.split("\n") if normalize_text(p)]
+        print(f"📄 --- Analyse page {idx} ---")
+        for line in lines:
+            parsed = parse_line(line)
+            if parsed["type"] == "facture":
+                print(f"✅ Facture → {parsed}")
+            else:
+                print(f"ℹ️ Commentaire → {parsed['raw']}")
+            results.append(parsed)
+    return results
 
 # ---------------- CLI ----------------
-if __name__ == "__main__":
+def main():
     if len(sys.argv) < 2:
         print("Usage: python test_invoice_lines.py <pdf_file>")
         sys.exit(1)
@@ -72,22 +107,9 @@ if __name__ == "__main__":
         print(json.dumps({"error": f"File not found: {pdf_file}"}))
         sys.exit(1)
 
-    print(f"⚡ OCR lancé sur : {pdf_file}\n")
-    pages = run_ocr(pdf_file)
-
-    all_results = []
-    for page_idx, lines in pages:
-        print(f"📄 --- Analyse page {page_idx} ---")
-        for line in lines:
-            parsed = parse_invoice_line(line)
-            if parsed["type"] == "facture":
-                print(f"✅ Facture → {parsed}")
-            elif parsed["type"] == "facture_suspecte":
-                print(f"⚠️ Facture suspecte → {parsed}")
-            else:
-                print(f"ℹ️ Commentaire → {parsed['raw']}")
-
-            all_results.append(parsed)
-
+    results = run_ocr(pdf_file)
     print("\n📊 Résultat final :")
-    print(json.dumps(all_results, indent=2, ensure_ascii=False))
+    print(json.dumps(results, indent=2, ensure_ascii=False))
+
+if __name__ == "__main__":
+    main()
