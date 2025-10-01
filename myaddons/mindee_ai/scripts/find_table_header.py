@@ -1,12 +1,12 @@
 # find_table_header.py
-# Étape 3 : détecter en-tête, isoler le tableau, et découper en colonnes
+# Étape 4 : détecter en-tête, isoler tableau, clusteriser les colonnes
 
 import sys, io, unicodedata, re
 import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
 
-# ---------- Utils OCR ----------
+# ---------- OCR utils ----------
 def pdf_to_images(pdf_path, dpi=300):
     doc = fitz.open(pdf_path)
     return [Image.open(io.BytesIO(p.get_pixmap(dpi=dpi).tobytes("png"))) for p in doc]
@@ -45,10 +45,10 @@ def strip_accents(s: str) -> str:
 def norm(s: str) -> str:
     return " ".join(strip_accents(s).lower().split())
 
-# ---------- Détection en-tête ----------
+# ---------- Header detection ----------
 HEADER_TOKENS = {
     "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
-    "prix", "prix unitaire", "montant", "tva"
+    "prix", "prix unitaire", "montant", "tva", "article", "description"
 }
 
 def header_score(text: str) -> int:
@@ -65,7 +65,7 @@ def find_header_line(lines, min_tokens=2):
         return best_idx, best_score
     return None, 0
 
-# ---------- Détection lignes produits ----------
+# ---------- Product line check ----------
 def looks_like_product_line(text: str) -> bool:
     t = text.strip()
     if not t:
@@ -87,20 +87,36 @@ def extract_table(lines, header_idx):
             break
     return table
 
-# ---------- Détection colonnes ----------
-def detect_columns(lines, min_gap=40):
+# ---------- Column clustering ----------
+def cluster_columns(xs, tol=50):
+    """Regroupe les X proches dans la même colonne"""
+    xs = sorted(xs)
+    clusters = []
+    for x in xs:
+        if not clusters:
+            clusters.append([x])
+        elif abs(x - sum(clusters[-1]) / len(clusters[-1])) <= tol:
+            clusters[-1].append(x)
+        else:
+            clusters.append([x])
+    return [int(sum(c) / len(c)) for c in clusters]
+
+def detect_columns(lines, tol=50, max_cols=8):
     xs = []
     for L in lines:
         for w in L["words"]:
             xs.append(w["x"])
     if not xs:
         return []
-    xs = sorted(xs)
-    cols = [xs[0]]
-    for i in range(1, len(xs)):
-        if xs[i] - xs[i-1] > min_gap:
-            cols.append(xs[i])
-    return cols
+    clusters = cluster_columns(xs, tol=tol)
+    # réduire si trop de colonnes
+    if len(clusters) > max_cols:
+        merged = []
+        for x in clusters:
+            if not merged or abs(x - merged[-1]) > tol:
+                merged.append(x)
+        clusters = merged
+    return clusters
 
 def assign_to_columns(line, col_positions):
     cells = {i: [] for i in range(len(col_positions))}
@@ -131,12 +147,12 @@ if __name__ == "__main__":
             print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
             print(f"   {lines[idx]['text']}")
 
-            # extraire le bloc tableau
+            # extraire bloc tableau
             table_zone = extract_table(lines, idx)
 
-            # détecter colonnes
-            col_positions = detect_columns(table_zone)
-            print(f"\n   Colonnes détectées: {len(col_positions)} positions -> {col_positions}")
+            # détecter colonnes avec clustering
+            col_positions = detect_columns(table_zone, tol=50, max_cols=8)
+            print(f"\n   Colonnes détectées ({len(col_positions)}): {col_positions}")
 
             print("\n   --- Tableau structuré ---")
             for L in table_zone:
