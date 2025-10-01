@@ -1,12 +1,12 @@
 # find_table_header.py
-# Étape 2 : détecter la ligne d’en-tête et fermer le tableau dès que la structure casse
+# Étape 3 : détecter en-tête, isoler le tableau, et découper en colonnes
 
 import sys, io, unicodedata, re
 import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
 
-# ---------- Utils ----------
+# ---------- Utils OCR ----------
 def pdf_to_images(pdf_path, dpi=300):
     doc = fitz.open(pdf_path)
     return [Image.open(io.BytesIO(p.get_pixmap(dpi=dpi).tobytes("png"))) for p in doc]
@@ -43,9 +43,7 @@ def strip_accents(s: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
 def norm(s: str) -> str:
-    s = strip_accents(s).lower()
-    s = " ".join(s.split())  # condense espaces
-    return s
+    return " ".join(strip_accents(s).lower().split())
 
 # ---------- Détection en-tête ----------
 HEADER_TOKENS = {
@@ -86,8 +84,30 @@ def extract_table(lines, header_idx):
         if looks_like_product_line(L["text"]):
             table.append(L)
         else:
-            break  # on arrête dès que ça ne ressemble plus à une ligne produit
+            break
     return table
+
+# ---------- Détection colonnes ----------
+def detect_columns(lines, min_gap=40):
+    xs = []
+    for L in lines:
+        for w in L["words"]:
+            xs.append(w["x"])
+    if not xs:
+        return []
+    xs = sorted(xs)
+    cols = [xs[0]]
+    for i in range(1, len(xs)):
+        if xs[i] - xs[i-1] > min_gap:
+            cols.append(xs[i])
+    return cols
+
+def assign_to_columns(line, col_positions):
+    cells = {i: [] for i in range(len(col_positions))}
+    for w in line["words"]:
+        idx = min(range(len(col_positions)), key=lambda i: abs(w["x"] - col_positions[i]))
+        cells[idx].append(w["text"])
+    return [" ".join(cells[i]) for i in range(len(col_positions))]
 
 # ---------- Main ----------
 if __name__ == "__main__":
@@ -111,7 +131,14 @@ if __name__ == "__main__":
             print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
             print(f"   {lines[idx]['text']}")
 
+            # extraire le bloc tableau
             table_zone = extract_table(lines, idx)
-            print("\n   --- Tableau extrait ---")
-            for j, L in enumerate(table_zone, start=idx):
-                print(f" [{j:>3}] {L['text']}")
+
+            # détecter colonnes
+            col_positions = detect_columns(table_zone)
+            print(f"\n   Colonnes détectées: {len(col_positions)} positions -> {col_positions}")
+
+            print("\n   --- Tableau structuré ---")
+            for L in table_zone:
+                cells = assign_to_columns(L, col_positions) if col_positions else [L["text"]]
+                print(" | ".join(cells))
