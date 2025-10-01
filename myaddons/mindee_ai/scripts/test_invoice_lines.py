@@ -178,25 +178,35 @@ def parse_invoice_lines_from_ocr_words(words, page_height_normalized=True):
     words: list of dicts {text,bbox:[[x0,y0],[x1,y1]]}
     If bbox are in pixels, you should normalize Y/X by dividing by page height/width first.
     """
-    # If coords are in pixels, detect and normalize (simple heuristic)
+    if not words:
+        return []
+
     max_x = max((bbox_center(w['bbox'])[0] for w in words), default=1.0)
     max_y = max((bbox_center(w['bbox'])[1] for w in words), default=1.0)
-    # If the max coords >> 1 assume pixel coords and normalize
-    if max_x > 2 or max_y > 2:
-        # detect page width/height
-        xs = [bbox_center(w['bbox'])[0] for w in words]
-        ys = [bbox_center(w['bbox'])[1] for w in words]
-        minx, maxx = min(xs), max(xs)
-        miny, maxy = min(ys), max(ys)
-        # normalize in-place
+    min_x = min((bbox_center(w['bbox'])[0] for w in words), default=0.0)
+    min_y = min((bbox_center(w['bbox'])[1] for w in words), default=0.0)
+
+    # Si toutes les coordonnées sont identiques → éviter la division par zéro
+    dx = max_x - min_x
+    dy = max_y - min_y
+    if dx == 0:
+        dx = 1.0
+    if dy == 0:
+        dy = 1.0
+
+    # Normalisation
+    if max_x > 2 or max_y > 2:  # suppose que ce sont des pixels
         for w in words:
             (x0,y0),(x1,y1) = w['bbox']
-            w['bbox'] = [[(x0-minx)/(maxx-minx), (y0-miny)/(maxy-miny)],
-                         [(x1-minx)/(maxx-minx), (y1-miny)/(maxy-miny)]]
+            w['bbox'] = [
+                [(x0-min_x)/dx, (y0-min_y)/dy],
+                [(x1-min_x)/dx, (y1-min_y)/dy]
+            ]
 
     lines = group_words_into_lines(words, y_thresh=0.015)
     parsed = extract_lines_from_text_lines(lines)
     return parsed
+
 
 # --- exemple d'utilisation ---
 if __name__ == "__main__":
