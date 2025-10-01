@@ -1,5 +1,6 @@
 # find_table_header.py
-# Étape 1 : lire le PDF, OCR, regrouper en lignes, trouver la ligne d’en-tête du tableau.
+# Étape 1bis : détecter la ligne d’en-tête du tableau
+# + supprimer tout ce qui est au-dessus
 
 import sys, io, unicodedata
 import fitz  # PyMuPDF
@@ -52,7 +53,7 @@ def norm(s: str) -> str:
     s = " ".join(s.split())  # condense espaces
     return s
 
-# Tokens d’en-tête (on cherche au moins 2 dans la même ligne)
+# Tokens d’en-tête
 HEADER_TOKENS = {
     "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
     "prix", "prix unitaire", "montant", "tva"
@@ -94,7 +95,6 @@ if __name__ == "__main__":
         print(f"\n📄 Page {pageno}")
         if idx is None:
             print("❌ Aucun en-tête détecté.")
-            # Top 5 candidats pour debug
             candidates = sorted(
                 [(i, header_score(L['text']), L['text']) for i, L in enumerate(lines)],
                 key=lambda x: x[1], reverse=True
@@ -104,10 +104,9 @@ if __name__ == "__main__":
         else:
             print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
             print(f"   {lines[idx]['text']}")
-            # Contexte visuel ±3 lignes
-            start = max(0, idx-3)
-            end = min(len(lines), idx+4)
-            print("\n   --- Contexte ---")
-            for j in range(start, end):
-                mark = "→" if j == idx else " "
-                print(f" {mark} [{j:>3}] {lines[j]['text']}")
+
+            # On garde uniquement à partir de l’en-tête
+            table_zone = lines[idx:]
+            print("\n   --- Bloc tableau (nettoyé) ---")
+            for j, L in enumerate(table_zone, start=idx):
+                print(f" [{j:>3}] {L['text']}")
