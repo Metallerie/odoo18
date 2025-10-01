@@ -88,3 +88,16 @@ if __name__ == "__main__":
         print(f"\n📄 --- Page {i} ---")
         for ln in table_lines:
             print("TABLE >>", ln["text"])
+    for i, img in enumerate(pages, 1):
+        words = ocr_image(img)
+        lines = group_words_into_lines(words)
+
+        print(f"\n--- OCR complet page {i} ---")
+        for ln in lines:
+            print(f"OCR >> {ln['text']}")
+
+        table_lines = filter_table_lines(lines)
+
+        print(f"\n📄 --- Table page {i} ---")
+        for ln in table_lines:
+            print("TABLE >>", ln["text"])
