@@ -35,7 +35,7 @@ def strip_accents(s: str) -> str:
 def norm(s: str) -> str:
     return " ".join(strip_accents(s).lower().split())
 
-# ---------------- Fusion lignes (ex: "Facture n°" + "2025/1680") ----------------
+# ---------------- Fusion lignes ----------------
 
 def merge_invoice_number_phrases(phrases):
     merged = []
@@ -125,7 +125,7 @@ def is_product_line(text: str) -> bool:
     return (has_word and has_number and (has_price or has_unit) and long_enough)
 
 def extract_table(phrases, header_idx):
-    products, others = [], []
+    products, others, structured = [], [], []
     for L in phrases[header_idx:]:
         if header_score(L) > 0:
             others.append(L)
@@ -134,9 +134,29 @@ def extract_table(phrases, header_idx):
             break
         if is_product_line(L):
             products.append(L)
+            parts = L.split()
+            ref, name, qty, uom, price_unit, subtotal, tva = None, None, None, None, None, None, None
+            if parts:
+                ref = parts[0] if parts[0].isdigit() else None
+                qty_match = re.search(r"\d+", L)
+                if qty_match:
+                    qty = qty_match.group(0)
+                price_match = re.findall(r"\d+[.,]\d{2}", L)
+                if price_match:
+                    price_unit = price_match[-1]
+            name = " ".join(p for p in parts[1:] if not re.match(r"\d+[.,]?\d*", p))
+            structured.append({
+                "ref": ref,
+                "name": name.strip(),
+                "qty": qty,
+                "uom": uom,
+                "price_unit": price_unit,
+                "subtotal": subtotal,
+                "tva": tva
+            })
         else:
             others.append(L)
-    return products, others
+    return products, others, structured
 
 # ---------------- OCR principal ----------------
 
@@ -148,7 +168,6 @@ def run_ocr(pdf_path):
         phrases = [normalize_text(p) for p in text.split("\n") if normalize_text(p)]
         phrases = merge_invoice_number_phrases(phrases)
         parsed = extract_invoice_data(phrases)
-        # Ajout fallback: chercher explicitement un numéro de facture si absent
         if "invoice_number" not in parsed:
             for p in phrases:
                 if re.search(r"facture.*\d", p.lower()):
@@ -157,9 +176,9 @@ def run_ocr(pdf_path):
                         parsed["invoice_number"] = num[0]
                         break
         header_idx, score = find_header_line(phrases, min_tokens=2)
-        products, others = [], []
+        products, others, structured = [], [], []
         if header_idx is not None:
-            products, others = extract_table(phrases, header_idx)
+            products, others, structured = extract_table(phrases, header_idx)
         pages_data.append({
             "page": idx,
             "content": text,
@@ -167,7 +186,8 @@ def run_ocr(pdf_path):
             "parsed": parsed,
             "header_index": header_idx,
             "products": products,
-            "others": others
+            "others": others,
+            "structured_products": structured
         })
     return {"pages": pages_data}
 
