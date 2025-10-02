@@ -160,31 +160,40 @@ def extract_invoice_data(phrases):
     return data
 
 # ---------------- OCR principal ----------------
-        # 3) Début/fin tableau + produits/autres + structure colonnes
+def run_ocr(pdf_path, dpi=300):
+    pages = convert_from_path(pdf_path, dpi=dpi)
+    out = {"pages": []}
+
+    for idx, img in enumerate(pages, start=1):
+        words = ocr_words(img)
+        lines = group_into_lines(words)
+        line_texts = [L["text"] for L in lines]
+
+        phrases = merge_invoice_number_phrases(line_texts)
+        parsed = extract_invoice_data(phrases)
+
         header_idx, score = find_header_line(lines, min_tokens=2)
         products, others = [], []
         header_text, header_cols, products_struct = None, [], []
         if header_idx is not None:
-            header_line = lines[header_idx]
-            header_text = header_line["text"]
-
-            # Bornes de colonnes depuis l’en-tête (coords X)
-            cut_x, header_cols = header_columns_from_words(header_line, min_gap=40)
-
-            # Si on n’a pas réussi à segmenter (ex: en-tête dense), fallback split_cols
-            if not header_cols or len(header_cols) == 1:
-                header_cols = split_cols(header_text)
-
-            # Extraire bloc tableau
+            header_text = lines[header_idx]["text"]
+            header_cols = split_cols(header_text)
             products, others = extract_table(lines, header_idx)
+            for L in products:
+                products_struct.append(split_cols(L["text"], header_text))
 
-            # Structure produits en colonnes (priorité aux cut_x)
-            if cut_x:
-                for L in products:
-                    products_struct.append(split_by_cuts(L["words"], cut_x))
-            else:
-                for L in products:
-                    products_struct.append(split_cols(L["text"], header_text))
+        out["pages"].append({
+            "page": idx,
+            "phrases": phrases,
+            "parsed": parsed,
+            "header_index": header_idx,
+            "header_text": header_text,
+            "header": header_cols,
+            "products": products_struct,
+            "others": [L["text"] for L in others],
+        })
+
+    return out
 
 # ---------------- CLI ----------------
 if __name__ == "__main__":
