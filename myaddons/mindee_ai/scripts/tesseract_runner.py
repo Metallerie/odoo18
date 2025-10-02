@@ -1,186 +1,222 @@
 #!/usr/bin/env python3
-import sys
+# -*- coding: utf-8 -*-
+import sys, os, io, json, re, unicodedata, argparse
+from pdf2image import convert_from_path
 import pytesseract
-from pytesseract import Output
 from PIL import Image
-import fitz  # PyMuPDF
-import re
-import json
-import argparse
 
-# ------------------ OCR ------------------
+# ---------------- Normalisation ----------------
+def normalize_text(s: str) -> str:
+    if not s:
+        return ""
+    s = s.replace("\u2019", "'").replace("\u00A0", " ")
+    return re.sub(r"\s+", " ", s).strip()
 
-def ocr_words(image):
-    """OCR et retourne une liste de mots avec coordonnées"""
-    data = pytesseract.image_to_data(image, output_type=Output.DICT, lang="fra")
+def strip_accents(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+def norm(s: str) -> str:
+    return " ".join(strip_accents((s or "")).lower().split())
+
+# ---------------- OCR mots -> lignes ----------------
+def ocr_words(img):
+    d = pytesseract.image_to_data(img, lang="fra", output_type=pytesseract.Output.DICT)
     words = []
-    for i, txt in enumerate(data["text"]):
-        if not txt.strip():
+    for i in range(len(d["text"])):
+        txt = (d["text"][i] or "").strip()
+        if not txt:
             continue
-        x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
-        words.append({
-            "text": txt.strip(),
-            "x": x, "y": y, "w": w, "h": h,
-            "cx": x + w/2, "cy": y + h/2
-        })
+        x, y, w, h = d["left"][i], d["top"][i], d["width"][i], d["height"][i]
+        words.append({"text": txt, "x": x, "y": y, "cx": x + w/2, "cy": y + h/2})
     return words
 
-def group_words_into_lines(words, y_thresh=10):
-    """Regroupe les mots OCR en lignes selon Y"""
+def group_into_lines(words, y_thresh=10):
     lines = []
-    for w in sorted(words, key=lambda k: k["cy"]):
+    for w in sorted(words, key=lambda a: a["cy"]):
         placed = False
-        for line in lines:
-            if abs(line[0]["cy"] - w["cy"]) <= y_thresh:
-                line.append(w)
+        for L in lines:
+            if abs(L["cy"] - w["cy"]) <= y_thresh:
+                L["words"].append(w)
+                L["cy"] = sum(z["cy"] for z in L["words"]) / len(L["words"])
                 placed = True
                 break
         if not placed:
-            lines.append([w])
-    # Tri horizontal
-    lines = [sorted(l, key=lambda w: w["x"]) for l in lines]
+            lines.append({"cy": w["cy"], "words": [w]})
+    for L in lines:
+        L["words"].sort(key=lambda a: a["x"])
+        L["text"] = normalize_text(" ".join(a["text"] for a in L["words"]))
     return lines
 
-def normalize_text(s):
-    return s.replace("\n", " ").strip()
+# ---------------- Début/Fin tableau ----------------
+HEADER_TOKENS = {
+    "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
+    "prix", "prix unitaire", "montant", "tva", "article", "description"
+}
+FOOTER_TOKENS = {"total ht", "total ttc", "net a payer"}
 
-def line_text(line):
-    return normalize_text(" ".join([w["text"] for w in line]))
-
-# ------------------ HEADER DETECTION ------------------
+def header_score(text: str) -> int:
+    t = norm(text)
+    return sum(1 for tok in HEADER_TOKENS if tok in t)
 
 def find_header_line(lines, min_tokens=2):
-    header_idx, best_score = None, -1
-    for idx, line in enumerate(lines):
-        text = line_text(line).lower()
-        score = 0
-        for kw in ["désignation", "description", "qté", "prix", "unité", "montant", "total", "tva"]:
-            if kw in text:
-                score += 1
-        tokens = text.split()
-        if len(tokens) >= min_tokens and score > best_score:
-            best_score = score
-            header_idx = idx
-    return header_idx, best_score
+    best_idx, best_score = None, 0
+    for i, L in enumerate(lines):
+        sc = header_score(L["text"])
+        if sc > best_score:
+            best_score, best_idx = sc, i
+    if best_idx is not None and best_score >= min_tokens:
+        return best_idx, best_score
+    return None, 0
 
-# ------------------ COLUMN SPLIT ------------------
+def is_footer_line(text: str) -> bool:
+    t = norm(text)
+    return any(tok in t for tok in FOOTER_TOKENS)
 
-def header_columns_from_words(header_line, min_gap=40):
-    """Déduit colonnes à partir des X des mots de l’en-tête"""
-    ws = sorted(header_line, key=lambda w: w["x"])
-    if not ws:
-        return [], []
+# ---------------- Split colonnes ----------------
+def split_cols(text, header_text=None):
+    """Découpe une ligne de tableau en colonnes."""
+    sep = r"\s{2,}"  # par défaut = au moins 2 espaces
+    if header_text and "|" in header_text:
+        sep = r"\|"  # si l'entête contient des pipes
+    return [col.strip() for col in re.split(sep, text) if col.strip()]
 
-    cols = [[ws[0]]]
-    for w in ws[1:]:
-        gap = w["x"] - (cols[-1][-1]["x"] + cols[-1][-1]["w"])
-        if gap > min_gap:
-            cols.append([w])
-        else:
-            cols[-1].append(w)
-
-    labels, cuts = [], []
-    for i, col in enumerate(cols):
-        col_sorted = sorted(col, key=lambda w: w["x"])
-        label = " ".join([w["text"] for w in col_sorted])
-        labels.append(label)
-        if i < len(cols) - 1:
-            right = col_sorted[-1]["x"] + col_sorted[-1]["w"]
-            left_next = sorted(cols[i+1], key=lambda w: w["x"])[0]["x"]
-            cuts.append((right + left_next) // 2)
-    return cuts, labels
-
-def split_by_cuts(line_words, cut_x):
-    nb_cols = len(cut_x) + 1
-    buckets = [[] for _ in range(nb_cols)]
-    for w in sorted(line_words, key=lambda z: z["x"]):
-        x = w["x"]
-        col = 0
-        while col < len(cut_x) and x > cut_x[col]:
-            col += 1
-        buckets[col].append(w["text"])
-    return [" ".join(b).strip() for b in buckets]
-
-# ------------------ TABLE EXTRACTION ------------------
+# ---------------- Heuristique produit ----------------
+def is_product_line(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+    has_word   = re.search(r"[A-Za-z]", t) is not None
+    has_number = re.search(r"\d", t) is not None
+    has_price  = re.search(r"\d+[.,]\d{2}", t) is not None
+    has_unit   = re.search(r"\b(PI|ML|KG|M2|U|L)\b", t.upper()) is not None
+    long_enough = len(t.split()) >= 3
+    if re.search(r"\b(total|net.?a.?payer|somme.?a.?payer)\b", norm(t)):
+        return False
+    return has_word and has_number and (has_price or has_unit) and long_enough
 
 def extract_table(lines, header_idx):
     products, others = [], []
-    for l in lines[header_idx+1:]:
-        txt = line_text(l)
-        if not txt:
+    for L in lines[header_idx:]:
+        txt = L["text"]
+        if header_score(txt) > 0:
+            others.append(L)
             continue
-        if re.search(r"(total|net à payer|merci|rcs|iban)", txt.lower()):
-            others.append(txt)
+        if is_footer_line(txt):
+            break
+        if is_product_line(txt):
+            products.append(L)
         else:
-            products.append(l)
+            others.append(L)
     return products, others
 
-# ------------------ MAIN OCR RUNNER ------------------
+# ---------------- N° facture + Date ----------------
+def merge_invoice_number_phrases(phrases):
+    merged, skip = [], False
+    keywords = [norm(k) for k in [
+        "facture", "facture n°", "facture numero", "facture no",
+        "facture d'acompte", "facture d’acompte",
+        "facture d'acompte n°", "facture d’acompte n°"
+    ]]
+    for i, raw in enumerate(phrases):
+        if skip:
+            skip = False
+        else:
+            cur = normalize_text(raw); cur_fold = norm(cur)
+            if any(k in cur_fold for k in keywords) and i + 1 < len(phrases):
+                nxt = normalize_text(phrases[i+1])
+                if re.match(r"^[A-Za-z0-9][A-Za-z0-9/\-]*$", nxt):
+                    merged.append(f"{cur} {nxt}")
+                    skip = True
+                    continue
+            merged.append(cur)
+    return merged
 
-def run_ocr(pdf_file):
-    doc = fitz.open(pdf_file)
-    pages_data = []
+def extract_invoice_data(phrases):
+    data = {}
+    pat_after_n_label = re.compile(
+        r"(?:facture)\s*(?:d'?acompte)?\s*(?:n[°ºo]|no|nº)\s*([A-Za-z0-9][A-Za-z0-9/\-]*)",
+        re.IGNORECASE
+    )
+    pat_after_facture = re.compile(
+        r"(?:facture)(?:\s+d'?acompte)?\s+([A-Za-z0-9][A-Za-z0-9/\-]*\d[A-Za-z0-9/\-]*)",
+        re.IGNORECASE
+    )
+    pat_date = re.compile(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b")
+    for raw in phrases:
+        phrase = normalize_text(raw)
+        folded = norm(phrase)
+        if "facture" in folded:
+            m = pat_after_n_label.search(folded)
+            if m and "invoice_number" not in data:
+                data["invoice_number"] = m.group(1)
+            if "invoice_number" not in data:
+                m2 = pat_after_facture.search(folded)
+                if m2:
+                    data["invoice_number"] = m2.group(1)
+        if "invoice_date" not in data:
+            mdate = pat_date.search(phrase)
+            if mdate:
+                data["invoice_date"] = mdate.group(1)
+    return data
 
-    for page_num in range(len(doc)):
-        page = doc[page_num]
-        pix = page.get_pixmap(dpi=200)
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-
-        words = ocr_words(img)
-        lines = group_words_into_lines(words)
-
-        lines_data = [{"text": line_text(l), "words": l} for l in lines]
-        phrases = [ld["text"] for ld in lines_data if ld["text"]]
-
-        header_idx, score = find_header_line(lines)
-        header_text, header_cols, products_struct, others = None, [], [], []
+# ---------------- OCR principal ----------------
+        # 3) Début/fin tableau + produits/autres + structure colonnes
+        header_idx, score = find_header_line(lines, min_tokens=2)
+        products, others = [], []
+        header_text, header_cols, products_struct = None, [], []
         if header_idx is not None:
             header_line = lines[header_idx]
-            header_text = line_text(header_line)
+            header_text = header_line["text"]
 
-            cut_x, header_cols = header_columns_from_words(header_line)
+            # Bornes de colonnes depuis l’en-tête (coords X)
+            cut_x, header_cols = header_columns_from_words(header_line, min_gap=40)
+
+            # Si on n’a pas réussi à segmenter (ex: en-tête dense), fallback split_cols
+            if not header_cols or len(header_cols) == 1:
+                header_cols = split_cols(header_text)
+
+            # Extraire bloc tableau
             products, others = extract_table(lines, header_idx)
 
+            # Structure produits en colonnes (priorité aux cut_x)
             if cut_x:
                 for L in products:
-                    products_struct.append(split_by_cuts(L, cut_x))
+                    products_struct.append(split_by_cuts(L["words"], cut_x))
             else:
-                # fallback simple : tout en une seule colonne
                 for L in products:
-                    products_struct.append([line_text(L)])
+                    products_struct.append(split_cols(L["text"], header_text))
 
-        # Extraction numéro/date facture (rapide)
-        parsed = {}
-        for p in phrases:
-            m = re.search(r"(facture[^\d]*\d+)", p.lower())
-            if m:
-                parsed["invoice_number"] = p
-            if re.search(r"\d{2}[/-]\d{2}[/-]\d{4}", p):
-                parsed["invoice_date"] = re.search(r"\d{2}[/-]\d{2}[/-]\d{4}", p).group()
-
-        pages_data.append({
-            "page": page_num + 1,
-            "phrases": phrases,
-            "parsed": parsed,
-            "header_index": header_idx,
-            "header_text": header_text,
-            "header": header_cols,
-            "products": products_struct,
-            "others": others
-        })
-    return {"pages": pages_data}
-
-# ------------------ MAIN ------------------
-
+# ---------------- CLI ----------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("file", help="PDF à analyser")
-    parser.add_argument("--console", action="store_true", help="Afficher texte brut")
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("pdf_file", help="Chemin du PDF")
+    ap.add_argument("--console", action="store_true", help="Affichage lisible dans le terminal")
+    ap.add_argument("--dpi", type=int, default=300, help="Résolution OCR (par défaut 300)")
+    args = ap.parse_args()
 
-    result = run_ocr(args.file)
-    if args.console:
-        for page in result["pages"]:
-            print("\n".join(page["phrases"]))
-    else:
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+    if not os.path.exists(args.pdf_file):
+        print(json.dumps({"error": f"File not found: {args.pdf_file}"}))
+        sys.exit(1)
+
+    try:
+        result = run_ocr(args.pdf_file, dpi=args.dpi)
+        if args.console:
+            for p in result["pages"]:
+                print(f"\n📄 Page {p['page']}")
+                if p["header_text"]:
+                    print("✅ En-tête :", p["header_text"])
+                    print("   Colonnes:", p["header"])
+                if p["parsed"].get("invoice_number"):
+                    print("   Numéro  :", p["parsed"]["invoice_number"])
+                if p["parsed"].get("invoice_date"):
+                    print("   Date    :", p["parsed"]["invoice_date"])
+                print("\n   --- Produits détectés ---")
+                for row in p["products"]:
+                    print("   •", row)
+                if not p["products"]:
+                    print("   (aucun)")
+        else:
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)
