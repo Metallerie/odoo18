@@ -141,59 +141,116 @@ class AccountMove(models.Model):
 
     # ---------------- Création lignes ----------------
     def _create_invoice_lines_from_ocr(self, ocr_data):
-        Product = self.env["product.product"]
-        for move in self:
-            for page in ocr_data.get("pages", []):
-                for row in page.get("products", []):
-                    if not row:
-                        continue
+    """Crée les lignes de facture à partir du JSON OCR Tesseract."""
+    Product = self.env["product.product"]
 
-                    # ⚠️ on suppose row = ["code", "nom", "qte", "unité", "prix", "montant", "TVA"]
-                    code = row[0] if len(row) > 0 else None
-                    name = row[1] if len(row) > 1 else "Produit OCR"
-                    qty = 1.0
-                    if len(row) > 2:
-                        try:
-                            qty = float(row[2].replace(",", "."))
-                        except:
-                            pass
-                    price_unit = 0.0
-                    if len(row) > 4:
-                        try:
-                            price_unit = float(row[4].replace(",", "."))
-                        except:
-                            pass
+    for move in self:
+        if not ocr_data.get("pages"):
+            continue
 
-                    # --- Cas spécial : Éco-participation ---
-                    if "eco-part" in name.lower() or "éco-part" in name.lower():
-                        product = Product.search([
-                            ("default_code", "=", "ECO-PART")
-                        ], limit=1)
-                        if not product:
-                            product = Product.search([("name", "ilike", "éco-participation")], limit=1)
-                        if not product:
-                            _logger.error("[OCR][ECO-PART] Produit 'Éco-participation' introuvable")
-                            continue
-                    else:
-                        # Produit normal
-                        product = None
-                        if code:
-                            product = Product.search([("default_code", "=", code)], limit=1)
-                        if not product:
-                            product = Product.search([("name", "ilike", name)], limit=1)
-                        if not product:
-                            product = Product.create({
-                                "name": name,
-                                "default_code": code or False,
-                                "type": "consu",
-                            })
+        page = ocr_data["pages"][0]
+        header = [h.lower() for h in page.get("header", [])]
+        products = page.get("products", [])
 
-                    # --- Création ligne facture ---
-                    self.env["account.move.line"].create({
-                        "move_id": move.id,
-                        "product_id": product.id,
-                        "name": name,
-                        "quantity": qty,
-                        "price_unit": price_unit,
-                        "account_id": move.journal_id.default_account_id.id,
+        line_vals = []
+
+        for row in products:
+            if not row:
+                continue
+
+            # 🔎 Cas 1 : l’entête commence par "ref"
+            if header and header[0].startswith("ref"):
+                ref = row[0]
+                designation_parts = []
+                for token in row[1:]:
+                    if re.search(r"\d", token):
+                        break
+                    designation_parts.append(token)
+                designation = " ".join(designation_parts).strip()
+
+            # 🔎 Cas 2 : l’entête commence par "désignation"
+            elif header and header[0].startswith("desi"):
+                ref = ""
+                designation_parts = []
+                for token in row:
+                    if re.search(r"\d", token):
+                        break
+                    designation_parts.append(token)
+                designation = " ".join(designation_parts).strip()
+
+            else:
+                # fallback : tout est dans la ligne
+                ref = ""
+                designation = " ".join(row)
+
+            # 🔎 Cas particulier Éco-participation
+            if re.search(r"eco[- ]?part", designation, re.IGNORECASE):
+                eco_prod = Product.search([("name", "ilike", "eco participation")], limit=1)
+                if eco_prod:
+                    product = eco_prod
+                else:
+                    # Si produit absent, on crée une seule fois
+                    product = Product.create({
+                        "name": "ECO PARTICIPATION",
+                        "type": "service",
+                        "invoice_policy": "order",
                     })
+                qty, price_unit = 1, 0.0
+                if len(row) >= 2:
+                    try:
+                        price_unit = float(row[-1].replace(",", "."))
+                    except Exception:
+                        pass
+                line_vals.append({
+                    "product_id": product.id,
+                    "name": designation,
+                    "quantity": qty,
+                    "price_unit": price_unit,
+                    "account_id": product.property_account_expense_id.id or product.categ_id.property_account_expense_categ_id.id,
+                })
+                continue
+
+            # 🔎 Extraction des nombres (quantité / prix / montant)
+            numbers = [t for t in row if re.match(r"^\d+[.,]?\d*$", t) or re.match(r"^\d+[.,]\d{2}$", t)]
+            qty, price_unit = 1, 0.0
+
+            if len(numbers) == 1:
+                try:
+                    price_unit = float(numbers[0].replace(",", "."))
+                except Exception:
+                    price_unit = 0.0
+            elif len(numbers) >= 2:
+                try:
+                    qty = float(numbers[-3].replace(",", ".")) if len(numbers) >= 3 else 1
+                except Exception:
+                    qty = 1
+                try:
+                    price_unit = float(numbers[-2].replace(",", "."))
+                except Exception:
+                    price_unit = 0.0
+
+            # 🔎 Recherche produit par référence ou nom
+            product = False
+            if ref:
+                product = Product.search([("default_code", "=", ref)], limit=1)
+            if not product:
+                product = Product.search([("name", "ilike", designation)], limit=1)
+
+            if not product:
+                product = Product.create({
+                    "name": designation,
+                    "default_code": ref or "",
+                    "type": "product",
+                })
+
+            line_vals.append({
+                "product_id": product.id,
+                "name": designation,
+                "quantity": qty,
+                "price_unit": price_unit,
+                "account_id": product.property_account_expense_id.id or product.categ_id.property_account_expense_categ_id.id,
+            })
+
+        if line_vals:
+            move.write({"invoice_line_ids": [(0, 0, vals) for vals in line_vals]})
+            _logger.warning("[OCR] %s lignes ajoutées sur la facture %s", len(line_vals), move.name)
