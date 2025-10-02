@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#tesseract_runner.py
 import sys, os, io, json, re, unicodedata, argparse
 from pdf2image import convert_from_path
 import pytesseract
