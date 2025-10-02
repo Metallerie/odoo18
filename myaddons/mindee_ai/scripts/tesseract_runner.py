@@ -77,11 +77,11 @@ def extract_invoice_data(phrases):
         phrase = normalize_text(raw)
         folded = fold_for_match(phrase)
         if "facture" in folded:
-            m = pat_after_n_label.search(folded)
+            m = pat_after_n_label.search(phrase)
             if m and "invoice_number" not in data:
                 data["invoice_number"] = m.group(1)
             if "invoice_number" not in data:
-                m2 = pat_after_facture.search(folded)
+                m2 = pat_after_facture.search(phrase)
                 if m2:
                     data["invoice_number"] = m2.group(1)
         if "invoice_date" not in data:
@@ -148,6 +148,14 @@ def run_ocr(pdf_path):
         phrases = [normalize_text(p) for p in text.split("\n") if normalize_text(p)]
         phrases = merge_invoice_number_phrases(phrases)
         parsed = extract_invoice_data(phrases)
+        # Ajout fallback: chercher explicitement un numéro de facture si absent
+        if "invoice_number" not in parsed:
+            for p in phrases:
+                if re.search(r"facture.*\d", p.lower()):
+                    num = re.findall(r"\d+", p)
+                    if num:
+                        parsed["invoice_number"] = num[0]
+                        break
         header_idx, score = find_header_line(phrases, min_tokens=2)
         products, others = [], []
         if header_idx is not None:
