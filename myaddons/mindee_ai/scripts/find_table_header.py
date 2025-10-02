@@ -1,5 +1,5 @@
 # find_table_header.py
-# Détection en-tête + extraction lignes produits avec regex par fournisseur
+# Détection en-tête + distinction lignes produit / autres
 
 import sys, io, unicodedata, re
 import fitz  # PyMuPDF
@@ -7,7 +7,7 @@ import pytesseract
 from PIL import Image
 
 # ---------- OCR utils ----------
-def pdf_to_images(pdf_path, dpi=200):
+def pdf_to_images(pdf_path, dpi=300):
     doc = fitz.open(pdf_path)
     return [Image.open(io.BytesIO(p.get_pixmap(dpi=dpi).tobytes("png"))) for p in doc]
 
@@ -71,67 +71,41 @@ def is_footer_line(text: str) -> bool:
     t = norm(text)
     return any(tok in t for tok in FOOTER_TOKENS)
 
-# ---------- Regex par fournisseur ----------
-REGEX_PATTERNS = {
-    "CCL": re.compile(r"^([A-Z0-9\-]{3,})\s+(.+?)\s+(\d+(?:[.,]\d+)?)\s?(PI|KG|ML|M2|U|L)?\s+(\d+[.,]\d{2})\s+(\d+[.,]\d{2})(?:\s+(\d+%?))?$"),
-    "LAMESCIE": re.compile(r"^([A-Z0-9\-]{5,})\s+(.+?)\s+(\d{1,3}\s?%)\s+(\d+[.,]\d{2})\s*€?\s+(\d+)\s+(\d+[.,]\d{2})"),
-    "LEB": re.compile(r"^(.+?)\s+(\d+[.,]\d{2})€?\s+(\d+%?)\s+(\d+[.,]\d{2})€?$"),
-    "FREE": re.compile(r"^Total\s+(\d+[.,]\d{2})€?\s+(\d+[.,]\d{2})€?$"),
-    "EDF": re.compile(r"^(.+?)\s+(\d+[.,]\d{2})€?$"),
-    "PROLIANS": re.compile(r"^([A-Z0-9\-]{4,})\s+(.+?)\s+(\d+[.,]\d{2})\s+(\d+[.,]\d{2})$")
-}
+# ---------- Product line check ----------
+def is_product_line(text: str) -> bool:
+    """Heuristique pour détecter une ligne produit"""
+    t = text.strip()
+    if not t:
+        return False
 
-def detect_supplier(text: str) -> str:
-    t = norm(text)
-    if "ccl" in t:
-        return "CCL"
-    if "lame scie" in t or "ruban" in t:
-        return "LAMESCIE"
-    if "leb" in t:
-        return "LEB"
-    if "free" in t:
-        return "FREE"
-    if "edf" in t:
-        return "EDF"
-    if "prolians" in t:
-        return "PROLIANS"
-    return "CCL"  # fallback
+    # doit contenir lettres + chiffres
+    has_word = re.search(r"[A-Za-z]", t) is not None
+    has_number = re.search(r"\d", t) is not None
 
-# ---------- Fusion spéciale Prolians ----------
-def merge_lines_for_prolians(lines):
-    merged = []
-    skip = False
-    for i in range(len(lines)):
-        if skip:
-            skip = False
+    # contient un prix avec décimales
+    has_price = re.search(r"\d+[.,]\d{2}", t) is not None
+
+    # contient une unité typique
+    has_unit = re.search(r"\b(PI|ML|KG|M2|U|L)\b", t.upper()) is not None
+
+    # longueur minimale
+    long_enough = len(t.split()) >= 3
+
+    return (has_word and has_number and (has_price or has_unit) and long_enough)
+
+def extract_table(lines, header_idx):
+    products, others = [], []
+    for L in lines[header_idx:]:
+        if header_score(L["text"]) > 0:  # garder l'en-tête
+            others.append(L)
             continue
-        if i < len(lines)-1:
-            cur, nxt = lines[i]["text"], lines[i+1]["text"]
-            # ligne désignation suivie d'une ligne code/prix
-            if (re.search(r"[A-Za-z]", cur) and not re.search(r"\d+[.,]\d{2}", cur)) and re.search(r"\d+[.,]\d{2}", nxt):
-                merged.append({"text": nxt.split()[0] + " " + cur + " " + " ".join(nxt.split()[1:])})
-                skip = True
-                continue
-        merged.append(lines[i])
-    return merged
-
-# ---------- Extraction ----------
-def extract_table(lines, header_idx, supplier):
-    table = []
-    regex = REGEX_PATTERNS.get(supplier)
-    if supplier == "PROLIANS":
-        lines = merge_lines_for_prolians(lines[header_idx:])
-    else:
-        lines = lines[header_idx:]
-    for L in lines:
-        txt = L["text"]
-        if header_score(txt) > 0:  
-            continue
-        if is_footer_line(txt):
+        if is_footer_line(L["text"]):
             break
-        if regex and regex.match(txt):
-            table.append(txt)
-    return table
+        if is_product_line(L["text"]):
+            products.append(L)
+        else:
+            others.append(L)
+    return products, others
 
 # ---------- Main ----------
 if __name__ == "__main__":
@@ -147,15 +121,20 @@ if __name__ == "__main__":
         lines = group_into_lines(words)
 
         idx, score = find_header_line(lines, min_tokens=2)
+
         print(f"\n📄 Page {pageno}")
         if idx is None:
             print("❌ Aucun en-tête détecté.")
         else:
-            supplier = detect_supplier(" ".join(l["text"] for l in lines[:10]))
-            print(f"✅ Fournisseur détecté : {supplier}")
-            print(f"✅ En-tête trouvé (score={score}) à l’index {idx}: {lines[idx]['text']}")
+            print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
+            print(f"   {lines[idx]['text']}")
 
-            table = extract_table(lines, idx, supplier)
+            products, others = extract_table(lines, idx)
+
             print("\n   --- Produits détectés ---")
-            for t in table:
-                print("   •", t)
+            for L in products:
+                print("   •", L["text"])
+
+            print("\n   --- Autres lignes ---")
+            for L in others:
+                print("   •", L["text"])
