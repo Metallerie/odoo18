@@ -185,7 +185,7 @@ class AccountMove(models.Model):
                             product = Product.create({
                                 "name": name,
                                 "default_code": code or False,
-                                "type": "product",
+                                "type": "consu",
                             })
 
                     # --- Création ligne facture ---
