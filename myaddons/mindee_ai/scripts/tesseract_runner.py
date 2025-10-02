@@ -92,8 +92,14 @@ def extract_invoice_data(phrases):
 
 # ---------------- Table header & product lines ----------------
 
-HEADER_TOKENS = {"ref","reference","designation","desi","qte","quantite","unite","prix","prix unitaire","montant","tva","article","description"}
+HEADER_TOKENS = {"ref","reference","designation","desi","qte","quantite","qté","unite","unité","prix","prix unitaire","montant","tva","article","description"}
 FOOTER_TOKENS = {"total ht","total ttc","net a payer"}
+
+PRODUCT_PATTERN = re.compile(
+    r"^(?P<ref>[A-Za-z0-9\-]+)?\s*(?P<name>.+?)\s+(?P<qty>\d+[.,]?\d*)\s*(?P<uom>PI|ML|KG|M2|U|L)?\s+(?P<pu>\d+[.,]\d{2})\s+(?P<subtotal>\d+[.,]\d{2})(?:\s+(?P<tva>\d{1,2}))?$",
+    re.IGNORECASE
+)
+
 
 def header_score(text: str) -> int:
     t = norm(text)
@@ -114,15 +120,7 @@ def is_footer_line(text: str) -> bool:
     return any(tok in t for tok in FOOTER_TOKENS)
 
 def is_product_line(text: str) -> bool:
-    t = text.strip()
-    if not t:
-        return False
-    has_word = re.search(r"[A-Za-z]", t) is not None
-    has_number = re.search(r"\d", t) is not None
-    has_price = re.search(r"\d+[.,]\d{2}", t) is not None
-    has_unit = re.search(r"\b(PI|ML|KG|M2|U|L)\b", t.upper()) is not None
-    long_enough = len(t.split()) >= 3
-    return (has_word and has_number and (has_price or has_unit) and long_enough)
+    return PRODUCT_PATTERN.match(text.strip()) is not None
 
 def extract_table(phrases, header_idx):
     products, others, structured = [], [], []
@@ -132,27 +130,17 @@ def extract_table(phrases, header_idx):
             continue
         if is_footer_line(L):
             break
-        if is_product_line(L):
+        m = PRODUCT_PATTERN.match(L.strip())
+        if m:
             products.append(L)
-            parts = L.split()
-            ref, name, qty, uom, price_unit, subtotal, tva = None, None, None, None, None, None, None
-            if parts:
-                ref = parts[0] if parts[0].isdigit() else None
-                qty_match = re.search(r"\d+", L)
-                if qty_match:
-                    qty = qty_match.group(0)
-                price_match = re.findall(r"\d+[.,]\d{2}", L)
-                if price_match:
-                    price_unit = price_match[-1]
-            name = " ".join(p for p in parts[1:] if not re.match(r"\d+[.,]?\d*", p))
             structured.append({
-                "ref": ref,
-                "name": name.strip(),
-                "qty": qty,
-                "uom": uom,
-                "price_unit": price_unit,
-                "subtotal": subtotal,
-                "tva": tva
+                "ref": m.group("ref"),
+                "name": m.group("name"),
+                "qty": m.group("qty"),
+                "uom": m.group("uom"),
+                "price_unit": m.group("pu"),
+                "subtotal": m.group("subtotal"),
+                "tva": m.group("tva"),
             })
         else:
             others.append(L)
