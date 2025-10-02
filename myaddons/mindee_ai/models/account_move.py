@@ -31,6 +31,20 @@ MONTHS_FR_MAP = {
     "decembre": "12", "dec": "12",
 }
 
+# ---------------- Heuristiques globales pour filtrer les "faux produits" ----------------
+FOOTER_TOKENS = {
+    "total", "total ht", "total ttc", "total t.v.a", "total tva", "net a payer", "net a paye",
+    "base ht", "frais fixes", "net ht", "t.v.a", "tva", "ttc", "acompte", "reste a payer",
+    "bon de livraison", "commande", "votre commande", "adresse", "siren", "iban", "bic",
+    "siege social", "rcs", "ape", "conditions", "paiement", "eco-part", "eeco-part", "escompte",
+    "remise", "ventilation", "net a payer"
+}
+
+UOM_CODES = ("PI", "ML", "KG", "M2", "U", "L")
+UOM_PATTERN = r"\b(?:PI|ML|KG|M2|U|L|UNITE\(S\)|UNITES|UNITE|UNITÉ\(S\))\b"
+PRICE_PATTERN = r"\d{1,3}(?:[ .]\d{3})*[.,]\d{2}"
+QTY_PATTERN = r"\b\d+(?:[.,]\d{1,3})?\b"
+
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -45,6 +59,9 @@ class AccountMove(models.Model):
         if not s:
             return s
         return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+
+    def _norm(self, s):
+        return " ".join(self._strip_accents((s or "")).lower().split())
 
     def _preclean_text(self, s):
         if not s:
@@ -138,27 +155,63 @@ class AccountMove(models.Model):
             return self.env['uom.uom'].search([('name', 'ilike', label)], limit=1)
         return False
 
+    def _is_real_product_line(self, header_text, line_text):
+        """Filtre fort pour ne garder que les vraies lignes produit.
+        Règles :
+         - exclure si tokens de totaux/pieds de page.
+         - exiger une quantité ET (unité OU un prix décimal).
+         - exiger au moins un mot "long" (désignation) pour éviter les lignes purement numériques.
+        """
+        t = self._norm(line_text)
+        if not t:
+            return False
+        # 1) Exclusions évidentes
+        for tok in FOOTER_TOKENS:
+            if tok in t:
+                return False
+        # 2) Doit avoir une désignation textuelle
+        has_word = re.search(r"[a-zA-Z]", line_text) is not None
+        if not has_word:
+            return False
+        # 3) Quantité
+        qty = re.search(QTY_PATTERN, line_text)
+        # 4) Unité & Prix
+        unit = re.search(UOM_PATTERN, line_text.upper())
+        price = re.search(PRICE_PATTERN, line_text)
+        # Condition minimale : quantité ET (unité OU prix)
+        if qty and (unit or price):
+            # Bonus : éviter les lignes de type "Ventilation" etc. (déjà gérées par tokens)
+            return True
+        return False
+
     def _parse_product_line(self, header, line_text):
+        # Parsing léger et robuste
         parts = line_text.split()
         vals = {"name": line_text}
-        if 'ref' in header.lower():
-            vals['default_code'] = parts[0]
-            vals['name'] = " ".join(parts[1:])
-        qty_match = re.search(r"(\d+[.,]?\d*)\s*(PI|ML|KG|M2|U|L)?", line_text)
-        if qty_match:
-            vals['quantity'] = float(qty_match.group(1).replace(',', '.'))
-            uom = self._match_uom_in_odoo(qty_match.group(2)) if qty_match.group(2) else False
-            if uom:
-                vals['product_uom_id'] = uom.id
-        price_match = re.search(r"(\d+[.,]\d{2})", line_text)
-        if price_match:
-            vals['price_unit'] = float(price_match.group(1).replace(',', '.'))
+        if 'ref' in (header or '').lower():
+            if parts:
+                vals['default_code'] = parts[0]
+                vals['name'] = " ".join(parts[1:]) or line_text
+        # Quantité + UoM
+        mqty = re.search(r"(\d+[.,]?\d*)\s*(PI|ML|KG|M2|U|L)?", line_text)
+        if mqty:
+            vals['quantity'] = float(mqty.group(1).replace(',', '.'))
+            if mqty.group(2):
+                uom = self._match_uom_in_odoo(mqty.group(2))
+                if uom:
+                    vals['product_uom_id'] = uom.id
+        # Prix unitaire (premier prix décimal rencontré)
+        mprice = re.search(PRICE_PATTERN, line_text)
+        if mprice:
+            vals['price_unit'] = float(mprice.group(0).replace(' ', '').replace(',', '.'))
         return vals
 
     # ---------------- Main action ----------------
     def action_ocr_fetch(self):
         for move in self:
             _logger.warning("⚡ [OCR] Start OCR for move id=%s name=%s", move.id, move.name)
+
+            # 1) Récup PDF
             pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
             if not pdf_attachments:
                 raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
@@ -166,6 +219,8 @@ class AccountMove(models.Model):
             file_path = "/tmp/ocr_temp_file.pdf"
             with open(file_path, "wb") as f:
                 f.write(base64.b64decode(attachment.datas))
+
+            # 2) OCR
             venv_python = "/data/odoo/odoo18-venv/bin/python3"
             tesseract_script_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/scripts/tesseract_runner.py"
             try:
@@ -178,6 +233,8 @@ class AccountMove(models.Model):
                 ocr_data = json.loads(ocr_json)
             except Exception as e:
                 raise UserError(f"Erreur OCR avec Tesseract : {e}")
+
+            # 3) Sauvegarde JSON
             move.mindee_local_response = json.dumps(ocr_data, indent=2, ensure_ascii=False)
             self.env["ir.attachment"].create({
                 "name": f"OCR_{attachment.name}.json",
@@ -187,6 +244,8 @@ class AccountMove(models.Model):
                 "mimetype": "application/json",
                 "datas": base64.b64encode(json.dumps(ocr_data, indent=2).encode("utf-8")),
             })
+
+            # 4) Métadonnées facture
             parsed = {}
             if ocr_data.get("pages"):
                 parsed = ocr_data["pages"][0].get("parsed", {}) or {}
@@ -196,13 +255,20 @@ class AccountMove(models.Model):
                     move.invoice_date = norm
             if parsed.get("invoice_number"):
                 move.ref = parsed["invoice_number"]
-            # ---------------- Produits ----------------
+
+            # 5) Lignes produits (filtrage fort)
             first_page = ocr_data.get("pages", [{}])[0]
             header_idx = first_page.get("header_index")
             header_line = first_page.get("phrases", [""])[header_idx] if header_idx is not None else ""
-            products = first_page.get("products", [])
+            products_raw = first_page.get("products", [])
+
+            # Appliquer filtre pour ne garder que les vraies lignes produit
+            products = [ln for ln in products_raw if self._is_real_product_line(header_line, ln)]
+
             for line_text in products:
                 vals = self._parse_product_line(header_line, line_text)
+
+                # 5.1 Chercher / créer produit
                 product = False
                 if vals.get('default_code'):
                     product = self.env['product.product'].search([('default_code', '=', vals['default_code'])], limit=1)
@@ -217,6 +283,8 @@ class AccountMove(models.Model):
                         'name': vals['name'],
                         'type': 'consu'
                     })
+
+                # 5.2 Créer ligne de facture
                 line_vals = {
                     'move_id': move.id,
                     'product_id': product.id,
@@ -226,5 +294,7 @@ class AccountMove(models.Model):
                 }
                 if vals.get('product_uom_id'):
                     line_vals['product_uom_id'] = vals['product_uom_id']
+
                 self.env['account.move.line'].create(line_vals)
+
         return True
