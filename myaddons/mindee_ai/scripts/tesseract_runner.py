@@ -52,7 +52,7 @@ HEADER_TOKENS = {
     "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
     "prix", "prix unitaire", "montant", "tva", "article", "description"
 }
-FOOTER_TOKENS = {"total ht", "total ttc", "net a payer"}  # volontairement minimal, pas "tva"
+FOOTER_TOKENS = {"total ht", "total ttc", "net a payer"}
 
 def header_score(text: str) -> int:
     t = norm(text)
@@ -72,7 +72,15 @@ def is_footer_line(text: str) -> bool:
     t = norm(text)
     return any(tok in t for tok in FOOTER_TOKENS)
 
-# ---------------- Heuristique produit (même esprit que ta version OK) ----------------
+# ---------------- Split colonnes ----------------
+def split_cols(text, header_text=None):
+    """Découpe une ligne de tableau en colonnes."""
+    sep = r"\s{2,}"  # par défaut = au moins 2 espaces
+    if header_text and "|" in header_text:
+        sep = r"\|"  # si l'entête contient des pipes
+    return [col.strip() for col in re.split(sep, text) if col.strip()]
+
+# ---------------- Heuristique produit ----------------
 def is_product_line(text: str) -> bool:
     t = (text or "").strip()
     if not t:
@@ -82,7 +90,6 @@ def is_product_line(text: str) -> bool:
     has_price  = re.search(r"\d+[.,]\d{2}", t) is not None
     has_unit   = re.search(r"\b(PI|ML|KG|M2|U|L)\b", t.upper()) is not None
     long_enough = len(t.split()) >= 3
-    # exclure lignes obviously totaux
     if re.search(r"\b(total|net.?a.?payer|somme.?a.?payer)\b", norm(t)):
         return False
     return has_word and has_number and (has_price or has_unit) and long_enough
@@ -102,7 +109,7 @@ def extract_table(lines, header_idx):
             others.append(L)
     return products, others
 
-# ---------------- N° facture + Date (comme avant) ----------------
+# ---------------- N° facture + Date ----------------
 def merge_invoice_number_phrases(phrases):
     merged, skip = [], False
     keywords = [norm(k) for k in [
@@ -158,22 +165,22 @@ def run_ocr(pdf_path, dpi=300):
     out = {"pages": []}
 
     for idx, img in enumerate(pages, start=1):
-        # 1) OCR mots + lignes
         words = ocr_words(img)
         lines = group_into_lines(words)
         line_texts = [L["text"] for L in lines]
 
-        # 2) N° + date (sur les lignes calculées)
         phrases = merge_invoice_number_phrases(line_texts)
         parsed = extract_invoice_data(phrases)
 
-        # 3) Début/fin tableau + produits/autres
         header_idx, score = find_header_line(lines, min_tokens=2)
         products, others = [], []
-        header_text = None
+        header_text, header_cols, products_struct = None, [], []
         if header_idx is not None:
             header_text = lines[header_idx]["text"]
+            header_cols = split_cols(header_text)
             products, others = extract_table(lines, header_idx)
+            for L in products:
+                products_struct.append(split_cols(L["text"], header_text))
 
         out["pages"].append({
             "page": idx,
@@ -181,7 +188,8 @@ def run_ocr(pdf_path, dpi=300):
             "parsed": parsed,
             "header_index": header_idx,
             "header_text": header_text,
-            "products": [L["text"] for L in products],
+            "header": header_cols,
+            "products": products_struct,
             "others": [L["text"] for L in others],
         })
 
@@ -206,13 +214,14 @@ if __name__ == "__main__":
                 print(f"\n📄 Page {p['page']}")
                 if p["header_text"]:
                     print("✅ En-tête :", p["header_text"])
+                    print("   Colonnes:", p["header"])
                 if p["parsed"].get("invoice_number"):
                     print("   Numéro  :", p["parsed"]["invoice_number"])
                 if p["parsed"].get("invoice_date"):
                     print("   Date    :", p["parsed"]["invoice_date"])
                 print("\n   --- Produits détectés ---")
-                for line in p["products"]:
-                    print("   •", line)
+                for row in p["products"]:
+                    print("   •", row)
                 if not p["products"]:
                     print("   (aucun)")
         else:
