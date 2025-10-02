@@ -1,5 +1,5 @@
 # find_table_header.py
-# Étape stable : détecter en-tête et isoler tableau (lignes brutes)
+# Détection en-tête et extraction du tableau (coupure au pied de facture)
 
 import sys, io, unicodedata, re
 import fitz  # PyMuPDF
@@ -45,10 +45,14 @@ def strip_accents(s: str) -> str:
 def norm(s: str) -> str:
     return " ".join(strip_accents(s).lower().split())
 
-# ---------- Header detection ----------
+# ---------- Header & footer ----------
 HEADER_TOKENS = {
     "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
     "prix", "prix unitaire", "montant", "tva", "article", "description"
+}
+
+FOOTER_TOKENS = {
+    "total ht", "tva", "total ttc", "net a payer"
 }
 
 def header_score(text: str) -> int:
@@ -65,6 +69,10 @@ def find_header_line(lines, min_tokens=2):
         return best_idx, best_score
     return None, 0
 
+def is_footer_line(text: str) -> bool:
+    t = norm(text)
+    return any(tok in t for tok in FOOTER_TOKENS)
+
 # ---------- Product line check ----------
 def looks_like_product_line(text: str) -> bool:
     t = text.strip()
@@ -78,13 +86,13 @@ def looks_like_product_line(text: str) -> bool:
 def extract_table(lines, header_idx):
     table = []
     for L in lines[header_idx:]:
-        if header_score(L["text"]) > 0:  # en-tête
+        if header_score(L["text"]) > 0:  # encore un en-tête
             table.append(L)
             continue
+        if is_footer_line(L["text"]):  # 🛑 on coupe au pied
+            break
         if looks_like_product_line(L["text"]):
             table.append(L)
-        else:
-            break
     return table
 
 # ---------- Main ----------
