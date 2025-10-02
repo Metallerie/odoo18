@@ -1,5 +1,5 @@
 # find_table_header.py
-# Détection en-tête et extraction du tableau (coupure au pied de facture)
+# Détection en-tête + distinction lignes produit / autres
 
 import sys, io, unicodedata, re
 import fitz  # PyMuPDF
@@ -45,15 +45,13 @@ def strip_accents(s: str) -> str:
 def norm(s: str) -> str:
     return " ".join(strip_accents(s).lower().split())
 
-# ---------- Header & footer ----------
+# ---------- Header detection ----------
 HEADER_TOKENS = {
     "ref", "reference", "designation", "desi", "qte", "quantite", "unite",
     "prix", "prix unitaire", "montant", "tva", "article", "description"
 }
 
-FOOTER_TOKENS = {
-    "total ht", "tva", "total ttc", "net a payer"
-}
+FOOTER_TOKENS = {"total ht", "total ttc", "net a payer"}
 
 def header_score(text: str) -> int:
     t = norm(text)
@@ -74,26 +72,40 @@ def is_footer_line(text: str) -> bool:
     return any(tok in t for tok in FOOTER_TOKENS)
 
 # ---------- Product line check ----------
-def looks_like_product_line(text: str) -> bool:
+def is_product_line(text: str) -> bool:
+    """Heuristique pour détecter une ligne produit"""
     t = text.strip()
     if not t:
         return False
+
+    # doit contenir lettres + chiffres
     has_word = re.search(r"[A-Za-z]", t) is not None
     has_number = re.search(r"\d", t) is not None
+
+    # contient un prix avec décimales
     has_price = re.search(r"\d+[.,]\d{2}", t) is not None
-    return has_word and (has_number or has_price)
+
+    # contient une unité typique
+    has_unit = re.search(r"\b(PI|ML|KG|M2|U|L)\b", t.upper()) is not None
+
+    # longueur minimale
+    long_enough = len(t.split()) >= 3
+
+    return (has_word and has_number and (has_price or has_unit) and long_enough)
 
 def extract_table(lines, header_idx):
-    table = []
+    products, others = [], []
     for L in lines[header_idx:]:
-        if header_score(L["text"]) > 0:  # encore un en-tête
-            table.append(L)
+        if header_score(L["text"]) > 0:  # garder l'en-tête
+            others.append(L)
             continue
-        if is_footer_line(L["text"]):  # 🛑 on coupe au pied
+        if is_footer_line(L["text"]):
             break
-        if looks_like_product_line(L["text"]):
-            table.append(L)
-    return table
+        if is_product_line(L["text"]):
+            products.append(L)
+        else:
+            others.append(L)
+    return products, others
 
 # ---------- Main ----------
 if __name__ == "__main__":
@@ -117,9 +129,12 @@ if __name__ == "__main__":
             print(f"✅ En-tête trouvé (score={score}) à l’index {idx}:")
             print(f"   {lines[idx]['text']}")
 
-            # Extraire bloc tableau brut
-            table_zone = extract_table(lines, idx)
+            products, others = extract_table(lines, idx)
 
-            print("\n   --- Tableau brut ---")
-            for j, L in enumerate(table_zone, start=idx):
-                print(f" [{j:>3}] {L['text']}")
+            print("\n   --- Produits détectés ---")
+            for L in products:
+                print("   •", L["text"])
+
+            print("\n   --- Autres lignes ---")
+            for L in others:
+                print("   •", L["text"])
