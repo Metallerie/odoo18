@@ -210,12 +210,12 @@ class AccountMove(models.Model):
                         product = self.env['product.product'].create({
                             'name': vals['name'],
                             'default_code': vals['default_code'],
-                            'type': 'consu'
+                            'detailed_type': 'consu'
                         })
                 else:
                     product = self.env['product.product'].create({
                         'name': vals['name'],
-                        'type': 'product'
+                        'detailed_type': 'consu'
                     })
                 line_vals = {
                     'move_id': move.id,
