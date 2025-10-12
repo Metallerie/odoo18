@@ -4,6 +4,7 @@ import json
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image
+from prettytable import PrettyTable
 
 def load_model(model_path):
     """Charge le fichier JSON complet Label Studio"""
@@ -52,20 +53,30 @@ def extract_with_model(pdf_path, model):
 
     return result
 
-def save_json(output_path, data):
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"✅ Extraction sauvegardée dans {output_path}")
+def display_console(result):
+    """Affiche le résultat sous forme de tableau console"""
+    table = PrettyTable()
+    table.field_names = ["Champ", "Valeur OCR"]
+
+    for key, value in result["header"].items():
+        table.add_row([key, value])
+
+    if result["lines"]:
+        table.add_row(["---", "---"])
+        for line in result["lines"]:
+            for k, v in line.items():
+                table.add_row([k, v])
+
+    print(table)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("⚠️ Usage: python3 extract_invoice.py <facture.pdf> <modele.json> <output.json>")
+    if len(sys.argv) < 3:
+        print("⚠️ Usage: python3 extract_invoice.py <facture.pdf> <modele.json>")
         sys.exit(1)
 
     pdf_file = sys.argv[1]
     model_file = sys.argv[2]
-    output_file = sys.argv[3]
 
     model = load_model(model_file)
     extracted = extract_with_model(pdf_file, model)
-    save_json(output_file, extracted)
+    display_console(extracted)
