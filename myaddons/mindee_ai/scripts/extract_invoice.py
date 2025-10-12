@@ -1,62 +1,67 @@
 # -*- coding: utf-8 -*-
 import sys
 import json
-import pytesseract
-from pdf2image import convert_from_path
 
 def load_model(model_path):
-    with open(model_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Charge le fichier JSON complet Label Studio"""
+    try:
+        with open(model_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"❌ Erreur lecture JSON {model_path}: {e}")
+        sys.exit(1)
 
-def ocr_pdf(pdf_path):
-    """Convertit le PDF en image(s) puis applique Tesseract OCR"""
-    images = convert_from_path(pdf_path)
-    text_results = []
-    for i, img in enumerate(images):
-        text = pytesseract.image_to_string(img, lang="fra")
-        text_results.append({"page": i+1, "text": text})
-    return text_results
-
-def extract_with_model(ocr_text, model):
+def extract_with_model(model):
     """
-    Associe les positions / labels du modèle aux valeurs détectées par OCR.
-    Ici on simplifie : on cherche juste les mots-clés (Invoice Number, Date...).
+    Lis un export Label Studio complet et récupère les labels + valeurs OCR associées
     """
     result = {"header": {}, "lines": []}
 
-    for annotation in model.get("annotations", []):
-        for item in annotation.get("result", []):
-            label = None
-            if "rectanglelabels" in item["value"]:
-                label = item["value"]["rectanglelabels"][0]
+    annotations = model.get("annotations", [])
+    if not annotations:
+        print("⚠️ Aucun bloc annotations trouvé dans ce JSON.")
+        return result
 
-            if label:
-                # 🔎 Ici simplification : on recherche le label dans le texte OCR
-                found = None
-                for page in ocr_text:
-                    if label.lower() in page["text"].lower():
-                        found = page["text"]
-                        break
-                result["header"][label] = found if found else "NON TROUVÉ"
+    for item in annotations[0].get("result", []):
+        value = item.get("value", {})
+
+        # Label (ex: Invoice Number, Date, Client…)
+        label = None
+        if "rectanglelabels" in value and value["rectanglelabels"]:
+            label = value["rectanglelabels"][0]
+
+        # Valeur associée (ex: 163908, 07/10/2025…)
+        text = None
+        if "text" in value and value["text"]:
+            text = " ".join(value["text"])
+
+        if label and text:
+            # Cas Header (infos générales)
+            if label not in ["Reference", "Description", "Quantity", "Unit Price", "Amount HT", "VAT", "Unité"]:
+                result["header"][label] = text
+            else:
+                # Cas Lignes (tableau facture)
+                result["lines"].append({label: text})
 
     return result
 
 def save_json(output_path, data):
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    """Sauvegarde le JSON résultat"""
+    try:
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        print(f"✅ Extraction sauvegardée dans {output_path}")
+    except Exception as e:
+        print(f"❌ Erreur sauvegarde {output_path}: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("⚠️ Usage: python3 extract_invoice.py <facture.pdf> <modele.json> <output.json>")
+    if len(sys.argv) < 3:
+        print("⚠️ Usage: python3 extract_invoice.py <modele.json> <output.json>")
         sys.exit(1)
 
-    pdf_file = sys.argv[1]
-    model_file = sys.argv[2]
-    output_file = sys.argv[3]
+    model_file = sys.argv[1]
+    output_file = sys.argv[2]
 
     model = load_model(model_file)
-    ocr_text = ocr_pdf(pdf_file)
-    extracted = extract_with_model(ocr_text, model)
+    extracted = extract_with_model(model)
     save_json(output_file, extracted)
-
-    print(f"✅ Extraction terminée → {output_file}")
