@@ -26,13 +26,11 @@ def extract_invoice(pdf_path, model):
     logging.debug(f"Texte extrait du PDF ({len(full_text)} caractères)")
 
     # 🔎 Récupération des annotations Label Studio
-annotations = []
-if isinstance(model, list) and len(model) > 0:
-    ann = model[0].get("annotations", [])
-    if ann and "result" in ann[0]:
-        annotations = ann[0]["result"]
-
-logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
+    annotations = []
+    if isinstance(model, list) and len(model) > 0:
+        ann = model[0].get("annotations", [])
+        if ann and "result" in ann[0]:
+            annotations = ann[0]["result"]
 
     logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
 
@@ -41,7 +39,7 @@ logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
         value = ann.get("value", {})
         label = value.get("labels", ["inconnu"])[0]
 
-        # Pas de texte dans le JSON → on va le chercher dans le PDF
+        # Recherche simple dans le texte PDF
         found = None
         if label == "invoice_number":
             match = re.search(r"FACTURE\s*[:N°]*\s*(\d+)", full_text, re.IGNORECASE)
@@ -56,6 +54,7 @@ logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
         results.append((label, found or "❌ non trouvé"))
 
     return results
+
 
 
 def main(pdf_file, model_file):
