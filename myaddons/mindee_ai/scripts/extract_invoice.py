@@ -9,7 +9,7 @@ from PIL import Image
 def ocr_from_pdf(pdf_file, x, y, w, h):
     """Extrait texte OCR d'une case (x,y,w,h en %) depuis un PDF."""
     doc = fitz.open(pdf_file)
-    page = doc[0]  # première page
+    page = doc[0]  # première page uniquement
     pix = page.get_pixmap()
     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
@@ -19,7 +19,7 @@ def ocr_from_pdf(pdf_file, x, y, w, h):
     abs_w = int(w / 100 * img.width)
     abs_h = int(h / 100 * img.height)
 
-    # Découpe l'image
+    # Découpe
     crop = img.crop((abs_x, abs_y, abs_x + abs_w, abs_y + abs_h))
 
     # OCR
@@ -31,13 +31,21 @@ def main(pdf_file, json_file):
         model = json.load(f)
 
     print("=== Cases détectées avec OCR ===")
+
     for entry in model:
-        for zone in entry.get("annotations", [])[0].get("result", []):
-            label_list = zone["value"].get("rectanglelabels", [])
+        # Vérifie si annotations et result existent
+        annotations = entry.get("annotations", [])
+        if not annotations:
+            continue
+
+        results = annotations[0].get("result", [])
+        for zone in results:
+            value = zone.get("value", {})
+            label_list = value.get("rectanglelabels", [])
             label = label_list[0] if label_list else "NUL"
 
-            x, y = zone["value"]["x"], zone["value"]["y"]
-            w, h = zone["value"]["width"], zone["value"]["height"]
+            x, y = value.get("x", 0), value.get("y", 0)
+            w, h = value.get("width", 0), value.get("height", 0)
 
             ocr_text = ocr_from_pdf(pdf_file, x, y, w, h)
             print(f"[Case] {label} → {ocr_text}")
