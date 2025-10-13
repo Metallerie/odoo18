@@ -26,11 +26,13 @@ def extract_invoice(pdf_path, model):
     logging.debug(f"Texte extrait du PDF ({len(full_text)} caractères)")
 
     # 🔎 Récupération des annotations Label Studio
-    annotations = []
-    if isinstance(model, list) and model:
-        anns = model[0].get("annotations", [])
-        if anns and "result" in anns[0]:
-            annotations = anns[0]["result"]
+annotations = []
+if isinstance(model, list) and len(model) > 0:
+    ann = model[0].get("annotations", [])
+    if ann and "result" in ann[0]:
+        annotations = ann[0]["result"]
+
+logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
 
     logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
 
