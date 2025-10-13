@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# odoo18/myaddons/mindee_ai/scripts/extract_invoice.py
+
 import sys
 import json
 import logging
@@ -8,8 +10,9 @@ from pdf2image import convert_from_path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
+# ---------- OCR avec Tesseract ----------
 def run_tesseract(image_path, lang="fra"):
-    """Exécute Tesseract OCR et retourne le texte reconnu ou 'NUL'."""
+    """Exécute Tesseract OCR et retourne le texte reconnu ou 'NUL' si vide."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
         output_path = tmp.name.replace(".txt", "")
     cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
@@ -21,6 +24,7 @@ def run_tesseract(image_path, lang="fra"):
     except FileNotFoundError:
         return "NUL"
 
+# ---------- Extraction ----------
 def extract_from_pdf(pdf_path, json_path):
     logging.info(f"Chargement du modèle JSON : {json_path}")
     with open(json_path, "r", encoding="utf-8") as f:
@@ -70,6 +74,21 @@ def extract_from_pdf(pdf_path, json_path):
 
     return structured
 
+# ---------- Normalisation ----------
+def normalize_values(data):
+    """
+    Remplace toutes les valeurs vides ou None par 'NUL' récursivement.
+    """
+    if isinstance(data, dict):
+        return {k: normalize_values(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [normalize_values(v) for v in data]
+    else:
+        if data is None or (isinstance(data, str) and data.strip() == ""):
+            return "NUL"
+        return data
+
+# ---------- Affichage hiérarchique ----------
 def print_tree(data, indent=0):
     """Affiche la structure JSON en arbre indenté."""
     for key, value in data.items():
@@ -79,6 +98,7 @@ def print_tree(data, indent=0):
         else:
             print(" " * indent + f"{key} : {value}")
 
+# ---------- Main ----------
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python extract_invoice.py <fichier.pdf> <modele.json>")
@@ -88,6 +108,9 @@ if __name__ == "__main__":
     json_file = sys.argv[2]
 
     structured = extract_from_pdf(pdf_file, json_file)
+
+    # 🔥 Remplacement des champs vides
+    structured = normalize_values(structured)
 
     print("\n=== Résultats OCR hiérarchiques (indentés) ===")
     print_tree(structured, indent=0)
