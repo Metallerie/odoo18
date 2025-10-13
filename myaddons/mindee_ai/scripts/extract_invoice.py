@@ -1,49 +1,60 @@
-# -*- coding: utf-8 -*-
-import json
+# extract_invoice.py
 import sys
+import json
 import logging
 from pdf2image import convert_from_path
-from PIL import Image
 import pytesseract
+from PIL import Image
 
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
 def load_model(model_file):
-    """Charge le modèle JSON"""
     with open(model_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def ocr_crop(image, bbox):
-    """OCR sur une zone de l'image définie par bbox = [x, y, width, height]"""
-    x, y, w, h = bbox
-    crop = image.crop((x, y, x + w, y + h))
-    text = pytesseract.image_to_string(crop, lang="fra")
-    logging.debug(f"OCR zone {bbox} → {text.strip()}")
-    return text.strip()
-
 def extract_invoice(pdf_file, model):
-    """Extrait les champs en fonction des zones définies dans le JSON"""
+    logging.info(f"Conversion du PDF en images : {pdf_file}")
+    pages = convert_from_path(pdf_file)
     results = {}
 
-    # Convertir le PDF en images (une page)
-    pages = convert_from_path(pdf_file, dpi=300)
-    page = pages[0]  # on prend la première page pour l’instant
+    # On prend uniquement la première page (si factures sur 1 page)
+    page = pages[0]
 
-    for field in model:
-        field_name = field.get("name")
-        bbox = field.get("bbox")  # attendu: [x, y, width, height]
+    for ann in model:
+        ann_id = ann.get("id", None)
+        annotations = ann.get("annotations", [])
 
-        if not bbox or not field_name:
-            continue
+        for a in annotations:
+            for r in a.get("result", []):
+                field_name = r["value"]["labels"][0]
+                rect = r["value"].get("rectanglelabels", None)
 
-        value = ocr_crop(page, bbox)
-        results[field_name] = value
+                # Coordonnées relatives (x, y, width, height)
+                x = r["value"].get("x", 0)
+                y = r["value"].get("y", 0)
+                w = r["value"].get("width", 0)
+                h = r["value"].get("height", 0)
+
+                # Convertir en pixels absolus
+                img_w, img_h = page.size
+                left = int(x * img_w / 100)
+                top = int(y * img_h / 100)
+                right = int((x + w) * img_w / 100)
+                bottom = int((y + h) * img_h / 100)
+
+                cropped = page.crop((left, top, right, bottom))
+
+                # OCR sur la zone
+                text = pytesseract.image_to_string(cropped, lang="fra").strip()
+                results[field_name] = text if text else ""
+
+                logging.debug(f"[{field_name}] Zone=({left},{top},{right},{bottom}) → '{results[field_name]}'")
 
     return results
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python extract_invoice.py <pdf_file> <model.json>")
+        print("Usage: python extract_invoice.py <fichier.pdf> <modele.json>")
         sys.exit(1)
 
     pdf_file = sys.argv[1]
@@ -54,4 +65,4 @@ if __name__ == "__main__":
 
     print("\n=== Résultats OCR par champ ===")
     for k, v in extracted.items():
-        print(f"{k:20} : {v}")
+        print(f"{k:15} : {v}")
