@@ -5,16 +5,14 @@ import logging
 import tempfile
 import subprocess
 from pdf2image import convert_from_path
-from tabulate import tabulate
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
 def run_tesseract(image_path, lang="fra"):
-    """Exécute tesseract OCR et retourne le texte reconnu."""
+    """Exécute Tesseract OCR et retourne le texte reconnu ou 'NUL'."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
         output_path = tmp.name.replace(".txt", "")
     cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
-    logging.debug(f"Commande OCR : {' '.join(cmd)}")
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     try:
         with open(output_path + ".txt", "r", encoding="utf-8") as f:
@@ -24,27 +22,27 @@ def run_tesseract(image_path, lang="fra"):
         return "NUL"
 
 def extract_from_pdf(pdf_path, json_path):
-    # Charger le JSON (zones annotées)
     logging.info(f"Chargement du modèle JSON : {json_path}")
     with open(json_path, "r", encoding="utf-8") as f:
         model = json.load(f)
 
-    # Convertir le PDF en images
     logging.info(f"Conversion du PDF en images : {pdf_path}")
     pages = convert_from_path(pdf_path, dpi=300)
 
-    results = []
+    structured = {"Header": {}, "Table": {}, "Footer": {}, "Document": {}}
+
     for entry in model:
         doc_id = entry.get("id", "N/A")
         zones = entry.get("Document", [])
         logging.debug(f"Analyse entrée JSON id={doc_id} avec {len(zones)} zones")
 
+        row_index = 1
         for idx, zone in enumerate(zones, start=1):
             label_list = zone.get("rectanglelabels", [])
             label = label_list[0] if label_list else f"Zone_{idx}"
-            x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
 
-            # Coords relatives → absolues
+            # coords relatives → absolues
+            x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
             page = pages[0]
             img_w, img_h = page.size
             left = int((x / 100) * img_w)
@@ -59,19 +57,27 @@ def extract_from_pdf(pdf_path, json_path):
 
             ocr_text = run_tesseract(crop_path)
 
-            # Construction clé hiérarchique
-            parent = "Document"
+            # Organisation hiérarchique
             if "Header" in label:
-                parent = "Header"
+                structured["Header"][label] = ocr_text
             elif "Table" in label:
-                parent = "Table.Row[1]"  # simplifié pour test
+                structured["Table"].setdefault(f"Row[{row_index}]", {})[label] = ocr_text
+                row_index += 1
             elif "Footer" in label:
-                parent = "Footer"
+                structured["Footer"][label] = ocr_text
+            else:
+                structured["Document"][label] = ocr_text
 
-            key = f"{parent}.{label}"
-            results.append((key, ocr_text))
+    return structured
 
-    return results
+def print_tree(data, indent=0):
+    """Affiche la structure JSON en arbre indenté."""
+    for key, value in data.items():
+        if isinstance(value, dict):
+            print(" " * indent + f"{key}")
+            print_tree(value, indent + 4)
+        else:
+            print(" " * indent + f"{key} : {value}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -81,7 +87,7 @@ if __name__ == "__main__":
     pdf_file = sys.argv[1]
     json_file = sys.argv[2]
 
-    data = extract_from_pdf(pdf_file, json_file)
+    structured = extract_from_pdf(pdf_file, json_file)
 
-    print("\n=== Résultats OCR hiérarchiques ===")
-    print(tabulate(data, headers=["Champ", "Valeur OCR"], tablefmt="grid"))
+    print("\n=== Résultats OCR hiérarchiques (indentés) ===")
+    print_tree(structured, indent=0)
