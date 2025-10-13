@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# odoo18/myaddons/mindee_ai/scripts/extract_invoice.py
+# /data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/scripts/extract_invoice.py
 
 import sys
 import json
@@ -9,6 +9,7 @@ import subprocess
 from pdf2image import convert_from_path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
+
 
 # ---------- OCR avec Tesseract ----------
 def run_tesseract(image_path, lang="fra"):
@@ -23,6 +24,7 @@ def run_tesseract(image_path, lang="fra"):
         return text if text else "NUL"
     except FileNotFoundError:
         return "NUL"
+
 
 # ---------- Extraction ----------
 def extract_from_pdf(pdf_path, json_path):
@@ -61,7 +63,7 @@ def extract_from_pdf(pdf_path, json_path):
 
             ocr_text = run_tesseract(crop_path)
 
-            # Organisation hiérarchique
+            # Organisation hiérarchique par type de bloc
             if "Header" in label:
                 structured["Header"][label] = ocr_text
             elif "Table" in label:
@@ -73,6 +75,7 @@ def extract_from_pdf(pdf_path, json_path):
                 structured["Document"][label] = ocr_text
 
     return structured
+
 
 # ---------- Normalisation ----------
 def normalize_values(data):
@@ -88,6 +91,7 @@ def normalize_values(data):
             return "NUL"
         return data
 
+
 # ---------- Affichage hiérarchique ----------
 def print_tree(data, indent=0):
     """Affiche la structure JSON en arbre indenté."""
@@ -97,6 +101,7 @@ def print_tree(data, indent=0):
             print_tree(value, indent + 4)
         else:
             print(" " * indent + f"{key} : {value}")
+
 
 # ---------- Main ----------
 if __name__ == "__main__":
