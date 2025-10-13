@@ -12,9 +12,26 @@ from PIL import Image
 from prettytable import PrettyTable
 
 def load_model(model_path):
-    """Charge un modèle JSON fournisseur (Label Studio)"""
+    """Charge un modèle JSON fournisseur (Label Studio) même si plusieurs objets"""
     with open(model_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        content = f.read().strip()
+
+    # Si ça commence par [ ... ], c'est un tableau JSON normal
+    if content.startswith("["):
+        data = json.loads(content)
+        return data[0] if data else {}
+
+    # Sinon, essayer de splitter plusieurs objets accolés
+    objs = []
+    decoder = json.JSONDecoder()
+    idx = 0
+    while idx < len(content):
+        obj, end = decoder.raw_decode(content, idx)
+        objs.append(obj)
+        idx = end
+        while idx < len(content) and content[idx].isspace():
+            idx += 1
+    return objs[0] if objs else {}
 
 def ocr_zone(img, box, page_w, page_h):
     """
