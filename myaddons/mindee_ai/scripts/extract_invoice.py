@@ -14,8 +14,11 @@ from prettytable import PrettyTable
 def load_model(model_path):
     """Charge un modèle JSON fournisseur (Label Studio)"""
     with open(model_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
+        data = json.load(f)
+    # Si c’est une liste, on prend le premier objet
+    if isinstance(data, list):
+        return data[0]
+    return data
 
 def ocr_zone(img, box, page_w, page_h):
     """
