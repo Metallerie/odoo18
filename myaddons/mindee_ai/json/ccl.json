@@ -46,19 +46,7 @@
       "height": 2.2405660377358494,
       "rotation": 0,
       "rectanglelabels": [
-        "Footer"
-      ],
-      "original_width": 2480,
-      "original_height": 3508
-    },
-    {
-      "x": 68.62821533724531,
-      "y": 24.613699212476714,
-      "width": 11.271929215402231,
-      "height": 2.5,
-      "rotation": 0,
-      "rectanglelabels": [
-        "Header"
+        "Document type"
       ],
       "original_width": 2480,
       "original_height": 3508
@@ -127,25 +115,13 @@
       "original_height": 3508
     },
     {
-      "x": 51.02886281048882,
-      "y": 97.34844255889247,
-      "width": 22.405322742709785,
-      "height": 1.4653343753489025,
-      "rotation": 0,
-      "rectanglelabels": [
-        "VAT Number"
-      ],
-      "original_width": 2480,
-      "original_height": 3508
-    },
-    {
       "x": 49.97611810007799,
       "y": 11.844648059735308,
       "width": 40.497888805235405,
       "height": 11.91233176293375,
       "rotation": 0,
       "rectanglelabels": [
-        "VAT Number"
+        "Customer adresse livraison"
       ],
       "original_width": 2480,
       "original_height": 3508
@@ -154,7 +130,8 @@
   "header_label": [
     "FACTURE N°",
     "Date facture",
-    "Adresse de Facturation"
+    "Adresse de Facturation",
+    "Adresse de Livraison"
   ],
   "footer": [
     {
@@ -182,13 +159,25 @@
       "original_height": 3508
     },
     {
+      "x": 80.11986023756786,
+      "y": 24.73469541067204,
+      "width": 11.193246732181414,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier APE"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
       "x": 10.411673356969517,
       "y": 94.37539816282985,
       "width": 26.520300060205372,
       "height": 1.5971091636409085,
       "rotation": 0,
       "rectanglelabels": [
-        "Supplier SIÈGE SOCIA"
+        "Supplier"
       ],
       "original_width": 2480,
       "original_height": 3508
@@ -206,25 +195,13 @@
       "original_height": 3508
     },
     {
-      "x": 75.82841350547605,
-      "y": 96.18082591303259,
-      "width": 14.271923758011914,
-      "height": 1.3193510482250708,
-      "rotation": 0,
-      "rectanglelabels": [
-        "Supplier_info"
-      ],
-      "original_width": 2480,
-      "original_height": 3508
-    },
-    {
       "x": 26.422076726649024,
       "y": 97.50017696125772,
       "width": 23.573600053515857,
       "height": 1.340234791958876,
       "rotation": 0,
       "rectanglelabels": [
-        "Supplier_info"
+        "Supplier info"
       ],
       "original_width": 2480,
       "original_height": 3508
@@ -236,7 +213,7 @@
       "height": 1.1804719905171803,
       "rotation": 0,
       "rectanglelabels": [
-        "Supplier APE"
+        "Supplier IBAN"
       ],
       "original_width": 2480,
       "original_height": 3508
@@ -338,18 +315,6 @@
       "original_height": 3508
     },
     {
-      "x": 80.11986023756786,
-      "y": 24.73469541067204,
-      "width": 11.193246732181414,
-      "height": 2.5,
-      "rotation": 0,
-      "rectanglelabels": [
-        "Amount HT"
-      ],
-      "original_width": 2480,
-      "original_height": 3508
-    },
-    {
       "x": 91.57657486305538,
       "y": 24.667374464320982,
       "width": 3.8365413877054095,
@@ -418,6 +383,7 @@
     "TVA",
     "Qté",
     "Unité",
+    "BON DE LIVRAISON N° ",
     "Réf.",
     "Désignation",
     "Qté",
@@ -1491,12 +1457,11 @@
       "original_height": 3508
     }
   ],
-  "line_value": "BON DE LIVRAISON N° 915912 07\/10\/2025 1131658                         Votre Commande :",
   "annotator": 1,
   "annotation_id": 2,
   "created_at": "2025-10-10T06:10:18.811600Z",
-  "updated_at": "2025-10-13T05:13:44.132025Z",
-  "lead_time": 32178.006
+  "updated_at": "2025-10-13T06:50:10.878738Z",
+  "lead_time": 33687.513
 },
 {
   "image": "\/data\/upload\/2\/0549c723-Facture_CCL_163908.png",
@@ -1609,14 +1574,14 @@
     "Réf."
   ],
   "header_value": [
-    "163908",
-    "07\/10\/2025",
-    "CCL",
-    "MR BARDINA FRANCK",
-    "716320619 RCS CASTRES",
-    "31,96",
-    "6,39",
-    "38,35 €"
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
   ],
   "footer": [
     {
@@ -2007,14 +1972,14 @@
     "Réf."
   ],
   "header_value": [
-    "163908",
-    "07\/10\/2025",
-    "CCL",
-    "MR BARDINA FRANCK",
-    "716320619 RCS CASTRES",
-    "31,96",
-    "6,39",
-    "38,35 €"
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
   ],
   "footer": [
     {
@@ -2267,26 +2232,26 @@
     }
   ],
   "line_value": [
-    "1",
-    "SEMIN COLLE TDV 20KG",
-    "1",
-    "21,26",
-    "A01844",
-    "668274",
-    "MANCH.LAQUEUR VELOURS 180 MM",
-    "PI",
-    "5,65",
-    "2",
-    "25530",
-    "708321",
-    "BROSSE RECHAMP.VIROLE INOX N°4",
-    "1",
-    "21,26",
-    "2",
-    "PI",
-    "5,652",
-    "5,053",
-    "2"
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
   ],
   "annotator": 1,
   "annotation_id": 7,
