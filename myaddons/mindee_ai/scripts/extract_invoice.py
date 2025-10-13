@@ -18,17 +18,16 @@ def load_model(model_path):
     return data
 
 def extract_invoice(pdf_path, model):
-    """Extrait les infos de la facture selon le modèle"""
     results = []
 
     with pdfplumber.open(pdf_path) as pdf:
         full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
     logging.debug(f"Texte extrait du PDF ({len(full_text)} caractères)")
 
-    # On cherche la clé annotations/result
     annotations = []
-    if "annotations" in model:
-        anns = model["annotations"]
+    if isinstance(model, list) and model:
+        first = model[0]
+        anns = first.get("annotations", [])
         if anns and "result" in anns[0]:
             annotations = anns[0]["result"]
 
@@ -36,19 +35,24 @@ def extract_invoice(pdf_path, model):
 
     for ann in annotations:
         value = ann.get("value", {})
-        label_list = value.get("labels", [])
-        label = label_list[0] if label_list else "inconnu"
-        text_list = value.get("text", [])
-        text = text_list[0] if text_list else ""
-        logging.debug(f"Annotation: {label} → '{text}'")
+        label = value.get("labels", ["inconnu"])[0]
 
-        if text and text in full_text:
-            logging.debug(f"✔ Match trouvé pour '{label}' : {text}")
-            results.append((label, text))
-        else:
-            logging.warning(f"❌ Pas trouvé : {label} ({text})")
+        # ⚠️ pas de valeur fournie dans le JSON → on cherche dans le texte du PDF
+        found = None
+        if label == "invoice_number":
+            match = re.search(r"FACTURE\s*[:N°]*\s*(\d+)", full_text, re.IGNORECASE)
+            if match:
+                found = match.group(1)
+
+        elif label == "invoice_date":
+            match = re.search(r"Date\s*facture\s*[:]*\s*(\d{2}/\d{2}/\d{4})", full_text, re.IGNORECASE)
+            if match:
+                found = match.group(1)
+
+        results.append((label, found or "❌ non trouvé"))
 
     return results
+
 
 def main(pdf_file, model_file):
     logging.info(f"📄 Lecture facture : {pdf_file}")
