@@ -1,58 +1,65 @@
-# extract_invoice_simple.py
+# extract_invoice.py
 
 import sys
 import json
-import fitz  # PyMuPDF
-import pytesseract
-from PIL import Image
+import tempfile
+import subprocess
+from pdf2image import convert_from_path
 
-def ocr_from_pdf(pdf_file, x, y, w, h):
-    """Extrait texte OCR d'une case (x,y,w,h en %) depuis un PDF."""
-    doc = fitz.open(pdf_file)
-    page = doc[0]  # première page uniquement
-    pix = page.get_pixmap()
-    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+# --- OCR avec Tesseract ---
+def run_tesseract(image_path, lang="fra"):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
+        output_path = tmp.name.replace(".txt", "")
+    cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
+    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    try:
+        with open(output_path + ".txt", "r", encoding="utf-8") as f:
+            text = f.read().strip()
+        return text if text else "NUL"
+    except FileNotFoundError:
+        return "NUL"
 
-    # Conversion % → coordonnées absolues
-    abs_x = int(x / 100 * img.width)
-    abs_y = int(y / 100 * img.height)
-    abs_w = int(w / 100 * img.width)
-    abs_h = int(h / 100 * img.height)
-
-    # Découpe
-    crop = img.crop((abs_x, abs_y, abs_x + abs_w, abs_y + abs_h))
-
-    # OCR
-    text = pytesseract.image_to_string(crop, lang="fra")
-    return text.strip() if text.strip() else "NUL"
-
-def main(pdf_file, json_file):
+# --- Extraction des cases et OCR ---
+def extract_cases(pdf_file, json_file):
+    # Charger modèle
     with open(json_file, "r", encoding="utf-8") as f:
         model = json.load(f)
 
+    # Charger le PDF en image
+    pages = convert_from_path(pdf_file, dpi=300)
+    page = pages[0]
+    img_w, img_h = page.size
+
     print("=== Cases détectées avec OCR ===")
-
     for entry in model:
-        # Vérifie si annotations et result existent
-        annotations = entry.get("annotations", [])
-        if not annotations:
-            continue
+        for section in ["Document", "header", "footer", "table", "table_header", "line_cells"]:
+            zones = entry.get(section, [])
+            for idx, zone in enumerate(zones, start=1):
+                label_list = zone.get("rectanglelabels", [])
+                label = label_list[0] if label_list else "NUL"
 
-        results = annotations[0].get("result", [])
-        for zone in results:
-            value = zone.get("value", {})
-            label_list = value.get("rectanglelabels", [])
-            label = label_list[0] if label_list else "NUL"
+                # Position en pixels
+                x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
+                left = int((x / 100) * img_w)
+                top = int((y / 100) * img_h)
+                right = int(((x + w) / 100) * img_w)
+                bottom = int(((y + h) / 100) * img_h)
 
-            x, y = value.get("x", 0), value.get("y", 0)
-            w, h = value.get("width", 0), value.get("height", 0)
+                # OCR sur la zone
+                crop = page.crop((left, top, right, bottom))
+                with tempfile.NamedTemporaryFile(suffix=".PNG", delete=False) as tmp_img:
+                    crop_path = tmp_img.name
+                    crop.save(crop_path)
 
-            ocr_text = ocr_from_pdf(pdf_file, x, y, w, h)
-            print(f"[Case] {label} → {ocr_text}")
+                text = run_tesseract(crop_path)
 
+                # Afficher la case avec position + valeur OCR
+                print(f"[{section}] {label} → x={x}, y={y}, w={w}, h={h} → {text}")
+
+# --- Main ---
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python extract_invoice_simple.py <facture.pdf> <modele.json>")
+        print("Usage: python extract_invoice.py <fichier.pdf> <modele.json>")
         sys.exit(1)
 
-    main(sys.argv[1], sys.argv[2])
+    extract_cases(sys.argv[1], sys.argv[2])
