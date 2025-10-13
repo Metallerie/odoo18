@@ -32,11 +32,9 @@ def extract_cases(pdf_file, json_file):
 
     print("=== Cases détectées avec OCR ===")
     for entry in model:
-        # Chercher toutes les zones dans toutes les clés
-        for key, zones in entry.items():
-            if not isinstance(zones, list):
-                continue
-            for zone in zones:
+        for section in ["Document", "header", "footer", "table", "table_header", "line_cells"]:
+            zones = entry.get(section, [])
+            for idx, zone in enumerate(zones, start=1):
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
@@ -55,8 +53,8 @@ def extract_cases(pdf_file, json_file):
 
                 text = run_tesseract(crop_path)
 
-                # Afficher juste la case (sans section)
-                print(f"[Case] {label} → x={x}, y={y}, w={w}, h={h} → {text}")
+                # Afficher la case avec position + valeur OCR
+                print(f"[{section}] {label} → x={x}, y={y}, w={w}, h={h} → {text}")
 
 # --- Main ---
 if __name__ == "__main__":
