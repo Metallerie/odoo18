@@ -1,4 +1,4 @@
-# extract_invoice.py (version dynamique)
+# extract_invoice.py (corrigé dynamique)
 
 import sys
 import json
@@ -32,10 +32,13 @@ def extract_cases(pdf_file, json_file):
 
     print("=== Cases détectées avec OCR (dynamique) ===")
     for entry in model:
-        for key, zones in entry.items():  # lecture de toutes les clés dynamiques
+        for key, zones in entry.items():
             if not isinstance(zones, list):
-                continue
+                continue  # skip si ce n’est pas une liste
             for zone in zones:
+                if not isinstance(zone, dict):
+                    continue  # skip si pas un dict
+
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
