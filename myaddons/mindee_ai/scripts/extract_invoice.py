@@ -20,24 +20,26 @@ def load_model(model_path):
 def extract_invoice(pdf_path, model):
     results = []
 
+    # Texte du PDF
     with pdfplumber.open(pdf_path) as pdf:
         full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
     logging.debug(f"Texte extrait du PDF ({len(full_text)} caractères)")
 
+    # 🔎 Récupération des annotations Label Studio
     annotations = []
     if isinstance(model, list) and model:
-        first = model[0]
-        anns = first.get("annotations", [])
+        anns = model[0].get("annotations", [])
         if anns and "result" in anns[0]:
             annotations = anns[0]["result"]
 
     logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
 
+    # On boucle sur les champs
     for ann in annotations:
         value = ann.get("value", {})
         label = value.get("labels", ["inconnu"])[0]
 
-        # ⚠️ pas de valeur fournie dans le JSON → on cherche dans le texte du PDF
+        # Pas de texte dans le JSON → on va le chercher dans le PDF
         found = None
         if label == "invoice_number":
             match = re.search(r"FACTURE\s*[:N°]*\s*(\d+)", full_text, re.IGNORECASE)
