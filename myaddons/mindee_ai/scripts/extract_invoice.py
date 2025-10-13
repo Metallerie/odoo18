@@ -2,92 +2,72 @@
 import sys
 import json
 import logging
-import tempfile
-import subprocess
-from pdf2image import convert_from_path
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
+def print_separator(char="=", width=66):
+    print(char * width)
 
-def run_tesseract(image_path, lang="fra"):
-    """Exécute Tesseract OCR et retourne le texte reconnu ou 'NUL'."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
-        output_path = tmp.name.replace(".txt", "")
-    cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
-    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-    try:
-        with open(output_path + ".txt", "r", encoding="utf-8") as f:
-            text = f.read().strip()
-        return text if text else "NUL"
-    except FileNotFoundError:
-        return "NUL"
+def format_line(cols, widths):
+    """Formate une ligne en fonction des largeurs"""
+    return "  ".join(str(c).ljust(w) for c, w in zip(cols, widths))
 
-def extract_from_pdf(pdf_path, json_path):
-    logging.info(f"Chargement du modèle JSON : {json_path}")
-    with open(json_path, "r", encoding="utf-8") as f:
-        model = json.load(f)
+def render_ascii(invoice):
+    # === HEADER ===
+    print_separator("=")
+    print(f"{'FACTURE N° : ' + invoice.get('invoice_number', 'NUL')}".center(66))
+    print(f"Date : {invoice.get('invoice_date', 'NUL')}".center(66))
+    print_separator("-")
+    print(f"Client : {invoice.get('client_id','NUL')}".ljust(30) + 
+          f"SIREN : {invoice.get('siren','NUL')}".rjust(30))
+    print("Adresse de Facturation".ljust(33) + "Adresse de Livraison")
+    print(invoice.get("billing_address","NUL").ljust(33) + invoice.get("shipping_address","NUL"))
+    print_separator("-")
 
-    logging.info(f"Conversion du PDF en images : {pdf_path}")
-    pages = convert_from_path(pdf_path, dpi=300)
+    # === TABLEAU ===
+    headers = ["Réf.", "Désignation", "Qté", "Unité", "PU", "Montant", "TVA"]
+    widths = [8, 28, 5, 6, 8, 8, 5]
+    print(format_line(headers, widths))
+    print("-" * 66)
 
-    structured = {"Header": {}, "Table": {}, "Footer": {}, "Document": {}}
+    rows = invoice.get("lines", [])
+    if not rows:
+        print("Aucune ligne de produit trouvée.")
+    else:
+        for row in rows:
+            print(format_line([
+                row.get("reference","NUL"),
+                row.get("description","NUL"),
+                row.get("quantity","NUL"),
+                row.get("unit","NUL"),
+                row.get("unit_price","NUL"),
+                row.get("amount_ht","NUL"),
+                row.get("vat","NUL")
+            ], widths))
+    print("-" * 66)
 
-    for entry in model:
-        doc_id = entry.get("id", "N/A")
-        zones = entry.get("Document", [])
-        logging.debug(f"Analyse entrée JSON id={doc_id} avec {len(zones)} zones")
+    # === TOTALS ===
+    print(f"{'TOTAL BRUT HT :':>50} {invoice.get('total_brut_ht','NUL')}")
+    print(f"{'TOTAL ECO-PART :':>50} {invoice.get('eco_part','NUL')}")
+    print(f"{'TOTAL NET HT   :':>50} {invoice.get('total_ht','NUL')}")
+    print(f"{'TOTAL T.V.A.   :':>50} {invoice.get('total_tva','NUL')}")
+    print_separator("-")
+    print(f"{'NET A PAYER    :':>50} {invoice.get('total_ttc','NUL')} €")
+    print_separator("=")
 
-        row_index = 1
-        for idx, zone in enumerate(zones, start=1):
-            label_list = zone.get("rectanglelabels", [])
-            label = label_list[0] if label_list else f"Zone_{idx}"
-
-            # coords relatives → absolues
-            x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
-            page = pages[0]
-            img_w, img_h = page.size
-            left = int((x / 100) * img_w)
-            top = int((y / 100) * img_h)
-            right = int(((x + w) / 100) * img_w)
-            bottom = int(((y + h) / 100) * img_h)
-
-            crop = page.crop((left, top, right, bottom))
-            with tempfile.NamedTemporaryFile(suffix=".PNG", delete=False) as tmp_img:
-                crop_path = tmp_img.name
-                crop.save(crop_path)
-
-            ocr_text = run_tesseract(crop_path)
-
-            # Organisation hiérarchique
-            if "Header" in label:
-                structured["Header"][label] = ocr_text
-            elif "Table" in label:
-                structured["Table"].setdefault(f"Row[{row_index}]", {})[label] = ocr_text
-                row_index += 1
-            elif "Footer" in label:
-                structured["Footer"][label] = ocr_text
-            else:
-                structured["Document"][label] = ocr_text
-
-    return structured
-
-def print_tree(data, indent=0):
-    """Affiche la structure JSON en arbre indenté."""
-    for key, value in data.items():
-        if isinstance(value, dict):
-            print(" " * indent + f"{key}")
-            print_tree(value, indent + 4)
-        else:
-            print(" " * indent + f"{key} : {value}")
+    # === FOOTER ===
+    print("\nConditions de paiement :")
+    print(invoice.get("payment_method", "NUL"))
+    print("\nMentions légales :")
+    print(invoice.get("mentions","NUL"))
+    print("\nSociété émettrice :")
+    print(invoice.get("supplier","NUL"))
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python extract_invoice.py <fichier.pdf> <modele.json>")
+    if len(sys.argv) < 2:
+        print("Usage: python extract_invoice.py <json_file>")
         sys.exit(1)
 
-    pdf_file = sys.argv[1]
-    json_file = sys.argv[2]
+    json_file = sys.argv[1]
+    with open(json_file, "r", encoding="utf-8") as f:
+        invoice = json.load(f)
 
-    structured = extract_from_pdf(pdf_file, json_file)
-
-    print("\n=== Résultats OCR hiérarchiques (indentés) ===")
-    print_tree(structured, indent=0)
+    render_ascii(invoice)
