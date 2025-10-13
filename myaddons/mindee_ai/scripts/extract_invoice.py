@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# odoo18/myaddons/mindee_ai/scripts/extract_invoice.py
 import sys
 import json
 import logging
