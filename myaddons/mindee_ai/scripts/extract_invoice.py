@@ -1,94 +1,75 @@
 # -*- coding: utf-8 -*-
-import fitz  # PyMuPDF
-import pytesseract
-from PIL import Image
-import io
+import sys
 import json
 import logging
-import sys
+from pdf2image import convert_from_path
+from PIL import Image
+import pytesseract
+from prettytable import PrettyTable
 
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(message)s")
 
 def load_model(model_file):
     logging.info(f"Chargement du modèle JSON : {model_file}")
     with open(model_file, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-            logging.debug(f"JSON chargé : type={type(data)} taille={len(data)}")
-            return data
-        except Exception as e:
-            logging.error(f"Erreur de parsing JSON : {e}")
-            return []
+        data = json.load(f)
+    logging.debug(f"JSON chargé : type={type(data)} taille={len(data)}")
+    return data
 
-def extract_invoice(pdf_path, model):
-    logging.info(f"Ouverture du PDF : {pdf_path}")
-    doc = fitz.open(pdf_path)
+def ocr_zone(image, box, original_size):
+    """OCRise une zone définie dans le JSON Label Studio"""
+    img_w, img_h = image.size
+    orig_w, orig_h = original_size
+
+    # Conversion % -> pixels
+    x_px = int((box["x"] / 100) * img_w)
+    y_px = int((box["y"] / 100) * img_h)
+    w_px = int((box["width"] / 100) * img_w)
+    h_px = int((box["height"] / 100) * img_h)
+
+    cropped = image.crop((x_px, y_px, x_px + w_px, y_px + h_px))
+    text = pytesseract.image_to_string(cropped, lang="fra")
+    return text.strip()
+
+def extract_invoice(pdf_file, model):
+    logging.info(f"Conversion du PDF en images : {pdf_file}")
+    pages = convert_from_path(pdf_file, dpi=300)
+    if not pages:
+        logging.error("Aucune page détectée dans le PDF")
+        return {}
+
+    page = pages[0]  # pour l’instant on gère une seule page
+
     results = {}
-
     for entry in model:
-        logging.debug(f"Analyse d'une entrée JSON : {entry.get('id', 'sans id')}")
-        annotations = entry.get("annotations", [])
-        logging.debug(f"  Nombre d'annotations trouvées : {len(annotations)}")
-
-        for ann in annotations:
-            for res in ann.get("result", []):
-                value = res.get("value", {})
-                labels = value.get("labels", ["inconnu"])
-                bbox = value.get("rectanglelabels", None)
-
-                # Log des valeurs JSON
-                logging.debug(f"    Champ {labels} - value keys: {list(value.keys())}")
-
-                # Vérifie présence coordonnées
-                x = value.get("x")
-                y = value.get("y")
-                w = value.get("width")
-                h = value.get("height")
-                page = value.get("page", 1)
-
-                logging.debug(f"    Coordonnées : x={x}, y={y}, w={w}, h={h}, page={page}")
-
-                if None in (x, y, w, h):
-                    logging.warning(f"    ⚠️ Pas de bbox pour {labels}, on saute")
-                    results[labels[0]] = ""
-                    continue
-
-                # Conversion des coordonnées (Label Studio donne en %)
-                page_index = page - 1
-                page_rect = doc[page_index].rect
-                rect = fitz.Rect(
-                    page_rect.x0 + (x/100.0)*page_rect.width,
-                    page_rect.y0 + (y/100.0)*page_rect.height,
-                    page_rect.x0 + ((x+w)/100.0)*page_rect.width,
-                    page_rect.y0 + ((y+h)/100.0)*page_rect.height
-                )
-
-                logging.debug(f"    Zone réelle PDF : {rect}")
-
-                # Découpe image
-                pix = doc[page_index].get_pixmap(clip=rect)
-                img = Image.open(io.BytesIO(pix.tobytes("png")))
-
-                text = pytesseract.image_to_string(img, lang="fra")
-                logging.info(f"    OCR pour {labels} : {text.strip()}")
-                results[labels[0]] = text.strip()
+        zones = entry.get("Document", [])
+        logging.debug(f"Analyse entrée JSON id={entry.get('id')} avec {len(zones)} zones")
+        for zone in zones:
+            labels = zone.get("rectanglelabels", [])
+            if not labels:
+                continue
+            label = labels[0]
+            text = ocr_zone(page, zone, (zone["original_width"], zone["original_height"]))
+            results[label] = text
+            logging.debug(f"OCR {label} → {text}")
 
     return results
 
 def main(pdf_file, model_file):
     model = load_model(model_file)
-    if not model:
-        logging.error("Modèle JSON vide ou incorrect")
-        return
-
     extracted = extract_invoice(pdf_file, model)
 
     print("\n=== Résultats OCR par champ ===")
+    table = PrettyTable(["Champ", "Valeur OCR"])
     for champ, valeur in extracted.items():
-        print(f"{champ:20s} -> {valeur}")
+        table.add_row([champ, valeur])
+    print(table)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python extract_invoice.py <facture.pdf> <modele.json>")
         sys.exit(1)
-    main(sys.argv[1], sys.argv[2])
+
+    pdf_file = sys.argv[1]
+    model_file = sys.argv[2]
+    main(pdf_file, model_file)
