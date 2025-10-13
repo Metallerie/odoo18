@@ -1,1980 +1,2297 @@
-	
-0	
-image	"/data/upload/3/db34cd17-Facture_CCL_163908.png"
-id	5
-Document	
-0	
-x	2.6645352591003757e-14
-y	1.3322676295501875e-15
-width	99.99999999999997
-height	24.292452830188648
-rotation	0
-rectanglelabels	
-0	"Header"
-original_width	2480
-original_height	3508
-1	
-x	0
-y	24.616539606207898
-width	100
-height	61.04315484804922
-rotation	0
-rectanglelabels	
-0	"Table"
-original_width	2480
-original_height	3508
-2	
-x	2.7755575615628907e-14
-y	85.79289929413706
-width	99.99999999999996
-height	12.812960895646533
-rotation	0
-rectanglelabels	
-0	"Footer"
-original_width	2480
-original_height	3508
-3	
-x	27.356208155812535
-y	4.127358490566038
-width	12.343654899573952
-height	2.2405660377358494
-rotation	0
-rectanglelabels	
-0	"Footer"
-original_width	2480
-original_height	3508
-4	
-x	68.62821533724531
-y	24.613699212476714
-width	11.271929215402231
-height	2.5
-rotation	0
-rectanglelabels	
-0	"Header"
-original_width	2480
-original_height	3508
-5	
-x	80.13600075875806
-y	34.39709129028151
-width	11.173275379051498
-height	1.8385532963102242
-rotation	0
-rectanglelabels	
-0	"Table"
-original_width	2480
-original_height	3508
-document_type	"FACTURE"
-header	
-0	
-x	27.189402008520997
-y	3.4198113207547167
-width	31.025943396226413
-height	3.1839622641509435
-rotation	0
-rectanglelabels	
-0	"Invoice Number"
-original_width	2480
-original_height	3508
-1	
-x	27.24171399554144
-y	6.59676081529749
-width	24.774167437974203
-height	1.814223512336718
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-2	
-x	4.737689390528943
-y	0.13955565479513235
-width	21.418304119682908
-height	11.583119347995975
-rotation	0
-rectanglelabels	
-0	"Supplier"
-original_width	2480
-original_height	3508
-3	
-x	4.8363912528316035
-y	11.98645571415983
-width	42.73790637706314
-height	11.877561255807734
-rotation	0
-rectanglelabels	
-0	"Customer adresse facturation"
-original_width	2480
-original_height	3508
-4	
-x	51.02886281048882
-y	97.34844255889247
-width	22.405322742709785
-height	1.4653343753489025
-rotation	0
-rectanglelabels	
-0	"VAT Number"
-original_width	2480
-original_height	3508
-5	
-x	49.97611810007799
-y	11.844648059735308
-width	40.497888805235405
-height	11.91233176293375
-rotation	0
-rectanglelabels	
-0	"VAT Number"
-original_width	2480
-original_height	3508
-header_label	
-0	"FACTURE N°"
-1	"Date facture"
-2	"Adresse de Facturation"
-footer	
-0	
-x	10.362738484289322
-y	96.02334043542594
-width	22.997533916525914
-height	1.3257787205537048
-rotation	0
-rectanglelabels	
-0	"Supplier BIC"
-original_width	2480
-original_height	3508
-1	
-x	51.02886281048882
-y	97.34844255889247
-width	22.405322742709785
-height	1.4653343753489025
-rotation	0
-rectanglelabels	
-0	"Supplier VAT Number"
-original_width	2480
-original_height	3508
-2	
-x	10.411673356969517
-y	94.37539816282985
-width	26.520300060205372
-height	1.5971091636409085
-rotation	0
-rectanglelabels	
-0	"Supplier SIÈGE SOCIA"
-original_width	2480
-original_height	3508
-3	
-x	38.60177008763226
-y	94.23651910512197
-width	51.37080344995336
-height	1.8748672790567014
-rotation	0
-rectanglelabels	
-0	"Supplier SIÈGE SOCIA"
-original_width	2480
-original_height	3508
-4	
-x	75.82841350547605
-y	96.18082591303259
-width	14.271923758011914
-height	1.3193510482250708
-rotation	0
-rectanglelabels	
-0	"Supplier_info"
-original_width	2480
-original_height	3508
-5	
-x	26.422076726649024
-y	97.50017696125772
-width	23.573600053515857
-height	1.340234791958876
-rotation	0
-rectanglelabels	
-0	"Supplier_info"
-original_width	2480
-original_height	3508
-6	
-x	43.807606766117004
-y	96.11138638417836
-width	30.842126736683014
-height	1.1804719905171803
-rotation	0
-rectanglelabels	
-0	"Supplier APE"
-original_width	2480
-original_height	3508
-7	
-x	34.27994341115435
-y	96.04194685532471
-width	8.741876686512143
-height	1.3887905770790354
-rotation	0
-rectanglelabels	
-0	"Supplier APE"
-original_width	2480
-original_height	3508
-footer_label	
-0	"SIREN"
-1	"N°INTRACOM"
-2	"Supplier"
-3	"SIÈGE SOCIAL "
-4	"IBAN"
-5	"APE"
-table	
-0	
-x	5.026121449273256
-y	24.929615974769625
-width	90.30991646135821
-height	2.696947926579967
-rotation	0
-rectanglelabels	
-0	"Table Header"
-original_width	2480
-original_height	3508
-1	
-x	4.922434090050102
-y	28.006992336497877
-width	90.49328685011147
-height	46.60221441379699
-rotation	0
-rectanglelabels	
-0	"Table Row"
-original_width	2480
-original_height	3508
-2	
-x	4.837378271454655
-y	74.52830188679246
-width	90.57573797930607
-height	10.849056603773537
-rotation	0
-rectanglelabels	
-0	"Table End"
-original_width	2480
-original_height	3508
-table_header	
-0	
-x	4.503765976871576
-y	24.64622641509434
-width	8.507113511868532
-height	2.594339622641506
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-1	
-x	12.888944726541549
-y	24.721049716165265
-width	42.21805126076587
-height	2.5
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-2	
-x	68.62821533724531
-y	24.613699212476714
-width	11.271929215402231
-height	2.5
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-3	
-x	80.11986023756786
-y	24.73469541067204
-width	11.193246732181414
-height	2.5
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-4	
-x	91.57657486305538
-y	24.667374464320982
-width	3.8365413877054095
-height	2.5000000000000004
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-5	
-x	55.34896739896792
-y	24.690615848369553
-width	6.605432323333609
-height	2.5
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-6	
-x	62.037132210083
-y	24.68580291044816
-width	6.377658794942796
-height	2.5000000000000004
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-7	
-x	61.83392296633728
-y	29.726914610757788
-width	6.827809846326399
-height	2.4834114378911862
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-8	
-x	68.6593499073185
-y	29.73952934815525
-width	11.414279565503845
-height	2.496751304459812
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-Intitulé_value	
-0	"Réf."
-1	"Désignation"
-2	"Prix Unitaire"
-3	"Montant"
-4	"TVA"
-5	"Qté"
-6	"Unité"
-7	"Réf."
-8	"Désignation"
-9	"Qté"
-10	"Unité"
-11	"Prix Unitaire"
-12	"Montant"
-13	"TVA"
-14	"Réf."
-15	"Réf."
-16	"Désignation"
-17	"Qté"
-18	"Unité"
-19	"Prix Unitaire"
-20	"Montant"
-21	"TVA"
-22	"Réf."
-23	"Réf."
-24	"Désignation"
-25	"Qté"
-26	"Unité"
-27	"Prix Unitaire"
-28	"Montant"
-29	"TVA"
-30	"Réf."
-31	"Désignation"
-32	"Unité"
-33	"Prix Unitaire"
-34	"Montant"
-35	"TVA"
-36	"Désignation"
-37	"Qté"
-38	"Unité"
-39	"Prix Unitaire"
-40	"Montant"
-41	"TVA"
-42	"Désignation"
-43	"Unité"
-44	"Prix Unitaire"
-45	"Montant"
-46	"TVA"
-47	"TOTAL BRUT H.T."
-48	"TOTAL ECO-PART."
-49	"FRAIS FIXES"
-50	"TVA"
-51	"Ventilation"
-52	"TOTAL T.V.A."
-53	"TOTAL NET H.T"
-54	"NET A PAYER"
-55	"Qté"
-56	"Qté"
-line_cells	
-0	
-x	4.76085419419337
-y	27.29716054690504
-width	90.44597976846222
-height	2.2897978724201424
-rotation	0
-rectanglelabels	
-0	"Commentaire"
-original_width	2480
-original_height	3508
-1	
-x	4.994633667760966
-y	29.63475402921782
-width	7.860945297389148
-height	2.5
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-2	
-x	12.984717593324039
-y	29.678253686677287
-width	42.26333456719962
-height	2.5000000000000453
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-3	
-x	55.31741954742741
-y	29.739724166473852
-width	6.481017275118372
-height	2.4846839806948173
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-4	
-x	80.14934899589107
-y	29.700779351441888
-width	11.257346217074431
-height	2.4999999999999973
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-5	
-x	91.47445665590033
-y	29.63596634414421
-width	3.7054991957895607
-height	2.567862961388886
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-6	
-x	4.8337940900790235
-y	32.19599232050151
-width	8.082687010076164
-height	2.2174982872974938
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-7	
-x	4.730947407311412
-y	34.471065308645365
-width	8.214288353116888
-height	1.7307011098799354
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-8	
-x	13.042838026969436
-y	34.485179671910686
-width	42.19810413490397
-height	1.6864639991928232
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-9	
-x	55.290312650582464
-y	34.36657461054525
-width	6.524303222612381
-height	1.8272395676084134
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-10	
-x	61.85786070185073
-y	34.39209547532802
-width	6.80931652404577
-height	1.8304612110668388
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-11	
-x	68.69782455893998
-y	34.404855907719394
-width	11.408227224353011
-height	1.8138462154743284
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-12	
-x	80.13600075875806
-y	34.39709129028151
-width	11.173275379051498
-height	1.8385532963102242
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-13	
-x	91.42081123044075
-y	34.401362164131406
-width	3.751593661962062
-height	1.8842064808367
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-14	
-x	4.936640772846702
-y	36.22080806638724
-width	8.04662557002741
-height	1.805492223504249
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-15	
-x	4.863416990674407
-y	38.065830167330816
-width	8.13039602343901
-height	2.2711697903508847
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-16	
-x	13.03558665016534
-y	38.06332626754457
-width	42.10250882894058
-height	2.284624725346775
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-17	
-x	55.21914547375493
-y	37.99241980576238
-width	6.539218253831615
-height	2.3451281916279156
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-18	
-x	61.82106393182587
-y	37.979104159928
-width	6.876760627114087
-height	2.3533835678742987
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-19	
-x	68.75366688320842
-y	37.99307029870619
-width	11.350385889820684
-height	2.338220686308481
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-20	
-x	80.11912626027417
-y	38.01614981164864
-width	11.216656379999968
-height	2.3332401284835056
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-21	
-x	91.3739084378286
-y	37.99915510533594
-width	3.821802638557345
-height	2.353802181260201
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-22	
-x	4.880426157022077
-y	40.36438256203581
-width	8.034933552621265
-height	1.836356066008817
-rotation	0
-rectanglelabels	
-0	"Reference"
-original_width	2480
-original_height	3508
-23	
-x	13.019462584943373
-y	40.403405968725565
-width	42.10363827139719
-height	1.7672520965460805
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-24	
-x	61.83603944611238
-y	40.36208379059616
-width	6.8907277454320255
-height	1.808574274675814
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-25	
-x	68.73794609283883
-y	40.371193131810195
-width	11.362035411268566
-height	1.744992747528502
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-26	
-x	80.11408019116317
-y	40.39466232186557
-width	11.222175685879748
-height	1.7170055369657928
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-27	
-x	91.39283928536315
-y	40.39250712912342
-width	3.8431889574709057
-height	1.7209567236596481
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-28	
-x	13.033737112336654
-y	32.245598631258495
-width	42.201068291711366
-height	2.16159350969537
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-29	
-x	55.285328146866775
-y	32.27123962249937
-width	6.525528196484734
-height	2.043096515692837
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-30	
-x	61.85955351382607
-y	32.261896270482815
-width	6.75347419977736
-height	2.099627034073466
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-31	
-x	68.65627254225932
-y	32.309227045215835
-width	11.432677377767112
-height	2.0561508225419454
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-32	
-x	80.12339213724387
-y	32.25493017986321
-width	11.253161330138788
-height	2.135968552677174
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-33	
-x	91.44576947633732
-y	32.23582437330117
-width	3.7573532571690125
-height	2.1395605405807263
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-34	
-x	13.03286588096183
-y	36.21861225996688
-width	42.190629064329194
-height	1.8113225346224615
-rotation	0
-rectanglelabels	
-0	"Description"
-original_width	2480
-original_height	3508
-35	
-x	61.83435852260111
-y	36.260837983569076
-width	6.845416198907853
-height	1.659524283990146
-rotation	0
-rectanglelabels	
-0	"Unité"
-original_width	2480
-original_height	3508
-36	
-x	68.70552509234712
-y	36.25011241831089
-width	11.42087874941306
-height	1.7088067612185196
-rotation	0
-rectanglelabels	
-0	"Unit Price"
-original_width	2480
-original_height	3508
-37	
-x	80.13853034457725
-y	36.30271162114658
-width	11.192206226585903
-height	1.7027361511099273
-rotation	0
-rectanglelabels	
-0	"Amount HT"
-original_width	2480
-original_height	3508
-38	
-x	91.39585298454374
-y	36.297973302939766
-width	3.7642066864882495
-height	1.693038247029609
-rotation	0
-rectanglelabels	
-0	"VAT"
-original_width	2480
-original_height	3508
-39	
-x	69.05774497869753
-y	74.52830188679245
-width	26.188565124771745
-height	1.768867924528326
-rotation	0
-rectanglelabels	
-0	"Total HT"
-original_width	2480
-original_height	3508
-40	
-x	68.99260174957777
-y	76.33310384520927
-width	26.291031692097484
-height	1.248640291858736
-rotation	0
-rectanglelabels	
-0	"TotalL ECO-PART."
-original_width	2480
-original_height	3508
-41	
-x	68.94767600433299
-y	77.65520226511426
-width	26.299621117759198
-height	1.5824392716018234
-rotation	0
-rectanglelabels	
-0	"Frais FIXES"
-original_width	2480
-original_height	3508
-42	
-x	35.63137229126978
-y	76.32574324391179
-width	18.062440801391595
-height	1.8142235123367094
-rotation	0
-rectanglelabels	
-0	"TVA"
-original_width	2480
-original_height	3508
-43	
-x	35.92747787817783
-y	74.37196407677993
-width	17.963738939088906
-height	1.8840013397342688
-rotation	0
-rectanglelabels	
-0	"Taux TVA"
-original_width	2480
-original_height	3508
-44	
-x	69.1362293571251
-y	80.62020803851094
-width	26.16978878050083
-height	1.7891962351455564
-rotation	0
-rectanglelabels	
-0	"Total TVA"
-original_width	2480
-original_height	3508
-45	
-x	69.1900054741831
-y	79.26009229525825
-width	25.994926105189336
-height	1.3095847813095327
-rotation	0
-rectanglelabels	
-0	"Total net H.T"
-original_width	2480
-original_height	3508
-46	
-x	69.1155675576296
-y	82.56852456814839
-width	26.07761830428229
-height	2.881472418414928
-rotation	0
-rectanglelabels	
-0	"Total TTC"
-original_width	2480
-original_height	3508
-47	
-x	55.27625425344526
-y	36.20870478597377
-width	6.468323427685661
-height	1.7090938797181325
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-48	
-x	55.19015569350297
-y	40.39000062750384
-width	6.598216363875448
-height	1.780864433220521
-rotation	0
-rectanglelabels	
-0	"Quantity"
-original_width	2480
-original_height	3508
-row_index	
-0	
-x	4.76085419419337
-y	27.29716054690504
-width	90.44597976846222
-height	2.2897978724201424
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-1	
-x	4.994633667760966
-y	29.63475402921782
-width	7.860945297389148
-height	2.5
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-2	
-x	12.984717593324039
-y	29.678253686677287
-width	42.26333456719962
-height	2.5000000000000453
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-3	
-x	55.31741954742741
-y	29.739724166473852
-width	6.481017275118372
-height	2.4846839806948173
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-4	
-x	61.83392296633728
-y	29.726914610757788
-width	6.827809846326399
-height	2.4834114378911862
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-5	
-x	68.6593499073185
-y	29.73952934815525
-width	11.414279565503845
-height	2.496751304459812
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-6	
-x	80.14934899589107
-y	29.700779351441888
-width	11.257346217074431
-height	2.4999999999999973
-rotation	0
-number	0
-original_width	2480
-original_height	3508
-7	
-x	91.47445665590033
-y	29.63596634414421
-width	3.7054991957895607
-height	2.567862961388886
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-8	
-x	4.8337940900790235
-y	32.19599232050151
-width	8.082687010076164
-height	2.2174982872974938
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-9	
-x	4.730947407311412
-y	34.471065308645365
-width	8.214288353116888
-height	1.7307011098799354
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-10	
-x	13.042838026969436
-y	34.485179671910686
-width	42.19810413490397
-height	1.6864639991928232
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-11	
-x	55.290312650582464
-y	34.36657461054525
-width	6.524303222612381
-height	1.8272395676084134
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-12	
-x	61.85786070185073
-y	34.39209547532802
-width	6.80931652404577
-height	1.8304612110668388
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-13	
-x	68.69782455893998
-y	34.404855907719394
-width	11.408227224353011
-height	1.8138462154743284
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-14	
-x	80.13600075875806
-y	34.39709129028151
-width	11.173275379051498
-height	1.8385532963102242
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-15	
-x	91.42081123044075
-y	34.401362164131406
-width	3.751593661962062
-height	1.8842064808367
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-16	
-x	4.936640772846702
-y	36.22080806638724
-width	8.04662557002741
-height	1.805492223504249
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-17	
-x	4.863416990674407
-y	38.065830167330816
-width	8.13039602343901
-height	2.2711697903508847
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-18	
-x	13.03558665016534
-y	38.06332626754457
-width	42.10250882894058
-height	2.284624725346775
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-19	
-x	55.21914547375493
-y	37.99241980576238
-width	6.539218253831615
-height	2.3451281916279156
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-20	
-x	61.82106393182587
-y	37.979104159928
-width	6.876760627114087
-height	2.3533835678742987
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-21	
-x	68.75366688320842
-y	37.99307029870619
-width	11.350385889820684
-height	2.338220686308481
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-22	
-x	80.11912626027417
-y	38.01614981164864
-width	11.216656379999968
-height	2.3332401284835056
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-23	
-x	91.3739084378286
-y	37.99915510533594
-width	3.821802638557345
-height	2.353802181260201
-rotation	0
-number	5
-original_width	2480
-original_height	3508
-24	
-x	4.880426157022077
-y	40.36438256203581
-width	8.034933552621265
-height	1.836356066008817
-rotation	0
-number	6
-original_width	2480
-original_height	3508
-25	
-x	13.019462584943373
-y	40.403405968725565
-width	42.10363827139719
-height	1.7672520965460805
-rotation	0
-number	6
-original_width	2480
-original_height	3508
-26	
-x	61.83603944611238
-y	40.36208379059616
-width	6.8907277454320255
-height	1.808574274675814
-rotation	0
-number	6
-original_width	2480
-original_height	3508
-27	
-x	68.73794609283883
-y	40.371193131810195
-width	11.362035411268566
-height	1.744992747528502
-rotation	0
-number	0
-original_width	2480
-original_height	3508
-28	
-x	80.11408019116317
-y	40.39466232186557
-width	11.222175685879748
-height	1.7170055369657928
-rotation	0
-number	6
-original_width	2480
-original_height	3508
-29	
-x	91.39283928536315
-y	40.39250712912342
-width	3.8431889574709057
-height	1.7209567236596481
-rotation	0
-number	6
-original_width	2480
-original_height	3508
-30	
-x	13.033737112336654
-y	32.245598631258495
-width	42.201068291711366
-height	2.16159350969537
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-31	
-x	55.285328146866775
-y	32.27123962249937
-width	6.525528196484734
-height	2.043096515692837
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-32	
-x	61.85955351382607
-y	32.261896270482815
-width	6.75347419977736
-height	2.099627034073466
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-33	
-x	68.65627254225932
-y	32.309227045215835
-width	11.432677377767112
-height	2.0561508225419454
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-34	
-x	80.12339213724387
-y	32.25493017986321
-width	11.253161330138788
-height	2.135968552677174
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-35	
-x	91.44576947633732
-y	32.23582437330117
-width	3.7573532571690125
-height	2.1395605405807263
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-36	
-x	13.03286588096183
-y	36.21861225996688
-width	42.190629064329194
-height	1.8113225346224615
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-37	
-x	61.83435852260111
-y	36.260837983569076
-width	6.845416198907853
-height	1.659524283990146
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-38	
-x	68.70552509234712
-y	36.25011241831089
-width	11.42087874941306
-height	1.7088067612185196
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-39	
-x	80.13853034457725
-y	36.30271162114658
-width	11.192206226585903
-height	1.7027361511099273
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-40	
-x	91.39585298454374
-y	36.297973302939766
-width	3.7642066864882495
-height	1.693038247029609
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-41	
-x	55.27625425344526
-y	36.20870478597377
-width	6.468323427685661
-height	1.7090938797181325
-rotation	0
-number	4
-original_width	2480
-original_height	3508
-42	
-x	55.19015569350297
-y	40.39000062750384
-width	6.598216363875448
-height	1.780864433220521
-rotation	0
-number	6
-original_width	2480
-original_height	3508
-line_value	"BON DE LIVRAISON N° 915912 07/10/2025 1131658                         Votre Commande :"
-annotator	1
-annotation_id	2
-created_at	"2025-10-10T06:10:18.811600Z"
-updated_at	"2025-10-13T05:13:44.132025Z"
-lead_time	32178.006
-1	
-image	"/data/upload/2/0549c723-Facture_CCL_163908.png"
-id	9
-header	
-0	
-x	26.9105886139165
-y	3.8441521006317503
-width	32.53961325243354
-height	2.5710419485791607
-rotation	0
-rectanglelabels	
-0	"Invoice Number"
-original_width	2480
-original_height	3508
-1	
-x	26.95589263515204
-y	6.805934775123906
-width	25.256991838818934
-height	1.6013964176762139
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-2	
-x	4.76938083557249
-y	0.4555972808288827
-width	21.262309766374326
-height	10.50516049995595
-rotation	0
-rectanglelabels	
-0	"Supplier"
-original_width	2480
-original_height	3508
-3	
-x	5.663002654443702
-y	14.172358296434481
-width	22.99179077704145
-height	2.4020946265143195
-rotation	0
-rectanglelabels	
-0	"Client"
-original_width	2480
-original_height	3508
-4	
-x	10.367651013520016
-y	95.99650895580947
-width	22.477764382253483
-height	1.416619907944309
-rotation	0
-rectanglelabels	
-0	"SIREN"
-original_width	2480
-original_height	3508
-5	
-x	80.30137764001176
-y	30.586671577615675
-width	11.099485202709673
-height	1.601396417676213
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-6	
-x	5.026333716961871
-y	32.31219990695787
-width	89.83391869319442
-height	2.0372794662744607
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-7	
-x	91.74064300198805
-y	30.34646211496424
-width	3.284541539577347
-height	1.6814662385600343
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-header_label	
-0	"FACTURE N° :"
-1	"Date facture :"
-2	"SIREN"
-3	"TOTAL NET H.T"
-4	"TOTAL T.V.A."
-5	"NET A PAYER"
-6	"Réf."
-header_value	
-0	"163908"
-1	"07/10/2025"
-2	"CCL"
-3	"MR BARDINA FRANCK"
-4	"716320619 RCS CASTRES"
-5	"31,96"
-6	"6,39"
-7	"38,35 €"
-footer	
-0	
-x	69.50690878376453
-y	79.08434616524069
-width	25.55321043920533
-height	1.478212077854976
-rotation	0
-rectanglelabels	
-0	"Total HT"
-original_width	2480
-original_height	3508
-1	
-x	69.2963875111808
-y	80.66953436651202
-width	26.38691165839213
-height	1.4687363594071725
-rotation	0
-rectanglelabels	
-0	"Total TVA"
-original_width	2480
-original_height	3508
-2	
-x	69.25512466225375
-y	82.77057594222161
-width	26.36920556015182
-height	2.5710419485791474
-rotation	0
-rectanglelabels	
-0	"Total TTC"
-original_width	2480
-original_height	3508
-row_index	
-0	
-x	55.35668866947338
-y	24.73162514872731
-width	6.567742723496835
-height	2.3215510197081173
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-1	
-x	12.867414315422385
-y	24.68424655648837
-width	42.35523878826534
-height	2.6058225731417686
-rotation	0
-number	0
-original_width	2480
-original_height	3508
-2	
-x	4.976646732725121
-y	30.51403545785416
-width	7.55127559989708
-height	1.691647898032167
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-3	
-x	12.636109014279207
-y	30.486205346571428
-width	43.323802334671555
-height	1.7724537992192604
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-4	
-x	56.06019792842917
-y	30.5571034985402
-width	5.816621609747571
-height	1.701555647250494
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-5	
-x	80.30137764001176
-y	30.586671577615675
-width	11.099485202709673
-height	1.601396417676213
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-6	
-x	5.026333716961871
-y	32.31219990695787
-width	89.83391869319442
-height	2.0372794662744607
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-7	
-x	5.096702388999336
-y	34.56694237374989
-width	7.248643397687945
-height	1.5213265967924114
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-8	
-x	12.638883675757853
-y	34.575475258212144
-width	43.944900598483166
-height	1.5213265967923988
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-9	
-x	62.20590608112009
-y	34.491615149949205
-width	6.621356949811101
-height	1.60139641767622
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-10	
-x	80.81230213762257
-y	34.50365646453262
-width	10.66225923716831
-height	1.7065284635040807
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-11	
-x	91.56286020319013
-y	34.48221553926619
-width	3.5991225217926424
-height	1.677222511236881
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-12	
-x	5.0967023889993355
-y	36.19155903948242
-width	90.04174220565496
-height	1.4412567759085988
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-13	
-x	4.983442335910458
-y	38.374262356775105
-width	7.361903450776823
-height	2.0818153429790756
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-14	
-x	12.571865892865027
-y	38.35344420334532
-width	43.944900598483166
-height	1.9216757012114485
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-15	
-x	57.30958686297032
-y	38.35344420334532
-width	10.872965096531914
-height	2.4020946265143124
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-16	
-x	81.54723822398937
-y	38.11323474069388
-width	9.85362461873207
-height	2.8825135518171834
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-17	
-x	92.4202033205213
-y	38.03316491981006
-width	2.8315013272218437
-height	2.642304089165762
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-18	
-x	69.24553943048264
-y	34.37077131258457
-width	11.413128426648086
-height	1.6629885875868382
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-19	
-x	69.39825454117806
-y	38.36960030329878
-width	11.460040874673055
-height	2.17941524299129
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-20	
-x	91.74064300198805
-y	30.34646211496424
-width	3.284541539577347
-height	1.6814662385600343
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-line_value	
-0	"1"
-1	"SEMIN COLLE TDV 20KG"
-2	"1"
-3	"21,26"
-4	"A01844"
-5	"668274"
-6	"MANCH.LAQUEUR VELOURS 180 MM"
-7	"PI"
-8	"5,65"
-9	"2"
-10	"25530"
-11	"708321"
-12	"BROSSE RECHAMP.VIROLE INOX N°4"
-13	"1"
-14	"21,26"
-15	"2"
-16	"PI"
-17	"5,652"
-18	"5,053"
-19	"2"
-annotator	1
-annotation_id	6
-created_at	"2025-10-10T20:29:51.256029Z"
-updated_at	"2025-10-10T20:29:51.256262Z"
-lead_time	5409.44
-2	
-image	"/data/upload/2/0549c723-Facture_CCL_163908.png"
-id	10
-header	
-0	
-x	26.93
-y	3.84
-width	32.53961325243354
-height	2.5710419485791607
-rotation	0
-rectanglelabels	
-0	"Invoice Number"
-original_width	2480
-original_height	3508
-1	
-x	26.93
-y	6.81
-width	25.256991838818934
-height	1.6013964176762139
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-2	
-x	5.04
-y	0.46
-width	21.262309766374326
-height	10.50516049995595
-rotation	0
-rectanglelabels	
-0	"Supplier"
-original_width	2480
-original_height	3508
-3	
-x	5.04
-y	14.17
-width	22.99179077704145
-height	2.4020946265143195
-rotation	0
-rectanglelabels	
-0	"Client"
-original_width	2480
-original_height	3508
-4	
-x	10.37
-y	96.0JS:96
-width	22.477764382253483
-height	1.416619907944309
-rotation	0
-rectanglelabels	
-0	"SIREN"
-original_width	2480
-original_height	3508
-5	
-x	80.81
-y	30.51
-width	11.099485202709673
-height	1.601396417676213
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-6	
-x	5.04
-y	32.31
-width	89.83391869319442
-height	2.0372794662744607
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-7	
-x	91.85
-y	30.51
-width	3.284541539577347
-height	1.6814662385600343
-rotation	0
-rectanglelabels	
-0	"Invoice Date"
-original_width	2480
-original_height	3508
-header_label	
-0	"FACTURE N° :"
-1	"Date facture :"
-2	"SIREN"
-3	"TOTAL NET H.T"
-4	"TOTAL T.V.A."
-5	"NET A PAYER"
-6	"Réf."
-header_value	
-0	"163908"
-1	"07/10/2025"
-2	"CCL"
-3	"MR BARDINA FRANCK"
-4	"716320619 RCS CASTRES"
-5	"31,96"
-6	"6,39"
-7	"38,35 €"
-footer	
-0	
-x	69.29
-y	79.08
-width	25.55321043920533
-height	1.478212077854976
-rotation	0
-rectanglelabels	
-0	"Total HT"
-original_width	2480
-original_height	3508
-1	
-x	69.29
-y	80.67
-width	26.38691165839213
-height	1.4687363594071725
-rotation	0
-rectanglelabels	
-0	"Total TVA"
-original_width	2480
-original_height	3508
-2	
-x	69.29
-y	82.77
-width	26.36920556015182
-height	2.5710419485791474
-rotation	0
-rectanglelabels	
-0	"Total TTC"
-original_width	2480
-original_height	3508
-row_index	
-0	
-x	56.3
-y	24.66
-width	6.567742723496835
-height	2.3215510197081173
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-1	
-x	12.67
-y	24.66
-width	42.35523878826534
-height	2.6058225731417686
-rotation	0
-number	0
-original_width	2480
-original_height	3508
-2	
-x	5.04
-y	30.51
-width	7.55127559989708
-height	1.691647898032167
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-3	
-x	12.67
-y	30.51
-width	43.323802334671555
-height	1.7724537992192604
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-4	
-x	56.3
-y	30.51
-width	5.816621609747571
-height	1.701555647250494
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-5	
-x	80.81
-y	30.51
-width	11.099485202709673
-height	1.601396417676213
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-6	
-x	5.04
-y	32.31
-width	89.83391869319442
-height	2.0372794662744607
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-7	
-x	5.04
-y	34.5
-width	7.248643397687945
-height	1.5213265967924114
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-8	
-x	12.67
-y	34.5
-width	43.944900598483166
-height	1.5213265967923988
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-9	
-x	62.11
-y	34.5
-width	6.621356949811101
-height	1.60139641767622
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-10	
-x	80.81
-y	34.5
-width	10.66225923716831
-height	1.7065284635040807
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-11	
-x	91.85
-y	34.5
-width	3.5991225217926424
-height	1.677222511236881
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-12	
-x	5.04
-y	36.19
-width	90.04174220565496
-height	1.4412567759085988
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-13	
-x	5.04
-y	38.27
-width	7.361903450776823
-height	2.0818153429790756
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-14	
-x	12.67
-y	38.27
-width	43.944900598483166
-height	1.9216757012114485
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-15	
-x	56.3
-y	38.27
-width	10.872965096531914
-height	2.4020946265143124
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-16	
-x	80.81
-y	38.27
-width	9.85362461873207
-height	2.8825135518171834
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-17	
-x	91.85
-y	38.27
-width	2.8315013272218437
-height	2.642304089165762
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-18	
-x	69.29
-y	34.5
-width	11.413128426648086
-height	1.6629885875868382
-rotation	0
-number	2
-original_width	2480
-original_height	3508
-19	
-x	69.29
-y	38.27
-width	11.460040874673055
-height	2.17941524299129
-rotation	0
-number	3
-original_width	2480
-original_height	3508
-20	
-x	91.85
-y	30.51
-width	3.284541539577347
-height	1.6814662385600343
-rotation	0
-number	1
-original_width	2480
-original_height	3508
-line_value	
-0	"1"
-1	"SEMIN COLLE TDV 20KG"
-2	"1"
-3	"21,26"
-4	"A01844"
-5	"668274"
-6	"MANCH.LAQUEUR VELOURS 180 MM"
-7	"PI"
-8	"5,65"
-9	"2"
-10	"25530"
-11	"708321"
-12	"BROSSE RECHAMP.VIROLE INOX N°4"
-13	"1"
-14	"21,26"
-15	"2"
-16	"PI"
-17	"5,652"
-18	"5,053"
-19	"2"
-annotator	1
-annotation_id	7
-created_at	"2025-10-10T20:36:55.558279Z"
-updated_at	"2025-10-10T20:36:55.558377Z"
-lead_time	5409.44
+[
+{
+  "image": "\/data\/upload\/3\/db34cd17-Facture_CCL_163908.png",
+  "id": 5,
+  "Document": [
+    {
+      "x": 2.6645352591003757e-14,
+      "y": 1.3322676295501875e-15,
+      "width": 99.99999999999997,
+      "height": 24.292452830188648,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Header"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 0,
+      "y": 24.616539606207898,
+      "width": 100,
+      "height": 61.04315484804922,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Table"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 2.7755575615628907e-14,
+      "y": 85.79289929413706,
+      "width": 99.99999999999996,
+      "height": 12.812960895646533,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Footer"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 27.356208155812535,
+      "y": 4.127358490566038,
+      "width": 12.343654899573952,
+      "height": 2.2405660377358494,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Footer"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.62821533724531,
+      "y": 24.613699212476714,
+      "width": 11.271929215402231,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Header"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.13600075875806,
+      "y": 34.39709129028151,
+      "width": 11.173275379051498,
+      "height": 1.8385532963102242,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Table"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "document_type": "FACTURE",
+  "header": [
+    {
+      "x": 27.189402008520997,
+      "y": 3.4198113207547167,
+      "width": 31.025943396226413,
+      "height": 3.1839622641509435,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Number"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 27.24171399554144,
+      "y": 6.59676081529749,
+      "width": 24.774167437974203,
+      "height": 1.814223512336718,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.737689390528943,
+      "y": 0.13955565479513235,
+      "width": 21.418304119682908,
+      "height": 11.583119347995975,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.8363912528316035,
+      "y": 11.98645571415983,
+      "width": 42.73790637706314,
+      "height": 11.877561255807734,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Customer adresse facturation"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 51.02886281048882,
+      "y": 97.34844255889247,
+      "width": 22.405322742709785,
+      "height": 1.4653343753489025,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT Number"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 49.97611810007799,
+      "y": 11.844648059735308,
+      "width": 40.497888805235405,
+      "height": 11.91233176293375,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT Number"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "header_label": [
+    "FACTURE N°",
+    "Date facture",
+    "Adresse de Facturation"
+  ],
+  "footer": [
+    {
+      "x": 10.362738484289322,
+      "y": 96.02334043542594,
+      "width": 22.997533916525914,
+      "height": 1.3257787205537048,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier BIC"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 51.02886281048882,
+      "y": 97.34844255889247,
+      "width": 22.405322742709785,
+      "height": 1.4653343753489025,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier VAT Number"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 10.411673356969517,
+      "y": 94.37539816282985,
+      "width": 26.520300060205372,
+      "height": 1.5971091636409085,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier SIÈGE SOCIA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 38.60177008763226,
+      "y": 94.23651910512197,
+      "width": 51.37080344995336,
+      "height": 1.8748672790567014,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier SIÈGE SOCIA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 75.82841350547605,
+      "y": 96.18082591303259,
+      "width": 14.271923758011914,
+      "height": 1.3193510482250708,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier_info"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 26.422076726649024,
+      "y": 97.50017696125772,
+      "width": 23.573600053515857,
+      "height": 1.340234791958876,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier_info"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 43.807606766117004,
+      "y": 96.11138638417836,
+      "width": 30.842126736683014,
+      "height": 1.1804719905171803,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier APE"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 34.27994341115435,
+      "y": 96.04194685532471,
+      "width": 8.741876686512143,
+      "height": 1.3887905770790354,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier APE"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "footer_label": [
+    "SIREN",
+    "N°INTRACOM",
+    "Supplier",
+    "SIÈGE SOCIAL ",
+    "IBAN",
+    "APE"
+  ],
+  "table": [
+    {
+      "x": 5.026121449273256,
+      "y": 24.929615974769625,
+      "width": 90.30991646135821,
+      "height": 2.696947926579967,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Table Header"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.922434090050102,
+      "y": 28.006992336497877,
+      "width": 90.49328685011147,
+      "height": 46.60221441379699,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Table Row"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.837378271454655,
+      "y": 74.52830188679246,
+      "width": 90.57573797930607,
+      "height": 10.849056603773537,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Table End"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "table_header": [
+    {
+      "x": 4.503765976871576,
+      "y": 24.64622641509434,
+      "width": 8.507113511868532,
+      "height": 2.594339622641506,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.888944726541549,
+      "y": 24.721049716165265,
+      "width": 42.21805126076587,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.62821533724531,
+      "y": 24.613699212476714,
+      "width": 11.271929215402231,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.11986023756786,
+      "y": 24.73469541067204,
+      "width": 11.193246732181414,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.57657486305538,
+      "y": 24.667374464320982,
+      "width": 3.8365413877054095,
+      "height": 2.5000000000000004,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.34896739896792,
+      "y": 24.690615848369553,
+      "width": 6.605432323333609,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 62.037132210083,
+      "y": 24.68580291044816,
+      "width": 6.377658794942796,
+      "height": 2.5000000000000004,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.83392296633728,
+      "y": 29.726914610757788,
+      "width": 6.827809846326399,
+      "height": 2.4834114378911862,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.6593499073185,
+      "y": 29.73952934815525,
+      "width": 11.414279565503845,
+      "height": 2.496751304459812,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "Intitulé_value": [
+    "Réf.",
+    "Désignation",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "Qté",
+    "Unité",
+    "Réf.",
+    "Désignation",
+    "Qté",
+    "Unité",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "Réf.",
+    "Réf.",
+    "Désignation",
+    "Qté",
+    "Unité",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "Réf.",
+    "Réf.",
+    "Désignation",
+    "Qté",
+    "Unité",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "Réf.",
+    "Désignation",
+    "Unité",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "Désignation",
+    "Qté",
+    "Unité",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "Désignation",
+    "Unité",
+    "Prix Unitaire",
+    "Montant",
+    "TVA",
+    "TOTAL BRUT H.T.",
+    "TOTAL ECO-PART.",
+    "FRAIS FIXES",
+    "TVA",
+    "Ventilation",
+    "TOTAL T.V.A.",
+    "TOTAL NET H.T",
+    "NET A PAYER",
+    "Qté",
+    "Qté"
+  ],
+  "line_cells": [
+    {
+      "x": 4.76085419419337,
+      "y": 27.29716054690504,
+      "width": 90.44597976846222,
+      "height": 2.2897978724201424,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Commentaire"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.994633667760966,
+      "y": 29.63475402921782,
+      "width": 7.860945297389148,
+      "height": 2.5,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.984717593324039,
+      "y": 29.678253686677287,
+      "width": 42.26333456719962,
+      "height": 2.5000000000000453,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.31741954742741,
+      "y": 29.739724166473852,
+      "width": 6.481017275118372,
+      "height": 2.4846839806948173,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.14934899589107,
+      "y": 29.700779351441888,
+      "width": 11.257346217074431,
+      "height": 2.4999999999999973,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.47445665590033,
+      "y": 29.63596634414421,
+      "width": 3.7054991957895607,
+      "height": 2.567862961388886,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.8337940900790235,
+      "y": 32.19599232050151,
+      "width": 8.082687010076164,
+      "height": 2.2174982872974938,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.730947407311412,
+      "y": 34.471065308645365,
+      "width": 8.214288353116888,
+      "height": 1.7307011098799354,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.042838026969436,
+      "y": 34.485179671910686,
+      "width": 42.19810413490397,
+      "height": 1.6864639991928232,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.290312650582464,
+      "y": 34.36657461054525,
+      "width": 6.524303222612381,
+      "height": 1.8272395676084134,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.85786070185073,
+      "y": 34.39209547532802,
+      "width": 6.80931652404577,
+      "height": 1.8304612110668388,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.69782455893998,
+      "y": 34.404855907719394,
+      "width": 11.408227224353011,
+      "height": 1.8138462154743284,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.13600075875806,
+      "y": 34.39709129028151,
+      "width": 11.173275379051498,
+      "height": 1.8385532963102242,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.42081123044075,
+      "y": 34.401362164131406,
+      "width": 3.751593661962062,
+      "height": 1.8842064808367,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.936640772846702,
+      "y": 36.22080806638724,
+      "width": 8.04662557002741,
+      "height": 1.805492223504249,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.863416990674407,
+      "y": 38.065830167330816,
+      "width": 8.13039602343901,
+      "height": 2.2711697903508847,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.03558665016534,
+      "y": 38.06332626754457,
+      "width": 42.10250882894058,
+      "height": 2.284624725346775,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.21914547375493,
+      "y": 37.99241980576238,
+      "width": 6.539218253831615,
+      "height": 2.3451281916279156,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.82106393182587,
+      "y": 37.979104159928,
+      "width": 6.876760627114087,
+      "height": 2.3533835678742987,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.75366688320842,
+      "y": 37.99307029870619,
+      "width": 11.350385889820684,
+      "height": 2.338220686308481,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.11912626027417,
+      "y": 38.01614981164864,
+      "width": 11.216656379999968,
+      "height": 2.3332401284835056,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.3739084378286,
+      "y": 37.99915510533594,
+      "width": 3.821802638557345,
+      "height": 2.353802181260201,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.880426157022077,
+      "y": 40.36438256203581,
+      "width": 8.034933552621265,
+      "height": 1.836356066008817,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Reference"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.019462584943373,
+      "y": 40.403405968725565,
+      "width": 42.10363827139719,
+      "height": 1.7672520965460805,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.83603944611238,
+      "y": 40.36208379059616,
+      "width": 6.8907277454320255,
+      "height": 1.808574274675814,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.73794609283883,
+      "y": 40.371193131810195,
+      "width": 11.362035411268566,
+      "height": 1.744992747528502,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.11408019116317,
+      "y": 40.39466232186557,
+      "width": 11.222175685879748,
+      "height": 1.7170055369657928,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.39283928536315,
+      "y": 40.39250712912342,
+      "width": 3.8431889574709057,
+      "height": 1.7209567236596481,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.033737112336654,
+      "y": 32.245598631258495,
+      "width": 42.201068291711366,
+      "height": 2.16159350969537,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.285328146866775,
+      "y": 32.27123962249937,
+      "width": 6.525528196484734,
+      "height": 2.043096515692837,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.85955351382607,
+      "y": 32.261896270482815,
+      "width": 6.75347419977736,
+      "height": 2.099627034073466,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.65627254225932,
+      "y": 32.309227045215835,
+      "width": 11.432677377767112,
+      "height": 2.0561508225419454,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.12339213724387,
+      "y": 32.25493017986321,
+      "width": 11.253161330138788,
+      "height": 2.135968552677174,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.44576947633732,
+      "y": 32.23582437330117,
+      "width": 3.7573532571690125,
+      "height": 2.1395605405807263,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.03286588096183,
+      "y": 36.21861225996688,
+      "width": 42.190629064329194,
+      "height": 1.8113225346224615,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Description"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.83435852260111,
+      "y": 36.260837983569076,
+      "width": 6.845416198907853,
+      "height": 1.659524283990146,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unité"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.70552509234712,
+      "y": 36.25011241831089,
+      "width": 11.42087874941306,
+      "height": 1.7088067612185196,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Unit Price"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.13853034457725,
+      "y": 36.30271162114658,
+      "width": 11.192206226585903,
+      "height": 1.7027361511099273,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Amount HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.39585298454374,
+      "y": 36.297973302939766,
+      "width": 3.7642066864882495,
+      "height": 1.693038247029609,
+      "rotation": 0,
+      "rectanglelabels": [
+        "VAT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.05774497869753,
+      "y": 74.52830188679245,
+      "width": 26.188565124771745,
+      "height": 1.768867924528326,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.99260174957777,
+      "y": 76.33310384520927,
+      "width": 26.291031692097484,
+      "height": 1.248640291858736,
+      "rotation": 0,
+      "rectanglelabels": [
+        "TotalL ECO-PART."
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.94767600433299,
+      "y": 77.65520226511426,
+      "width": 26.299621117759198,
+      "height": 1.5824392716018234,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Frais FIXES"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 35.63137229126978,
+      "y": 76.32574324391179,
+      "width": 18.062440801391595,
+      "height": 1.8142235123367094,
+      "rotation": 0,
+      "rectanglelabels": [
+        "TVA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 35.92747787817783,
+      "y": 74.37196407677993,
+      "width": 17.963738939088906,
+      "height": 1.8840013397342688,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Taux TVA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.1362293571251,
+      "y": 80.62020803851094,
+      "width": 26.16978878050083,
+      "height": 1.7891962351455564,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total TVA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.1900054741831,
+      "y": 79.26009229525825,
+      "width": 25.994926105189336,
+      "height": 1.3095847813095327,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total net H.T"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.1155675576296,
+      "y": 82.56852456814839,
+      "width": 26.07761830428229,
+      "height": 2.881472418414928,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total TTC"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.27625425344526,
+      "y": 36.20870478597377,
+      "width": 6.468323427685661,
+      "height": 1.7090938797181325,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.19015569350297,
+      "y": 40.39000062750384,
+      "width": 6.598216363875448,
+      "height": 1.780864433220521,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Quantity"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "row_index": [
+    {
+      "x": 4.76085419419337,
+      "y": 27.29716054690504,
+      "width": 90.44597976846222,
+      "height": 2.2897978724201424,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.994633667760966,
+      "y": 29.63475402921782,
+      "width": 7.860945297389148,
+      "height": 2.5,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.984717593324039,
+      "y": 29.678253686677287,
+      "width": 42.26333456719962,
+      "height": 2.5000000000000453,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.31741954742741,
+      "y": 29.739724166473852,
+      "width": 6.481017275118372,
+      "height": 2.4846839806948173,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.83392296633728,
+      "y": 29.726914610757788,
+      "width": 6.827809846326399,
+      "height": 2.4834114378911862,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.6593499073185,
+      "y": 29.73952934815525,
+      "width": 11.414279565503845,
+      "height": 2.496751304459812,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.14934899589107,
+      "y": 29.700779351441888,
+      "width": 11.257346217074431,
+      "height": 2.4999999999999973,
+      "rotation": 0,
+      "number": 0,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.47445665590033,
+      "y": 29.63596634414421,
+      "width": 3.7054991957895607,
+      "height": 2.567862961388886,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.8337940900790235,
+      "y": 32.19599232050151,
+      "width": 8.082687010076164,
+      "height": 2.2174982872974938,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.730947407311412,
+      "y": 34.471065308645365,
+      "width": 8.214288353116888,
+      "height": 1.7307011098799354,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.042838026969436,
+      "y": 34.485179671910686,
+      "width": 42.19810413490397,
+      "height": 1.6864639991928232,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.290312650582464,
+      "y": 34.36657461054525,
+      "width": 6.524303222612381,
+      "height": 1.8272395676084134,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.85786070185073,
+      "y": 34.39209547532802,
+      "width": 6.80931652404577,
+      "height": 1.8304612110668388,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.69782455893998,
+      "y": 34.404855907719394,
+      "width": 11.408227224353011,
+      "height": 1.8138462154743284,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.13600075875806,
+      "y": 34.39709129028151,
+      "width": 11.173275379051498,
+      "height": 1.8385532963102242,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.42081123044075,
+      "y": 34.401362164131406,
+      "width": 3.751593661962062,
+      "height": 1.8842064808367,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.936640772846702,
+      "y": 36.22080806638724,
+      "width": 8.04662557002741,
+      "height": 1.805492223504249,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.863416990674407,
+      "y": 38.065830167330816,
+      "width": 8.13039602343901,
+      "height": 2.2711697903508847,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.03558665016534,
+      "y": 38.06332626754457,
+      "width": 42.10250882894058,
+      "height": 2.284624725346775,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.21914547375493,
+      "y": 37.99241980576238,
+      "width": 6.539218253831615,
+      "height": 2.3451281916279156,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.82106393182587,
+      "y": 37.979104159928,
+      "width": 6.876760627114087,
+      "height": 2.3533835678742987,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.75366688320842,
+      "y": 37.99307029870619,
+      "width": 11.350385889820684,
+      "height": 2.338220686308481,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.11912626027417,
+      "y": 38.01614981164864,
+      "width": 11.216656379999968,
+      "height": 2.3332401284835056,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.3739084378286,
+      "y": 37.99915510533594,
+      "width": 3.821802638557345,
+      "height": 2.353802181260201,
+      "rotation": 0,
+      "number": 5,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.880426157022077,
+      "y": 40.36438256203581,
+      "width": 8.034933552621265,
+      "height": 1.836356066008817,
+      "rotation": 0,
+      "number": 6,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.019462584943373,
+      "y": 40.403405968725565,
+      "width": 42.10363827139719,
+      "height": 1.7672520965460805,
+      "rotation": 0,
+      "number": 6,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.83603944611238,
+      "y": 40.36208379059616,
+      "width": 6.8907277454320255,
+      "height": 1.808574274675814,
+      "rotation": 0,
+      "number": 6,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.73794609283883,
+      "y": 40.371193131810195,
+      "width": 11.362035411268566,
+      "height": 1.744992747528502,
+      "rotation": 0,
+      "number": 0,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.11408019116317,
+      "y": 40.39466232186557,
+      "width": 11.222175685879748,
+      "height": 1.7170055369657928,
+      "rotation": 0,
+      "number": 6,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.39283928536315,
+      "y": 40.39250712912342,
+      "width": 3.8431889574709057,
+      "height": 1.7209567236596481,
+      "rotation": 0,
+      "number": 6,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.033737112336654,
+      "y": 32.245598631258495,
+      "width": 42.201068291711366,
+      "height": 2.16159350969537,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.285328146866775,
+      "y": 32.27123962249937,
+      "width": 6.525528196484734,
+      "height": 2.043096515692837,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.85955351382607,
+      "y": 32.261896270482815,
+      "width": 6.75347419977736,
+      "height": 2.099627034073466,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.65627254225932,
+      "y": 32.309227045215835,
+      "width": 11.432677377767112,
+      "height": 2.0561508225419454,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.12339213724387,
+      "y": 32.25493017986321,
+      "width": 11.253161330138788,
+      "height": 2.135968552677174,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.44576947633732,
+      "y": 32.23582437330117,
+      "width": 3.7573532571690125,
+      "height": 2.1395605405807263,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 13.03286588096183,
+      "y": 36.21861225996688,
+      "width": 42.190629064329194,
+      "height": 1.8113225346224615,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 61.83435852260111,
+      "y": 36.260837983569076,
+      "width": 6.845416198907853,
+      "height": 1.659524283990146,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 68.70552509234712,
+      "y": 36.25011241831089,
+      "width": 11.42087874941306,
+      "height": 1.7088067612185196,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.13853034457725,
+      "y": 36.30271162114658,
+      "width": 11.192206226585903,
+      "height": 1.7027361511099273,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.39585298454374,
+      "y": 36.297973302939766,
+      "width": 3.7642066864882495,
+      "height": 1.693038247029609,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.27625425344526,
+      "y": 36.20870478597377,
+      "width": 6.468323427685661,
+      "height": 1.7090938797181325,
+      "rotation": 0,
+      "number": 4,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 55.19015569350297,
+      "y": 40.39000062750384,
+      "width": 6.598216363875448,
+      "height": 1.780864433220521,
+      "rotation": 0,
+      "number": 6,
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "line_value": "BON DE LIVRAISON N° 915912 07\/10\/2025 1131658                         Votre Commande :",
+  "annotator": 1,
+  "annotation_id": 2,
+  "created_at": "2025-10-10T06:10:18.811600Z",
+  "updated_at": "2025-10-13T05:13:44.132025Z",
+  "lead_time": 32178.006
+},
+{
+  "image": "\/data\/upload\/2\/0549c723-Facture_CCL_163908.png",
+  "id": 9,
+  "header": [
+    {
+      "x": 26.9105886139165,
+      "y": 3.8441521006317503,
+      "width": 32.53961325243354,
+      "height": 2.5710419485791607,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Number"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 26.95589263515204,
+      "y": 6.805934775123906,
+      "width": 25.256991838818934,
+      "height": 1.6013964176762139,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.76938083557249,
+      "y": 0.4555972808288827,
+      "width": 21.262309766374326,
+      "height": 10.50516049995595,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.663002654443702,
+      "y": 14.172358296434481,
+      "width": 22.99179077704145,
+      "height": 2.4020946265143195,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Client"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 10.367651013520016,
+      "y": 95.99650895580947,
+      "width": 22.477764382253483,
+      "height": 1.416619907944309,
+      "rotation": 0,
+      "rectanglelabels": [
+        "SIREN"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.30137764001176,
+      "y": 30.586671577615675,
+      "width": 11.099485202709673,
+      "height": 1.601396417676213,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.026333716961871,
+      "y": 32.31219990695787,
+      "width": 89.83391869319442,
+      "height": 2.0372794662744607,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.74064300198805,
+      "y": 30.34646211496424,
+      "width": 3.284541539577347,
+      "height": 1.6814662385600343,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "header_label": [
+    "FACTURE N° :",
+    "Date facture :",
+    "SIREN",
+    "TOTAL NET H.T",
+    "TOTAL T.V.A.",
+    "NET A PAYER",
+    "Réf."
+  ],
+  "header_value": [
+    "163908",
+    "07\/10\/2025",
+    "CCL",
+    "MR BARDINA FRANCK",
+    "716320619 RCS CASTRES",
+    "31,96",
+    "6,39",
+    "38,35 €"
+  ],
+  "footer": [
+    {
+      "x": 69.50690878376453,
+      "y": 79.08434616524069,
+      "width": 25.55321043920533,
+      "height": 1.478212077854976,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.2963875111808,
+      "y": 80.66953436651202,
+      "width": 26.38691165839213,
+      "height": 1.4687363594071725,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total TVA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.25512466225375,
+      "y": 82.77057594222161,
+      "width": 26.36920556015182,
+      "height": 2.5710419485791474,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total TTC"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "row_index": [
+    {
+      "x": 55.35668866947338,
+      "y": 24.73162514872731,
+      "width": 6.567742723496835,
+      "height": 2.3215510197081173,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.867414315422385,
+      "y": 24.68424655648837,
+      "width": 42.35523878826534,
+      "height": 2.6058225731417686,
+      "rotation": 0,
+      "number": 0,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.976646732725121,
+      "y": 30.51403545785416,
+      "width": 7.55127559989708,
+      "height": 1.691647898032167,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.636109014279207,
+      "y": 30.486205346571428,
+      "width": 43.323802334671555,
+      "height": 1.7724537992192604,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 56.06019792842917,
+      "y": 30.5571034985402,
+      "width": 5.816621609747571,
+      "height": 1.701555647250494,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.30137764001176,
+      "y": 30.586671577615675,
+      "width": 11.099485202709673,
+      "height": 1.601396417676213,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.026333716961871,
+      "y": 32.31219990695787,
+      "width": 89.83391869319442,
+      "height": 2.0372794662744607,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.096702388999336,
+      "y": 34.56694237374989,
+      "width": 7.248643397687945,
+      "height": 1.5213265967924114,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.638883675757853,
+      "y": 34.575475258212144,
+      "width": 43.944900598483166,
+      "height": 1.5213265967923988,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 62.20590608112009,
+      "y": 34.491615149949205,
+      "width": 6.621356949811101,
+      "height": 1.60139641767622,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.81230213762257,
+      "y": 34.50365646453262,
+      "width": 10.66225923716831,
+      "height": 1.7065284635040807,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.56286020319013,
+      "y": 34.48221553926619,
+      "width": 3.5991225217926424,
+      "height": 1.677222511236881,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.0967023889993355,
+      "y": 36.19155903948242,
+      "width": 90.04174220565496,
+      "height": 1.4412567759085988,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 4.983442335910458,
+      "y": 38.374262356775105,
+      "width": 7.361903450776823,
+      "height": 2.0818153429790756,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.571865892865027,
+      "y": 38.35344420334532,
+      "width": 43.944900598483166,
+      "height": 1.9216757012114485,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 57.30958686297032,
+      "y": 38.35344420334532,
+      "width": 10.872965096531914,
+      "height": 2.4020946265143124,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 81.54723822398937,
+      "y": 38.11323474069388,
+      "width": 9.85362461873207,
+      "height": 2.8825135518171834,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 92.4202033205213,
+      "y": 38.03316491981006,
+      "width": 2.8315013272218437,
+      "height": 2.642304089165762,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.24553943048264,
+      "y": 34.37077131258457,
+      "width": 11.413128426648086,
+      "height": 1.6629885875868382,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.39825454117806,
+      "y": 38.36960030329878,
+      "width": 11.460040874673055,
+      "height": 2.17941524299129,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.74064300198805,
+      "y": 30.34646211496424,
+      "width": 3.284541539577347,
+      "height": 1.6814662385600343,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "line_value": [
+    "1",
+    "SEMIN COLLE TDV 20KG",
+    "1",
+    "21,26",
+    "A01844",
+    "668274",
+    "MANCH.LAQUEUR VELOURS 180 MM",
+    "PI",
+    "5,65",
+    "2",
+    "25530",
+    "708321",
+    "BROSSE RECHAMP.VIROLE INOX N°4",
+    "1",
+    "21,26",
+    "2",
+    "PI",
+    "5,652",
+    "5,053",
+    "2"
+  ],
+  "annotator": 1,
+  "annotation_id": 6,
+  "created_at": "2025-10-10T20:29:51.256029Z",
+  "updated_at": "2025-10-10T20:29:51.256262Z",
+  "lead_time": 5409.44
+},
+{
+  "image": "\/data\/upload\/2\/0549c723-Facture_CCL_163908.png",
+  "id": 10,
+  "header": [
+    {
+      "x": 26.93,
+      "y": 3.84,
+      "width": 32.53961325243354,
+      "height": 2.5710419485791607,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Number"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 26.93,
+      "y": 6.81,
+      "width": 25.256991838818934,
+      "height": 1.6013964176762139,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 0.46,
+      "width": 21.262309766374326,
+      "height": 10.50516049995595,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Supplier"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 14.17,
+      "width": 22.99179077704145,
+      "height": 2.4020946265143195,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Client"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 10.37,
+      "y": 96.0,
+      "width": 22.477764382253483,
+      "height": 1.416619907944309,
+      "rotation": 0,
+      "rectanglelabels": [
+        "SIREN"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.81,
+      "y": 30.51,
+      "width": 11.099485202709673,
+      "height": 1.601396417676213,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 32.31,
+      "width": 89.83391869319442,
+      "height": 2.0372794662744607,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.85,
+      "y": 30.51,
+      "width": 3.284541539577347,
+      "height": 1.6814662385600343,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Invoice Date"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "header_label": [
+    "FACTURE N° :",
+    "Date facture :",
+    "SIREN",
+    "TOTAL NET H.T",
+    "TOTAL T.V.A.",
+    "NET A PAYER",
+    "Réf."
+  ],
+  "header_value": [
+    "163908",
+    "07\/10\/2025",
+    "CCL",
+    "MR BARDINA FRANCK",
+    "716320619 RCS CASTRES",
+    "31,96",
+    "6,39",
+    "38,35 €"
+  ],
+  "footer": [
+    {
+      "x": 69.29,
+      "y": 79.08,
+      "width": 25.55321043920533,
+      "height": 1.478212077854976,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total HT"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.29,
+      "y": 80.67,
+      "width": 26.38691165839213,
+      "height": 1.4687363594071725,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total TVA"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.29,
+      "y": 82.77,
+      "width": 26.36920556015182,
+      "height": 2.5710419485791474,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Total TTC"
+      ],
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "row_index": [
+    {
+      "x": 56.3,
+      "y": 24.66,
+      "width": 6.567742723496835,
+      "height": 2.3215510197081173,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.67,
+      "y": 24.66,
+      "width": 42.35523878826534,
+      "height": 2.6058225731417686,
+      "rotation": 0,
+      "number": 0,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 30.51,
+      "width": 7.55127559989708,
+      "height": 1.691647898032167,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.67,
+      "y": 30.51,
+      "width": 43.323802334671555,
+      "height": 1.7724537992192604,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 56.3,
+      "y": 30.51,
+      "width": 5.816621609747571,
+      "height": 1.701555647250494,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.81,
+      "y": 30.51,
+      "width": 11.099485202709673,
+      "height": 1.601396417676213,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 32.31,
+      "width": 89.83391869319442,
+      "height": 2.0372794662744607,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 34.5,
+      "width": 7.248643397687945,
+      "height": 1.5213265967924114,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.67,
+      "y": 34.5,
+      "width": 43.944900598483166,
+      "height": 1.5213265967923988,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 62.11,
+      "y": 34.5,
+      "width": 6.621356949811101,
+      "height": 1.60139641767622,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.81,
+      "y": 34.5,
+      "width": 10.66225923716831,
+      "height": 1.7065284635040807,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.85,
+      "y": 34.5,
+      "width": 3.5991225217926424,
+      "height": 1.677222511236881,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 36.19,
+      "width": 90.04174220565496,
+      "height": 1.4412567759085988,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 5.04,
+      "y": 38.27,
+      "width": 7.361903450776823,
+      "height": 2.0818153429790756,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 12.67,
+      "y": 38.27,
+      "width": 43.944900598483166,
+      "height": 1.9216757012114485,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 56.3,
+      "y": 38.27,
+      "width": 10.872965096531914,
+      "height": 2.4020946265143124,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 80.81,
+      "y": 38.27,
+      "width": 9.85362461873207,
+      "height": 2.8825135518171834,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.85,
+      "y": 38.27,
+      "width": 2.8315013272218437,
+      "height": 2.642304089165762,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.29,
+      "y": 34.5,
+      "width": 11.413128426648086,
+      "height": 1.6629885875868382,
+      "rotation": 0,
+      "number": 2,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 69.29,
+      "y": 38.27,
+      "width": 11.460040874673055,
+      "height": 2.17941524299129,
+      "rotation": 0,
+      "number": 3,
+      "original_width": 2480,
+      "original_height": 3508
+    },
+    {
+      "x": 91.85,
+      "y": 30.51,
+      "width": 3.284541539577347,
+      "height": 1.6814662385600343,
+      "rotation": 0,
+      "number": 1,
+      "original_width": 2480,
+      "original_height": 3508
+    }
+  ],
+  "line_value": [
+    "1",
+    "SEMIN COLLE TDV 20KG",
+    "1",
+    "21,26",
+    "A01844",
+    "668274",
+    "MANCH.LAQUEUR VELOURS 180 MM",
+    "PI",
+    "5,65",
+    "2",
+    "25530",
+    "708321",
+    "BROSSE RECHAMP.VIROLE INOX N°4",
+    "1",
+    "21,26",
+    "2",
+    "PI",
+    "5,652",
+    "5,053",
+    "2"
+  ],
+  "annotator": 1,
+  "annotation_id": 7,
+  "created_at": "2025-10-10T20:36:55.558279Z",
+  "updated_at": "2025-10-10T20:36:55.558377Z",
+  "lead_time": 5409.44
+}
+]
