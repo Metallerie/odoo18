@@ -1,80 +1,66 @@
-# -*- coding: utf-8 -*-
-"""
-Extraction des champs d'une facture PDF à partir d'un modèle Label Studio (zones)
-Usage :
-  python3 extract_invoice.py <facture.pdf> <modele.json>
-"""
+# /data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/scripts/extract_invoice.py
 import sys
 import json
-import pytesseract
-from pdf2image import convert_from_path
-from PIL import Image
+import logging
+import pdfplumber
 from prettytable import PrettyTable
 
+logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(message)s")
+
 def load_model(model_path):
-    """Charge un modèle JSON fournisseur (Label Studio)"""
+    """Charge le modèle JSON du fournisseur"""
     with open(model_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    # Si c’est une liste, on prend le premier objet
+    logging.info(f"Type JSON chargé: {type(data)}")
     if isinstance(data, list):
+        logging.info(f"Liste avec {len(data)} éléments, on prend le premier")
         return data[0]
     return data
 
-def ocr_zone(img, box, page_w, page_h):
-    """
-    Extrait le texte d'une zone définie par Label Studio (coordonnées en %)
-    """
-    x = int((box["x"] / 100) * page_w)
-    y = int((box["y"] / 100) * page_h)
-    w = int((box["width"] / 100) * page_w)
-    h = int((box["height"] / 100) * page_h)
-
-    cropped = img.crop((x, y, x + w, y + h))
-    text = pytesseract.image_to_string(cropped, lang="fra").strip()
-    return text
-
 def extract_invoice(pdf_path, model):
-    """Extrait les valeurs OCR du PDF selon les zones du modèle"""
-    results = {}
-    images = convert_from_path(pdf_path)
+    """Extrait les infos de la facture selon le modèle"""
+    results = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    logging.debug(f"Texte extrait du PDF ({len(full_text)} caractères)")
 
     annotations = model.get("annotations", [])
-    if not annotations:
-        print("⚠️ Modèle JSON vide ou incorrect")
-        return results
+    logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
 
-    for img in images:
-        page_w, page_h = img.size
+    for ann in annotations:
+        label = ann.get("label", "inconnu")
+        text = ann.get("text", "")
+        logging.debug(f"Annotation: {label} → '{text}'")
 
-        for item in annotations[0].get("result", []):
-            value = item.get("value", {})
-            if "rectanglelabels" in value and value["rectanglelabels"]:
-                label = value["rectanglelabels"][0]
-
-                extracted_text = ocr_zone(img, value, page_w, page_h)
-                if extracted_text:
-                    results[label] = extracted_text
+        # Recherche brute du texte dans le PDF
+        if text and text in full_text:
+            logging.debug(f"✔ Match trouvé pour '{label}' : {text}")
+            results.append((label, text))
+        else:
+            logging.warning(f"❌ Pas trouvé : {label} ({text})")
 
     return results
 
-def display_table(results):
-    """Affiche les résultats dans un tableau console"""
+def main(pdf_file, model_file):
+    logging.info(f"📄 Lecture facture : {pdf_file}")
+    logging.info(f"📦 Modèle fournisseur : {model_file}")
+
+    model = load_model(model_file)
+    if not model:
+        print("⚠️ Modèle JSON vide ou incorrect")
+        return
+
+    extracted = extract_invoice(pdf_file, model)
+
     table = PrettyTable()
     table.field_names = ["Champ", "Valeur OCR"]
-
-    for label, val in results.items():
-        table.add_row([label, val])
-
+    for label, value in extracted:
+        table.add_row([label, value])
     print(table)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("⚠️ Usage: python3 extract_invoice.py <facture.pdf> <modele.json>")
+    if len(sys.argv) != 3:
+        print("Usage: python extract_invoice.py <fichier.pdf> <modele.json>")
         sys.exit(1)
-
-    pdf_file = sys.argv[1]
-    model_file = sys.argv[2]
-
-    model = load_model(model_file)
-    extracted = extract_invoice(pdf_file, model)
-    display_table(extracted)
+    main(sys.argv[1], sys.argv[2])
