@@ -25,15 +25,23 @@ def extract_invoice(pdf_path, model):
         full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
     logging.debug(f"Texte extrait du PDF ({len(full_text)} caractères)")
 
-    annotations = model.get("annotations", [])
+    # On cherche la clé annotations/result
+    annotations = []
+    if "annotations" in model:
+        anns = model["annotations"]
+        if anns and "result" in anns[0]:
+            annotations = anns[0]["result"]
+
     logging.info(f"{len(annotations)} annotations trouvées dans le modèle")
 
     for ann in annotations:
-        label = ann.get("label", "inconnu")
-        text = ann.get("text", "")
+        value = ann.get("value", {})
+        label_list = value.get("labels", [])
+        label = label_list[0] if label_list else "inconnu"
+        text_list = value.get("text", [])
+        text = text_list[0] if text_list else ""
         logging.debug(f"Annotation: {label} → '{text}'")
 
-        # Recherche brute du texte dans le PDF
         if text and text in full_text:
             logging.debug(f"✔ Match trouvé pour '{label}' : {text}")
             results.append((label, text))
