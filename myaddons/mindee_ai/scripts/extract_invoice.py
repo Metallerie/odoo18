@@ -1,4 +1,4 @@
-# extract_invoice.py
+# extract_invoice.py (version dynamique)
 
 import sys
 import json
@@ -30,11 +30,12 @@ def extract_cases(pdf_file, json_file):
     page = pages[0]
     img_w, img_h = page.size
 
-    print("=== Cases détectées avec OCR ===")
+    print("=== Cases détectées avec OCR (dynamique) ===")
     for entry in model:
-        for section in ["Document", "header", "footer", "table", "table_header", "line_cells"]:
-            zones = entry.get(section, [])
-            for idx, zone in enumerate(zones, start=1):
+        for key, zones in entry.items():  # lecture de toutes les clés dynamiques
+            if not isinstance(zones, list):
+                continue
+            for zone in zones:
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
@@ -53,8 +54,8 @@ def extract_cases(pdf_file, json_file):
 
                 text = run_tesseract(crop_path)
 
-                # Afficher la case avec position + valeur OCR
-                print(f"[{section}] {label} → x={x}, y={y}, w={w}, h={h} → {text}")
+                # Afficher résultat
+                print(f"[{label}] x={x}, y={y}, w={w}, h={h} → {text}")
 
 # --- Main ---
 if __name__ == "__main__":
