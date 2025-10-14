@@ -1,38 +1,54 @@
-from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
 import base64
 import json
 import xml.etree.ElementTree as ET
+
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
+    # Champs JSON/XML actifs
     labelstudio_json = fields.Text("Label Studio JSON", help="Dernière version JSON")
     labelstudio_xml = fields.Text("Label Studio XML", help="Dernière version XML")
 
+    # Fichiers uploadés
     labelstudio_json_file = fields.Binary("Importer JSON")
     labelstudio_json_filename = fields.Char("Nom du fichier JSON")
     labelstudio_xml_file = fields.Binary("Importer XML")
     labelstudio_xml_filename = fields.Char("Nom du fichier XML")
 
+    # Historique versionné
     labelstudio_history_ids = fields.One2many(
         "mindee.labelstudio.history", "partner_id", string="Historique Label Studio"
     )
 
-    # ----------------- Validation -----------------
+    # ---------- Validation ----------
     @staticmethod
     def _b64_to_text(b64_content: bytes) -> str:
-        raw = base64.b64decode(b64_content or b"")
-        return raw.decode("utf-8")
+        try:
+            raw = base64.b64decode(b64_content or b"")
+        except Exception:
+            raise ValidationError(_("Le fichier est corrompu ou non lisible (base64)."))
+        try:
+            return raw.decode("utf-8")
+        except Exception:
+            raise ValidationError(_("Encodage invalide : le fichier doit être en UTF-8."))
 
     @staticmethod
     def _validate_json(text: str):
-        json.loads(text)
+        try:
+            json.loads(text)
+        except Exception as e:
+            raise ValidationError(_("JSON invalide : %s") % e)
 
     @staticmethod
     def _validate_xml(text: str):
-        ET.fromstring(text)
+        try:
+            ET.fromstring(text)
+        except Exception as e:
+            raise ValidationError(_("XML invalide : %s") % e)
 
     def _apply_uploaded_files_to_fields(self, vals: dict) -> dict:
         out = dict(vals)
@@ -56,10 +72,11 @@ class ResPartner(models.Model):
 
         return out
 
-    @api.model
-    def create(self, vals):
-        vals = self._apply_uploaded_files_to_fields(vals)
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals.update(self._apply_uploaded_files_to_fields(vals))
+        return super().create(vals_list)
 
     def write(self, vals):
         vals = self._apply_uploaded_files_to_fields(vals)
