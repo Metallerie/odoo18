@@ -45,4 +45,32 @@
                             <group>
                                 <field name="version_date" readonly="1"/>
                                 <field name="user_id" readonly="1"/>
-                                <field name="json_content" widget="json" r_
+                                <field name="json_content" widget="json" readonly="1"/>
+                                <field name="xml_content" widget="text" readonly="1"/>
+                            </group>
+                            <footer>
+                                <button string="Restaurer"
+                                        type="object"
+                                        name="action_restore_labelstudio_version"
+                                        class="btn-secondary"/>
+                                <button string="Télécharger JSON"
+                                        type="object"
+                                        name="action_download_json"
+                                        class="btn-primary"/>
+                                <button string="Télécharger XML"
+                                        type="object"
+                                        name="action_download_xml"
+                                        class="btn-primary"/>
+                                <button string="Fermer"
+                                        class="btn-link"
+                                        special="cancel"/>
+                            </footer>
+                        </form>
+                    </field>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
