@@ -1,0 +1,63 @@
+<odoo>
+  <record id="view_partner_form_mindee" model="ir.ui.view">
+    <field name="name">res.partner.form.mindee</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+
+      <notebook position="inside">
+        <page string="Label Studio">
+          <group>
+            <group string="Édition">
+              <field name="labelstudio_json" widget="json" placeholder="Colle ici le JSON Label Studio"/>
+              <field name="labelstudio_xml" widget="text" placeholder="Colle ici le XML Label Studio"/>
+            </group>
+
+            <group string="Importer depuis fichier">
+              <group>
+                <field name="labelstudio_json_file" filename="labelstudio_json_filename"/>
+                <field name="labelstudio_json_filename" readonly="1"/>
+              </group>
+              <group>
+                <field name="labelstudio_xml_file" filename="labelstudio_xml_filename"/>
+                <field name="labelstudio_xml_filename" readonly="1"/>
+              </group>
+            </group>
+
+            <group>
+              <button name="action_save_labelstudio_version"
+                      type="object"
+                      class="btn-primary"
+                      string="Sauver comme nouvelle version"/>
+            </group>
+          </group>
+
+          <separator string="Historique des versions"/>
+          <field name="labelstudio_history_ids" nolabel="1" context="{'default_partner_id': active_id}">
+            <tree create="false" edit="false">
+              <field name="version_date"/>
+              <field name="user_id"/>
+            </tree>
+            <form create="false" edit="false">
+              <group>
+                <field name="version_date" readonly="1"/>
+                <field name="user_id" readonly="1"/>
+                <field name="json_content" widget="json" readonly="1"/>
+                <field name="xml_content" widget="text" readonly="1"/>
+              </group>
+              <footer>
+                <button string="Restaurer cette version"
+                        type="object"
+                        name="action_restore_labelstudio_version"
+                        class="btn-secondary"
+                        context="{'labelstudio_history_id': active_id}"/>
+                <button string="Fermer" class="btn-link" special="cancel"/>
+              </footer>
+            </form>
+          </field>
+        </page>
+      </notebook>
+
+    </field>
+  </record>
+</odoo>
