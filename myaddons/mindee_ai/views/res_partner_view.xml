@@ -7,8 +7,10 @@
 
             <xpath expr="//notebook" position="inside">
                 <page string="Label Studio">
+
+                    <!-- Section édition JSON/XML -->
                     <group>
-                        <group string="Édition">
+                        <group string="Édition manuelle">
                             <field name="labelstudio_json" widget="json"/>
                             <field name="labelstudio_xml" widget="text"/>
                         </group>
@@ -32,38 +34,15 @@
                         </group>
                     </group>
 
+                    <!-- Section historique -->
                     <separator string="Historique des versions"/>
- <field name="labelstudio_history_ids" nolabel="1">
-    <tree string="Historique Label Studio" editable="false">
-        <field name="version_date"/>
-        <field name="user_id"/>
-    </tree>
-    <form string="Version Label Studio">
-        <group>
-            <field name="version_date" readonly="1"/>
-            <field name="user_id" readonly="1"/>
-            <field name="json_content" widget="json" readonly="1"/>
-            <field name="xml_content" widget="text" readonly="1"/>
-        </group>
-        <footer>
-            <button string="Restaurer"
-                    type="object"
-                    name="action_restore_labelstudio_version"
-                    class="btn-secondary"/>
-            <button string="Télécharger JSON"
-                    type="object"
-                    name="action_download_json"
-                    class="btn-primary"/>
-            <button string="Télécharger XML"
-                    type="object"
-                    name="action_download_xml"
-                    class="btn-primary"/>
-            <button string="Fermer"
-                    class="btn-link"
-                    special="cancel"/>
-        </footer>
-    </form>
-</field>
-
-    </record>
-</odoo>
+                    <field name="labelstudio_history_ids" nolabel="1" mode="tree,form">
+                        <tree string="Historique Label Studio" create="false" edit="false">
+                            <field name="version_date"/>
+                            <field name="user_id"/>
+                        </tree>
+                        <form string="Version Label Studio">
+                            <group>
+                                <field name="version_date" readonly="1"/>
+                                <field name="user_id" readonly="1"/>
+                                <field name="json_content" widget="json" r_
