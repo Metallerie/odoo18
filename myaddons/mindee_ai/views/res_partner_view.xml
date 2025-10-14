@@ -1,4 +1,50 @@
 <odoo>
+    <!-- Vue tree pour l'historique -->
+    <record id="view_labelstudio_history_tree" model="ir.ui.view">
+        <field name="name">mindee.labelstudio.history.tree</field>
+        <field name="model">mindee.labelstudio.history</field>
+        <field name="arch" type="xml">
+            <tree string="Historique Label Studio" create="false" edit="false">
+                <field name="version_date"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue form pour l'historique -->
+    <record id="view_labelstudio_history_form" model="ir.ui.view">
+        <field name="name">mindee.labelstudio.history.form</field>
+        <field name="model">mindee.labelstudio.history</field>
+        <field name="arch" type="xml">
+            <form string="Version Label Studio">
+                <group>
+                    <field name="version_date" readonly="1"/>
+                    <field name="user_id" readonly="1"/>
+                    <field name="json_content" widget="json" readonly="1"/>
+                    <field name="xml_content" widget="text" readonly="1"/>
+                </group>
+                <footer>
+                    <button string="Restaurer"
+                            type="object"
+                            name="action_restore_labelstudio_version"
+                            class="btn-secondary"/>
+                    <button string="Télécharger JSON"
+                            type="object"
+                            name="action_download_json"
+                            class="btn-primary"/>
+                    <button string="Télécharger XML"
+                            type="object"
+                            name="action_download_xml"
+                            class="btn-primary"/>
+                    <button string="Fermer"
+                            class="btn-link"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue partenaire héritée -->
     <record id="view_partner_form_mindee" model="ir.ui.view">
         <field name="name">res.partner.form.mindee</field>
         <field name="model">res.partner</field>
@@ -8,7 +54,6 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Label Studio">
 
-                    <!-- Section édition JSON/XML -->
                     <group>
                         <group string="Édition manuelle">
                             <field name="labelstudio_json" widget="json"/>
@@ -34,40 +79,11 @@
                         </group>
                     </group>
 
-                    <!-- Section historique -->
                     <separator string="Historique des versions"/>
-                    <field name="labelstudio_history_ids" nolabel="1" mode="tree,form">
-                        <tree string="Historique Label Studio" create="false" edit="false">
-                            <field name="version_date"/>
-                            <field name="user_id"/>
-                        </tree>
-                        <form string="Version Label Studio">
-                            <group>
-                                <field name="version_date" readonly="1"/>
-                                <field name="user_id" readonly="1"/>
-                                <field name="json_content" widget="json" readonly="1"/>
-                                <field name="xml_content" widget="text" readonly="1"/>
-                            </group>
-                            <footer>
-                                <button string="Restaurer"
-                                        type="object"
-                                        name="action_restore_labelstudio_version"
-                                        class="btn-secondary"/>
-                                <button string="Télécharger JSON"
-                                        type="object"
-                                        name="action_download_json"
-                                        class="btn-primary"/>
-                                <button string="Télécharger XML"
-                                        type="object"
-                                        name="action_download_xml"
-                                        class="btn-primary"/>
-                                <button string="Fermer"
-                                        class="btn-link"
-                                        special="cancel"/>
-                            </footer>
-                        </form>
-                    </field>
-
+                    <field name="labelstudio_history_ids"
+                           mode="tree,form"
+                           context="{'default_partner_id': active_id}"
+                           views="mindee_ai.view_labelstudio_history_tree,mindee_ai.view_labelstudio_history_form"/>
                 </page>
             </xpath>
 
