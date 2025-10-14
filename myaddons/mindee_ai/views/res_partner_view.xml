@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <odoo>
-    <!-- Vue formulaire Partenaire : ajout d'un onglet Label Studio -->
     <record id="view_partner_form_mindee" model="ir.ui.view">
         <field name="name">res.partner.form.mindee</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
 
-            <notebook position="inside">
+            <xpath expr="//notebook" position="inside">
                 <page string="Label Studio">
                     <group>
                         <group string="Édition">
-                            <field name="labelstudio_json" widget="json" placeholder="Colle ici le JSON Label Studio"/>
-                            <field name="labelstudio_xml" widget="text" placeholder="Colle ici le XML Label Studio"/>
+                            <field name="labelstudio_json" widget="json"/>
+                            <field name="labelstudio_xml" widget="text"/>
                         </group>
 
                         <group string="Importer depuis fichier">
@@ -30,13 +29,13 @@
                         <group>
                             <button name="action_save_labelstudio_version"
                                     type="object"
-                                    class="btn-primary"
-                                    string="Sauver comme nouvelle version"/>
+                                    string="Sauver comme nouvelle version"
+                                    class="btn-primary"/>
                         </group>
                     </group>
 
                     <separator string="Historique des versions"/>
-                    <field name="labelstudio_history_ids" nolabel="1" context="{'default_partner_id': active_id}">
+                    <field name="labelstudio_history_ids" nolabel="1">
                         <tree create="false" edit="false">
                             <field name="version_date"/>
                             <field name="user_id"/>
@@ -54,22 +53,22 @@
                                         name="action_restore_labelstudio_version"
                                         class="btn-secondary"
                                         context="{'labelstudio_history_id': active_id}"/>
-                                <button type="action"
-                                        name="ir.actions.act_url"
+                                <button name="action_download_json"
+                                        type="object"
                                         string="Télécharger JSON"
-                                        class="btn-primary"
-                                        context="{'url': '/mindee/labelstudio/download/json/%(id)d'}"/>
-                                <button type="action"
-                                        name="ir.actions.act_url"
+                                        class="btn-primary"/>
+                                <button name="action_download_xml"
+                                        type="object"
                                         string="Télécharger XML"
-                                        class="btn-primary"
-                                        context="{'url': '/mindee/labelstudio/download/xml/%(id)d'}"/>
-                                <button string="Fermer" class="btn-link" special="cancel"/>
+                                        class="btn-primary"/>
+                                <button string="Fermer"
+                                        class="btn-link"
+                                        special="cancel"/>
                             </footer>
                         </form>
                     </field>
                 </page>
-            </notebook>
+            </xpath>
 
         </field>
     </record>
