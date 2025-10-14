@@ -16,6 +16,7 @@
         'views/res_config_settings_views.xml',
         'security/ir.model.access.csv',
         'views/res_partner_view.xml',
+        'views/labelstudio_history_views.xml',
         'data/ir_cron.xml',
         'data/ir_config_parameter.xml',
     ],
