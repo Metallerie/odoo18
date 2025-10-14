@@ -6,3 +6,4 @@ from . import ocr_rule_partner
 from . import account_move_line
 from . import invoice_import_cron
 from . import res_partner
+from . import labelstudio_history
