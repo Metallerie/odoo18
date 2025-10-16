@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# account_move.py (intégration LabelStudio – JSON en base, OCR brut + JSON enrichi)
+# account_move.py (intégration LabelStudio – JSON en base, OCR brut + JSON enrichi, suppression lignes)
 
 import base64
 import json
@@ -47,7 +47,6 @@ QTY_PATTERN = r"(?<![0-9])\d{1,5}(?:[.,]\d{1,3})?(?![0-9])"
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    # === Stockage direct en base pour l'IA ===
     ocr_raw_text = fields.Text(
         string="OCR Brut (Tesseract)",
         readonly=True,
@@ -60,14 +59,12 @@ class AccountMove(models.Model):
         store=True,
     )
 
-    # (Champ existant) on garde si tu l'utilises déjà ailleurs
     mindee_local_response = fields.Text(
         string="Réponse OCR JSON (Tesseract)",
         readonly=True,
         store=True,
     )
 
-    # === Utils ===
     def _strip_accents(self, s):
         if not s:
             return s
@@ -185,12 +182,10 @@ class AccountMove(models.Model):
                 pass
         return vals
 
-    # === Récupération du modèle Label Studio depuis la base ===
     def _get_partner_labelstudio_json(self, partner):
         json_str = (partner.labelstudio_json or '').strip()
         if json_str:
             return json_str
-        # fallback : dernière version d'historique (si champ vide sur partner)
         hist = self.env['mindee.labelstudio.history'].sudo().search(
             [('partner_id', '=', partner.id)], order='version_date desc, id desc', limit=1
         )
@@ -198,13 +193,7 @@ class AccountMove(models.Model):
             return hist.json_content
         return ''
 
-    # === Action principale ===
     def action_ocr_fetch(self):
-        """
-        - Pas de fallback Tesseract si pas de modèle LS.
-        - Génère et stocke en base : ocr_raw_text + ocr_json_result (zones).
-        - Alimente ref + invoice_date si zones correspondantes.
-        """
         venv_python = "/data/odoo/odoo18-venv/bin/python3"
         runner_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/invoice_labelmodel_runner.py"
 
@@ -215,14 +204,13 @@ class AccountMove(models.Model):
             model_json = self._get_partner_labelstudio_json(move.partner_id)
             if not model_json:
                 _logger.warning("[OCR][LabelStudio] Aucun modèle JSON pour le partenaire id=%s", move.partner_id.id)
-                continue  # pas de modèle => rien faire
+                continue
 
             pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
             if not pdf_attachments:
                 raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
             attachment = pdf_attachments[0]
 
-            # Écrire le PDF et le JSON du modèle dans des fichiers temporaires
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
                 pdf_path = tmp_pdf.name
                 tmp_pdf.write(base64.b64decode(attachment.datas))
@@ -231,26 +219,24 @@ class AccountMove(models.Model):
                 json_path = tmp_js.name
                 tmp_js.write(model_json)
 
-            # Appel runner
             try:
                 result = subprocess.run(
                     [venv_python, runner_path, pdf_path, json_path],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                     timeout=180, check=True, encoding="utf-8",
                 )
-                ocr_result = json.loads(result.stdout or '{}')
+                if not result.stdout.strip():
+                    raise UserError(f"Runner n'a rien renvoyé. stderr={result.stderr}")
+                ocr_result = json.loads(result.stdout)
             except Exception as e:
-                _logger.error("[OCR][Runner] Erreur runner: %s | stderr=%s", e, getattr(result, 'stderr', ''))
+                _logger.error("[OCR][Runner] stdout=%s | stderr=%s", getattr(result, 'stdout', ''), getattr(result, 'stderr', ''))
                 raise UserError(f"Erreur OCR avec LabelStudio runner : {e}")
 
-            # Stockage direct en base
             move.ocr_raw_text = ocr_result.get("ocr_raw", "")
             zones = ocr_result.get("ocr_zones", []) or []
             move.ocr_json_result = json.dumps(zones, indent=2, ensure_ascii=False)
-            # (optionnel) compat
             move.mindee_local_response = move.ocr_json_result
 
-            # Injection champs clés depuis les zones
             def _pick_zone(labels):
                 labels_norm = [self._strip_accents(l).lower() for l in labels]
                 for z in zones:
@@ -259,18 +245,19 @@ class AccountMove(models.Model):
                         return (z.get('text') or '').strip()
                 return ''
 
-            # Numéro de facture
             inv_num = _pick_zone([
                 'invoice number', 'numero facture', 'n° facture', 'facture n', 'facture no', 'facture num'
             ])
             if inv_num:
                 move.ref = inv_num
 
-            # Date de facture
             inv_date = _pick_zone(['invoice date', 'date facture', 'date de facture'])
             if inv_date:
                 d = self._normalize_date(inv_date)
                 if d:
                     move.invoice_date = d
+
+            # ⚡ Supprimer toutes les lignes existantes avant réinjection
+            move.line_ids.unlink()
 
         return True
