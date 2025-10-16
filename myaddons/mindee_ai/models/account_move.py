@@ -135,4 +135,72 @@ class AccountMove(models.Model):
 
     def action_ocr_fetch(self):
         venv_python = "/data/odoo/odoo18-venv/bin/python3"
-        runner_path = "/data/odoo/metal-odoo18-p
+        runner_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/invoice_labelmodel_runner.py"
+
+        for move in self:
+            if not move.partner_id:
+                raise UserError("Vous devez d'abord renseigner un fournisseur avant de lancer l'OCR.")
+
+            model_json = self._get_partner_labelstudio_json(move.partner_id)
+            if not model_json:
+                raise UserError(f"Aucun modèle JSON trouvé pour le fournisseur {move.partner_id.display_name}.")
+
+            pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
+            if not pdf_attachments:
+                raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
+            attachment = pdf_attachments[0]
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                pdf_path = tmp_pdf.name
+                tmp_pdf.write(base64.b64decode(attachment.datas))
+
+            with tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8", suffix=".json") as tmp_js:
+                json_path = tmp_js.name
+                tmp_js.write(model_json)
+
+            try:
+                result = subprocess.run(
+                    [venv_python, runner_path, pdf_path, json_path],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=180, check=True, encoding="utf-8",
+                )
+
+                _logger.warning("[OCR][Runner] stdout=%s", result.stdout)
+                _logger.warning("[OCR][Runner] stderr=%s", result.stderr)
+
+                if not result.stdout.strip():
+                    raise UserError("Runner n'a rien renvoyé, voir logs pour debug.")
+
+                ocr_result = json.loads(result.stdout)
+            except Exception as e:
+                _logger.error("[OCR][Runner][EXCEPTION] %s", e)
+                raise UserError(f"Erreur OCR avec LabelStudio runner : {e}")
+
+            move.ocr_raw_text = ocr_result.get("ocr_raw", "")
+            zones = ocr_result.get("ocr_zones", []) or []
+            move.ocr_json_result = json.dumps(zones, indent=2, ensure_ascii=False)
+            move.mindee_local_response = move.ocr_json_result
+
+            def _pick_zone(labels):
+                labels_norm = [self._strip_accents(l).lower() for l in labels]
+                for z in zones:
+                    lab = self._strip_accents((z.get('label') or '')).lower()
+                    if any(lab.startswith(lbl) or lbl in lab for lbl in labels_norm):
+                        return (z.get('text') or '').strip()
+                return ''
+
+            inv_num = _pick_zone([
+                'invoice number', 'numero facture', 'n° facture', 'facture n', 'facture no', 'facture num'
+            ])
+            if inv_num:
+                move.ref = inv_num
+
+            inv_date = _pick_zone(['invoice date', 'date facture', 'date de facture'])
+            if inv_date:
+                d = self._normalize_date(inv_date)
+                if d:
+                    move.invoice_date = d
+
+            move.line_ids.unlink()
+
+        return True
