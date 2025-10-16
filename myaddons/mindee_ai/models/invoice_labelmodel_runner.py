@@ -1,50 +1,34 @@
 # -*- coding: utf-8 -*-
+# invoice_labelmodel_runner.py
+
 import json
 import tempfile
-import subprocess
-import logging
 from pdf2image import convert_from_path
-
-_logger = logging.getLogger(__name__)
-
-# --- OCR avec Tesseract ---
-def run_tesseract(image_path, lang="fra"):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
-        output_path = tmp.name.replace(".txt", "")
-    cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
-    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-
-    try:
-        with open(output_path + ".txt", "r", encoding="utf-8") as f:
-            text = f.read().strip()
-        return text if text else ""
-    except FileNotFoundError:
-        return ""
+import pytesseract
 
 
-# --- Extraction des zones selon modèle ---
-def extract_cases(pdf_file, json_file):
+def run_invoice_labelmodel(pdf_file, json_model):
     """
-    Retourne un dict avec l'OCR par zones selon le modèle JSON.
-    Sert pour Odoo ET pour l'entraînement IA.
+    Exécute l'OCR sur un PDF avec un modèle LabelStudio
+    et renvoie deux choses :
+      - ocr_raw : texte brut complet de la page
+      - ocr_zones : liste des zones labelisées avec valeurs OCR
     """
-    results = {
-        "file_name": pdf_file,
-        "pages": []
-    }
 
-    # Charger modèle
-    with open(json_file, "r", encoding="utf-8") as f:
+    # Charger le modèle
+    with open(json_model, "r", encoding="utf-8") as f:
         model = json.load(f)
 
-    # Charger le PDF en image (première page uniquement pour l'instant)
+    # Convertir PDF en images
     pages = convert_from_path(pdf_file, dpi=300)
-    page = pages[0]
+    page = pages[0]  # première page
     img_w, img_h = page.size
 
-    page_result = {"page": 1, "zones": []}
-    _logger.warning("📄 [OCR] PDF=%s W=%s H=%s", pdf_file, img_w, img_h)
+    # OCR brut complet
+    ocr_raw = pytesseract.image_to_string(page, lang="fra")
 
+    # OCR par zones Label Studio
+    ocr_zones = []
     for entry in model:
         for key, zones in entry.items():
             if not isinstance(zones, list):
@@ -69,46 +53,36 @@ def extract_cases(pdf_file, json_file):
                     crop_path = tmp_img.name
                     crop.save(crop_path)
 
-                text = run_tesseract(crop_path)
+                text = pytesseract.image_to_string(crop, lang="fra").strip()
+                if not text:
+                    text = "NUL"
 
-                zone_result = {
+                ocr_zones.append({
                     "label": label,
                     "x": x, "y": y, "w": w, "h": h,
                     "text": text
-                }
-                page_result["zones"].append(zone_result)
+                })
 
-                _logger.warning("🔎 [OCR][%s] → %s", label, text)
-
-    results["pages"].append(page_result)
-    return results
-
-
-# --- OCR brut façon console ---
-def pretty_print_results(results):
-    """
-    Retourne une version texte brute style console pour debug/stockage dans Odoo.
-    """
-    lines = ["=== Cases détectées avec OCR (dynamique) ==="]
-    for page in results.get("pages", []):
-        for zone in page.get("zones", []):
-            label = zone.get("label", "NUL")
-            x, y, w, h = zone["x"], zone["y"], zone["w"], zone["h"]
-            text = zone.get("text", "")
-            lines.append(f"[{label}] x={x}, y={y}, w={w}, h={h} → {text}")
-    return "\n".join(lines)
+    return {
+        "ocr_raw": ocr_raw,
+        "ocr_zones": ocr_zones
+    }
 
 
-# --- Debug CLI (optionnel) ---
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) != 3:
-        print("Usage: python partner_invoice_labelmodel.py <fichier.pdf> <modele.json>")
+    try:
+        if len(sys.argv) != 3:
+            print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": "Bad arguments"}))
+            sys.exit(1)
+
+        pdf_file = sys.argv[1]
+        json_file = sys.argv[2]
+
+        data = run_invoice_labelmodel(pdf_file, json_file)
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+
+    except Exception as e:
+        # ⚠️ Toujours renvoyer du JSON minimal en cas d'erreur
+        print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": str(e)}))
         sys.exit(1)
-
-    pdf_file = sys.argv[1]
-    json_file = sys.argv[2]
-
-    data = extract_cases(pdf_file, json_file)
-    print(pretty_print_results(data))
-    print(json.dumps(data, indent=2, ensure_ascii=False))
