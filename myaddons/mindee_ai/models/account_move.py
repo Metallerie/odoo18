@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi, suppression lignes, fournisseur obligatoire)
+# account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi, suppression lignes, fournisseur obligatoire, logs debug)
 
 import base64
 import json
@@ -122,66 +122,6 @@ class AccountMove(models.Model):
         _logger.warning("[OCR][DATE] Parse KO: '%s' -> cleaned='%s'", date_str, cleaned)
         return None
 
-    def _match_tax_in_odoo(self, tva_rate):
-        try:
-            taux = float(tva_rate)
-        except Exception:
-            return False
-        return self.env['account.tax'].search([('amount', '=', taux), ('type_tax_use', '=', 'purchase')], limit=1)
-
-    def _match_uom_in_odoo(self, unit_code):
-        if not unit_code:
-            return False
-        mapping = {
-            'PI': 'Unité', 'U': 'Unité', 'ML': 'mètre', 'M': 'mètre', 'KG': 'kg', 'M2': 'm²', 'L': 'Litre'
-        }
-        label = mapping.get(unit_code.upper())
-        if label:
-            return self.env['uom.uom'].search([('name', 'ilike', label)], limit=1)
-        return False
-
-    def _is_real_product_line(self, header_text, line_text):
-        t = self._norm(line_text)
-        if not t:
-            return False
-        for tok in FOOTER_TOKENS:
-            if tok in t:
-                return False
-        has_word = re.search(r"[a-zA-Z]", line_text) is not None
-        if not has_word:
-            return False
-        qty = re.search(QTY_PATTERN, line_text)
-        unit = re.search(UOM_PATTERN, line_text.upper())
-        price = re.search(PRICE_PATTERN, line_text)
-        if qty and (unit or price):
-            return True
-        return False
-
-    def _parse_product_line(self, header, line_text):
-        parts = line_text.split()
-        vals = {"name": line_text}
-        if 'ref' in (header or '').lower():
-            if parts:
-                vals['default_code'] = parts[0]
-                vals['name'] = " ".join(parts[1:]) or line_text
-        mqty = re.search(r"(\d+[.,]?\d*)\s*(PI|ML|KG|M2|U|L)?", line_text)
-        if mqty:
-            try:
-                vals['quantity'] = float(mqty.group(1).replace(',', '.'))
-            except Exception:
-                pass
-            if mqty.group(2):
-                uom = self._match_uom_in_odoo(mqty.group(2))
-                if uom:
-                    vals['product_uom_id'] = uom.id
-        mprice = re.findall(PRICE_PATTERN, line_text)
-        if mprice:
-            try:
-                vals['price_unit'] = float(mprice[-1].replace(' ', '').replace(',', '.'))
-            except Exception:
-                pass
-        return vals
-
     def _get_partner_labelstudio_json(self, partner):
         json_str = (partner.labelstudio_json or '').strip()
         if json_str:
@@ -195,10 +135,4 @@ class AccountMove(models.Model):
 
     def action_ocr_fetch(self):
         venv_python = "/data/odoo/odoo18-venv/bin/python3"
-        runner_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/invoice_labelmodel_runner.py"
-
-        for move in self:
-            if not move.partner_id:
-                raise UserError("Vous devez d'abord renseigner un fournisseur avant de lancer l'OCR.")
-
-            model_json = self
+        runner_path = "/data/odoo/metal-odoo18-p
