@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# account_move.py (intégration LabelStudio – JSON en base, OCR brut + JSON enrichi, suppression lignes)
+# account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi, suppression lignes, fournisseur obligatoire)
 
 import base64
 import json
@@ -199,65 +199,6 @@ class AccountMove(models.Model):
 
         for move in self:
             if not move.partner_id:
-                continue
+                raise UserError("Vous devez d'abord renseigner un fournisseur avant de lancer l'OCR.")
 
-            model_json = self._get_partner_labelstudio_json(move.partner_id)
-            if not model_json:
-                _logger.warning("[OCR][LabelStudio] Aucun modèle JSON pour le partenaire id=%s", move.partner_id.id)
-                continue
-
-            pdf_attachments = move.attachment_ids.filtered(lambda a: a.mimetype == "application/pdf")[:1]
-            if not pdf_attachments:
-                raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
-            attachment = pdf_attachments[0]
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-                pdf_path = tmp_pdf.name
-                tmp_pdf.write(base64.b64decode(attachment.datas))
-
-            with tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8", suffix=".json") as tmp_js:
-                json_path = tmp_js.name
-                tmp_js.write(model_json)
-
-            try:
-                result = subprocess.run(
-                    [venv_python, runner_path, pdf_path, json_path],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    timeout=180, check=True, encoding="utf-8",
-                )
-                if not result.stdout.strip():
-                    raise UserError(f"Runner n'a rien renvoyé. stderr={result.stderr}")
-                ocr_result = json.loads(result.stdout)
-            except Exception as e:
-                _logger.error("[OCR][Runner] stdout=%s | stderr=%s", getattr(result, 'stdout', ''), getattr(result, 'stderr', ''))
-                raise UserError(f"Erreur OCR avec LabelStudio runner : {e}")
-
-            move.ocr_raw_text = ocr_result.get("ocr_raw", "")
-            zones = ocr_result.get("ocr_zones", []) or []
-            move.ocr_json_result = json.dumps(zones, indent=2, ensure_ascii=False)
-            move.mindee_local_response = move.ocr_json_result
-
-            def _pick_zone(labels):
-                labels_norm = [self._strip_accents(l).lower() for l in labels]
-                for z in zones:
-                    lab = self._strip_accents((z.get('label') or '')).lower()
-                    if any(lab.startswith(lbl) or lbl in lab for lbl in labels_norm):
-                        return (z.get('text') or '').strip()
-                return ''
-
-            inv_num = _pick_zone([
-                'invoice number', 'numero facture', 'n° facture', 'facture n', 'facture no', 'facture num'
-            ])
-            if inv_num:
-                move.ref = inv_num
-
-            inv_date = _pick_zone(['invoice date', 'date facture', 'date de facture'])
-            if inv_date:
-                d = self._normalize_date(inv_date)
-                if d:
-                    move.invoice_date = d
-
-            # ⚡ Supprimer toutes les lignes existantes avant réinjection
-            move.line_ids.unlink()
-
-        return True
+            model_json = self
