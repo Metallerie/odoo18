@@ -46,8 +46,8 @@ def run_invoice_labelmodel(pdf_file, json_model):
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
-                # ignorer les zones inutiles
-                if label in IGNORE_LABELS:
+                # ignorer les zones inutiles OU les NUL
+                if label in IGNORE_LABELS or label == "NUL":
                     continue
 
                 # Position en pixels
@@ -64,8 +64,8 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
                 text = pytesseract.image_to_string(crop, lang="fra").strip()
 
-                # ⚠️ on ignore les cases vides ou NUL
-                if not text or text.upper() == "NUL":
+                # ⚠️ on ignore les cases vides
+                if not text:
                     continue
 
                 ocr_zones.append({
