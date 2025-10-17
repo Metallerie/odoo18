@@ -7,12 +7,38 @@ from pdf2image import convert_from_path
 import pytesseract
 
 
+def _assign_row_index(ocr_zones, y_tolerance=1.5):
+    """
+    Ajoute un row_index en regroupant les zones par ligne (ordonnées par Y).
+    """
+    line_labels = {"Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"}
+    line_zones = [z for z in ocr_zones if z["label"] in line_labels]
+
+    # Trier par position verticale
+    line_zones.sort(key=lambda z: z["y"])
+
+    row_index = 0
+    last_y = None
+    for zone in line_zones:
+        if last_y is None or abs(zone["y"] - last_y) > y_tolerance:
+            row_index += 1
+        zone["row_index"] = row_index
+        last_y = zone["y"]
+
+    # Recalque dans ocr_zones complet
+    for z in ocr_zones:
+        if z in line_zones:
+            z["row_index"] = next(lz["row_index"] for lz in line_zones if lz is z)
+
+    return ocr_zones
+
+
 def run_invoice_labelmodel(pdf_file, json_model):
     """
     Exécute l'OCR sur un PDF avec un modèle LabelStudio
     et renvoie deux choses :
       - ocr_raw : texte brut complet de la page
-      - ocr_zones : liste des zones labelisées avec valeurs OCR
+      - ocr_zones : liste des zones labelisées avec valeurs OCR (+ row_index auto)
     """
 
     # Charger le modèle
@@ -40,11 +66,6 @@ def run_invoice_labelmodel(pdf_file, json_model):
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
-                # Récupérer l'index de ligne s'il existe (Label Studio Number)
-                row_index = None
-                if "row_index" in zone.get("value", {}):
-                    row_index = zone["value"]["row_index"]
-
                 # Position en pixels
                 x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
                 left = int((x / 100) * img_w)
@@ -64,10 +85,13 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
                 ocr_zones.append({
                     "label": label,
-                    "row_index": row_index,   # ✅ numéro de ligne ajouté
+                    "row_index": None,  # remplacé ensuite
                     "x": x, "y": y, "w": w, "h": h,
                     "text": text
                 })
+
+    # 🔥 Numérotation automatique des lignes
+    ocr_zones = _assign_row_index(ocr_zones)
 
     return {
         "ocr_raw": ocr_raw,
