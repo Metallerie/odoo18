@@ -1,10 +1,20 @@
 # -*- coding: utf-8 -*-
 # ocr_console_debug.py
-# Test OCR LabelStudio runner → affichage console des lignes produits
+# Test OCR LabelStudio runner → affichage console avec tri produit / incomplet
 
 import json
 import subprocess
 import sys
+
+def to_float(val):
+    """Convertit une valeur OCR en float sécurisé"""
+    if not val:
+        return 0.0
+    val = str(val).replace(" ", "").replace(",", ".")
+    try:
+        return float(val)
+    except:
+        return 0.0
 
 def main():
     if len(sys.argv) != 3:
@@ -57,7 +67,15 @@ def main():
         uom = data.get("Unité", "")
         pu = data.get("Unit Price", "")
         montant = data.get("Amount HT", "")
-        print(f"Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={qty}, U={uom}, PU={pu}, Montant={montant}")
+
+        qty_val = to_float(qty)
+        pu_val = to_float(pu)
+        montant_val = to_float(montant)
+
+        if qty_val > 0 and pu_val > 0 and montant_val > 0:
+            print(f"✅ Ligne produit : Ref={ref}, Desc={desc}, Qté={qty}, U={uom}, PU={pu}, Montant={montant}")
+        else:
+            print(f"⚠️ Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={qty}, U={uom}, PU={pu}, Montant={montant}")
 
 
 if __name__ == "__main__":
