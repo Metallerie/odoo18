@@ -232,7 +232,9 @@ class AccountMove(models.Model):
                     move.invoice_date = d
 
             # Nettoyage des anciennes lignes
-            move.line_ids.unlink()
+            # Supprimer uniquement les lignes "produit"
+            product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, 'product'))
+            product_lines_to_remove.unlink()
 
             # --- Extraction lignes produits ---
             product_lines = []
