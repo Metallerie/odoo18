@@ -19,25 +19,21 @@
             </xpath>
         </field>
     </record>
-        <!-- Bouton OCR sur la facture -->
 
+    <!-- Bouton OCR sur la facture -->
     <record id="view_move_form_inherit_ocr_button" model="ir.ui.view">
-    <field name="name">invoice.form.inherit.account.move</field>
-    <field name="model">account.move</field>
-    <field name="inherit_id" ref="account.view_move_form"/>
-    <field name="arch" type="xml">
-        <header position="inside">
-            <button name="action_ocr_fetch"
-                    string="Scan From Attachment"
-                    type="object"
-                    class="oe_highlight"
-                    groups="account.group_account_invoice"/>
-        </header>
-    </field>
-</record>
-
-
-    
+        <field name="name">invoice.form.inherit.account.move</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_ocr_fetch"
+                        string="Scan From Attachment"
+                        class="btn-secondary"
+                        type="object" />
+            </xpath>
+        </field>
+    </record>
 
     <!-- Liste OCR rules -->
     <record id="view_ocr_rule_list" model="ir.ui.view">
@@ -92,14 +88,14 @@
             <xpath expr="//sheet/notebook" position="inside">
 
                 <!-- ✅ Onglet OCR JSON -->
-                <page string="OCR JSON">
+                <page string="OCR Brut">
                     <field name="attachment_ids" widget="json" readonly="1">
                         
                     </field>
                 </page>
 
                 <!-- ✅ Onglet brut pour debug -->
-                <page string="OCR brut (debug)">
+                <page string="OCR json (debug)">
                     <field name="mindee_local_response" widget="text" readonly="1"  store="True"/>
                 </page>
 
