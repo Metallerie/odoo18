@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA + commentaires + logs détaillés)
+# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA + commentaires)
 
 import base64
 import json
@@ -131,15 +131,19 @@ class AccountMove(models.Model):
         return ''
 
     def _to_float(self, val):
-        """Convertit un texte OCR en float sécurisé"""
+        """Convertit un texte OCR en float sécurisé (ignore les labels non numériques)"""
         if not val or val == "NUL":
             return 0.0
+        val = str(val).strip()
         val = val.replace(" ", "").replace(",", ".")
+        # Vérifie si c'est bien un nombre (ignore "PrixUnitaire", "TVA", etc.)
         if not re.match(r"^-?\d+(\.\d+)?$", val):
+            _logger.debug("[OCR][_to_float] Ignored non-numeric value: %s", val)
             return 0.0
         try:
             return float(val)
-        except Exception:
+        except Exception as e:
+            _logger.debug("[OCR][_to_float] Conversion error for '%s': %s", val, e)
             return 0.0
 
     def _find_tax(self, vat_rate):
@@ -227,7 +231,7 @@ class AccountMove(models.Model):
                 if d:
                     move.invoice_date = d
 
-            # Nettoyage des anciennes lignes
+            # Nettoyage des anciennes lignes produits
             product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, 'product'))
             product_lines_to_remove.unlink()
 
@@ -258,7 +262,6 @@ class AccountMove(models.Model):
                 vat_rate = self._to_float(vat_text)
                 tax = self._find_tax(vat_rate) or default_tax
 
-                # === LOG DÉTAILLÉ PAR LIGNE ===
                 _logger.warning(
                     "[OCR][ROW] y=%s | Ref=%s | Desc=%s | Qté=%s | U=%s | PU=%s | Montant=%s | TVA=%s",
                     y, ref, desc, qty, uom, price_unit, amount, vat_rate
