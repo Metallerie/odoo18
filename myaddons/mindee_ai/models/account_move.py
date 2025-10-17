@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# account_move.py (LabelStudio – JSON en base, OCR brut + Totaux HT/TVA/TTC + Produit en attente)
-
 import base64
 import json
 import logging
@@ -16,22 +14,6 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 
-MONTHS_FR_MAP = {
-    "janvier": "01", "janv": "01", "jan": "01",
-    "fevrier": "02", "fevr": "02", "fev": "02",
-    "mars": "03",
-    "avril": "04", "avr": "04",
-    "mai": "05",
-    "juin": "06",
-    "juillet": "07", "juil": "07",
-    "aout": "08",
-    "septembre": "09", "sept": "09",
-    "octobre": "10", "oct": "10",
-    "novembre": "11", "nov": "11",
-    "decembre": "12", "dec": "12",
-}
-
-
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -45,17 +27,16 @@ class AccountMove(models.Model):
         return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
 
     def _to_float(self, val):
-        """Convertit un texte OCR en float sécurisé"""
         if not val or val == "NUL":
             return 0.0
         val = val.replace(" ", "").replace(",", ".")
+        val = re.sub(r"[^\d\.\-]", "", val)
         try:
             return float(val)
         except Exception:
             return 0.0
 
     def _find_tax(self, vat_rate):
-        """Trouve une taxe Odoo correspondant au taux OCR"""
         if vat_rate <= 0:
             return False
         tax = self.env["account.tax"].search(
@@ -80,7 +61,6 @@ class AccountMove(models.Model):
                 raise UserError("Aucune pièce jointe PDF trouvée sur cette facture.")
             attachment = pdf_attachments[0]
 
-            # Sauvegarde PDF + JSON temporaire
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
                 pdf_path = tmp_pdf.name
                 tmp_pdf.write(base64.b64decode(attachment.datas))
@@ -107,47 +87,53 @@ class AccountMove(models.Model):
                 _logger.error("[OCR][Runner][EXCEPTION] %s", e)
                 raise UserError(f"Erreur OCR avec LabelStudio runner : {e}")
 
-            # Sauvegarde du brut
             move.ocr_raw_text = ocr_result.get("ocr_raw", "")
             zones = ocr_result.get("ocr_zones", []) or []
             move.ocr_json_result = json.dumps(zones, indent=2, ensure_ascii=False)
             move.mindee_local_response = move.ocr_json_result
 
-            # Nettoyage anciennes lignes PRODUITS uniquement
-            product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, "product"))
-            product_lines_to_remove.unlink()
+            # Nettoyage anciennes lignes produit
+            move.line_ids.filtered(lambda l: l.display_type in (False, "product")).unlink()
 
-            # --- Extraction des totaux ---
+            # --- Extraction totaux ---
             total_ht = 0.0
             total_tva = 0.0
             total_ttc = 0.0
 
             for z in zones:
-                label = (z.get("label") or "").lower()
+                label = (z.get("label") or "").lower().strip()
                 text = (z.get("text") or "").strip()
+                _logger.info("[OCR][ZONE] Label='%s' | Text='%s'", label, text)
 
-                if label in ["total ht", "total net h.t", "total brut ht"]:
-                    total_ht = self._to_float(re.sub(r"[^\d,\.]", "", text))
+                if "total" in label and "ht" in label:
+                    total_ht = self._to_float(text)
+                elif "tva" in label:
+                    total_tva = self._to_float(text)
+                elif "ttc" in label or "net a payer" in label:
+                    total_ttc = self._to_float(text)
 
-                elif label in ["tva", "total tva"]:
-                    total_tva = self._to_float(re.sub(r"[^\d,\.]", "", text))
+            _logger.warning("[OCR][TOTALS DETECTED] HT=%s | TVA=%s | TTC=%s", total_ht, total_tva, total_ttc)
 
-                elif label in ["total ttc", "net a payer"]:
-                    total_ttc = self._to_float(re.sub(r"[^\d,\.]", "", text))
+            # --- Ligne factice ---
+            tax = False
+            if total_ht > 0 and total_tva > 0:
+                vat_rate = round((total_tva / total_ht) * 100, 2)
+                tax = self._find_tax(vat_rate)
 
-            _logger.info("[OCR][TOTALS] HT=%s | TVA=%s | TTC=%s", total_ht, total_tva, total_ttc)
+            move.line_ids.create({
+                "move_id": move.id,
+                "name": "Produit en attente (OCR)",
+                "quantity": 1,
+                "price_unit": total_ht if total_ht > 0 else 0.0,
+                "account_id": move.journal_id.default_account_id.id,
+                "tax_ids": [(6, 0, [tax.id])] if tax else False,
+            })
 
-            # --- Création d’une ligne factice ---
-            tax = self._find_tax(round((total_tva / total_ht) * 100, 2)) if total_ht > 0 else False
-
-            if total_ht > 0:
-                move.line_ids.create({
-                    "move_id": move.id,
-                    "name": "Produit en attente (OCR)",
-                    "quantity": 1,
-                    "price_unit": total_ht,
-                    "account_id": move.journal_id.default_account_id.id,
-                    "tax_ids": [(6, 0, [tax.id])] if tax else False,
-                })
+            # Ajouter une note informative
+            move.line_ids.create({
+                "move_id": move.id,
+                "name": f"Totaux OCR → HT={total_ht} / TVA={total_tva} / TTC={total_ttc}",
+                "display_type": "line_note",
+            })
 
         return True
