@@ -1,8 +1,19 @@
+# -*- coding: utf-8 -*-
+# invoice_labelmodel_runner.py
+
+import json
+import tempfile
+from pdf2image import convert_from_path
+import pytesseract
+
+
 def run_invoice_labelmodel(pdf_file, json_model):
-    import json
-    import tempfile
-    from pdf2image import convert_from_path
-    import pytesseract
+    """
+    Exécute l'OCR sur un PDF avec un modèle LabelStudio
+    et renvoie deux choses :
+      - ocr_raw : texte brut complet de la page
+      - ocr_zones : liste des zones labelisées avec valeurs OCR
+    """
 
     # Charger le modèle
     with open(json_model, "r", encoding="utf-8") as f:
@@ -48,16 +59,36 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
                 ocr_zones.append({
                     "label": label,
+                    "row_index": None,   # valeur par défaut, remplacée ensuite
                     "x": x, "y": y, "w": w, "h": h,
                     "text": text
                 })
 
     # 🔹 Numérotation globale haut → bas
     ocr_zones = sorted(ocr_zones, key=lambda z: z["y"])
-    for idx, zone in enumerate(ocr_zones):
+    for idx, zone in enumerate(ocr_zones, start=1):
         zone["row_index"] = idx
 
     return {
         "ocr_raw": ocr_raw,
         "ocr_zones": ocr_zones
     }
+
+
+if __name__ == "__main__":
+    import sys
+    try:
+        if len(sys.argv) != 3:
+            print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": "Bad arguments"}))
+            sys.exit(1)
+
+        pdf_file = sys.argv[1]
+        json_file = sys.argv[2]
+
+        data = run_invoice_labelmodel(pdf_file, json_file)
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+
+    except Exception as e:
+        # ⚠️ Toujours renvoyer du JSON minimal en cas d'erreur
+        print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": str(e)}))
+        sys.exit(1)
