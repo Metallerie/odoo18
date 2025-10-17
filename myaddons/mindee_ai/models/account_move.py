@@ -223,22 +223,25 @@ class AccountMove(models.Model):
                         rows[y] = {}
                     rows[y][z.get("label")] = (z.get("text") or "").strip()
 
+            def _to_float(val):
+                if not val or val == "NUL":
+                    return 0.0
+                val = val.replace(" ", "").replace(",", ".")
+                # Vérifie si c’est bien un nombre
+                if not re.match(r"^-?\d+(\.\d+)?$", val):
+                    return 0.0
+                try:
+                    return float(val)
+                except Exception:
+                    return 0.0
+
             for y, data in sorted(rows.items()):
                 ref = data.get("Reference", "")
                 desc = data.get("Description", "")
-                qty_raw = data.get("Quantity", "")
+                qty = _to_float(data.get("Quantity", ""))
                 uom = data.get("Unité", "")
-                pu_raw = data.get("Unit Price", "")
-                amt_raw = data.get("Amount HT", "")
-
-                def _to_float(val):
-                    if not val or val == "NUL":
-                        return 0.0
-                    return float(val.replace(",", ".").replace(" ", ""))
-
-                qty = _to_float(qty_raw)
-                price_unit = _to_float(pu_raw)
-                amount = _to_float(amt_raw)
+                price_unit = _to_float(data.get("Unit Price", ""))
+                amount = _to_float(data.get("Amount HT", ""))
 
                 if desc and (price_unit > 0 or amount > 0):
                     product_lines.append({
