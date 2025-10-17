@@ -245,8 +245,9 @@ class AccountMove(models.Model):
             for z in zones:
                 if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
                     y = round(float(z.get("y", 0)), 1)
+                    rows[y] = {}
+
                     if y not in rows:
-                        rows[y] = {}
                     rows[y][z.get("label")] = (z.get("text") or "").strip()
 
             if not rows:
