@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA + commentaires)
+# suppression lignes, fournisseur obligatoire, logs debug,
+# extraction lignes produits + TVA + commentaires)
 
 import base64
 import json
@@ -131,12 +132,11 @@ class AccountMove(models.Model):
         return ''
 
     def _to_float(self, val):
-        """Convertit un texte OCR en float sécurisé (ignore les labels non numériques)"""
+        """Convertit un texte OCR en float sécurisé"""
         if not val or val == "NUL":
             return 0.0
         val = str(val).strip()
         val = val.replace(" ", "").replace(",", ".")
-        # Vérifie si c'est bien un nombre (ignore "PrixUnitaire", "TVA", etc.)
         if not re.match(r"^-?\d+(\.\d+)?$", val):
             _logger.debug("[OCR][_to_float] Ignored non-numeric value: %s", val)
             return 0.0
@@ -231,9 +231,13 @@ class AccountMove(models.Model):
                 if d:
                     move.invoice_date = d
 
-            # Nettoyage des anciennes lignes produits
-            product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, 'product'))
+            # Nettoyage des anciennes lignes (tout sauf notes/sections)
+            product_lines_to_remove = move.line_ids.filtered(
+                lambda l: l.display_type not in ('line_section', 'line_note')
+            )
+            count_removed = len(product_lines_to_remove)
             product_lines_to_remove.unlink()
+            _logger.warning("[OCR] %s anciennes lignes supprimées sur facture %s", count_removed, move.name)
 
             # --- Extraction lignes produits + commentaires ---
             product_lines = []
@@ -247,6 +251,9 @@ class AccountMove(models.Model):
                         rows[y] = {}
                     rows[y][z.get("label")] = (z.get("text") or "").strip()
 
+            if not rows:
+                _logger.warning("[OCR] Aucune ligne détectée dans zones pour facture %s", move.name)
+
             default_tax = self.env['account.tax'].search([('type_tax_use', '=', 'purchase')], limit=1)
 
             for y, data in sorted(rows.items()):
@@ -257,18 +264,17 @@ class AccountMove(models.Model):
                 price_unit = self._to_float(data.get("Unit Price", ""))
                 amount = self._to_float(data.get("Amount HT", ""))
 
-                # Détection TVA
                 vat_text = data.get("VAT", "")
                 vat_rate = self._to_float(vat_text)
                 tax = self._find_tax(vat_rate) or default_tax
 
+                # --- LOG DEBUG par ligne ---
                 _logger.warning(
                     "[OCR][ROW] y=%s | Ref=%s | Desc=%s | Qté=%s | U=%s | PU=%s | Montant=%s | TVA=%s",
                     y, ref, desc, qty, uom, price_unit, amount, vat_rate
                 )
 
                 if qty > 0 and price_unit > 0:
-                    # Ligne produit complète
                     product_lines.append({
                         "name": f"[{ref}] {desc}" if ref else desc or "Ligne sans désignation",
                         "quantity": qty,
@@ -277,7 +283,6 @@ class AccountMove(models.Model):
                         "tax_ids": [(6, 0, [tax.id])] if tax else False,
                     })
                 else:
-                    # Ligne incomplète -> commentaire
                     comment_text = f"Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={data.get('Quantity','')}, U={uom}, PU={data.get('Unit Price','')}, Montant={data.get('Amount HT','')}"
                     comment_lines.append(comment_text)
 
