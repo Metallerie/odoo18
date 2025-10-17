@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits)
+# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA)
 
 import base64
 import json
@@ -134,6 +134,28 @@ class AccountMove(models.Model):
             return hist.json_content
         return ''
 
+    def _to_float(self, val):
+        """Convertit un texte OCR en float sécurisé"""
+        if not val or val == "NUL":
+            return 0.0
+        val = val.replace(" ", "").replace(",", ".")
+        if not re.match(r"^-?\d+(\.\d+)?$", val):
+            return 0.0
+        try:
+            return float(val)
+        except Exception:
+            return 0.0
+
+    def _find_tax(self, vat_rate):
+        """Trouve une taxe Odoo correspondant au taux OCR"""
+        if vat_rate <= 0:
+            return False
+        tax = self.env['account.tax'].search([
+            ('amount', '=', vat_rate),
+            ('type_tax_use', '=', 'purchase')
+        ], limit=1)
+        return tax or False
+
     def action_ocr_fetch(self):
         venv_python = "/data/odoo/odoo18-venv/bin/python3"
         runner_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/invoice_labelmodel_runner.py"
@@ -217,39 +239,34 @@ class AccountMove(models.Model):
             rows = {}
 
             for z in zones:
-                if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT"]:
+                if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
                     y = round(float(z.get("y", 0)), 1)
                     if y not in rows:
                         rows[y] = {}
                     rows[y][z.get("label")] = (z.get("text") or "").strip()
 
-            def _to_float(val):
-                if not val or val == "NUL":
-                    return 0.0
-                val = val.replace(" ", "").replace(",", ".")
-                # Vérifie si c’est bien un nombre
-                if not re.match(r"^-?\d+(\.\d+)?$", val):
-                    return 0.0
-                try:
-                    return float(val)
-                except Exception:
-                    return 0.0
+            default_tax = self.env['account.tax'].search([('type_tax_use', '=', 'purchase')], limit=1)
 
             for y, data in sorted(rows.items()):
                 ref = data.get("Reference", "")
                 desc = data.get("Description", "")
-                qty = _to_float(data.get("Quantity", ""))
+                qty = self._to_float(data.get("Quantity", ""))
                 uom = data.get("Unité", "")
-                price_unit = _to_float(data.get("Unit Price", ""))
-                amount = _to_float(data.get("Amount HT", ""))
+                price_unit = self._to_float(data.get("Unit Price", ""))
+                amount = self._to_float(data.get("Amount HT", ""))
 
-                if desc and (price_unit > 0 or amount > 0):
-                    product_lines.append({
-                        "name": f"[{ref}] {desc}" if ref else desc,
-                        "quantity": qty if qty > 0 else 1.0,
-                        "price_unit": price_unit,
-                        "account_id": move.journal_id.default_account_id.id,
-                    })
+                # Détection TVA
+                vat_text = data.get("VAT", "")
+                vat_rate = self._to_float(vat_text)
+                tax = self._find_tax(vat_rate) or default_tax
+
+                product_lines.append({
+                    "name": f"[{ref}] {desc}" if ref else desc or "Ligne sans désignation",
+                    "quantity": qty if qty > 0 else 1.0,
+                    "price_unit": price_unit,
+                    "account_id": move.journal_id.default_account_id.id,
+                    "tax_ids": [(6, 0, [tax.id])] if tax else False,
+                })
 
             for line in product_lines:
                 move.line_ids.create({
