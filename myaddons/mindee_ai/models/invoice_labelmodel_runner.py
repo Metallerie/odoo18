@@ -1,134 +1,106 @@
-# extract_invoice.py (version avec JSON)
-# Usage:
-#   python extract_invoice.py <fichier.pdf> <modele.json> [--json-out /chemin/sortie.json]
+# -*- coding: utf-8 -*-
+# invoice_labelmodel_runner.py
+# OCR par zones + regroupement lignes (ocr_rows)
 
-import sys
 import json
 import tempfile
-import subprocess
-from pathlib import Path
 from pdf2image import convert_from_path
+import pytesseract
 
-# --- OCR avec Tesseract ---
-def run_tesseract(image_path, lang="fra"):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
-        output_path = tmp.name.replace(".txt", "")
-    cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
-    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-    try:
-        with open(output_path + ".txt", "r", encoding="utf-8") as f:
-            text = f.read().strip()
-        return text if text else "NUL"
-    except FileNotFoundError:
-        return "NUL"
+def run_invoice_labelmodel(pdf_file, json_model):
+    """
+    Exécute l'OCR sur un PDF avec un modèle LabelStudio
+    Retourne :
+      - ocr_raw : texte brut complet
+      - ocr_zones : toutes les zones extraites
+      - ocr_rows : regroupement par lignes
+    """
 
-def _get_coords(zone):
-    """Récupère x,y,w,h depuis la racine ou zone['value'] (tolérant selon export LS)."""
-    v = zone.get("value") or {}
-    x = zone.get("x", v.get("x"))
-    y = zone.get("y", v.get("y"))
-    w = zone.get("width", v.get("width"))
-    h = zone.get("height", v.get("height"))
-    if x is None or y is None or w is None or h is None:
-        return None
-    return float(x), float(y), float(w), float(h)
-
-# --- Extraction des cases et OCR ---
-def extract_cases(pdf_file, json_file, json_out_path=None):
-    # Charger modèle
-    with open(json_file, "r", encoding="utf-8") as f:
+    # Charger le modèle
+    with open(json_model, "r", encoding="utf-8") as f:
         model = json.load(f)
 
-    # Charger le PDF en image
+    # Convertir PDF en images
     pages = convert_from_path(pdf_file, dpi=300)
     page = pages[0]
     img_w, img_h = page.size
 
-    # OCR brut page entière
-    page_text = run_tesseract(_save_temp_img(page))
+    # OCR brut complet
+    ocr_raw = pytesseract.image_to_string(page, lang="fra")
 
-    print("=== Cases détectées avec OCR (dynamique) ===")
-    all_cases = []
-
+    # OCR par zones Label Studio
+    ocr_zones = []
     for entry in model:
         for key, zones in entry.items():
             if not isinstance(zones, list):
-                continue  # skip si ce n’est pas une liste
+                continue
             for zone in zones:
                 if not isinstance(zone, dict):
-                    continue  # skip si pas un dict
+                    continue
 
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
-                coords = _get_coords(zone)
-                if coords is None:
-                    continue
-                x, y, w, h = coords
-
                 # Position en pixels
+                x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
                 left = int((x / 100) * img_w)
                 top = int((y / 100) * img_h)
                 right = int(((x + w) / 100) * img_w)
                 bottom = int(((y + h) / 100) * img_h)
 
-                # OCR sur la zone
-                crop_path = _save_temp_crop(page, left, top, right, bottom)
-                text = run_tesseract(crop_path)
+                crop = page.crop((left, top, right, bottom))
+                with tempfile.NamedTemporaryFile(suffix=".PNG", delete=False) as tmp_img:
+                    crop_path = tmp_img.name
+                    crop.save(crop_path)
 
-                # Afficher résultat "tel quel"
-                print(f"[{label}] x={x}, y={y}, w={w}, h={h} → {text}")
+                text = pytesseract.image_to_string(crop, lang="fra").strip()
+                if not text:
+                    text = "NUL"
 
-                # Accumuler pour JSON
-                all_cases.append({
+                ocr_zones.append({
                     "label": label,
                     "x": x, "y": y, "w": w, "h": h,
                     "text": text
                 })
 
-    # Construire le JSON final
-    filled_cases = [c for c in all_cases if (c.get("text") or "").strip() and c["text"].strip().upper() != "NUL"]
+    # === Regroupement par lignes ===
+    row_index = 0
+    rows = []
+    current_y = None
+    tolerance = 2.0  # tolérance sur Y (en % hauteur doc)
 
-    result = {
-        "ocr_raw": page_text,
-        "ocr_zones_all": all_cases,        # toutes les cases (comme l’affichage)
-        "ocr_zones_filled": filled_cases,  # uniquement cases remplies (≠ NUL)
+    for zone in sorted(ocr_zones, key=lambda z: (z["y"], z["x"])):
+        if current_y is None or abs(zone["y"] - current_y) > tolerance:
+            # nouvelle ligne
+            row_index += 1
+            current_y = zone["y"]
+            rows.append({"row_index": row_index, "cells": []})
+
+        rows[-1]["cells"].append({
+            "label": zone["label"],
+            "text": zone["text"]
+        })
+
+    return {
+        "ocr_raw": ocr_raw,
+        "ocr_zones": ocr_zones,
+        "ocr_rows": rows
     }
 
-    # Sortie JSON facultative vers fichier
-    if json_out_path:
-        outp = Path(json_out_path)
-        outp.parent.mkdir(parents=True, exist_ok=True)
-        with open(outp, "w", encoding="utf-8") as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-        print(f"\n>>> JSON écrit dans: {outp}")
-
-    # Et on affiche aussi le JSON sur stdout à la fin si pas de fichier fourni
-    if not json_out_path:
-        print("\n=== JSON (aperçu) ===")
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-
-def _save_temp_img(pil_img):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-        pil_img.save(tmp.name)
-        return tmp.name
-
-def _save_temp_crop(page_img, left, top, right, bottom):
-    crop = page_img.crop((left, top, right, bottom))
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-        crop.save(tmp_img.name)
-        return tmp_img.name
-
-# --- Main ---
+# === Main pour test console ===
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python extract_invoice.py <fichier.pdf> <modele.json> [--json-out /chemin/sortie.json]")
+    import sys
+    try:
+        if len(sys.argv) != 3:
+            print(json.dumps({"error": "Usage: python invoice_labelmodel_runner.py <pdf> <model.json>"}))
+            sys.exit(1)
+
+        pdf_file = sys.argv[1]
+        json_file = sys.argv[2]
+
+        data = run_invoice_labelmodel(pdf_file, json_file)
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+
+    except Exception as e:
+        print(json.dumps({"ocr_raw": "", "ocr_zones": [], "ocr_rows": [], "error": str(e)}))
         sys.exit(1)
-
-    pdf_path = sys.argv[1]
-    model_path = sys.argv[2]
-    json_out = None
-    if len(sys.argv) >= 5 and sys.argv[3] == "--json-out":
-        json_out = sys.argv[4]
-
-    extract_cases(pdf_path, model_path, json_out_path=json_out)
