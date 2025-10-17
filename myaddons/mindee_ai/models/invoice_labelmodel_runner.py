@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # invoice_labelmodel_runner.py
 # OCR par zones + regroupement lignes (ocr_rows)
+# Version avec suppression des "NUL"
 
 import json
 import tempfile
@@ -8,7 +9,7 @@ from pdf2image import convert_from_path
 import pytesseract
 
 # Labels à ignorer (zones structurelles LS)
-IGNORE_LABELS = {"Header", "Table", "Footer", "Document", "Document type", 
+IGNORE_LABELS = {"Header", "Table", "Footer", "Document", "Document type",
                  "Table Header", "Table Row", "Table End", "Table Total"}
 
 def run_invoice_labelmodel(pdf_file, json_model):
@@ -16,8 +17,8 @@ def run_invoice_labelmodel(pdf_file, json_model):
     Exécute l'OCR sur un PDF avec un modèle LabelStudio
     Retourne :
       - ocr_raw : texte brut complet
-      - ocr_zones : toutes les zones utiles (hors header/footer)
-      - ocr_rows : regroupement par lignes
+      - ocr_zones : toutes les zones utiles (hors header/footer, sans NUL)
+      - ocr_rows : regroupement par lignes (sans NUL)
     """
 
     # Charger le modèle
@@ -62,8 +63,10 @@ def run_invoice_labelmodel(pdf_file, json_model):
                     crop.save(crop_path)
 
                 text = pytesseract.image_to_string(crop, lang="fra").strip()
-                if not text:
-                    text = "NUL"
+
+                # ⚠️ on ignore les cases vides ou NUL
+                if not text or text.upper() == "NUL":
+                    continue
 
                 ocr_zones.append({
                     "label": label,
