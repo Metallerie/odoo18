@@ -193,8 +193,13 @@ class AccountMove(models.Model):
                 'invoice number', 'numero facture', 'n° facture', 'facture n', 'facture no', 'facture num'
             ])
             if inv_num:
-                move.ref = inv_num
-
+                inv_num_clean = re.sub(
+                    r'(?i)facture\s*(n°|no|num|number)?\s*[:\-]?\s*',
+                    '',
+                    inv_num
+                ).strip()
+                move.ref = inv_num_clean
+                
             inv_date = _pick_zone(['invoice date', 'date facture', 'date de facture'])
             if inv_date:
                 d = self._normalize_date(inv_date)
