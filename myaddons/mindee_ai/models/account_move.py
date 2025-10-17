@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# account_move.py (OCR Mindee – création ligne factice si pas de lignes)
+# account_move.py (OCR Mindee – en-tête + ligne factice si pas de lignes)
 
 import base64
 import json
 import logging
 import re
 import unicodedata
-from datetime import date
+from datetime import datetime
 
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -65,6 +65,9 @@ class AccountMove(models.Model):
             total_ht = 0.0
             total_tva = 0.0
             total_ttc = 0.0
+            invoice_number = ""
+            invoice_date = None
+            supplier_name = ""
 
             # --------------------------
             # Analyse zones OCR
@@ -74,17 +77,50 @@ class AccountMove(models.Model):
                 text = (z.get("text") or "").strip()
                 _logger.warning("[OCR][ZONE] label=%s text=%s", label, text)
 
-                # Nettoyage du texte
                 clean_text = re.sub(r"[^\d,\.]", "", text)
 
-                if "total brut ht" in label or "total net h.t" in label or "total ht" in label:
+                # Numéro facture
+                if "invoice number" in label and not invoice_number:
+                    invoice_number = re.sub(r"\D", "", text)
+                
+                # Date facture
+                elif "invoice date" in label and not invoice_date:
+                    m = re.search(r"(\d{2}/\d{2}/\d{4})", text)
+                    if m:
+                        try:
+                            invoice_date = datetime.strptime(m.group(1), "%d/%m/%Y").date()
+                        except Exception:
+                            pass
+
+                # Fournisseur
+                elif "supplier" in label and not supplier_name:
+                    supplier_name = text.strip()
+
+                # Totaux
+                elif "total brut ht" in label or "total net h.t" in label or "total ht" in label:
                     total_ht = self._to_float(clean_text)
                 elif "total tva" in label or (label == "tva" and "total" in text.lower()):
                     total_tva = self._to_float(clean_text)
                 elif "total ttc" in label or "net a payer" in label:
                     total_ttc = self._to_float(clean_text)
 
-            _logger.warning("[OCR][TOTALS DETECTED] HT=%s | TVA=%s | TTC=%s", total_ht, total_tva, total_ttc)
+            _logger.warning("[OCR][HEADER] Num=%s | Date=%s | Fournisseur=%s", invoice_number, invoice_date, supplier_name)
+            _logger.warning("[OCR][TOTALS] HT=%s | TVA=%s | TTC=%s", total_ht, total_tva, total_ttc)
+
+            # --------------------------
+            # Mise à jour en-tête facture
+            # --------------------------
+            vals = {}
+            if invoice_number:
+                vals["ref"] = invoice_number
+            if invoice_date:
+                vals["invoice_date"] = invoice_date
+            if supplier_name:
+                partner = self.env["res.partner"].search([("name", "ilike", supplier_name)], limit=1)
+                if partner:
+                    vals["partner_id"] = partner.id
+            if vals:
+                move.write(vals)
 
             # --------------------------
             # Suppression anciennes lignes
@@ -119,6 +155,14 @@ class AccountMove(models.Model):
             })
 
             move.ocr_debug = json.dumps(
-                {"total_ht": total_ht, "total_tva": total_tva, "total_ttc": total_ttc}, indent=2
+                {
+                    "invoice_number": invoice_number,
+                    "invoice_date": str(invoice_date),
+                    "supplier": supplier_name,
+                    "total_ht": total_ht,
+                    "total_tva": total_tva,
+                    "total_ttc": total_ttc,
+                },
+                indent=2
             )
             _logger.warning("[OCR][FINAL DEBUG] %s", move.ocr_debug)
