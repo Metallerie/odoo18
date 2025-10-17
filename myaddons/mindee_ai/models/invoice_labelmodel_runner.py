@@ -1,36 +1,119 @@
 # -*- coding: utf-8 -*-
-import sys
+# invoice_labelmodel_runner.py
+# OCR par zones + regroupement lignes (ocr_rows)
+# Version avec suppression des "NUL"
+
 import json
+import tempfile
+from pdf2image import convert_from_path
+import pytesseract
 
-def load_json(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+# Labels à ignorer (zones structurelles LS)
+IGNORE_LABELS = {"Header", "Table", "Footer", "Document", "Document type",
+                 "Table Header", "Table Row", "Table End", "Table Total"}
 
-def save_json(data, path):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def run_invoice_labelmodel(pdf_file, json_model):
+    """
+    Exécute l'OCR sur un PDF avec un modèle LabelStudio
+    Retourne :
+      - ocr_raw : texte brut complet
+      - ocr_zones : toutes les zones utiles (hors header/footer, sans NUL)
+      - ocr_rows : regroupement par lignes (sans NUL)
+    """
 
-def round_coords(z):
-    for key in ["x", "y", "w", "h"]:
-        if key in z:
-            z[key] = round(z[key], 2)
-    return z
+    # Charger le modèle
+    with open(json_model, "r", encoding="utf-8") as f:
+        model = json.load(f)
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: python3 invoice_labelmodel_runner.py input.json output.json")
-        sys.exit(1)
+    # Convertir PDF en images
+    pages = convert_from_path(pdf_file, dpi=300)
+    page = pages[0]
+    img_w, img_h = page.size
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
+    # OCR brut complet
+    ocr_raw = pytesseract.image_to_string(page, lang="fra")
 
-    data = load_json(input_file)
+    # OCR par zones Label Studio
+    ocr_zones = []
+    for entry in model:
+        for key, zones in entry.items():
+            if not isinstance(zones, list):
+                continue
+            for zone in zones:
+                if not isinstance(zone, dict):
+                    continue
 
-    if "ocr_zones_all" in data:
-        data["ocr_zones_all"] = [round_coords(z) for z in data["ocr_zones_all"]]
+                label_list = zone.get("rectanglelabels", [])
+                label = label_list[0] if label_list else "NUL"
 
-    save_json(data, output_file)
-    print(f"✅ JSON arrondi sauvegardé dans {output_file}")
+                # ignorer les zones inutiles
+                if label in IGNORE_LABELS:
+                    continue
 
+                # Position en pixels
+                x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
+                left = int((x / 100) * img_w)
+                top = int((y / 100) * img_h)
+                right = int(((x + w) / 100) * img_w)
+                bottom = int(((y + h) / 100) * img_h)
+
+                crop = page.crop((left, top, right, bottom))
+                with tempfile.NamedTemporaryFile(suffix=".PNG", delete=False) as tmp_img:
+                    crop_path = tmp_img.name
+                    crop.save(crop_path)
+
+                text = pytesseract.image_to_string(crop, lang="fra").strip()
+
+                # ⚠️ on ignore les cases vides ou NUL
+                if not text or text.upper() == "NUL":
+                    continue
+
+                ocr_zones.append({
+                    "label": label,
+                    "x": round(x, 2),  # 2 décimales
+                    "y": round(y, 2),
+                    "w": round(w, 2),
+                    "h": round(h, 2),
+                    "text": text
+                })
+
+    # === Regroupement par lignes ===
+    row_index = 0
+    rows = []
+    current_y = None
+    tolerance = 2.0  # tolérance sur Y (% hauteur doc)
+
+    for zone in sorted(ocr_zones, key=lambda z: (z["y"], z["x"])):
+        if current_y is None or abs(zone["y"] - current_y) > tolerance:
+            row_index += 1
+            current_y = zone["y"]
+            rows.append({"row_index": row_index, "cells": []})
+
+        rows[-1]["cells"].append({
+            "label": zone["label"],
+            "text": zone["text"]
+        })
+
+    return {
+        "ocr_raw": ocr_raw,
+        "ocr_zones": ocr_zones,  # zones utiles uniquement
+        "ocr_rows": rows
+    }
+
+# === Main pour test console ===
 if __name__ == "__main__":
-    main()
+    import sys
+    try:
+        if len(sys.argv) != 3:
+            print(json.dumps({"error": "Usage: python invoice_labelmodel_runner.py <pdf> <model.json>"}))
+            sys.exit(1)
+
+        pdf_file = sys.argv[1]
+        json_file = sys.argv[2]
+
+        data = run_invoice_labelmodel(pdf_file, json_file)
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+
+    except Exception as e:
+        print(json.dumps({"ocr_raw": "", "ocr_zones": [], "ocr_rows": [], "error": str(e)}))
+        sys.exit(1)
