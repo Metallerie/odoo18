@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug,
-# extraction lignes produits + TVA + commentaires + filtres headers)
+# account_move.py (LabelStudio – OCR avec logs chatter + Python,
+# suppression lignes produits, extraction lignes + commentaires)
 
 import base64
 import json
@@ -16,7 +15,6 @@ from odoo import models, fields
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
-
 
 MONTHS_FR_MAP = {
     "janvier": "01", "janv": "01", "jan": "01",
@@ -33,15 +31,10 @@ MONTHS_FR_MAP = {
     "decembre": "12", "dec": "12",
 }
 
-FOOTER_TOKENS = {
-    "total", "total ht", "total ttc", "total t.v.a", "total tva", "net a payer", "net a paye",
-    "base ht", "frais fixes", "net ht", "t.v.a", "tva", "ttc", "acompte", "reste a payer",
-    "bon de livraison", "commande", "votre commande", "adresse", "siren", "iban", "bic",
-    "siege social", "rcs", "ape", "conditions", "paiement", "eco-part", "escompte",
-    "remise", "ventilation", "net a payer"
+IGNORE_VALUES = {
+    "réf.", "ref", "designation", "désignation",
+    "qté", "unité", "prix unitaire", "montant", "tva"
 }
-
-IGNORE_VALUES = {"réf.", "ref", "designation", "désignation", "qté", "unité", "prix unitaire", "montant", "tva"}
 
 
 class AccountMove(models.Model):
@@ -52,18 +45,29 @@ class AccountMove(models.Model):
         readonly=True,
         store=True,
     )
-
     ocr_json_result = fields.Text(
         string="OCR JSON enrichi (LabelStudio)",
         readonly=True,
         store=True,
     )
-
     mindee_local_response = fields.Text(
         string="Réponse OCR JSON (Tesseract)",
         readonly=True,
         store=True,
     )
+
+    # === Helpers ===
+    def _log(self, move, level, msg, *args):
+        """Log Python + chatter Odoo (debug visible dans facture)."""
+        text = msg % args if args else msg
+        try:
+            getattr(_logger, level)(text)
+        except Exception:
+            _logger.warning(text)
+        try:
+            move.message_post(body=f"[OCR] {text}")
+        except Exception:
+            pass
 
     def _strip_accents(self, s):
         if not s:
@@ -89,8 +93,9 @@ class AccountMove(models.Model):
         cleaned = self._preclean_text(raw)
         cleaned_lc = cleaned.lower()
         cleaned_lc_noacc = self._strip_accents(cleaned_lc)
+
         m = re.search(
-            r"(?P<d>[0-9O]{1,2})\s*[\/-]\s*(?P<m>[0-9O]{1,2})\s*[\/-]\s*(?P<y>\d{2,4})",
+            r"(?P<d>[0-9O]{1,2})[\/-](?P<m>[0-9O]{1,2})[\/-](?P<y>\d{2,4})",
             cleaned_lc_noacc,
         )
         if m:
@@ -103,6 +108,7 @@ class AccountMove(models.Model):
                 return date(yy, mm, dd)
             except Exception:
                 pass
+
         m2 = re.search(
             r"(?P<d>[0-9O]{1,2})\s+(?P<mon>[a-zA-Z\u00C0-\u017F\.]+)\s+(?P<y>\d{2,4})",
             cleaned_lc,
@@ -119,22 +125,22 @@ class AccountMove(models.Model):
                     return date(yy, int(mm), dd)
             except Exception:
                 pass
-        _logger.warning("[OCR][DATE] Parse KO: '%s' -> cleaned='%s'", date_str, cleaned)
+
+        self._log(self, "warning", "DATE Parse KO: '%s' -> cleaned='%s'", date_str, cleaned)
         return None
 
     def _get_partner_labelstudio_json(self, partner):
-        json_str = (partner.labelstudio_json or '').strip()
+        json_str = (partner.labelstudio_json or "").strip()
         if json_str:
             return json_str
-        hist = self.env['mindee.labelstudio.history'].sudo().search(
-            [('partner_id', '=', partner.id)], order='version_date desc, id desc', limit=1
+        hist = self.env["mindee.labelstudio.history"].sudo().search(
+            [("partner_id", "=", partner.id)], order="version_date desc, id desc", limit=1
         )
-        if hist and (hist.json_content or '').strip():
+        if hist and (hist.json_content or "").strip():
             return hist.json_content
-        return ''
+        return ""
 
     def _to_float(self, val):
-        """Convertit un texte OCR en float sécurisé"""
         if not val or val == "NUL":
             return 0.0
         val = val.replace(" ", "").replace(",", ".")
@@ -144,15 +150,14 @@ class AccountMove(models.Model):
             return 0.0
 
     def _find_tax(self, vat_rate):
-        """Trouve une taxe Odoo correspondant au taux OCR"""
         if vat_rate <= 0:
             return False
-        tax = self.env['account.tax'].search([
-            ('amount', '=', vat_rate),
-            ('type_tax_use', '=', 'purchase')
-        ], limit=1)
+        tax = self.env["account.tax"].search(
+            [("amount", "=", vat_rate), ("type_tax_use", "=", "purchase")], limit=1
+        )
         return tax or False
 
+    # === Action principale ===
     def action_ocr_fetch(self):
         venv_python = "/data/odoo/odoo18-venv/bin/python3"
         runner_path = "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/invoice_labelmodel_runner.py"
@@ -160,6 +165,8 @@ class AccountMove(models.Model):
         for move in self:
             if not move.partner_id:
                 raise UserError("Vous devez d'abord renseigner un fournisseur avant de lancer l'OCR.")
+
+            self._log(move, "warning", "=== START OCR fetch (move=%s id=%s) ===", move.name or "", move.id)
 
             model_json = self._get_partner_labelstudio_json(move.partner_id)
             if not model_json:
@@ -184,90 +191,63 @@ class AccountMove(models.Model):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                     timeout=180, check=True, encoding="utf-8",
                 )
-
-                _logger.warning("[OCR][Runner] stdout=%s", result.stdout)
-                _logger.warning("[OCR][Runner] stderr=%s", result.stderr)
-
                 if not result.stdout.strip():
                     raise UserError("Runner n'a rien renvoyé, voir logs pour debug.")
 
                 ocr_result = json.loads(result.stdout)
             except Exception as e:
-                _logger.error("[OCR][Runner][EXCEPTION] %s", e)
-                raise UserError(f"Erreur OCR avec LabelStudio runner : {e}")
+                self._log(move, "error", "Runner Exception: %s", e)
+                raise UserError(f"Erreur OCR runner : {e}")
 
             move.ocr_raw_text = ocr_result.get("ocr_raw", "")
             zones = ocr_result.get("ocr_zones", []) or []
             move.ocr_json_result = json.dumps(zones, indent=2, ensure_ascii=False)
             move.mindee_local_response = move.ocr_json_result
 
-            def _pick_zone(labels):
-                labels_norm = [self._strip_accents(l).lower() for l in labels]
-                for z in zones:
-                    lab = self._strip_accents((z.get('label') or '')).lower()
-                    if any(lab.startswith(lbl) or lbl in lab for lbl in labels_norm):
-                        return (z.get('text') or '').strip()
-                return ''
+            # Supprime les anciennes lignes produits
+            old_lines = move.line_ids.filtered(lambda l: l.display_type in (False, "product"))
+            count_removed = len(old_lines)
+            old_lines.unlink()
+            self._log(move, "warning", "%s anciennes lignes PRODUITS supprimées", count_removed)
 
-            # --- Référence facture ---
-            inv_num = _pick_zone([
-                'invoice number', 'numero facture', 'n° facture', 'facture n', 'facture no', 'facture num'
-            ])
-            if inv_num:
-                inv_num_clean = re.sub(
-                    r'(?i)facture\s*(n°|no|num|number)?\s*[:\-]?\s*',
-                    '',
-                    inv_num
-                ).strip()
-                move.ref = inv_num_clean
-
-            # --- Date facture ---
-            inv_date = _pick_zone(['invoice date', 'date facture', 'date de facture'])
-            if inv_date:
-                d = self._normalize_date(inv_date)
-                if d:
-                    move.invoice_date = d
-
-            # Nettoyage des anciennes lignes produit
-            product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, 'product'))
-            product_lines_to_remove.unlink()
-
-            # --- Extraction lignes produits + commentaires ---
-            product_lines = []
-            comment_lines = []
+            # Extraction lignes
             rows = {}
-
-            tolerance = 0.5  # tolérance verticale
-
+            tolerance = 0.5
             for z in zones:
                 if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
                     text = (z.get("text") or "").strip()
                     if self._norm(text) in IGNORE_VALUES:
-                        continue  # ignorer les en-têtes de tableau
-
+                        continue
                     y = round(float(z.get("y", 0)) / tolerance) * tolerance
                     if y not in rows:
                         rows[y] = {}
                     rows[y][z.get("label")] = text
 
-            default_tax = self.env['account.tax'].search([('type_tax_use', '=', 'purchase')], limit=1)
+            product_lines, comment_lines = [], []
+            default_tax = self.env["account.tax"].search([("type_tax_use", "=", "purchase")], limit=1)
+
+            if not rows:
+                self._log(move, "warning", "Aucune ligne détectée")
 
             for y, data in sorted(rows.items()):
                 ref = data.get("Reference", "")
                 desc = data.get("Description", "")
-                qty = self._to_float(data.get("Quantity", ""))
+                qty_raw = data.get("Quantity", "")
+                pu_raw = data.get("Unit Price", "")
+                amt_raw = data.get("Amount HT", "")
                 uom = data.get("Unité", "")
-                price_unit = self._to_float(data.get("Unit Price", ""))
-                amount = self._to_float(data.get("Amount HT", ""))
+
+                qty = self._to_float(qty_raw)
+                price_unit = self._to_float(pu_raw)
+                amount = self._to_float(amt_raw)
 
                 vat_text = data.get("VAT", "")
                 vat_rate = self._to_float(vat_text)
                 tax = self._find_tax(vat_rate) or default_tax
 
-                _logger.warning(
-                    "[OCR][ROW] y=%s | Ref=%s | Desc=%s | Qté=%s | U=%s | PU=%s | Montant=%s | TVA=%s",
-                    y, ref, desc, qty, uom, price_unit, amount, vat_rate
-                )
+                self._log(move, "warning",
+                          "ROW y=%s | Ref=%s | Desc=%s | Qté=%s | U=%s | PU=%s | Montant=%s | TVA=%s",
+                          y, ref, desc, qty_raw, uom, pu_raw, amt_raw, vat_rate)
 
                 if qty > 0 and price_unit > 0:
                     product_lines.append({
@@ -278,23 +258,17 @@ class AccountMove(models.Model):
                         "tax_ids": [(6, 0, [tax.id])] if tax else False,
                     })
                 else:
-                    comment_text = f"Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={data.get('Quantity','')}, U={uom}, PU={data.get('Unit Price','')}, Montant={data.get('Amount HT','')}"
-                    comment_lines.append(comment_text)
+                    comment_lines.append(
+                        f"Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={qty_raw}, U={uom}, PU={pu_raw}, Montant={amt_raw}"
+                    )
 
             for line in product_lines:
-                move.line_ids.create({
-                    "move_id": move.id,
-                    **line
-                })
+                move.line_ids.create({"move_id": move.id, **line})
 
             for comment in comment_lines:
-                move.line_ids.create({
-                    "move_id": move.id,
-                    "name": comment,
-                    "display_type": "line_note",
-                })
+                move.line_ids.create({"move_id": move.id, "name": comment, "display_type": "line_note"})
 
-            _logger.info("[OCR][LINES] %s lignes produit et %s commentaires ajoutées sur facture %s",
-                         len(product_lines), len(comment_lines), move.name)
+            self._log(move, "info", "%s lignes produit et %s commentaires ajoutés", len(product_lines), len(comment_lines))
+            self._log(move, "warning", "=== END OCR fetch (move=%s id=%s) ===", move.name or "", move.id)
 
         return True
