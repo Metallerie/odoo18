@@ -7,12 +7,16 @@ import tempfile
 from pdf2image import convert_from_path
 import pytesseract
 
+# Labels à ignorer (zones structurelles LS)
+IGNORE_LABELS = {"Header", "Table", "Footer", "Document", "Document type", 
+                 "Table Header", "Table Row", "Table End", "Table Total"}
+
 def run_invoice_labelmodel(pdf_file, json_model):
     """
     Exécute l'OCR sur un PDF avec un modèle LabelStudio
     Retourne :
       - ocr_raw : texte brut complet
-      - ocr_zones : toutes les zones extraites
+      - ocr_zones : toutes les zones utiles (hors header/footer)
       - ocr_rows : regroupement par lignes
     """
 
@@ -41,6 +45,10 @@ def run_invoice_labelmodel(pdf_file, json_model):
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
+                # ignorer les zones inutiles
+                if label in IGNORE_LABELS:
+                    continue
+
                 # Position en pixels
                 x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
                 left = int((x / 100) * img_w)
@@ -67,11 +75,10 @@ def run_invoice_labelmodel(pdf_file, json_model):
     row_index = 0
     rows = []
     current_y = None
-    tolerance = 2.0  # tolérance sur Y (en % hauteur doc)
+    tolerance = 2.0  # tolérance sur Y (% hauteur doc)
 
     for zone in sorted(ocr_zones, key=lambda z: (z["y"], z["x"])):
         if current_y is None or abs(zone["y"] - current_y) > tolerance:
-            # nouvelle ligne
             row_index += 1
             current_y = zone["y"]
             rows.append({"row_index": row_index, "cells": []})
@@ -83,7 +90,7 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
     return {
         "ocr_raw": ocr_raw,
-        "ocr_zones": ocr_zones,
+        "ocr_zones": ocr_zones,  # zones utiles uniquement
         "ocr_rows": rows
     }
 
