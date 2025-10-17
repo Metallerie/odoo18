@@ -16,6 +16,14 @@ class LabelStudioHistory(models.Model):
         for history in self:
             if not history.partner_id:
                 continue
+
+            # 🔥 D'abord on efface les anciens contenus
+            history.partner_id.write({
+                "labelstudio_json": False,
+                "labelstudio_xml": False,
+            })
+
+            # ✅ Ensuite on restaure cette version
             history.partner_id.write({
                 "labelstudio_json": history.json_content or "",
                 "labelstudio_xml": history.xml_content or "",
