@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes produits, fournisseur obligatoire,
-# logs debug, extraction lignes produits + TVA + commentaires)
+# suppression lignes, fournisseur obligatoire, logs debug,
+# extraction lignes produits + TVA + commentaires + filtres headers)
 
 import base64
 import json
@@ -40,6 +40,8 @@ FOOTER_TOKENS = {
     "siege social", "rcs", "ape", "conditions", "paiement", "eco-part", "escompte",
     "remise", "ventilation", "net a payer"
 }
+
+IGNORE_VALUES = {"réf.", "ref", "designation", "désignation", "qté", "unité", "prix unitaire", "montant", "tva"}
 
 
 class AccountMove(models.Model):
@@ -135,15 +137,10 @@ class AccountMove(models.Model):
         """Convertit un texte OCR en float sécurisé"""
         if not val or val == "NUL":
             return 0.0
-        val = str(val).strip()
         val = val.replace(" ", "").replace(",", ".")
-        if not re.match(r"^-?\d+(\.\d+)?$", val):
-            _logger.debug("[OCR][_to_float] Ignored non-numeric value: %s", val)
-            return 0.0
         try:
             return float(val)
-        except Exception as e:
-            _logger.debug("[OCR][_to_float] Conversion error for '%s': %s", val, e)
+        except Exception:
             return 0.0
 
     def _find_tax(self, vat_rate):
@@ -231,28 +228,27 @@ class AccountMove(models.Model):
                 if d:
                     move.invoice_date = d
 
-            # Nettoyage uniquement des anciennes lignes produits OCR
-            product_lines_to_remove = move.line_ids.filtered(
-                lambda l: not l.display_type and not l.tax_line_id and not l.exclude_from_invoice_tab
-            )
-            count_removed = len(product_lines_to_remove)
+            # Nettoyage des anciennes lignes produit
+            product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, 'product'))
             product_lines_to_remove.unlink()
-            _logger.warning("[OCR] %s anciennes lignes PRODUITS supprimées sur facture %s", count_removed, move.name)
 
             # --- Extraction lignes produits + commentaires ---
             product_lines = []
             comment_lines = []
             rows = {}
 
+            tolerance = 0.5  # tolérance verticale
+
             for z in zones:
                 if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
-                    y = round(float(z.get("y", 0)), 1)
+                    text = (z.get("text") or "").strip()
+                    if self._norm(text) in IGNORE_VALUES:
+                        continue  # ignorer les en-têtes de tableau
+
+                    y = round(float(z.get("y", 0)) / tolerance) * tolerance
                     if y not in rows:
                         rows[y] = {}
-                    rows[y][z.get("label")] = (z.get("text") or "").strip()
-
-            if not rows:
-                _logger.warning("[OCR] Aucune ligne détectée dans zones pour facture %s", move.name)
+                    rows[y][z.get("label")] = text
 
             default_tax = self.env['account.tax'].search([('type_tax_use', '=', 'purchase')], limit=1)
 
@@ -298,7 +294,7 @@ class AccountMove(models.Model):
                     "display_type": "line_note",
                 })
 
-            _logger.info("[OCR][LINES] %s lignes produit et %s commentaires ajoutés sur facture %s",
+            _logger.info("[OCR][LINES] %s lignes produit et %s commentaires ajoutées sur facture %s",
                          len(product_lines), len(comment_lines), move.name)
 
         return True
