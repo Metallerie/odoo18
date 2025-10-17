@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA)
+# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA + commentaires)
 
 import base64
 import json
@@ -39,10 +39,6 @@ FOOTER_TOKENS = {
     "siege social", "rcs", "ape", "conditions", "paiement", "eco-part", "escompte",
     "remise", "ventilation", "net a payer"
 }
-
-UOM_PATTERN = r"\b(?:PI|ML|KG|M2|U|L|UNITE\(S\)|UNITES|UNITE|UNITÉ\(S\))\b"
-PRICE_PATTERN = r"\d{1,3}(?:[ .]\d{3})*[.,]\d{2}"
-QTY_PATTERN = r"(?<![0-9])\d{1,5}(?:[.,]\d{1,3})?(?![0-9])"
 
 
 class AccountMove(models.Model):
@@ -232,12 +228,12 @@ class AccountMove(models.Model):
                     move.invoice_date = d
 
             # Nettoyage des anciennes lignes
-            # Supprimer uniquement les lignes "produit"
             product_lines_to_remove = move.line_ids.filtered(lambda l: l.display_type in (False, 'product'))
             product_lines_to_remove.unlink()
 
-            # --- Extraction lignes produits ---
+            # --- Extraction lignes produits + commentaires ---
             product_lines = []
+            comment_lines = []
             rows = {}
 
             for z in zones:
@@ -262,21 +258,36 @@ class AccountMove(models.Model):
                 vat_rate = self._to_float(vat_text)
                 tax = self._find_tax(vat_rate) or default_tax
 
-                product_lines.append({
-                    "name": f"[{ref}] {desc}" if ref else desc or "Ligne sans désignation",
-                    "quantity": qty if qty > 0 else 1.0,
-                    "price_unit": price_unit,
-                    "account_id": move.journal_id.default_account_id.id,
-                    "tax_ids": [(6, 0, [tax.id])] if tax else False,
-                })
+                if qty > 0 and price_unit > 0:
+                    # Ligne produit complète
+                    product_lines.append({
+                        "name": f"[{ref}] {desc}" if ref else desc or "Ligne sans désignation",
+                        "quantity": qty,
+                        "price_unit": price_unit,
+                        "account_id": move.journal_id.default_account_id.id,
+                        "tax_ids": [(6, 0, [tax.id])] if tax else False,
+                    })
+                else:
+                    # Ligne incomplète -> commentaire
+                    comment_text = f"Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={data.get('Quantity','')}, U={uom}, PU={data.get('Unit Price','')}, Montant={data.get('Amount HT','')}"
+                    comment_lines.append(comment_text)
 
+            # Création lignes produit
             for line in product_lines:
                 move.line_ids.create({
                     "move_id": move.id,
                     **line
                 })
 
-            _logger.info("[OCR][LINES] %s lignes produit ajoutées sur facture %s",
-                         len(product_lines), move.name)
+            # Création lignes commentaire
+            for comment in comment_lines:
+                move.line_ids.create({
+                    "move_id": move.id,
+                    "name": comment,
+                    "display_type": "line_note",
+                })
+
+            _logger.info("[OCR][LINES] %s lignes produit et %s commentaires ajoutés sur facture %s",
+                         len(product_lines), len(comment_lines), move.name)
 
         return True
