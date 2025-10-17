@@ -1,267 +1,134 @@
-# -*- coding: utf-8 -*-
-# invoice_labelmodel_runner.py
-#
-# - OCR zones à partir d'un modèle Label Studio (JSON)
-# - Déduplique les boîtes identiques (évite les doublons "NUL")
-# - Numérotation par ligne : toutes les cases d'une même ligne partagent le même row_index
-#   (tolérance verticale adaptative, robuste aux petites dérives d'alignement)
+# extract_invoice.py (version avec JSON)
+# Usage:
+#   python extract_invoice.py <fichier.pdf> <modele.json> [--json-out /chemin/sortie.json]
 
+import sys
 import json
-import math
 import tempfile
-from statistics import median
+import subprocess
+from pathlib import Path
 from pdf2image import convert_from_path
-import pytesseract
 
+# --- OCR avec Tesseract ---
+def run_tesseract(image_path, lang="fra"):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
+        output_path = tmp.name.replace(".txt", "")
+    cmd = ["tesseract", image_path, output_path, "-l", lang, "txt"]
+    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    try:
+        with open(output_path + ".txt", "r", encoding="utf-8") as f:
+            text = f.read().strip()
+        return text if text else "NUL"
+    except FileNotFoundError:
+        return "NUL"
 
-# --- Paramètres de regroupement (peuvent être ajustés si besoin) ---
-# Facteur appliqué sur la "hauteur typique" / le pas vertical médian pour obtenir la tolérance
-VERT_TOL_FACTOR = 0.45
-# Tolérance verticale minimale (en % hauteur page, car y/h sont en %)
-VERT_TOL_MIN = 0.6
-# Tolérance verticale maximale (limite haute de sécurité)
-VERT_TOL_MAX = 3.5
+def _get_coords(zone):
+    """Récupère x,y,w,h depuis la racine ou zone['value'] (tolérant selon export LS)."""
+    v = zone.get("value") or {}
+    x = zone.get("x", v.get("x"))
+    y = zone.get("y", v.get("y"))
+    w = zone.get("width", v.get("width"))
+    h = zone.get("height", v.get("height"))
+    if x is None or y is None or w is None or h is None:
+        return None
+    return float(x), float(y), float(w), float(h)
 
-# Si présent, on essaie de borner les lignes entre "Table Header" et "Table End"
-USE_TABLE_BOUNDS = True
-
-
-def _bbox_key(z):
-    """Clé de déduplication: bbox arrondie pour tolérer les micro-variations."""
-    return (
-        round(float(z["x"]), 3),
-        round(float(z["y"]), 3),
-        round(float(z["w"]), 3),
-        round(float(z["h"]), 3),
-    )
-
-
-def _dedupe_boxes(zones):
-    """
-    Déduplique les zones avec la même bbox.
-    Règles :
-      - on préfère un label != "NUL" à un label "NUL"
-      - on préfère le texte non vide / le plus long
-    """
-    kept = {}
-    for z in zones:
-        key = _bbox_key(z)
-        if key not in kept:
-            kept[key] = z
-            continue
-        a = kept[key]
-        b = z
-        # Choix du meilleur label
-        a_label = (a.get("label") or "NUL")
-        b_label = (b.get("label") or "NUL")
-        a_text = (a.get("text") or "").strip()
-        b_text = (b.get("text") or "").strip()
-
-        def score(label, text):
-            s = 0
-            if label != "NUL":
-                s += 10
-            s += min(len(text), 50)  # plus de contenu est en général meilleur
-            return s
-
-        if score(b_label, b_text) > score(a_label, a_text):
-            kept[key] = b
-
-    return list(kept.values())
-
-
-def _table_bounds(ocr_zones):
-    """
-    Facultatif: bornes verticales du tableau si on a des zones "Table Header" / "Table End".
-    On retourne (top, bottom) en pourcentage (même unité que y/h).
-    """
-    header = next((z for z in ocr_zones if z.get("label") == "Table Header"), None)
-    end = next((z for z in ocr_zones if z.get("label") in ("Table End", "Table Total")), None)
-
-    if header:
-        top = float(header["y"]) + float(header["h"]) * 0.8  # un peu sous l'entête
-    else:
-        top = min((float(z["y"]) for z in ocr_zones), default=0.0)
-
-    if end:
-        bottom = float(end["y"])  # juste au-dessus des totaux
-    else:
-        bottom = max((float(z["y"]) + float(z["h"]) for z in ocr_zones), default=100.0)
-
-    return top, bottom
-
-
-def _compute_vertical_tolerance(items):
-    """
-    Calcule une tolérance verticale adaptative basée sur :
-    - la médiane des hauteurs de cases
-    - la médiane des deltas y_center successifs
-    On prend le max des deux signaux * VERT_TOL_FACTOR, borné entre VERT_TOL_MIN et VERT_TOL_MAX.
-    """
-    if not items:
-        return VERT_TOL_MIN
-
-    heights = [float(i["h"]) for i in items if float(i["h"]) > 0]
-    med_h = median(heights) if heights else 1.0
-
-    centers = [float(i["y"]) + float(i["h"]) / 2.0 for i in items]
-    centers.sort()
-    deltas = []
-    for i in range(1, len(centers)):
-        d = centers[i] - centers[i - 1]
-        # on ignore les sauts trop gros (changement de bloc) et les zéros
-        if 0.2 <= d <= 10.0:
-            deltas.append(d)
-    med_d = median(deltas) if deltas else med_h
-
-    tol = max(med_h, med_d) * VERT_TOL_FACTOR
-    tol = max(VERT_TOL_MIN, min(tol, VERT_TOL_MAX))
-    return tol
-
-
-def _assign_row_index_by_lines(ocr_zones):
-    """
-    Regroupe toutes les cases en lignes visuelles (buckets verticaux).
-    Toutes les cases d'une même ligne reçoivent le même row_index (1,2,3,...).
-    """
-    if not ocr_zones:
-        return ocr_zones
-
-    # Optionnel: borner au "vrai" tableau si on a ces zones
-    if USE_TABLE_BOUNDS:
-        top, bottom = _table_bounds(ocr_zones)
-    else:
-        top = min(float(z["y"]) for z in ocr_zones)
-        bottom = max(float(z["y"]) + float(z["h"]) for z in ocr_zones)
-
-    # Liste de travail avec centres verticaux
-    items = []
-    for z in ocr_zones:
-        y = float(z["y"])
-        h = float(z["h"])
-        y_center = y + h / 2.0
-        # garde tout (on veut aussi commentaires, totaux, etc.), mais ça reste borné
-        if y_center < top - 1.0 or y_center > bottom + 1.0:
-            # hors du bloc principal -> on les inclut quand même, mais ils formeront leurs propres lignes
-            pass
-        items.append({
-            "ref": z,
-            "y": y,
-            "h": h,
-            "y_center": y_center,
-            "x": float(z["x"]),
-        })
-
-    # Tri du haut vers le bas
-    items.sort(key=lambda t: (t["y_center"], t["x"]))
-
-    # Tolérance adaptative
-    tol = _compute_vertical_tolerance(items)
-
-    # Bucketing
-    buckets = []  # chaque bucket: dict { "centers":[], "members":[items], "y_mean":float }
-    for it in items:
-        if not buckets:
-            buckets.append({"centers": [it["y_center"]], "members": [it], "y_mean": it["y_center"]})
-            continue
-        b = buckets[-1]
-        if abs(it["y_center"] - b["y_mean"]) <= tol:
-            b["members"].append(it)
-            b["centers"].append(it["y_center"])
-            b["y_mean"] = sum(b["centers"]) / len(b["centers"])
-        else:
-            buckets.append({"centers": [it["y_center"]], "members": [it], "y_mean": it["y_center"]})
-
-    # Attribution des row_index, 1..N
-    row_idx = 1
-    for b in buckets:
-        for m in b["members"]:
-            m["ref"]["row_index"] = row_idx
-        row_idx += 1
-
-    return ocr_zones
-
-
-def run_invoice_labelmodel(pdf_file, json_model):
-    """
-    Exécute l'OCR sur un PDF avec un modèle LabelStudio
-    et renvoie :
-      - ocr_raw : texte brut complet de la page
-      - ocr_zones : liste des zones labellisées avec valeurs OCR (+ row_index par ligne)
-    """
-    # Charger le modèle (JSON simple attendu)
-    with open(json_model, "r", encoding="utf-8") as f:
+# --- Extraction des cases et OCR ---
+def extract_cases(pdf_file, json_file, json_out_path=None):
+    # Charger modèle
+    with open(json_file, "r", encoding="utf-8") as f:
         model = json.load(f)
 
-    # PDF -> image (1ère page)
+    # Charger le PDF en image
     pages = convert_from_path(pdf_file, dpi=300)
     page = pages[0]
     img_w, img_h = page.size
 
-    # OCR brut
-    ocr_raw = pytesseract.image_to_string(page, lang="fra")
+    # OCR brut page entière
+    page_text = run_tesseract(_save_temp_img(page))
 
-    # OCR par zones
-    ocr_zones = []
+    print("=== Cases détectées avec OCR (dynamique) ===")
+    all_cases = []
+
     for entry in model:
         for key, zones in entry.items():
             if not isinstance(zones, list):
-                continue
+                continue  # skip si ce n’est pas une liste
             for zone in zones:
                 if not isinstance(zone, dict):
-                    continue
+                    continue  # skip si pas un dict
 
                 label_list = zone.get("rectanglelabels", [])
-                label = (label_list[0] if label_list else "NUL") or "NUL"
+                label = label_list[0] if label_list else "NUL"
 
-                # Certains exports mettent les coords à la racine, d'autres dans "value"
-                v = zone.get("value") or {}
-                x = zone.get("x", v.get("x"))
-                y = zone.get("y", v.get("y"))
-                w = zone.get("width", v.get("width"))
-                h = zone.get("height", v.get("height"))
-                if x is None or y is None or w is None or h is None:
+                coords = _get_coords(zone)
+                if coords is None:
                     continue
+                x, y, w, h = coords
 
-                # OCR de la zone (coords en % -> pixels)
-                left = int((float(x) / 100.0) * img_w)
-                top = int((float(y) / 100.0) * img_h)
-                right = int(((float(x) + float(w)) / 100.0) * img_w)
-                bottom = int(((float(y) + float(h)) / 100.0) * img_h)
+                # Position en pixels
+                left = int((x / 100) * img_w)
+                top = int((y / 100) * img_h)
+                right = int(((x + w) / 100) * img_w)
+                bottom = int(((y + h) / 100) * img_h)
 
-                crop = page.crop((left, top, right, bottom))
-                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_img:
-                    crop.save(tmp_img.name)
+                # OCR sur la zone
+                crop_path = _save_temp_crop(page, left, top, right, bottom)
+                text = run_tesseract(crop_path)
 
-                text = pytesseract.image_to_string(crop, lang="fra").strip() or "NUL"
+                # Afficher résultat "tel quel"
+                print(f"[{label}] x={x}, y={y}, w={w}, h={h} → {text}")
 
-                ocr_zones.append({
+                # Accumuler pour JSON
+                all_cases.append({
                     "label": label,
-                    "row_index": None,     # attribué ensuite
-                    "x": float(x), "y": float(y), "w": float(w), "h": float(h),
+                    "x": x, "y": y, "w": w, "h": h,
                     "text": text
                 })
 
-    # 1) Déduplique les boîtes en double (souvent une version "NUL" et une version labellisée)
-    ocr_zones = _dedupe_boxes(ocr_zones)
+    # Construire le JSON final
+    filled_cases = [c for c in all_cases if (c.get("text") or "").strip() and c["text"].strip().upper() != "NUL"]
 
-    # 2) Regroupe par lignes (toutes les cases d'une ligne -> même row_index)
-    ocr_zones = _assign_row_index_by_lines(ocr_zones)
+    result = {
+        "ocr_raw": page_text,
+        "ocr_zones_all": all_cases,        # toutes les cases (comme l’affichage)
+        "ocr_zones_filled": filled_cases,  # uniquement cases remplies (≠ NUL)
+    }
 
-    return {"ocr_raw": ocr_raw, "ocr_zones": ocr_zones}
+    # Sortie JSON facultative vers fichier
+    if json_out_path:
+        outp = Path(json_out_path)
+        outp.parent.mkdir(parents=True, exist_ok=True)
+        with open(outp, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        print(f"\n>>> JSON écrit dans: {outp}")
 
+    # Et on affiche aussi le JSON sur stdout à la fin si pas de fichier fourni
+    if not json_out_path:
+        print("\n=== JSON (aperçu) ===")
+        print(json.dumps(result, indent=2, ensure_ascii=False))
 
+def _save_temp_img(pil_img):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+        pil_img.save(tmp.name)
+        return tmp.name
+
+def _save_temp_crop(page_img, left, top, right, bottom):
+    crop = page_img.crop((left, top, right, bottom))
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+        crop.save(tmp_img.name)
+        return tmp_img.name
+
+# --- Main ---
 if __name__ == "__main__":
-    import sys
-    try:
-        if len(sys.argv) != 3:
-            print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": "Bad arguments"}))
-            sys.exit(1)
-
-        pdf_file = sys.argv[1]
-        json_file = sys.argv[2]
-        data = run_invoice_labelmodel(pdf_file, json_file)
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-    except Exception as e:
-        print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": str(e)}))
+    if len(sys.argv) < 3:
+        print("Usage: python extract_invoice.py <fichier.pdf> <modele.json> [--json-out /chemin/sortie.json]")
         sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    model_path = sys.argv[2]
+    json_out = None
+    if len(sys.argv) >= 5 and sys.argv[3] == "--json-out":
+        json_out = sys.argv[4]
+
+    extract_cases(pdf_path, model_path, json_out_path=json_out)
