@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi, suppression lignes, fournisseur obligatoire, logs debug)
+# account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
+# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits)
 
 import base64
 import json
@@ -189,6 +190,7 @@ class AccountMove(models.Model):
                         return (z.get('text') or '').strip()
                 return ''
 
+            # --- Référence facture ---
             inv_num = _pick_zone([
                 'invoice number', 'numero facture', 'n° facture', 'facture n', 'facture no', 'facture num'
             ])
@@ -199,13 +201,60 @@ class AccountMove(models.Model):
                     inv_num
                 ).strip()
                 move.ref = inv_num_clean
-                
+
+            # --- Date facture ---
             inv_date = _pick_zone(['invoice date', 'date facture', 'date de facture'])
             if inv_date:
                 d = self._normalize_date(inv_date)
                 if d:
                     move.invoice_date = d
 
+            # Nettoyage des anciennes lignes
             move.line_ids.unlink()
+
+            # --- Extraction lignes produits ---
+            product_lines = []
+            rows = {}
+
+            for z in zones:
+                if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT"]:
+                    y = round(float(z.get("y", 0)), 1)
+                    if y not in rows:
+                        rows[y] = {}
+                    rows[y][z.get("label")] = (z.get("text") or "").strip()
+
+            for y, data in sorted(rows.items()):
+                ref = data.get("Reference", "")
+                desc = data.get("Description", "")
+                qty_raw = data.get("Quantity", "")
+                uom = data.get("Unité", "")
+                pu_raw = data.get("Unit Price", "")
+                amt_raw = data.get("Amount HT", "")
+
+                def _to_float(val):
+                    if not val or val == "NUL":
+                        return 0.0
+                    return float(val.replace(",", ".").replace(" ", ""))
+
+                qty = _to_float(qty_raw)
+                price_unit = _to_float(pu_raw)
+                amount = _to_float(amt_raw)
+
+                if desc and (price_unit > 0 or amount > 0):
+                    product_lines.append({
+                        "name": f"[{ref}] {desc}" if ref else desc,
+                        "quantity": qty if qty > 0 else 1.0,
+                        "price_unit": price_unit,
+                        "account_id": move.journal_id.default_account_id.id,
+                    })
+
+            for line in product_lines:
+                move.line_ids.create({
+                    "move_id": move.id,
+                    **line
+                })
+
+            _logger.info("[OCR][LINES] %s lignes produit ajoutées sur facture %s",
+                         len(product_lines), move.name)
 
         return True
