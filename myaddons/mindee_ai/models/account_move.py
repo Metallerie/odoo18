@@ -206,6 +206,7 @@ class AccountMove(models.Model):
 
             def _pick_zone(labels):
                 labels_norm = [self._strip_accents(l).lower() for l in labels]
+                rows = {}   # <<< AJOUT POUR ÉVITER LE NameError
                 for z in zones:
                     lab = self._strip_accents((z.get('label') or '')).lower()
                     if any(lab.startswith(lbl) or lbl in lab for lbl in labels_norm):
