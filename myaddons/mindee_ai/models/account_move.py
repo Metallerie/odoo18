@@ -206,7 +206,6 @@ class AccountMove(models.Model):
 
             def _pick_zone(labels):
                 labels_norm = [self._strip_accents(l).lower() for l in labels]
-                rows = {}   # <<< AJOUT POUR ÉVITER LE NameError
                 for z in zones:
                     lab = self._strip_accents((z.get('label') or '')).lower()
                     if any(lab.startswith(lbl) or lbl in lab for lbl in labels_norm):
@@ -241,13 +240,12 @@ class AccountMove(models.Model):
             product_lines_to_remove.unlink()
             _logger.warning("[OCR] %s anciennes lignes PRODUITS supprimées sur facture %s", count_removed, move.name)
 
-
+            rows = {}   # <<< AJOUT POUR ÉVITER LE NameError
             for z in zones:
                 if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
                     y = round(float(z.get("y", 0)), 1)
-                    rows[y] = {}
-
                     if y not in rows:
+                        rows[y] = {}
                     rows[y][z.get("label")] = (z.get("text") or "").strip()
 
             if not rows:
