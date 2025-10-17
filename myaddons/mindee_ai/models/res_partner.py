@@ -19,11 +19,6 @@ class ResPartner(models.Model):
     labelstudio_xml_file = fields.Binary("Importer XML")
     labelstudio_xml_filename = fields.Char("Nom du fichier XML")
 
-    # Historique versionné
-    labelstudio_history_ids = fields.One2many(
-        "mindee.labelstudio.history", "partner_id", string="Historique Label Studio"
-    )
-
     # ---------- Validation ----------
     @staticmethod
     def _b64_to_text(b64_content: bytes) -> str:
@@ -81,11 +76,3 @@ class ResPartner(models.Model):
     def write(self, vals):
         vals = self._apply_uploaded_files_to_fields(vals)
         return super().write(vals)
-
-    def action_save_labelstudio_version(self):
-        for partner in self:
-            self.env["mindee.labelstudio.history"].create({
-                "partner_id": partner.id,
-                "json_content": partner.labelstudio_json or "",
-                "xml_content": partner.labelstudio_xml or "",
-            })

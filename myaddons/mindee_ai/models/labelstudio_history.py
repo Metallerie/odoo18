@@ -11,23 +11,24 @@ class LabelStudioHistory(models.Model):
     user_id = fields.Many2one("res.users", default=lambda self: self.env.user, string="Auteur")
     json_content = fields.Text("JSON")
     xml_content = fields.Text("XML")
-
+    
     def action_restore_labelstudio_version(self):
         for history in self:
             if not history.partner_id:
                 continue
 
-            # 🔥 D'abord on efface les anciens contenus
+        # 🔥 on vide toujours avant de réinjecter
             history.partner_id.write({
                 "labelstudio_json": False,
                 "labelstudio_xml": False,
             })
 
-            # ✅ Ensuite on restaure cette version
             history.partner_id.write({
                 "labelstudio_json": history.json_content or "",
                 "labelstudio_xml": history.xml_content or "",
             })
+
+
 
     def action_download_json(self):
         self.ensure_one()
