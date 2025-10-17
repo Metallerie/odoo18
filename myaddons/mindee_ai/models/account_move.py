@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA + commentaires)
+# suppression lignes, fournisseur obligatoire, logs debug, extraction lignes produits + TVA + commentaires + logs détaillés)
 
 import base64
 import json
@@ -257,6 +257,12 @@ class AccountMove(models.Model):
                 vat_text = data.get("VAT", "")
                 vat_rate = self._to_float(vat_text)
                 tax = self._find_tax(vat_rate) or default_tax
+
+                # === LOG DÉTAILLÉ PAR LIGNE ===
+                _logger.warning(
+                    "[OCR][ROW] y=%s | Ref=%s | Desc=%s | Qté=%s | U=%s | PU=%s | Montant=%s | TVA=%s",
+                    y, ref, desc, qty, uom, price_unit, amount, vat_rate
+                )
 
                 if qty > 0 and price_unit > 0:
                     # Ligne produit complète
