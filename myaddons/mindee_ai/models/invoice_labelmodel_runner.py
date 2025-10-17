@@ -70,7 +70,10 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
                 ocr_zones.append({
                     "label": label,
-                    "x": x, "y": y, "w": w, "h": h,
+                    "x": round(x, 2),  # 2 décimales
+                    "y": round(y, 2),
+                    "w": round(w, 2),
+                    "h": round(h, 2),
                     "text": text
                 })
 
