@@ -1,119 +1,86 @@
 # -*- coding: utf-8 -*-
-# invoice_labelmodel_runner.py
-# OCR par zones + regroupement lignes (ocr_rows)
-# Version avec suppression des "NUL"
-
+import sys
 import json
-import tempfile
-from pdf2image import convert_from_path
-import pytesseract
 
-# Labels à ignorer (zones structurelles LS)
-IGNORE_LABELS = {"Header", "Table", "Footer", "Document", "Document type",
-                 "Table Header", "Table Row", "Table End", "Table Total"}
+def load_json(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def run_invoice_labelmodel(pdf_file, json_model):
-    """
-    Exécute l'OCR sur un PDF avec un modèle LabelStudio
-    Retourne :
-      - ocr_raw : texte brut complet
-      - ocr_zones : toutes les zones utiles (hors header/footer, sans NUL)
-      - ocr_rows : regroupement par lignes (sans NUL)
-    """
+def save_json(data, path):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-    # Charger le modèle
-    with open(json_model, "r", encoding="utf-8") as f:
-        model = json.load(f)
-
-    # Convertir PDF en images
-    pages = convert_from_path(pdf_file, dpi=300)
-    page = pages[0]
-    img_w, img_h = page.size
-
-    # OCR brut complet
-    ocr_raw = pytesseract.image_to_string(page, lang="fra")
-
-    # OCR par zones Label Studio
-    ocr_zones = []
-    for entry in model:
-        for key, zones in entry.items():
-            if not isinstance(zones, list):
-                continue
-            for zone in zones:
-                if not isinstance(zone, dict):
-                    continue
-
-                label_list = zone.get("rectanglelabels", [])
-                label = label_list[0] if label_list else "NUL"
-
-                # ignorer les zones inutiles
-                if label in IGNORE_LABELS:
-                    continue
-
-                # Position en pixels
-                x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
-                left = int((x / 100) * img_w)
-                top = int((y / 100) * img_h)
-                right = int(((x + w) / 100) * img_w)
-                bottom = int(((y + h) / 100) * img_h)
-
-                crop = page.crop((left, top, right, bottom))
-                with tempfile.NamedTemporaryFile(suffix=".PNG", delete=False) as tmp_img:
-                    crop_path = tmp_img.name
-                    crop.save(crop_path)
-
-                text = pytesseract.image_to_string(crop, lang="fra").strip()
-
-                # ⚠️ on ignore les cases vides ou NUL
-                if not text or text.upper() == "NUL":
-                    continue
-
-                ocr_zones.append({
-                    "label": label,
-                    "x": round(x, 2),  # 2 décimales
-                    "y": round(y, 2),
-                    "w": round(w, 2),
-                    "h": round(h, 2),
-                    "text": text
-                })
-
-    # === Regroupement par lignes ===
-    row_index = 0
+def build_rows(zones):
     rows = []
-    current_y = None
-    tolerance = 2.0  # tolérance sur Y (% hauteur doc)
+    row_index = 0
 
-    for zone in sorted(ocr_zones, key=lambda z: (z["y"], z["x"])):
-        if current_y is None or abs(zone["y"] - current_y) > tolerance:
+    # Trier toutes les zones par Y croissant
+    sorted_zones = sorted(zones, key=lambda z: round(z["y"], 2))
+
+    for z in sorted_zones:
+        label = z.get("label", "")
+        text = z.get("text", "").strip()
+
+        # ignorer si vide, ou header/footer/table
+        if not text or label in ["Header", "Footer", "Table"]:
+            continue
+
+        # arrondir coordonnées
+        x = round(z.get("x", 0), 2)
+        y = round(z.get("y", 0), 2)
+        w = round(z.get("w", 0), 2)
+        h = round(z.get("h", 0), 2)
+
+        # si c’est une nouvelle ligne
+        if not rows or abs(y - rows[-1]["y"]) > 1.5:  
             row_index += 1
-            current_y = zone["y"]
-            rows.append({"row_index": row_index, "cells": []})
+            rows.append({
+                "row_index": row_index,
+                "y": y,
+                "cells": []
+            })
 
-        rows[-1]["cells"].append({
-            "label": zone["label"],
-            "text": zone["text"]
-        })
+        # ajouter cellule si pas NUL
+        if label != "NUL":
+            rows[-1]["cells"].append({
+                "label": label,
+                "text": text,
+                "x": x, "y": y, "w": w, "h": h
+            })
 
-    return {
-        "ocr_raw": ocr_raw,
-        "ocr_zones": ocr_zones,  # zones utiles uniquement
-        "ocr_rows": rows
+    # Nettoyer les doublons dans chaque ligne
+    for row in rows:
+        clean_cells = []
+        seen_texts = set()
+        for cell in row["cells"]:
+            if cell["text"] in seen_texts:
+                continue
+            seen_texts.add(cell["text"])
+            clean_cells.append(cell)
+        row["cells"] = clean_cells
+
+    return rows
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: python3 invoice_labelmodel_runner.py input.json output.json")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+
+    data = load_json(input_file)
+    zones = data.get("ocr_zones_all", [])
+
+    rows = build_rows(zones)
+
+    result = {
+        "ocr_raw": data.get("ocr_raw", ""),
+        "rows": rows
     }
 
-# === Main pour test console ===
+    save_json(result, output_file)
+    print(f"✅ JSON nettoyé enregistré dans {output_file}")
+
 if __name__ == "__main__":
-    import sys
-    try:
-        if len(sys.argv) != 3:
-            print(json.dumps({"error": "Usage: python invoice_labelmodel_runner.py <pdf> <model.json>"}))
-            sys.exit(1)
-
-        pdf_file = sys.argv[1]
-        json_file = sys.argv[2]
-
-        data = run_invoice_labelmodel(pdf_file, json_file)
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-
-    except Exception as e:
-        print(json.dumps({"ocr_raw": "", "ocr_zones": [], "ocr_rows": [], "error": str(e)}))
-        sys.exit(1)
+    main()
