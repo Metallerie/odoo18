@@ -232,17 +232,14 @@ class AccountMove(models.Model):
                     move.invoice_date = d
 
             # Nettoyage des anciennes lignes (tout sauf notes/sections)
+            # Nettoyage uniquement des lignes produits OCR
             product_lines_to_remove = move.line_ids.filtered(
-                lambda l: l.display_type not in ('line_section', 'line_note')
+            lambda l: not l.display_type and not l.tax_line_id and not l.exclude_from_invoice_tab
             )
             count_removed = len(product_lines_to_remove)
             product_lines_to_remove.unlink()
-            _logger.warning("[OCR] %s anciennes lignes supprimées sur facture %s", count_removed, move.name)
+            _logger.warning("[OCR] %s anciennes lignes PRODUITS supprimées sur facture %s", count_removed, move.name)
 
-            # --- Extraction lignes produits + commentaires ---
-            product_lines = []
-            comment_lines = []
-            rows = {}
 
             for z in zones:
                 if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
