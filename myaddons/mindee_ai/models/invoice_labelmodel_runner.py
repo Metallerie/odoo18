@@ -9,10 +9,8 @@ import pytesseract
 
 def run_invoice_labelmodel(pdf_file, json_model):
     """
-    Exécute l'OCR sur un PDF avec un modèle LabelStudio
-    et renvoie deux choses :
-      - ocr_raw : texte brut complet de la page
-      - ocr_zones : liste des zones labelisées avec valeurs OCR
+    OCR + LabelStudio avec numérotation des lignes basée
+    sur la première cellule à gauche (x minimal).
     """
 
     # Charger le modèle
@@ -21,13 +19,13 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
     # Convertir PDF en images
     pages = convert_from_path(pdf_file, dpi=300)
-    page = pages[0]  # première page
+    page = pages[0]
     img_w, img_h = page.size
 
     # OCR brut complet
     ocr_raw = pytesseract.image_to_string(page, lang="fra")
 
-    # OCR par zones Label Studio
+    # OCR zones
     ocr_zones = []
     for entry in model:
         for key, zones in entry.items():
@@ -40,34 +38,48 @@ def run_invoice_labelmodel(pdf_file, json_model):
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
-                # Position en pixels
                 x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
                 left = int((x / 100) * img_w)
                 top = int((y / 100) * img_h)
                 right = int(((x + w) / 100) * img_w)
                 bottom = int(((y + h) / 100) * img_h)
 
-                # OCR sur la zone
                 crop = page.crop((left, top, right, bottom))
                 with tempfile.NamedTemporaryFile(suffix=".PNG", delete=False) as tmp_img:
                     crop_path = tmp_img.name
                     crop.save(crop_path)
 
-                text = pytesseract.image_to_string(crop, lang="fra").strip()
-                if not text:
-                    text = "NUL"
+                text = pytesseract.image_to_string(crop, lang="fra").strip() or "NUL"
 
                 ocr_zones.append({
                     "label": label,
-                    "row_index": None,   # valeur par défaut, remplacée ensuite
+                    "row_index": None,
                     "x": x, "y": y, "w": w, "h": h,
                     "text": text
                 })
 
-    # 🔹 Numérotation globale haut → bas
-    ocr_zones = sorted(ocr_zones, key=lambda z: z["y"])
-    for idx, zone in enumerate(ocr_zones, start=1):
-        zone["row_index"] = idx
+    # 🔹 Numérotation basée sur la première cellule (gauche)
+    ocr_zones = sorted(ocr_zones, key=lambda z: (z["y"], z["x"]))
+    row_index = 0
+    rows = []  # mémorise (y, h, idx) pour chaque ligne créée
+
+    for zone in ocr_zones:
+        if zone["x"] < 15:  # seuil arbitraire : x < 15% = cellule de gauche
+            row_index += 1
+            base_y, base_h = zone["y"], zone["h"]
+            zone["row_index"] = row_index
+            rows.append((base_y, base_h, row_index))
+        else:
+            # Cherche la ligne correspondante dans rows
+            for (y0, h0, idx) in rows[::-1]:
+                if y0 - 0.5 <= zone["y"] <= y0 + h0 + 0.5:
+                    zone["row_index"] = idx
+                    break
+            if zone["row_index"] is None:
+                # rien trouvé → nouvelle ligne
+                row_index += 1
+                zone["row_index"] = row_index
+                rows.append((zone["y"], zone["h"], row_index))
 
     return {
         "ocr_raw": ocr_raw,
@@ -89,6 +101,5 @@ if __name__ == "__main__":
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
     except Exception as e:
-        # ⚠️ Toujours renvoyer du JSON minimal en cas d'erreur
         print(json.dumps({"ocr_raw": "", "ocr_zones": [], "error": str(e)}))
         sys.exit(1)
