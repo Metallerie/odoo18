@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # account_move.py (LabelStudio – JSON en base, OCR brut + JSON enrichi,
-# suppression lignes, fournisseur obligatoire, logs debug,
-# extraction lignes produits + TVA + commentaires)
+# suppression lignes produits, fournisseur obligatoire,
+# logs debug, extraction lignes produits + TVA + commentaires)
 
 import base64
 import json
@@ -231,16 +231,19 @@ class AccountMove(models.Model):
                 if d:
                     move.invoice_date = d
 
-            # Nettoyage des anciennes lignes (tout sauf notes/sections)
-            # Nettoyage uniquement des lignes produits OCR
+            # Nettoyage uniquement des anciennes lignes produits OCR
             product_lines_to_remove = move.line_ids.filtered(
-            lambda l: not l.display_type and not l.tax_line_id and not l.exclude_from_invoice_tab
+                lambda l: not l.display_type and not l.tax_line_id and not l.exclude_from_invoice_tab
             )
             count_removed = len(product_lines_to_remove)
             product_lines_to_remove.unlink()
             _logger.warning("[OCR] %s anciennes lignes PRODUITS supprimées sur facture %s", count_removed, move.name)
 
-            rows = {}   # <<< AJOUT POUR ÉVITER LE NameError
+            # --- Extraction lignes produits + commentaires ---
+            product_lines = []
+            comment_lines = []
+            rows = {}
+
             for z in zones:
                 if z.get("label") in ["Reference", "Description", "Quantity", "Unité", "Unit Price", "Amount HT", "VAT"]:
                     y = round(float(z.get("y", 0)), 1)
@@ -265,7 +268,6 @@ class AccountMove(models.Model):
                 vat_rate = self._to_float(vat_text)
                 tax = self._find_tax(vat_rate) or default_tax
 
-                # --- LOG DEBUG par ligne ---
                 _logger.warning(
                     "[OCR][ROW] y=%s | Ref=%s | Desc=%s | Qté=%s | U=%s | PU=%s | Montant=%s | TVA=%s",
                     y, ref, desc, qty, uom, price_unit, amount, vat_rate
@@ -283,14 +285,12 @@ class AccountMove(models.Model):
                     comment_text = f"Ligne OCR incomplète : Ref={ref}, Desc={desc}, Qté={data.get('Quantity','')}, U={uom}, PU={data.get('Unit Price','')}, Montant={data.get('Amount HT','')}"
                     comment_lines.append(comment_text)
 
-            # Création lignes produit
             for line in product_lines:
                 move.line_ids.create({
                     "move_id": move.id,
                     **line
                 })
 
-            # Création lignes commentaire
             for comment in comment_lines:
                 move.line_ids.create({
                     "move_id": move.id,
