@@ -99,6 +99,7 @@ class AccountMove(models.Model):
             total_ht = 0.0
             total_tva = 0.0
             total_ttc = 0.0
+            raw_ht = raw_tva = raw_ttc = ""
 
             for z in zones:
                 label = (z.get("label") or "").lower().strip()
@@ -107,32 +108,36 @@ class AccountMove(models.Model):
 
                 if "total" in label and "ht" in label:
                     total_ht = self._to_float(text)
-                elif "tva" in label:
+                    raw_ht = text
+                elif "tva" in label and "total" in label:
                     total_tva = self._to_float(text)
+                    raw_tva = text
                 elif "ttc" in label or "net a payer" in label:
                     total_ttc = self._to_float(text)
+                    raw_ttc = text
 
             _logger.warning("[OCR][TOTALS DETECTED] HT=%s | TVA=%s | TTC=%s", total_ht, total_tva, total_ttc)
 
-            # --- Ligne factice ---
-            tax = False
-            if total_ht > 0 and total_tva > 0:
-                vat_rate = round((total_tva / total_ht) * 100, 2)
-                tax = self._find_tax(vat_rate)
-
+            # --- Ligne factice produit ---
             move.line_ids.create({
                 "move_id": move.id,
                 "name": "Produit en attente (OCR)",
                 "quantity": 1,
                 "price_unit": total_ht if total_ht > 0 else 0.0,
                 "account_id": move.journal_id.default_account_id.id,
-                "tax_ids": [(6, 0, [tax.id])] if tax else False,
             })
 
-            # Ajouter une note informative
+            # --- Ligne note informative avec brut et float ---
+            note_text = (
+                f"Totaux OCR détectés :\n"
+                f"HT : \"{raw_ht}\" → {total_ht}\n"
+                f"TVA : \"{raw_tva}\" → {total_tva}\n"
+                f"TTC : \"{raw_ttc}\" → {total_ttc}"
+            )
+
             move.line_ids.create({
                 "move_id": move.id,
-                "name": f"Totaux OCR → HT={total_ht} / TVA={total_tva} / TTC={total_ttc}",
+                "name": note_text,
                 "display_type": "line_note",
             })
 
