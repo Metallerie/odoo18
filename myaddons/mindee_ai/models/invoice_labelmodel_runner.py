@@ -40,6 +40,11 @@ def run_invoice_labelmodel(pdf_file, json_model):
                 label_list = zone.get("rectanglelabels", [])
                 label = label_list[0] if label_list else "NUL"
 
+                # Récupérer l'index de ligne s'il existe (Label Studio Number)
+                row_index = None
+                if "row_index" in zone.get("value", {}):
+                    row_index = zone["value"]["row_index"]
+
                 # Position en pixels
                 x, y, w, h = zone["x"], zone["y"], zone["width"], zone["height"]
                 left = int((x / 100) * img_w)
@@ -59,6 +64,7 @@ def run_invoice_labelmodel(pdf_file, json_model):
 
                 ocr_zones.append({
                     "label": label,
+                    "row_index": row_index,   # ✅ numéro de ligne ajouté
                     "x": x, "y": y, "w": w, "h": h,
                     "text": text
                 })
