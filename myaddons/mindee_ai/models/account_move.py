@@ -6,7 +6,6 @@ import re
 import subprocess
 import tempfile
 import unicodedata
-from datetime import date
 
 from odoo import models, fields
 from odoo.exceptions import UserError
@@ -37,8 +36,11 @@ class AccountMove(models.Model):
             return 0.0
 
     def _find_tax(self, vat_rate):
+        """Retourne une taxe Odoo correspondant au taux OCR, sinon TVA 20% par défaut."""
         if vat_rate <= 0:
-            return False
+            return self.env['account.tax'].search(
+                [('amount', '=', 20), ('type_tax_use', '=', 'purchase')], limit=1
+            )
         tax = self.env["account.tax"].search(
             [("amount", "=", vat_rate), ("type_tax_use", "=", "purchase")], limit=1
         )
@@ -99,7 +101,6 @@ class AccountMove(models.Model):
             total_ht = 0.0
             total_tva = 0.0
             total_ttc = 0.0
-            raw_ht = raw_tva = raw_ttc = ""
 
             for z in zones:
                 label = (z.get("label") or "").lower().strip()
@@ -108,33 +109,30 @@ class AccountMove(models.Model):
 
                 if "total" in label and "ht" in label:
                     total_ht = self._to_float(text)
-                    raw_ht = text
                 elif "tva" in label and "total" in label:
                     total_tva = self._to_float(text)
-                    raw_tva = text
                 elif "ttc" in label or "net a payer" in label:
                     total_ttc = self._to_float(text)
-                    raw_ttc = text
 
             _logger.warning("[OCR][TOTALS DETECTED] HT=%s | TVA=%s | TTC=%s", total_ht, total_tva, total_ttc)
 
             # --- Ligne factice produit ---
+            vat_rate = 0.0
+            if total_ht > 0 and total_tva > 0:
+                vat_rate = round((total_tva / total_ht) * 100, 2)
+            tax = self._find_tax(vat_rate)
+
             move.line_ids.create({
                 "move_id": move.id,
                 "name": "Produit en attente (OCR)",
                 "quantity": 1,
                 "price_unit": total_ht if total_ht > 0 else 0.0,
                 "account_id": move.journal_id.default_account_id.id,
+                "tax_ids": [(6, 0, [tax.id])] if tax else False,
             })
 
-            # --- Ligne note informative avec brut et float ---
-            note_text = (
-                f"Totaux OCR détectés :\n"
-                f"HT : \"{raw_ht}\" → {total_ht}\n"
-                f"TVA : \"{raw_tva}\" → {total_tva}\n"
-                f"TTC : \"{raw_ttc}\" → {total_ttc}"
-            )
-
+            # --- Ligne note informative ---
+            note_text = f"Totaux OCR détectés : HT={total_ht} / TVA={total_tva} / TTC={total_ttc}"
             move.line_ids.create({
                 "move_id": move.id,
                 "name": note_text,
