@@ -15,7 +15,6 @@
                 </p>
           </div>
           <div class="row mt16 o_settings_container">
-              <div class="o_setting_left_pane">
                 <label for="docai_project_id"/>
                 <field name="docai_project_id"/>
 
@@ -32,7 +31,6 @@
                 <field name="docai_receipt_processor_id"/>
 
               
-            </div>
           </div>
         </div>
       </xpath>
