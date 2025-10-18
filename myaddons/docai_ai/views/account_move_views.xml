@@ -4,13 +4,14 @@
     <field name="model">account.move</field>
     <field name="inherit_id" ref="account.view_move_form"/>
     <field name="arch" type="xml">
-      <header position="inside">
-        <button name="action_docai_scan"
-                type="object"
-                string="Scan for Attachment"
-                class="btn-primary"
-        invisible="expr=&quot;move_type != 'in_invoice'&quot;"/>
-      </header>
+                  <xpath expr="//header" position="inside">
+                <button name="action_docai_scan"
+                        string="Scan From Attachment"
+                        class="btn-secondary"
+                        type="object" />
+            </xpath>
+
+     
     </field>
   </record>
 </odoo>
