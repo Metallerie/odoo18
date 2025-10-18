@@ -7,6 +7,13 @@
       <xpath expr="//form[@js_class='base_settings']" position="inside">       
         <div class="app_settings_block" data-string="DocAI">
           <h2>Google Document AI</h2>
+          <div>
+            <p>
+                  Configurez ici vos identifiants Google Document AI :
+                  <br/>- Processor pour les factures fournisseurs
+                  <br/>- Processor pour les reçus / tickets de caisse
+                </p>
+          </div>
           <div class="row mt16 o_settings_container">
             <div class="col-12 col-lg-6 o_setting_box">
               <div class="o_setting_left_pane">
@@ -26,13 +33,7 @@
                 <field name="docai_receipt_processor_id"/>
               </div>
 
-              <div class="o_setting_right_pane">
-                <p>
-                  Configurez ici vos identifiants Google Document AI :
-                  <br/>- Processor pour les factures fournisseurs
-                  <br/>- Processor pour les reçus / tickets de caisse
-                </p>
-              </div>
+              
             </div>
           </div>
         </div>
