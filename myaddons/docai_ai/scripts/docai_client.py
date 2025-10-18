@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#scripts indépendant conection docai
 import os
 import json
 import logging
