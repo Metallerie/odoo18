@@ -1,3 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_docai_ai_docai_ai,docai_ai.docai_ai,model_docai_ai_docai_ai,base.group_user,1,1,1,1
-access_docai_import_user,access.docai.import.user,model_docai_ai_invoice_import,base.group_user,1,1,1,1
+access_docai_invoice_import,access.docai.invoice.import,model_docai_ai_invoice_import,base.group_user,1,1,1,1
+access_docai_attachment,access.docai.attachment,model_ir_attachment,base.group_user,1,1,1,1
