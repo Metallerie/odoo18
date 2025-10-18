@@ -1,26 +1,1974 @@
-2025-08-26 07:57:23,244 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_153783.pdf : [Errno 2] No such file or directory: '/data/Documents/factures_a_traiter/Facture_CCL_153783.pdf' -> '/data/Documents/factures_archive/Facture_CCL_153783.pdf_imported' 
-2025-08-26 07:57:29,370 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_153783.pdf : [Errno 2] No such file or directory: '/data/Documents/factures_a_traiter/Facture_CCL_153783.pdf' -> '/data/Documents/factures_archive/Facture_CCL_153783.pdf_imported' 
-2025-08-26 08:02:29,737 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_153783.pdf : [Errno 2] No such file or directory: '/data/Documents/factures_a_traiter/Facture_CCL_153783.pdf' -> '/data/Documents/factures_archive/Facture_CCL_153783.pdf_imported' 
-2025-08-26 08:13:04,881 577317 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_imported' 
-2025-08-26 08:21:58,290 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_imported' 
-2025-08-26 08:22:38,814 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du déplacement du doublon Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_duplicate' 
-2025-08-26 08:31:06,678 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du traitement du fichier Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_imported' 
-2025-08-26 08:32:39,167 582102 ERROR metal-prod-18 odoo.addons.mindee_ai.models.invoice_import_cron: Erreur lors du déplacement du doublon Facture_CCL_150184.pdf : [Errno 13] Permission denied: '/data/Documents/factures_a_traiter/Facture_CCL_150184.pdf' -> '/data/Documents/factures_archive/Facture_CCL_150184.pdf_duplicate' 
-2025-08-26 23:22:26,440 584277 ERROR metal-prod-18 odoo.addons.google_recaptcha.models.ir_http: Trial captcha verification timeout for ip address 127.0.0.1 
-2025-08-27 06:53:21,276 584277 ERROR metal-prod-18 odoo.addons.google_recaptcha.models.ir_http: Trial captcha verification timeout for ip address 127.0.0.1 
-2025-08-28 14:09:05,582 584277 ERROR metal-prod-18 odoo.addons.base.models.assetsbundle: 'Could not get content for product_metal/static/src/js/product_quantity_precision.js.' in file 'product_metal/static/src/js/product_quantity_precision.js' 
-2025-08-30 08:27:01,912 584277 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_template" WHERE id IN (112)'
-ERROR: update or delete on table "product_product" violates foreign key constraint "account_move_line_product_id_fkey" on table "account_move_line"
-DETAIL:  Key (id)=(1329) is still referenced from table "account_move_line".
- 
-2025-08-30 13:39:04,979 1634681 ERROR metal-prod-18 odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['account_statement_base', 'account_statement_import_base', 'account_statement_import_file', 'account_statement_import_ofx'] 
-2025-08-30 15:02:17,997 1649483 ERROR metal-prod-18 odoo.osv.expression: Non-stored field account.account.group_id cannot be searched. 
-NoneType: None
-2025-08-30 15:06:11,636 1649483 ERROR metal-prod-18 odoo.sql_db: bad query: b'INSERT INTO "date_range" ("company_id", "create_date", "create_uid", "name", "write_date", "write_uid") VALUES (1, \'2025-08-30 15:06:11.635132\', 2, \'{"en_US": "01/01/2025 au 31/12/2025", "fr_FR": "01/01/2025 au 31/12/2025"}\', \'2025-08-30 15:06:11.635132\', 2) RETURNING "id"'
-ERROR: null value in column "type_id" of relation "date_range" violates not-null constraint
-DETAIL:  Failing row contains (1, null, 1, 2, 2, null, null, {"en_US": "01/01/2025 au 31/12/2025", "fr_FR": "01/01/2025 au 31..., null, 2025-08-30 15:06:11.635132, 2025-08-30 15:06:11.635132).
- 
-2025-08-30 16:30:58,039 1662726 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "account_journal" WHERE id IN (10)'
-ERROR: update or delete on table "account_journal" violates foreign key constraint "pos_payment_method_journal_id_fkey" on table "pos_payment_method"
-DETAIL:  Key (id)=(10) is still referenced from table "pos_payment_method".
- 
+2025-10-16 21:25:06,608 1785269 ERROR metal-prod-18 odoo.addons.mindee_ai.models.account_move: [OCR][Runner][EXCEPTION] Expecting value: line 1 column 1 (char 0) 
+2025-10-17 09:11:58,545 1909947 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 41, in call_button
+    get_public_method(Model, method)
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 38, in get_public_method
+    raise AttributeError(f"The method '{model._name}.{name}' does not exist")  # noqa: TRY004
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: The method 'account.move.action_ocr_fetch' does not exist
+2025-10-17 09:15:38,404 1910762 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 41, in call_button
+    get_public_method(Model, method)
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 38, in get_public_method
+    raise AttributeError(f"The method '{model._name}.{name}' does not exist")  # noqa: TRY004
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: The method 'account.move.action_ocr_fetch' does not exist
+2025-10-17 09:16:35,873 1910762 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2025-10-17 09:16:37,234 1910762 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 678, in button_immediate_upgrade
+    return self._button_immediate_function(self.env.registry[self._name].button_upgrade)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 555, in _tag_root
+    raise ParseError(msg) from None  # Restart with "--log-handler odoo.tools.convert:DEBUG" for complete traceback
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/views/account_move.xml:24
+Erreur lors de la validation de la vue :
+
+<form string="Account Entry" js_class="account_move_form" __validate__="1">
+                    <header>
+                        <!-- Post -->
+                        <button name="action_post" string="Post" class="oe_highlight" type="object" groups="account.group_account_invoice" data-hotkey="q" context="{'validate_analytic': True, 'disable_abnormal_invoice_detection': False}" invisible="hide_post_button or move_type != 'entry'"/>
+                        <button name="action_post" string="Confirm" class="oe_highlight" type="object" groups="account.group_account_invoice" data-hotkey="q" context="{'validate_analytic': True, 'disable_abnormal_invoice_detection': False}" invisible="hide_post_button or move_type == 'entry' or display_inactive_currency_warning"/>
+
+action_ocr_fetch n'est pas une action valide sur account.move
+
+View error context:
+{'file': '/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/views/account_move.xml',
+ 'line': 3,
+ 'name': 'invoice.form.inherit.account.move',
+ 'view': ir.ui.view(3493,),
+ 'view.model': 'account.move',
+ 'view.parent': ir.ui.view(690,),
+ 'xmlid': 'view_move_form_inherit_ocr_button'}
+
+2025-10-17 09:28:17,130 1912968 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2025-10-17 09:28:17,425 1912968 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 678, in button_immediate_upgrade
+    return self._button_immediate_function(self.env.registry[self._name].button_upgrade)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 555, in _tag_root
+    raise ParseError(msg) from None  # Restart with "--log-handler odoo.tools.convert:DEBUG" for complete traceback
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/views/account_move.xml:24
+Erreur lors de la validation de la vue :
+
+<form string="Account Entry" js_class="account_move_form" __validate__="1">
+                    <header>
+                        <!-- Post -->
+                        <button name="action_post" string="Post" class="oe_highlight" type="object" groups="account.group_account_invoice" data-hotkey="q" context="{'validate_analytic': True, 'disable_abnormal_invoice_detection': False}" invisible="hide_post_button or move_type != 'entry'"/>
+                        <button name="action_post" string="Confirm" class="oe_highlight" type="object" groups="account.group_account_invoice" data-hotkey="q" context="{'validate_analytic': True, 'disable_abnormal_invoice_detection': False}" invisible="hide_post_button or move_type == 'entry' or display_inactive_currency_warning"/>
+
+action_ocr_fetch n'est pas une action valide sur account.move
+
+View error context:
+{'file': '/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/views/account_move.xml',
+ 'line': 3,
+ 'name': 'invoice.form.inherit.account.move',
+ 'view': ir.ui.view(3493,),
+ 'view.model': 'account.move',
+ 'view.parent': ir.ui.view(690,),
+ 'xmlid': 'view_move_form_inherit_ocr_button'}
+
+2025-10-17 09:59:41,809 1918936 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 240, in action_ocr_fetch
+    price_unit = _to_float(pu_raw)
+                 ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 237, in _to_float
+    return float(val.replace(",", ".").replace(" ", ""))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: 'PrixUnitaire'
+2025-10-17 17:55:30,022 2011243 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 247, in action_ocr_fetch
+    if y not in rows:
+                ^^^^
+NameError: name 'rows' is not defined
+2025-10-17 17:58:12,214 2012101 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 248, in action_ocr_fetch
+    if y not in rows:
+                ^^^^
+NameError: name 'rows' is not defined
+2025-10-17 18:01:19,236 2013019 CRITICAL metal-prod-18 odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:01:19,239 2013019 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2025-10-17 18:01:19,239 2013019 CRITICAL metal-prod-18 odoo.service.server: Failed to initialize database `metal-prod-18`. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/server.py", line 1361, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:01:33,604 2013019 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:01:33,606 2013019 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 18:01:33,606 2013019 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:01:43,396 2013019 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:01:43,398 2013019 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 18:01:43,398 2013019 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:02:35,037 2013019 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:02:35,039 2013019 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 18:02:35,039 2013019 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:02:44,721 2013019 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:02:44,723 2013019 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 18:02:44,724 2013019 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:03:36,287 2013019 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:03:36,289 2013019 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 18:03:36,289 2013019 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:03:45,850 2013019 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 18:03:45,852 2013019 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 18:03:45,852 2013019 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 251
+    rows[y][z.get("label")] = (z.get("text") or "").strip()
+    ^^^^
+IndentationError: expected an indented block after 'if' statement on line 250
+2025-10-17 18:04:59,874 2013753 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 284, in action_ocr_fetch
+    comment_lines.append(comment_text)
+    ^^^^^^^^^^^^^
+NameError: name 'comment_lines' is not defined
+2025-10-17 19:02:03,376 2027275 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 41, in call_button
+    get_public_method(Model, method)
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 38, in get_public_method
+    raise AttributeError(f"The method '{model._name}.{name}' does not exist")  # noqa: TRY004
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: The method 'account.move.action_ocr_fetch' does not exist
+2025-10-17 19:29:56,017 2033844 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 41, in call_button
+    get_public_method(Model, method)
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 38, in get_public_method
+    raise AttributeError(f"The method '{model._name}.{name}' does not exist")  # noqa: TRY004
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: The method 'account.move.action_ocr_fetch' does not exist
+2025-10-17 19:31:57,957 2034348 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 41, in call_button
+    get_public_method(Model, method)
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 38, in get_public_method
+    raise AttributeError(f"The method '{model._name}.{name}' does not exist")  # noqa: TRY004
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: The method 'account.move.action_ocr_fetch' does not exist
+2025-10-17 19:43:52,454 2036970 CRITICAL metal-prod-18 odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:43:52,457 2036970 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2025-10-17 19:43:52,457 2036970 CRITICAL metal-prod-18 odoo.service.server: Failed to initialize database `metal-prod-18`. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/server.py", line 1361, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:19,480 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:19,482 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:19,482 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:21,884 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:21,886 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:21,887 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:25,518 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:25,520 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:25,520 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:29,310 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:29,312 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:29,312 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:30,180 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:30,182 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:30,183 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:30,275 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:30,277 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:30,277 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:30,890 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:30,892 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:30,892 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:32,845 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:32,848 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:32,848 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:39,340 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:39,342 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:39,342 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:44:52,230 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:44:52,232 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:44:52,232 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:45:11,713 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:45:11,715 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:45:11,715 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:45:30,283 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:45:30,285 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:45:30,285 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:45:30,980 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:45:30,982 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:45:30,982 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:45:40,971 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:45:40,973 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:45:40,973 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:46:25,377 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:46:25,379 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:46:25,380 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:46:31,999 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:46:32,001 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:46:32,001 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:47:31,625 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:47:31,627 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:47:31,627 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
+2025-10-17 19:47:32,844 2036970 CRITICAL ? odoo.modules.module: Couldn't load module mindee_ai 
+2025-10-17 19:47:32,846 2036970 ERROR ? odoo.modules.registry: Failed to load registry 
+2025-10-17 19:47:32,847 2036970 ERROR ? odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 106, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'metal-prod-18'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2058, in _serve_db
+    self.registry, cr_readwrite = self._open_registry()
+                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 1668, in _open_registry
+    registry = Registry(self.db)
+               ^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 108, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/__init__.py", line 2, in <module>
+    from . import models
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/__init__.py", line 2, in <module>
+    from . import account_move
+  File "/data/odoo/metal-odoo18-p8179/myaddons/mindee_ai/models/account_move.py", line 242
+    import base64
+    ^^^^^^
+SyntaxError: invalid syntax
