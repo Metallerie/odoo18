@@ -13,5 +13,23 @@
 
      
     </field>
+    <!-- Inherit vue formulaire des factures pour ajouter le champ + l’onglet OCR -->
+    <record id="view_move_form_inherit_ocr_json" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.ocr.json</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+
+               
+
+                <!-- ✅ Onglet brut pour debug -->
+                <page string="OCR json (debug)">
+                    <field name="docai_response_json" widget="json" readonly="1"  store="True"/>
+                </page>
+
+            </xpath>
+        </field>
+    </record>
   </record>
 </odoo>
