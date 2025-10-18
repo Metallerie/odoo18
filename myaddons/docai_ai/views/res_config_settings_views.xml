@@ -4,17 +4,26 @@
     <field name="model">res.config.settings</field>
     <field name="inherit_id" ref="base.res_config_settings_view_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//form[@js_class='base_settings']" position="inside">
-        <div class="app_settings_block">
+      <xpath expr="//div[@id='settings']" position="inside">
+        <div class="app_settings_block" data-string="DocAI">
           <h2>Google Document AI</h2>
           <div class="row mt16 o_settings_container">
             <div class="col-12 col-lg-6 o_setting_box">
               <div class="o_setting_left_pane">
-                <field name="docai_project_id" string="Docai Project ID"/>
-                <field name="docai_location" string="Docai Location"/>
-                <field name="docai_key_path" string="Docai Key Path"/>
-                <field name="docai_invoice_processor_id" string="Docai Invoice Processor ID"/>
-                <field name="docai_receipt_processor_id" string="Docai Receipt Processor ID"/>
+                <label for="docai_project_id" string="Google Project ID"/>
+                <field name="docai_project_id"/>
+
+                <label for="docai_location" string="Location"/>
+                <field name="docai_location"/>
+
+                <label for="docai_key_path" string="Chemin clé JSON"/>
+                <field name="docai_key_path"/>
+
+                <label for="docai_invoice_processor_id" string="Processor ID Factures"/>
+                <field name="docai_invoice_processor_id"/>
+
+                <label for="docai_receipt_processor_id" string="Processor ID Reçus"/>
+                <field name="docai_receipt_processor_id"/>
               </div>
               <div class="o_setting_right_pane">
                 <p>
