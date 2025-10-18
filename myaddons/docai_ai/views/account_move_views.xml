@@ -9,7 +9,7 @@
                 type="object"
                 string="Scan for Attachment"
                 class="btn-primary"
-                invisible="expr='move_type != \"in_invoice\"'"/>
+        invisible="expr=&quot;move_type != 'in_invoice'&quot;"/>
       </header>
     </field>
   </record>
