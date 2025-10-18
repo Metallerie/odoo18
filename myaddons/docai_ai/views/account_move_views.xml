@@ -1,16 +1,15 @@
-
 <odoo>
-  <record id="view_move_form_docai" model="ir.ui.view">
+  <record id="account_move_form_docai" model="ir.ui.view">
     <field name="name">account.move.form.docai</field>
     <field name="model">account.move</field>
     <field name="inherit_id" ref="account.view_move_form"/>
     <field name="arch" type="xml">
       <header position="inside">
-        <button name="action_docai_scan_attachment"
-                string="Scan Attachment (DocAI)"
+        <button name="action_docai_scan"
                 type="object"
+                string="Scan for Attachment"
                 class="btn-primary"
-                states="draft"/>
+                invisible="expr='move_type != \"in_invoice\"'"/>
       </header>
     </field>
   </record>
