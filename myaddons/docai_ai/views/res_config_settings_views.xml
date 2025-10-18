@@ -10,11 +10,11 @@
           <div class="row mt16 o_settings_container">
             <div class="col-12 col-lg-6 o_setting_box">
               <div class="o_setting_left_pane">
-                <field name="docai_project_id"/>
-                <field name="docai_location"/>
-                <field name="docai_key_path"/>
-                <field name="docai_invoice_processor_id"/>
-                <field name="docai_receipt_processor_id"/>
+                <field name="docai_project_id" string="Docai project id"//>
+                <field name="docai_location" string="Docai location"//>
+                <field name="docai_key_path" string="Docai key path"//>
+                <field name="docai_invoice_processor_id" string="Docai invoice processor id"//>
+                <field name="docai_receipt_processor_id" string="Docai receipt processor id"//>
               </div>
               <div class="o_setting_right_pane">
                 <p>
