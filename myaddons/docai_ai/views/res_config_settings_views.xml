@@ -14,7 +14,6 @@
                   <br/>- Processor pour les reçus / tickets de caisse
                 </p>
           </div>
-          <div class="row mt16 o_settings_container">
                 <label for="docai_project_id"/>
                 <field name="docai_project_id"/>
 
@@ -31,7 +30,6 @@
                 <field name="docai_receipt_processor_id"/>
 
               
-          </div>
         </div>
       </xpath>
     </field>
