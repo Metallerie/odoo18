@@ -1,34 +1,38 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "docai_ai",
+    'name': "DocAI AI",
 
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
+    'summary': "Analyse automatique des factures PDF avec Google Document AI (Invoice Parser)",
 
     'description': """
-Long description of module's purpose
+Ce module permet d'importer des factures PDF dans Odoo, 
+de les envoyer à Google Document AI (Invoice Parser) 
+et de stocker le JSON de réponse pour générer automatiquement
+des factures fournisseurs (account.move).
     """,
 
-    'author': "My Company",
-    'website': "https://www.yourcompany.com",
+    'author': "Bardina Métallerie",
+    'website': "http://www.metallerie.xyz",
 
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
-    'category': 'Uncategorized',
-    'version': '0.1',
+    'category': 'Accounting',
+    'version': '1.0',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base'],
+    # dépendances nécessaires
+    'depends': ['base', 'account'],
 
-    # always loaded
+    # fichiers chargés à l'installation
     'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
-        'views/templates.xml',
+        'security/ir.model.access.csv',
+        'views/res_config_settings_views.xml',
+        'views/account_move_views.xml',
+        'data/cron.xml',
     ],
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
-    ],
-}
 
+    # mode démo (pas obligatoire)
+    'demo': [
+        # 'demo/demo.xml',
+    ],
+
+    'installable': True,
+    'application': False,
+}
