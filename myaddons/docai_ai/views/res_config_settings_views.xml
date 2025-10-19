@@ -22,8 +22,8 @@
                 <label for="docai_invoice_processor_id"/>
                 <field name="docai_invoice_processor_id"/>
 
-                <label for="docai_receipt_processor_id"/>
-                <!-- <field name="docai_receipt_processor_id"/> -->
+                <!--label for="docai_receipt_processor_id"/>
+                 <field name="docai_receipt_processor_id"/> -->
               </div>
               <div class="o_setting_right_pane">
                 <p>
