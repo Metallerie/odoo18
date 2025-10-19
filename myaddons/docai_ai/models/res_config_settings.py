@@ -60,6 +60,7 @@ class ResConfigSettings(models.TransientModel):
             )
 
             name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
+            _logger.info(f"[DocAI] Test avec processor name = {name}")
 
             if test_invoice:
                 with open(test_invoice, "rb") as f:
