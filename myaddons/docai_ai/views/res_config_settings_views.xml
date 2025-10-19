@@ -8,7 +8,6 @@
         <div class="app_settings_block" string="DocAI">
           <h2>Google Document AI</h2>
           <div class="row mt16 o_settings_container">
-              <div class="o_setting_left_pane">
                 <field name="docai_project_id"/>
                 <field name="docai_location"/>
                 <field name="docai_key_path"/>
@@ -19,14 +18,11 @@
                         type="object"
                         string="Tester la connexion"
                         class="btn-primary"/>
-              </div>
-              <div class="o_setting_right_pane">
                 <p>
                   Configurez ici vos identifiants Google Document AI :
                   <br/>- Un processor pour les factures fournisseurs
                   <br/>- Un processor pour les reçus / tickets de caisse
                 </p>
-              </div>
             
           </div>
         </div>
