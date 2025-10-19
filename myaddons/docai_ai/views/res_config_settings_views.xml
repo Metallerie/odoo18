@@ -8,12 +8,12 @@
         <div class="app_settings_block" string="DocAI">
           <h2>Google Document AI</h2>
           <div class="row mt16 o_settings_container">
+            <div class="col-12 col-lg-6 o_setting_box">
                 <field name="docai_project_id"/>
                 <field name="docai_location"/>
                 <field name="docai_key_path"/>
                 <field name="docai_invoice_processor_id"/>
                 <field name="docai_receipt_processor_id"/>
-                <field name="docai_test_invoice_path"/>
                 <button name="action_test_docai_connection"
                         type="object"
                         string="Tester la connexion"
@@ -23,7 +23,7 @@
                   <br/>- Un processor pour les factures fournisseurs
                   <br/>- Un processor pour les reçus / tickets de caisse
                 </p>
-            
+            </div>
           </div>
         </div>
       </xpath>
