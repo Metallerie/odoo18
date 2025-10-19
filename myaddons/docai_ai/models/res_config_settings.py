@@ -1,65 +1,79 @@
-# myaddons/docai_ai/models/res_config_settings.py
 # -*- coding: utf-8 -*-
-
-import os
-import logging
 from odoo import models, fields, api
-from odoo.exceptions import UserError
-from google.cloud import documentai_v1 as documentai
+import logging
 
 _logger = logging.getLogger(__name__)
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    docai_project_id = fields.Char("Google Project ID")
-    docai_location = fields.Char("DocAI Location", default="eu")
-    docai_key_path = fields.Char("Chemin clé JSON")
-    docai_invoice_processor_id = fields.Char("Processor Factures ID")
-    docai_test_invoice_path = fields.Char("Facture de test (PDF)")
+    # Champs configurables (stockés dans ir.config_parameter)
+    docai_project_id = fields.Char(
+        string="Project ID",
+        config_parameter="docai_ai.project_id"
+    )
+    docai_location = fields.Char(
+        string="Location",
+        default="eu",
+        config_parameter="docai_ai.location"
+    )
+    docai_key_path = fields.Char(
+        string="Chemin fichier JSON clé API",
+        config_parameter="docai_ai.key_path"
+    )
+    docai_invoice_processor_id = fields.Char(
+        string="Processor Facture",
+        config_parameter="docai_ai.invoice_processor_id"
+    )
+    docai_test_invoice_path = fields.Char(
+        string="Facture de test (PDF)",
+        config_parameter="docai_ai.test_invoice_path"
+    )
 
+    # Bouton "Tester connexion"
     def action_test_docai_connection(self):
-        """Teste la connexion à Document AI avec une facture de test"""
+        """Test la connexion à Google Document AI avec les paramètres saisis"""
         project_id = self.docai_project_id
         location = self.docai_location or "eu"
         processor_id = self.docai_invoice_processor_id
         key_path = self.docai_key_path
-        file_path = self.docai_test_invoice_path
+        test_invoice = self.docai_test_invoice_path
 
-        if not (project_id and location and processor_id and key_path and file_path):
-            raise UserError("⚠️ Merci de remplir tous les champs (Project, Location, Processor, Key, Facture test).")
+        if not project_id or not location or not processor_id or not key_path:
+            raise ValueError("⚠️ Merci de configurer tous les champs obligatoires (Project, Location, Key, Processor).")
 
-        # Authentification
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
+        _logger.info("=== [DocAI Test] ===")
+        _logger.info(f"Project: {project_id}, Location: {location}, Processor: {processor_id}")
+        _logger.info(f"Key path: {key_path}")
+        if test_invoice:
+            _logger.info(f"Facture test: {test_invoice}")
 
         try:
-            # ⚡ Client forcé sur EU
+            from google.cloud import documentai_v1 as documentai
+            import os
+
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
+
             client = documentai.DocumentProcessorServiceClient(
                 client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
             )
+
             name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
-            # Charger le PDF de test
-            with open(file_path, "rb") as f:
-                pdf_content = f.read()
-
-            raw_document = documentai.RawDocument(
-                content=pdf_content,
-                mime_type="application/pdf"
-            )
-            request = documentai.ProcessRequest(name=name, raw_document=raw_document)
-            result = client.process_document(request=request)
-
-            # Résumé des infos extraites
-            doc = result.document
-            extrait = []
-            for entity in doc.entities[:5]:  # limite aux 5 premiers champs
-                extrait.append(f"{entity.type_}: {entity.mention_text}")
-
-            msg = "✅ Connexion réussie à Google Document AI !\n\nChamps extraits :\n" + "\n".join(extrait)
-            _logger.info(msg)
-            raise UserError(msg)  # affichage dans Odoo
+            if test_invoice:
+                with open(test_invoice, "rb") as f:
+                    pdf_content = f.read()
+                raw_document = documentai.RawDocument(content=pdf_content, mime_type="application/pdf")
+                request = documentai.ProcessRequest(name=name, raw_document=raw_document)
+                result = client.process_document(request=request)
+                text_detected = result.document.text[:300]
+                _logger.info(f"✅ Connexion OK - extrait du texte: {text_detected}")
+            else:
+                # Juste un ping si pas de fichier de test
+                processors = list(client.list_processors(parent=f"projects/{project_id}/locations/{location}"))
+                _logger.info(f"✅ Connexion OK - {len(processors)} processeurs détectés")
 
         except Exception as e:
-            _logger.error("❌ Erreur DocAI Test : %s", e)
-            raise UserError(f"❌ Échec de connexion à Document AI : {str(e)}")
+            _logger.error(f"❌ Erreur connexion Document AI : {e}")
+            raise
