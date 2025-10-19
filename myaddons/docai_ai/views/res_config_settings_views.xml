@@ -22,15 +22,19 @@
                 <label for="docai_invoice_processor_id"/>
                 <field name="docai_invoice_processor_id"/>
 
-                <!--label for="docai_receipt_processor_id"/>
-                 <field name="docai_receipt_processor_id"/> -->
+                <label for="docai_test_invoice_path"/>
+                <field name="docai_test_invoice_path"/>
               </div>
               <div class="o_setting_right_pane">
                 <p>
                   Configure ici tes identifiants Google Document AI :
                   <br/>• Processor factures fournisseur
-                  <br/>• Processor reçus / tickets
+                  <br/>• Clé JSON + chemin facture de test
                 </p>
+                <button name="action_test_docai_connection"
+                        type="object"
+                        string="Tester connexion"
+                        class="btn btn-primary"/>
               </div>
             </div>
           </div>
