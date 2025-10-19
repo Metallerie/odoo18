@@ -1,22 +1,35 @@
 from google.cloud import documentai_v1 as documentai
+import os
 
+# Chemin vers ta clé JSON
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/data/keys/docai-factures-1d0a66f84bff.json"
+
+# Paramètres du processor
 project_id = "889157590963"
-location = "us"
+location = "eu"  # bien Europe
 processor_id = "a228740c1efe755d"
-key_path = "/data/keys/docai-factures-1d0a66f84bff.json"
+file_path = "/data/Documents/factures_archive/Facture_CCL_153880.pdf"
 
-client = documentai.DocumentProcessorServiceClient.from_service_account_json(key_path)
+# Client
+client = documentai.DocumentProcessorServiceClient()
+name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
-# Chemin complet du processor
-name = f"projects/{889157590963}/locations/{eu}/processors/{a228740c1efe755d}"
-# name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
+# Charger ton PDF
+with open(file_path, "rb") as f:
+    pdf_content = f.read()
 
-print(name)
-with open("/data/Documents/factures_archive/Facture_CCL_153880.pdf", "rb") as f:
-    raw_document = documentai.RawDocument(content=f.read(), mime_type="application/pdf")
+raw_document = documentai.RawDocument(content=pdf_content, mime_type="application/pdf")
 
+# Envoyer la requête
 request = documentai.ProcessRequest(name=name, raw_document=raw_document)
 result = client.process_document(request=request)
 
-print("✅ Document traité avec succès")
-print("Texte extrait :", result.document.text[:500])
+# Récupérer le document
+document = result.document
+
+print("=== Texte détecté ===")
+print(document.text[:1000])  # affiche seulement les 1000 premiers caractères
+
+print("\n=== Champs extraits ===")
+for entity in document.entities:
+    print(f"{entity.type_}: {entity.mention_text}")
