@@ -1,30 +1,20 @@
 from google.cloud import documentai_v1 as documentai
-import os
 
-# Chemin de ta clé JSON
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/data/keys/docai-factures-1d0a66f84bff.json"
-
-# Paramètres
 project_id = "889157590963"
 location = "eu"
 processor_id = "a228740c1efe755d"
-file_path = "/data/Documents/factures_archive/Facture_CCL_153880.pdf"
+key_path = "/data/odoo/metal-odoo18-p8179/keys/docai.json"
 
-# Client
-client = documentai.DocumentProcessorServiceClient()
+client = documentai.DocumentProcessorServiceClient.from_service_account_json(key_path)
+
+# Chemin complet du processor
 name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
-# Lire le fichier PDF
-with open(file_path, "rb") as f:
-    pdf_content = f.read()
+with open("/data/Documents/factures_archive/Facture_CCL_153880.pdf", "rb") as f:
+    raw_document = documentai.RawDocument(content=f.read(), mime_type="application/pdf")
 
-raw_document = documentai.RawDocument(content=pdf_content, mime_type="application/pdf")
-
-# Envoyer la requête
 request = documentai.ProcessRequest(name=name, raw_document=raw_document)
 result = client.process_document(request=request)
 
-# Afficher le texte brut détecté
-document = result.document
-print("=== Texte détecté ===")
-print(document.text)
+print("✅ Document traité avec succès")
+print("Texte extrait :", result.document.text[:500])
