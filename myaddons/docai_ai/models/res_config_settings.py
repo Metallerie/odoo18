@@ -58,4 +58,57 @@ class ResConfigSettings(models.TransientModel):
         ICP = self.env['ir.config_parameter'].sudo()
         project_id = ICP.get_param('docai_ai.project_id')
         location = ICP.get_param('docai_ai.location', 'eu')
-        key_path = ICP.get_param('docai_ai.key_path
+        key_path = ICP.get_param('docai_ai.key_path')
+
+        _logger.info("=== [DocAI Test] Début du test connexion ===")
+        _logger.info("Project ID: %s", project_id)
+        _logger.info("Location: %s", location)
+        _logger.info("Key path: %s", key_path)
+
+        if not all([project_id, location, key_path]):
+            raise UserError("Veuillez remplir tous les champs DocAI avant de tester la connexion.")
+
+        if documentai is None or service_account is None:
+            raise UserError("Le package google-cloud-documentai n’est pas installé. "
+                            "Installe-le avec : pip install google-cloud-documentai")
+
+        try:
+            # Charger credentials
+            _logger.info("Chargement des credentials depuis: %s", key_path)
+            credentials = service_account.Credentials.from_service_account_file(key_path)
+
+            # Forcer endpoint régional
+            api_endpoint = f"{location}-documentai.googleapis.com"
+            _logger.info("Connexion endpoint: %s", api_endpoint)
+
+            client = documentai.DocumentProcessorServiceClient(
+                credentials=credentials,
+                client_options={"api_endpoint": api_endpoint}
+            )
+
+            # Liste des processors du projet
+            parent = f"projects/{project_id}/locations/{location}"
+            processors = client.list_processors(parent=parent)
+
+            first_proc = next(processors, None)
+            if not first_proc:
+                raise UserError("Aucun processor trouvé dans ce projet.")
+
+            _logger.info("Premier processor trouvé: %s (ID=%s, état=%s)",
+                         first_proc.display_name, first_proc.name, first_proc.state.name)
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': "Connexion réussie 🎉",
+                    'message': f"Processor trouvé : {first_proc.display_name} "
+                               f"(état: {first_proc.state.name}, région: {location})",
+                    'sticky': False,
+                }
+            }
+
+        except Exception as e:
+            full_error = traceback.format_exc()
+            _logger.error("=== [DocAI Test] ERREUR ===\n%s", full_error)
+            raise UserError(f"Echec de connexion à Document AI : {str(e)}")
