@@ -8,7 +8,7 @@ key_path = "/data/keys/docai-factures-1d0a66f84bff.json"
 client = documentai.DocumentProcessorServiceClient.from_service_account_json(key_path)
 
 # Chemin complet du processor
- name = f"projects/{889157590963}/locations/{eu}/processors/{a228740c1efe755d}"
+name = f"projects/{889157590963}/locations/{eu}/processors/{a228740c1efe755d}"
 # name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
 print(name)
