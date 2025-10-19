@@ -59,6 +59,7 @@ class ResConfigSettings(models.TransientModel):
         project_id = ICP.get_param('docai_ai.project_id')
         location = ICP.get_param('docai_ai.location', 'eu')
         key_path = ICP.get_param('docai_ai.key_path')
+        
 
         _logger.info("=== [DocAI Test] Début du test connexion ===")
         _logger.info("Project ID: %s", project_id)
