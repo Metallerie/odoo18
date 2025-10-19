@@ -5,16 +5,27 @@
     <field name="inherit_id" ref="base.res_config_settings_view_form"/>
     <field name="arch" type="xml">
       <xpath expr="//form[@js_class='base_settings']" position="inside">       
-        <div class="app_settings_block">
+        <div class="app_settings_block" data-string="Google Document AI">
           <h2>Google Document AI</h2>
           <div class="row mt16 o_settings_container">
             <div class="col-12 o_setting_box">
               <div class="o_setting_left_pane">
-                <field name="docai_project_id"/>
-                <field name="docai_location"/>
-                <field name="docai_key_path"/>
-                <field name="docai_invoice_processor_id"/>
-                <field name="docai_test_invoice_path"/>
+                <div class="o_form_label">Project ID</div>
+                <div class="o_form_field"><field name="docai_project_id"/></div>
+
+                <div class="o_form_label">Location</div>
+                <div class="o_form_field"><field name="docai_location"/></div>
+
+                <div class="o_form_label">Clé JSON</div>
+                <div class="o_form_field"><field name="docai_key_path"/></div>
+
+                <div class="o_form_label">Processor Facture</div>
+                <div class="o_form_field"><field name="docai_invoice_processor_id"/></div>
+
+                <div class="o_form_label">Facture de test</div>
+                <div class="o_form_field">
+                  <field name="docai_test_invoice_path" placeholder="/data/Documents/factures_archive/test.pdf"/>
+                </div>
               </div>
               <div class="o_setting_right_pane">
                 <p>
