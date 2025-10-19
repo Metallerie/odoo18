@@ -3,7 +3,7 @@ from google.cloud import documentai_v1 as documentai
 project_id = "889157590963"
 location = "eu"
 processor_id = "a228740c1efe755d"
-key_path = "/data/odoo/metal-odoo18-p8179/keys/docai-factures-1d0a66f84bff.json"
+key_path = "/data/keys/docai-factures-1d0a66f84bff.json"
 
 client = documentai.DocumentProcessorServiceClient.from_service_account_json(key_path)
 
