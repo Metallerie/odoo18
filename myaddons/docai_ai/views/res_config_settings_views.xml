@@ -1,3 +1,4 @@
+
 <odoo>
   <record id="view_res_config_settings_docai" model="ir.ui.view">
     <field name="name">res.config.settings.view.form.docai</field>
@@ -9,21 +10,25 @@
           <h2>Google Document AI</h2>
           <div class="row mt16 o_settings_container">
             <div class="col-12 col-lg-6 o_setting_box">
+              <div class="o_setting_left_pane">
                 <field name="docai_project_id"/>
                 <field name="docai_location"/>
                 <field name="docai_key_path"/>
                 <field name="docai_invoice_processor_id"/>
                 <field name="docai_receipt_processor_id"/>
-                <field name="docai_test_invoice_path"/>
+                 <field name="docai_test_invoice_path"/>
                 <button name="action_test_docai_connection"
                         type="object"
                         string="Tester la connexion"
                         class="btn-primary"/>
+              </div>
+              <div class="o_setting_right_pane">
                 <p>
                   Configurez ici vos identifiants Google Document AI :
                   <br/>- Un processor pour les factures fournisseurs
                   <br/>- Un processor pour les reçus / tickets de caisse
                 </p>
+              </div>
             </div>
           </div>
         </div>
@@ -31,3 +36,4 @@
     </field>
   </record>
 </odoo>
+
