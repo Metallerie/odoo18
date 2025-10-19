@@ -14,7 +14,7 @@
                 <label for="docai location"/><field name="docai_location"/>
                 <label for="docai key_path"/><field name="docai_key_path"/>
                 <label for="docai invoice processor_id"/><field name="docai_invoice_processor_id"/>
-                <label for="docai receipt processor_id"/><field name="docai_receipt_processor_id"/>
+                <label for="docai receipt processor_id"/><!--field name="docai_receipt_processor_id"/-->
               </div>
               <div class="o_setting_right_pane">
                 <p>
