@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import traceback
 from odoo import models, fields
 from odoo.exceptions import UserError
 
@@ -53,12 +54,18 @@ class ResConfigSettings(models.TransientModel):
 
     # Bouton de test connexion
     def action_test_docai_connection(self):
-        """Teste la connexion avec Google Document AI"""
+        """Teste la connexion avec Google Document AI avec logs détaillés"""
         ICP = self.env['ir.config_parameter'].sudo()
         project_id = ICP.get_param('docai_ai.project_id')
         location = ICP.get_param('docai_ai.location', 'eu')
         key_path = ICP.get_param('docai_ai.key_path')
         processor_id = ICP.get_param('docai_ai.invoice_processor_id')
+
+        _logger.info("=== [DocAI Test] Début du test connexion ===")
+        _logger.info("Project ID: %s", project_id)
+        _logger.info("Location: %s", location)
+        _logger.info("Key path: %s", key_path)
+        _logger.info("Processor ID: %s", processor_id)
 
         if not all([project_id, location, key_path, processor_id]):
             raise UserError("Veuillez remplir tous les champs DocAI avant de tester la connexion.")
@@ -68,21 +75,25 @@ class ResConfigSettings(models.TransientModel):
                             "Installe-le avec : pip install google-cloud-documentai")
 
         try:
-            # Charger les credentials depuis ton fichier JSON
+            # Charger les credentials
+            _logger.info("Chargement des credentials depuis: %s", key_path)
             credentials = service_account.Credentials.from_service_account_file(key_path)
 
-            # Forcer l'endpoint en fonction de la région choisie
+            # Forcer endpoint selon la région
             api_endpoint = f"{location}-documentai.googleapis.com"
+            _logger.info("Connexion au endpoint: %s", api_endpoint)
+
             client = documentai.DocumentProcessorServiceClient(
                 credentials=credentials,
                 client_options={"api_endpoint": api_endpoint}
             )
 
             processor_name = client.processor_path(project_id, location, processor_id)
+            _logger.info("Processor Path construit: %s", processor_name)
 
-            # Récupération des infos du processor
+            # Récupération des infos processor
             processor = client.get_processor(name=processor_name)
-            _logger.info("DocAI Processor récupéré : %s (state=%s)", processor.display_name, processor.state.name)
+            _logger.info("Processor récupéré: %s (state=%s)", processor.display_name, processor.state.name)
 
             return {
                 'type': 'ir.actions.client',
@@ -96,5 +107,6 @@ class ResConfigSettings(models.TransientModel):
             }
 
         except Exception as e:
-            _logger.error("Erreur DocAI: %s", e, exc_info=True)
-            raise UserError(f"Echec de connexion à Document AI : {e}")
+            full_error = traceback.format_exc()
+            _logger.error("=== [DocAI Test] ERREUR ===\n%s", full_error)
+            raise UserError(f"Echec de connexion à Document AI : {str(e)}")
