@@ -56,9 +56,8 @@ class ResConfigSettings(models.TransientModel):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
 
             client = documentai.DocumentProcessorServiceClient(
-                client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
+            client_options={"api_endpoint": f"{self.docai_location}-documentai.googleapis.com"}
             )
-
             name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
             _logger.info(f"[DocAI] Test avec processor name = {name}")
 
