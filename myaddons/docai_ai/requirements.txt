@@ -1,0 +1,15 @@
+# Google Cloud Auth
+google-auth>=2.0.0
+google-auth-oauthlib>=1.0.0
+
+# Client REST (API JSON)
+google-api-python-client>=2.0.0
+
+# Client gRPC Document AI
+google-cloud-documentai>=2.0.0
+google-api-core>=2.0.0
+google-cloud-core>=2.0.0
+
+# gRPC core
+grpcio>=1.60.0
+grpcio-status>=1.60.0
