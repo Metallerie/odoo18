@@ -2,7 +2,7 @@ from google.cloud import documentai_v1 as documentai
 import os
 
 # Chemin de ta clé JSON
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/data/keys/docai-factures.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/data/keys/docai-factures-1d0a66f84bff.json"
 
 # Paramètres
 project_id = "889157590963"
