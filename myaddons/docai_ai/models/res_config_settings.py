@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import logging
-import os
-
-from odoo import models, fields, api
+import base64
+from odoo import models, fields
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
 try:
-    from google.cloud import documentai
+    from google.cloud import documentai_v1 as documentai
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
 except ImportError:
     documentai = None
 
@@ -24,8 +25,7 @@ class ResConfigSettings(models.TransientModel):
     )
     docai_key_path = fields.Char("Chemin clé JSON Google")
     docai_invoice_processor_id = fields.Char("DocAI Processor ID (Factures)")
-    docai_receipt_processor_id = fields.Char("DocAI Processor ID (Reçus)")
-    docai_test_invoice_path = fields.Char("Chemin facture test")
+    docai_test_invoice_path = fields.Char("Facture test (PDF)")
 
     def set_values(self):
         res = super().set_values()
@@ -34,7 +34,6 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('docai_ai.location', self.docai_location)
         ICP.set_param('docai_ai.key_path', self.docai_key_path)
         ICP.set_param('docai_ai.invoice_processor_id', self.docai_invoice_processor_id)
-        ICP.set_param('docai_ai.receipt_processor_id', self.docai_receipt_processor_id)
         ICP.set_param('docai_ai.test_invoice_path', self.docai_test_invoice_path)
         return res
 
@@ -46,13 +45,12 @@ class ResConfigSettings(models.TransientModel):
             docai_location=ICP.get_param('docai_ai.location', 'eu'),
             docai_key_path=ICP.get_param('docai_ai.key_path'),
             docai_invoice_processor_id=ICP.get_param('docai_ai.invoice_processor_id'),
-            docai_receipt_processor_id=ICP.get_param('docai_ai.receipt_processor_id'),
             docai_test_invoice_path=ICP.get_param('docai_ai.test_invoice_path'),
         )
         return res
 
     def action_test_docai_connection(self):
-        """Teste la connexion et l’analyse d’une facture de test avec Google Document AI"""
+        """Test de connexion avec Document AI"""
         ICP = self.env['ir.config_parameter'].sudo()
         project_id = ICP.get_param('docai_ai.project_id')
         location = ICP.get_param('docai_ai.location', 'eu')
@@ -61,17 +59,21 @@ class ResConfigSettings(models.TransientModel):
         test_invoice_path = ICP.get_param('docai_ai.test_invoice_path')
 
         if not all([project_id, location, key_path, processor_id, test_invoice_path]):
-            raise UserError("⚠️ Remplis tous les champs DocAI + chemin facture test avant de lancer le test.")
+            raise UserError("⚠️ Remplis tous les champs DocAI (clé JSON, projet, location, processor, facture test).")
 
         if documentai is None:
-            raise UserError("⚠️ Le package google-cloud-documentai n’est pas installé. Fais : pip install google-cloud-documentai")
+            raise UserError("⚠️ Installe google-cloud-documentai et google-api-python-client.")
 
-        if not os.path.exists(test_invoice_path):
-            raise UserError(f"⚠️ Facture de test introuvable : {test_invoice_path}")
+        name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
+        # Essai 1 : gRPC
         try:
-            client = documentai.DocumentProcessorServiceClient.from_service_account_json(key_path)
-            name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
+            _logger.info("🔄 [DocAI Test] Tentative gRPC avec endpoint %s", location)
+
+            client = documentai.DocumentProcessorServiceClient.from_service_account_file(
+                key_path,
+                client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
+            )
 
             with open(test_invoice_path, "rb") as f:
                 raw_document = documentai.RawDocument(content=f.read(), mime_type="application/pdf")
@@ -79,20 +81,48 @@ class ResConfigSettings(models.TransientModel):
             request = documentai.ProcessRequest(name=name, raw_document=raw_document)
             result = client.process_document(request=request)
 
-            # On récupère juste un extrait du texte
-            doc_text = result.document.text[:200] if result.document.text else "⚠️ Pas de texte extrait"
-            _logger.info("✅ DocAI Test réussi. Extrait : %s", doc_text)
-
+            doc_text = result.document.text[:200]
+            _logger.info("✅ [DocAI Test] Connexion gRPC OK, extrait : %s", doc_text)
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': "Test OK ✅",
-                    'message': f"Connexion réussie 🎉 Facture test analysée.\nExtrait : {doc_text}",
+                    'title': "Connexion réussie (gRPC) 🎉",
+                    'message': f"Extrait : {doc_text}",
                     'sticky': False,
                 }
             }
 
-        except Exception as e:
-            _logger.error("❌ Erreur DocAI Test : %s", e, exc_info=True)
-            raise UserError(f"❌ Échec de connexion à Document AI : {e}")
+        except Exception as grpc_err:
+            _logger.warning("⚠️ Erreur gRPC (%s), fallback REST", grpc_err)
+
+            # Essai 2 : REST
+            try:
+                creds = service_account.Credentials.from_service_account_file(
+                    key_path,
+                    scopes=["https://www.googleapis.com/auth/cloud-platform"]
+                )
+                service = build("documentai", "v1", credentials=creds)
+
+                with open(test_invoice_path, "rb") as f:
+                    encoded = base64.b64encode(f.read()).decode("utf-8")
+
+                request = {"rawDocument": {"content": encoded, "mimeType": "application/pdf"}}
+                result = service.projects().locations().processors().process(
+                    name=name, body=request
+                ).execute()
+
+                doc_text = result.get("document", {}).get("text", "")[:200]
+                _logger.info("✅ [DocAI Test] Connexion REST OK, extrait : %s", doc_text)
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': "Connexion réussie (REST) 🎉",
+                        'message': f"Extrait : {doc_text}",
+                        'sticky': False,
+                    }
+                }
+            except Exception as rest_err:
+                _logger.error("❌ Erreur REST : %s", rest_err)
+                raise UserError(f"❌ Échec de connexion à Document AI (REST) : {rest_err}")
