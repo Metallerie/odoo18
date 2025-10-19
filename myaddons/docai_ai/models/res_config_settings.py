@@ -7,11 +7,11 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 try:
-    from google.cloud import documentai_v1 as documentai
     from google.oauth2 import service_account
+    from googleapiclient.discovery import build
 except ImportError:
-    documentai = None
     service_account = None
+    build = None
 
 
 class ResConfigSettings(models.TransientModel):
@@ -52,16 +52,15 @@ class ResConfigSettings(models.TransientModel):
         )
         return res
 
-    # Bouton de test connexion
+    # Bouton de test connexion (REST)
     def action_test_docai_connection(self):
-        """Teste la connexion avec Google Document AI via list_processors (plus léger que get_processor)"""
+        """Teste la connexion avec Google Document AI via REST (plus stable que gRPC)"""
         ICP = self.env['ir.config_parameter'].sudo()
         project_id = ICP.get_param('docai_ai.project_id')
         location = ICP.get_param('docai_ai.location', 'eu')
         key_path = ICP.get_param('docai_ai.key_path')
-        
 
-        _logger.info("=== [DocAI Test] Début du test connexion ===")
+        _logger.info("=== [DocAI Test REST] Début du test connexion ===")
         _logger.info("Project ID: %s", project_id)
         _logger.info("Location: %s", location)
         _logger.info("Key path: %s", key_path)
@@ -69,47 +68,45 @@ class ResConfigSettings(models.TransientModel):
         if not all([project_id, location, key_path]):
             raise UserError("Veuillez remplir tous les champs DocAI avant de tester la connexion.")
 
-        if documentai is None or service_account is None:
-            raise UserError("Le package google-cloud-documentai n’est pas installé. "
-                            "Installe-le avec : pip install google-cloud-documentai")
+        if service_account is None or build is None:
+            raise UserError("Les packages google-auth et google-api-python-client ne sont pas installés. "
+                            "Installe-les avec : pip install google-auth google-auth-oauthlib google-api-python-client")
 
         try:
             # Charger credentials
             _logger.info("Chargement des credentials depuis: %s", key_path)
             credentials = service_account.Credentials.from_service_account_file(key_path)
 
-            # Forcer endpoint régional
-            api_endpoint = f"{location}-documentai.googleapis.com"
-            _logger.info("Connexion endpoint: %s", api_endpoint)
+            # Construire client REST Document AI
+            service = build("documentai", "v1", credentials=credentials, cache_discovery=False)
 
-            client = documentai.DocumentProcessorServiceClient(
-                credentials=credentials,
-                client_options={"api_endpoint": api_endpoint}
-            )
-
-            # Liste des processors du projet
             parent = f"projects/{project_id}/locations/{location}"
-            processors = client.list_processors(parent=parent)
+            _logger.info("Requête REST sur: %s", parent)
 
-            first_proc = next(processors, None)
-            if not first_proc:
+            # Liste des processors via REST
+            processors = service.projects().locations().processors().list(parent=parent).execute()
+
+            if "processors" not in processors or not processors["processors"]:
                 raise UserError("Aucun processor trouvé dans ce projet.")
 
-            _logger.info("Premier processor trouvé: %s (ID=%s, état=%s)",
-                         first_proc.display_name, first_proc.name, first_proc.state.name)
+            first_proc = processors["processors"][0]
+            display_name = first_proc.get("displayName", "Inconnu")
+            state = first_proc.get("state", "INCONNU")
+
+            _logger.info("Premier processor REST: %s (state=%s)", display_name, state)
 
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
                     'title': "Connexion réussie 🎉",
-                    'message': f"Processor trouvé : {first_proc.display_name} "
-                               f"(état: {first_proc.state.name}, région: {location})",
+                    'message': f"Processor trouvé (REST) : {display_name} "
+                               f"(état: {state}, région: {location})",
                     'sticky': False,
                 }
             }
 
         except Exception as e:
             full_error = traceback.format_exc()
-            _logger.error("=== [DocAI Test] ERREUR ===\n%s", full_error)
-            raise UserError(f"Echec de connexion à Document AI : {str(e)}")
+            _logger.error("=== [DocAI Test REST] ERREUR ===\n%s", full_error)
+            raise UserError(f"Echec de connexion à Document AI (REST) : {str(e)}")
