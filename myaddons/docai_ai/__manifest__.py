@@ -26,7 +26,7 @@ des factures fournisseurs (account.move).
         'views/res_config_settings_views.xml',
         'views/docai_json_runner.xml',
         'views/account_move_views.xml',
-        'data/ir_cron.xml',
+        'views/ir_cron.xml',
     ],
 
     # mode démo (pas obligatoire)
