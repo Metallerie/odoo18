@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import os
 import logging
 from odoo import models, fields, api
@@ -18,23 +17,23 @@ class ResConfigSettings(models.TransientModel):
     docai_invoice_processor_id = fields.Char("Processor Facture")
     docai_test_invoice_path = fields.Char("Facture de test")
 
-    # Charger depuis ir.config_parameter
+    # Lecture depuis ir.config_parameter
     @api.model
     def get_values(self):
-        res = super(ResConfigSettings, self).get_values()
+        res = super().get_values()
         ICP = self.env["ir.config_parameter"].sudo()
         res.update(
-            docai_project_id=ICP.get_param("docai_ai.project_id", default=""),
-            docai_location=ICP.get_param("docai_ai.location", default="eu"),
-            docai_key_path=ICP.get_param("docai_ai.key_path", default=""),
-            docai_invoice_processor_id=ICP.get_param("docai_ai.invoice_processor_id", default=""),
-            docai_test_invoice_path=ICP.get_param("docai_ai.test_invoice_path", default=""),
+            docai_project_id=ICP.get_param("docai_ai.project_id", ""),
+            docai_location=ICP.get_param("docai_ai.location", "eu"),
+            docai_key_path=ICP.get_param("docai_ai.key_path", ""),
+            docai_invoice_processor_id=ICP.get_param("docai_ai.invoice_processor_id", ""),
+            docai_test_invoice_path=ICP.get_param("docai_ai.test_invoice_path", ""),
         )
         return res
 
     # Sauvegarde dans ir.config_parameter
     def set_values(self):
-        super(ResConfigSettings, self).set_values()
+        super().set_values()
         ICP = self.env["ir.config_parameter"].sudo()
         ICP.set_param("docai_ai.project_id", self.docai_project_id or "")
         ICP.set_param("docai_ai.location", self.docai_location or "eu")
@@ -54,7 +53,7 @@ class ResConfigSettings(models.TransientModel):
 
         name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
-        # --- PRINT console ---
+        # --- Debug console ---
         print("\n=== ⚡ VARIABLES ENVOYÉES À DOCUMENT AI ===")
         print(f"Project ID   : {project_id}")
         print(f"Location     : {location}")
@@ -90,6 +89,7 @@ class ResConfigSettings(models.TransientModel):
             return True
 
         except Exception as e:
-            print("❌ Erreur connexion Document AI :", str(e))
-            _logger.error("❌ Erreur connexion Document AI : %s", str(e))
+            msg = f"❌ Erreur connexion Document AI : {str(e)}"
+            print(msg)
+            _logger.error(msg)
             return False
