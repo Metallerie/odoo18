@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 import os
 import logging
-from odoo import models, fields, api
 from google.cloud import documentai_v1 as documentai
 
 _logger = logging.getLogger(__name__)
@@ -10,14 +10,12 @@ _logger = logging.getLogger(__name__)
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
-    # Champs configurables
     docai_project_id = fields.Char("Project ID")
     docai_location = fields.Char("Location", default="eu")
     docai_key_path = fields.Char("Chemin Clé JSON")
     docai_invoice_processor_id = fields.Char("Processor Facture")
     docai_test_invoice_path = fields.Char("Facture de test")
 
-    # Lecture depuis ir.config_parameter
     @api.model
     def get_values(self):
         res = super().get_values()
@@ -31,7 +29,6 @@ class ResConfigSettings(models.TransientModel):
         )
         return res
 
-    # Sauvegarde dans ir.config_parameter
     def set_values(self):
         super().set_values()
         ICP = self.env["ir.config_parameter"].sudo()
@@ -41,7 +38,6 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param("docai_ai.invoice_processor_id", self.docai_invoice_processor_id or "")
         ICP.set_param("docai_ai.test_invoice_path", self.docai_test_invoice_path or "")
 
-    # Bouton : Test connexion Document AI
     def action_test_docai_connection(self):
         self.ensure_one()
 
@@ -53,16 +49,6 @@ class ResConfigSettings(models.TransientModel):
 
         name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
-        # --- Debug console ---
-        print("\n=== ⚡ VARIABLES ENVOYÉES À DOCUMENT AI ===")
-        print(f"Project ID   : {project_id}")
-        print(f"Location     : {location}")
-        print(f"Key Path     : {key_path}")
-        print(f"Processor ID : {processor_id}")
-        print(f"Test Invoice : {test_invoice}")
-        print(f"Processor Name complet : {name}")
-        print("==========================================\n")
-
         try:
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
 
@@ -73,23 +59,19 @@ class ResConfigSettings(models.TransientModel):
             with open(test_invoice, "rb") as f:
                 pdf_content = f.read()
 
-            raw_document = documentai.RawDocument(
-                content=pdf_content,
-                mime_type="application/pdf"
-            )
-
+            raw_document = documentai.RawDocument(content=pdf_content, mime_type="application/pdf")
             request = documentai.ProcessRequest(name=name, raw_document=raw_document)
             result = client.process_document(request=request)
 
+            # Petit extrait du texte
             document = result.document
-            print("✅ Connexion réussie !")
-            print("📄 Extrait texte détecté :")
-            print(document.text[:500])
+            sample_text = document.text[:300].replace("\n", " ")
 
-            return True
+            msg = _("✅ Connexion réussie à Google Document AI !\nExtrait : %s") % sample_text
+            _logger.info(msg)
+            self.env.user.notify_info(message=msg)
 
         except Exception as e:
-            msg = f"❌ Erreur connexion Document AI : {str(e)}"
-            print(msg)
+            msg = _("❌ Erreur connexion Document AI : %s") % str(e)
             _logger.error(msg)
-            return False
+            raise UserError(msg)
