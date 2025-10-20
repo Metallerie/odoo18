@@ -6,9 +6,8 @@
     <field name="arch" type="xml">
       <xpath expr="//form[@js_class='base_settings']" position="inside">       
         <div class="app_settings_block" data-string="Google Document AI">
+        <block title="Google Document AI" name="google_document_AI_setting_container">
           <h2>Google Document AI</h2>
-          <div class="row mt16 o_settings_container">
-            <div class="col-12 o_setting_box">
               <div class="o_setting_left_pane">
                 <div class="o_form_label">Project ID</div>
                 <div class="o_form_field"><field name="docai_project_id"/></div>
@@ -38,8 +37,7 @@
                         string="Tester connexion"
                         class="btn btn-primary"/>
               </div>
-            </div>
-          </div>
+           </block>
         </div>
       </xpath>
     </field>
