@@ -8,7 +8,7 @@
         <button name="action_docai_scan_json"
                 type="object"
                 string="Scan from JSON"
-                class="oe_highlight"/>
+                class="oe_secondary"/>
       </xpath>
     </field>
   </record>
