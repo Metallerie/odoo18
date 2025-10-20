@@ -63,15 +63,34 @@ class ResConfigSettings(models.TransientModel):
             request = documentai.ProcessRequest(name=name, raw_document=raw_document)
             result = client.process_document(request=request)
 
-            # Petit extrait du texte
             document = result.document
             sample_text = document.text[:300].replace("\n", " ")
 
             msg = _("✅ Connexion réussie à Google Document AI !\nExtrait : %s") % sample_text
             _logger.info(msg)
-            self.env.user.notify_info(message=msg)
+
+            # Retourne une notification à l’utilisateur
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Test Document AI"),
+                    "message": msg,
+                    "sticky": False,
+                    "type": "success",
+                },
+            }
 
         except Exception as e:
             msg = _("❌ Erreur connexion Document AI : %s") % str(e)
             _logger.error(msg)
-            raise UserError(msg)
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Test Document AI"),
+                    "message": msg,
+                    "sticky": True,
+                    "type": "danger",
+                },
+            }
