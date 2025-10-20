@@ -17,14 +17,14 @@ class AccountMove(models.Model):
     # JSON complet Document AI (archive pour l’entraînement IA)
     docai_json_raw = fields.Text("JSON complet DocAI", readonly=True)
 
-    # JSON minimal (entities uniquement, utilisable dans Odoo)
+    # JSON minimal (entities uniquement, exploitable dans Odoo)
     docai_json = fields.Text("JSON simplifié DocAI", readonly=True)
 
     # Flag pour savoir si la facture a été analysée
     docai_analyzed = fields.Boolean("Analysée par DocAI", default=False, readonly=True)
 
     # -------------------------------------------------------------------------
-    # MÉTHODE PRINCIPALE
+    # MÉTHODE PRINCIPALE : Analyse DocAI
     # -------------------------------------------------------------------------
     def action_docai_analyze_attachment(self, force=False):
         """
@@ -92,8 +92,40 @@ class AccountMove(models.Model):
                 raise UserError(_("Erreur analyse Document AI : %s") % e)
 
     # -------------------------------------------------------------------------
-    # MÉTHODE POUR LE BOUTON MANUEL
+    # MÉTHODE POUR RAFRAÎCHIR
     # -------------------------------------------------------------------------
     def action_docai_refresh_json(self):
         """Rafraîchir les JSON même si déjà analysé"""
         return self.action_docai_analyze_attachment(force=True)
+
+    # -------------------------------------------------------------------------
+    # MÉTHODES DE TÉLÉCHARGEMENT
+    # -------------------------------------------------------------------------
+    def action_docai_download_json(self, raw=False):
+        """
+        Télécharge le JSON DocAI (brut ou simplifié).
+        """
+        self.ensure_one()
+
+        filename = f"facture_{self.id}_{'raw' if raw else 'min'}.json"
+        content = self.docai_json_raw if raw else self.docai_json
+
+        if not content:
+            raise UserError(_("Aucun JSON DocAI disponible pour cette facture."))
+
+        # Encode en base64 pour un data:URL
+        data = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"data:application/json;base64,{data}",
+            "target": "self",
+        }
+
+    def action_docai_download_json_raw(self):
+        """Télécharger le JSON complet"""
+        return self.action_docai_download_json(raw=True)
+
+    def action_docai_download_json_min(self):
+        """Télécharger le JSON simplifié"""
+        return self.action_docai_download_json(raw=False)
