@@ -2,6 +2,7 @@
 # docai_json_runner.py
 import base64
 import os
+import json
 import logging
 from odoo import models, fields, _
 from odoo.exceptions import UserError
@@ -13,8 +14,11 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    # JSON brut renvoyé par Document AI
-    docai_json = fields.Text("JSON brut DocAI", readonly=True)
+    # JSON complet Document AI (archive pour l’entraînement IA)
+    docai_json_raw = fields.Text("JSON complet DocAI", readonly=True)
+
+    # JSON minimal (entities uniquement, utilisable dans Odoo)
+    docai_json = fields.Text("JSON simplifié DocAI", readonly=True)
 
     # Flag pour savoir si la facture a été analysée
     docai_analyzed = fields.Boolean("Analysée par DocAI", default=False, readonly=True)
@@ -26,15 +30,14 @@ class AccountMove(models.Model):
         """
         Analyse avec Google Document AI.
         - En cron (force=False) : ne lance l'analyse que si docai_json est vide.
-        - En manuel (force=True) : réanalyse et écrase le JSON existant.
+        - En manuel (force=True) : réanalyse et écrase les JSON.
         """
         for move in self:
-            # ✅ Si déjà analysée et qu’on ne force pas → on ne fait rien
             if move.docai_analyzed and not force:
                 _logger.info(f"[DocAI] Facture {move.id} déjà analysée, skip")
                 continue
 
-            # 🔎 Récupérer le PDF attaché à la facture
+            # 🔎 Récupérer le PDF attaché
             attachment = self.env["ir.attachment"].search([
                 ("res_model", "=", "account.move"),
                 ("res_id", "=", move.id),
@@ -68,12 +71,17 @@ class AccountMove(models.Model):
                 request = documentai.ProcessRequest(name=name, raw_document=raw_document)
                 result = client.process_document(request=request)
 
-                # 📦 JSON brut
+                # 📦 JSON complet
                 raw_json = documentai.Document.to_json(result.document)
+
+                # 📦 JSON minimal (entities uniquement)
+                parsed = json.loads(raw_json)
+                minimal = {"entities": parsed.get("entities", [])}
 
                 # 💾 Écriture dans la facture
                 move.write({
-                    "docai_json": raw_json,
+                    "docai_json_raw": raw_json,
+                    "docai_json": json.dumps(minimal, indent=2, ensure_ascii=False),
                     "docai_analyzed": True,
                 })
 
@@ -87,5 +95,5 @@ class AccountMove(models.Model):
     # MÉTHODE POUR LE BOUTON MANUEL
     # -------------------------------------------------------------------------
     def action_docai_refresh_json(self):
-        """Rafraîchir le JSON même si déjà analysé"""
+        """Rafraîchir les JSON même si déjà analysé"""
         return self.action_docai_analyze_attachment(force=True)
