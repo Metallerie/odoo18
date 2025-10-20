@@ -24,7 +24,7 @@
         <button name="action_docai_refresh_json"
                 string="Rafraîchir JSON"
                 type="object"
-                class="btn-secondary"
+                class="btn-secondary" />
       </xpath>
     </field>
   </record>
