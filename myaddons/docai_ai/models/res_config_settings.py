@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from odoo import models, fields, api
+from odoo import models, fields
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -16,9 +16,8 @@ class ResConfigSettings(models.TransientModel):
     docai_invoice_processor_id = fields.Char(string="Processor Factures")
     docai_test_invoice_path = fields.Char(string="Facture Test (PDF)")
 
-    # Lecture des paramètres stockés
     def get_values(self):
-        res = super().get_values()
+        res = super(ResConfigSettings, self).get_values()
         ICP = self.env["ir.config_parameter"].sudo()
         res.update(
             docai_project_id=ICP.get_param("docai_ai.docai_project_id", default=""),
@@ -29,9 +28,8 @@ class ResConfigSettings(models.TransientModel):
         )
         return res
 
-    # Sauvegarde des paramètres
     def set_values(self):
-        super().set_values()
+        super(ResConfigSettings, self).set_values()
         ICP = self.env["ir.config_parameter"].sudo()
         ICP.set_param("docai_ai.docai_project_id", self.docai_project_id or "")
         ICP.set_param("docai_ai.docai_location", self.docai_location or "eu")
@@ -39,7 +37,6 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param("docai_ai.docai_invoice_processor_id", self.docai_invoice_processor_id or "")
         ICP.set_param("docai_ai.docai_test_invoice_path", self.docai_test_invoice_path or "")
 
-    # Bouton de test de connexion
     def action_test_docai_connection(self):
         import os
         from google.cloud import documentai_v1 as documentai
@@ -50,11 +47,11 @@ class ResConfigSettings(models.TransientModel):
         key_path = self.docai_key_path
         test_invoice = self.docai_test_invoice_path
 
-        if not project_id or not location or not processor_id or not key_path:
+        if not (project_id and location and processor_id and key_path and test_invoice):
             raise UserError("⚠️ Paramètres Document AI incomplets.")
 
-        if not test_invoice or not os.path.exists(test_invoice):
-            raise UserError("⚠️ Aucune facture de test trouvée. Vérifie le chemin.")
+        if not os.path.exists(test_invoice):
+            raise UserError("⚠️ Le fichier de test n’existe pas : %s" % test_invoice)
 
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
 
@@ -75,15 +72,13 @@ class ResConfigSettings(models.TransientModel):
         try:
             result = client.process_document(request=request)
             doc = result.document
-            _logger.info("✅ Connexion Document AI OK - Texte extrait: %s", doc.text[:200])
             return {
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
                     "title": "Succès",
-                    "message": "✅ Connexion OK - Champs extraits: %s" % ", ".join(
-                        [e.type_ for e in doc.entities[:5]]
-                    ),
+                    "message": "Connexion OK ✅. Champs extraits: %s"
+                               % ", ".join([e.type_ for e in doc.entities[:5]]),
                     "sticky": False,
                 },
             }
