@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-import os
-from odoo import models, fields
+from odoo import models, fields, api
 from odoo.exceptions import UserError
-
-from google.cloud import documentai_v1 as documentai
 
 _logger = logging.getLogger(__name__)
 
@@ -12,25 +9,17 @@ _logger = logging.getLogger(__name__)
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
-    # Champs configurables
-    docai_project_id = fields.Char("Google Project ID")
-    docai_location = fields.Char("Location", default="eu")
-    docai_key_path = fields.Char("Chemin fichier clé JSON")
-    docai_invoice_processor_id = fields.Char("Processor ID Factures")
-    docai_test_invoice_path = fields.Char("Chemin facture test")
+    # Champs de config Google Document AI
+    docai_project_id = fields.Char(string="Project ID")
+    docai_location = fields.Char(string="Location", default="eu")
+    docai_key_path = fields.Char(string="Chemin Clé JSON")
+    docai_invoice_processor_id = fields.Char(string="Processor Factures")
+    docai_test_invoice_path = fields.Char(string="Facture Test (PDF)")
 
-    def set_values(self):
-        super().set_values()
-        self.env["ir.config_parameter"].sudo().set_param("docai_ai.docai_project_id", self.docai_project_id or "")
-        self.env["ir.config_parameter"].sudo().set_param("docai_ai.docai_location", self.docai_location or "eu")
-        self.env["ir.config_parameter"].sudo().set_param("docai_ai.docai_key_path", self.docai_key_path or "")
-        self.env["ir.config_parameter"].sudo().set_param("docai_ai.docai_invoice_processor_id", self.docai_invoice_processor_id or "")
-        self.env["ir.config_parameter"].sudo().set_param("docai_ai.docai_test_invoice_path", self.docai_test_invoice_path or "")
-
-    @classmethod
-    def get_values(cls):
+    # Lecture des paramètres stockés
+    def get_values(self):
         res = super().get_values()
-        ICP = cls.env["ir.config_parameter"].sudo()
+        ICP = self.env["ir.config_parameter"].sudo()
         res.update(
             docai_project_id=ICP.get_param("docai_ai.docai_project_id", default=""),
             docai_location=ICP.get_param("docai_ai.docai_location", default="eu"),
@@ -40,66 +29,64 @@ class ResConfigSettings(models.TransientModel):
         )
         return res
 
+    # Sauvegarde des paramètres
+    def set_values(self):
+        super().set_values()
+        ICP = self.env["ir.config_parameter"].sudo()
+        ICP.set_param("docai_ai.docai_project_id", self.docai_project_id or "")
+        ICP.set_param("docai_ai.docai_location", self.docai_location or "eu")
+        ICP.set_param("docai_ai.docai_key_path", self.docai_key_path or "")
+        ICP.set_param("docai_ai.docai_invoice_processor_id", self.docai_invoice_processor_id or "")
+        ICP.set_param("docai_ai.docai_test_invoice_path", self.docai_test_invoice_path or "")
+
+    # Bouton de test de connexion
     def action_test_docai_connection(self):
-        """Test de connexion à Google Document AI avec la facture de test"""
+        import os
+        from google.cloud import documentai_v1 as documentai
+
+        project_id = self.docai_project_id
+        location = self.docai_location
+        processor_id = self.docai_invoice_processor_id
+        key_path = self.docai_key_path
+        test_invoice = self.docai_test_invoice_path
+
+        if not project_id or not location or not processor_id or not key_path:
+            raise UserError("⚠️ Paramètres Document AI incomplets.")
+
+        if not test_invoice or not os.path.exists(test_invoice):
+            raise UserError("⚠️ Aucune facture de test trouvée. Vérifie le chemin.")
+
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
+
+        client = documentai.DocumentProcessorServiceClient(
+            client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
+        )
+        name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
+
+        with open(test_invoice, "rb") as f:
+            pdf_content = f.read()
+
+        raw_document = documentai.RawDocument(
+            content=pdf_content,
+            mime_type="application/pdf"
+        )
+        request = documentai.ProcessRequest(name=name, raw_document=raw_document)
+
         try:
-            if not self.docai_project_id or not self.docai_invoice_processor_id:
-                raise UserError("⚠️ Project ID et Processor ID sont obligatoires")
-
-            if not self.docai_key_path or not os.path.exists(self.docai_key_path):
-                raise UserError(f"⚠️ Fichier clé JSON introuvable : {self.docai_key_path}")
-
-            if not self.docai_test_invoice_path or not os.path.exists(self.docai_test_invoice_path):
-                raise UserError(f"⚠️ Facture test introuvable : {self.docai_test_invoice_path}")
-
-            # Authentification
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.docai_key_path
-
-            # Endpoint forcé (ex: eu-documentai.googleapis.com)
-            api_endpoint = f"{self.docai_location}-documentai.googleapis.com"
-            client = documentai.DocumentProcessorServiceClient(
-                client_options={"api_endpoint": api_endpoint}
-            )
-
-            # Nom du processor
-            name = f"projects/{self.docai_project_id}/locations/{self.docai_location}/processors/{self.docai_invoice_processor_id}"
-
-            # DEBUG
-            _logger.info("=== [DocAI DEBUG] ===")
-            _logger.info("Endpoint utilisé : %s", api_endpoint)
-            _logger.info("Processor name   : %s", name)
-            _logger.info("Clé JSON         : %s", self.docai_key_path)
-            _logger.info("Facture test     : %s", self.docai_test_invoice_path)
-
-            # Charger le PDF
-            with open(self.docai_test_invoice_path, "rb") as f:
-                pdf_content = f.read()
-
-            raw_document = documentai.RawDocument(
-                content=pdf_content,
-                mime_type="application/pdf"
-            )
-
-            # Requête
-            request = documentai.ProcessRequest(name=name, raw_document=raw_document)
             result = client.process_document(request=request)
-
-            document = result.document
-
-            _logger.info("=== [DocAI RESULT - Texte détecté] ===\n%s", document.text[:500])
-            for entity in document.entities:
-                _logger.info("Champ %s → %s", entity.type_, entity.mention_text)
-
+            doc = result.document
+            _logger.info("✅ Connexion Document AI OK - Texte extrait: %s", doc.text[:200])
             return {
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
                     "title": "Succès",
-                    "message": "Connexion à Google Document AI réussie ✅",
+                    "message": "✅ Connexion OK - Champs extraits: %s" % ", ".join(
+                        [e.type_ for e in doc.entities[:5]]
+                    ),
                     "sticky": False,
                 },
             }
-
         except Exception as e:
-            _logger.error("❌ Erreur connexion Document AI : %s", e, exc_info=True)
-            raise UserError(f"❌ Échec de connexion à Document AI : {str(e)}")
+            _logger.error("❌ Erreur connexion Document AI : %s", e)
+            raise UserError("❌ Erreur connexion Document AI : %s" % e)
