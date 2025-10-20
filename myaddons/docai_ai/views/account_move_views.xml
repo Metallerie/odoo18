@@ -12,8 +12,7 @@
       </xpath>
     </field>
   </record>
-</odoo>
-<odoo>
+
   <!-- Héritage de la vue facture pour ajouter un onglet OCR JSON docai_json_runner.xml -->
   <record id="view_move_form_json" model="ir.ui.view">
     <field name="name">account.move.form.json</field>
