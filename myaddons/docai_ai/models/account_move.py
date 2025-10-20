@@ -12,8 +12,8 @@ class AccountMove(models.Model):
 
     def action_docai_scan_json(self):
         """
-        Lit le champ docai_json (Document AI) et met à jour la facture
-        + ses lignes (account.move.line).
+        Lit le champ docai_json (JSON simplifié DocAI)
+        et met à jour les infos de la facture + lignes
         """
         for move in self:
             if not move.docai_json:
@@ -21,90 +21,77 @@ class AccountMove(models.Model):
 
             try:
                 data = json.loads(move.docai_json)
-                entities = {
-                    ent.get("type_"): ent.get("mentionText")
-                    for ent in data.get("entities", [])
-                }
-
                 vals = {}
-                # Numéro de facture
-                if "invoice_id" in entities:
-                    vals["ref"] = entities["invoice_id"]
 
-                # Date de facture
-                if "invoice_date" in entities:
-                    vals["invoice_date"] = entities["invoice_date"]
+                # Champs simples
+                if data.get("invoice_id"):
+                    vals["ref"] = data["invoice_id"]
 
-                # Fournisseur
-                partner = None
-                if "supplier_registration" in entities:
+                if data.get("invoice_date"):
+                    vals["invoice_date"] = data["invoice_date"]
+
+                if data.get("supplier_name"):
                     partner = self.env["res.partner"].search([
-                        ("vat", "=", entities["supplier_registration"])
+                        ("name", "ilike", data["supplier_name"])
                     ], limit=1)
-                if not partner and "supplier_name" in entities:
-                    partner = self.env["res.partner"].search([
-                        ("name", "ilike", entities["supplier_name"])
-                    ], limit=1)
-                if partner:
-                    vals["partner_id"] = partner.id
+                    if partner:
+                        vals["partner_id"] = partner.id
 
-                # Totaux
-                if "total_amount" in entities:
+                if data.get("total_amount"):
                     try:
-                        vals["amount_total"] = float(entities["total_amount"].replace(",", "."))
+                        vals["amount_total"] = float(data["total_amount"])
                     except Exception:
-                        _logger.warning(f"Impossible de parser total_amount {entities['total_amount']}")
+                        _logger.warning(f"⚠️ Montant invalide dans JSON facture {move.id}: {data.get('total_amount')}")
 
-                # Appliquer les infos simples
+                # Appliquer les champs simples
                 if vals:
                     move.write(vals)
+                    _logger.info(f"✅ Facture {move.id} mise à jour depuis JSON simplifié : {vals}")
 
-                # 🧾 Lignes de facture
-                line_items = [ent for ent in data.get("entities", []) if ent.get("type_") == "line_item"]
+                # Traitement des lignes
+                if "line_item" in data and data["line_item"]:
+                    lines = []
+                    for item in data["line_item"]:
+                        product = self.env["product.product"].search([
+                            ("name", "ilike", item.get("description", ""))
+                        ], limit=1)
 
-                if line_items:
-                    move.line_ids.unlink()  # ⚠️ on supprime les anciennes lignes
+                        line_vals = {
+                            "name": item.get("description", "Ligne importée"),
+                            "quantity": float(item.get("quantity") or 1.0),
+                            "price_unit": float(item.get("unit_price") or 0.0),
+                            "move_id": move.id,
+                        }
+                        if product:
+                            line_vals["product_id"] = product.id
 
-                    new_lines = []
-                    for item in line_items:
-                        description = item.get("mentionText") or "Ligne"
-                        quantity = 1.0
-                        price_unit = 0.0
-                        total = 0.0
+                        lines.append((0, 0, line_vals))
 
-                        for prop in item.get("properties", []):
-                            if prop.get("type_") in ["item_description", "description"]:
-                                description = prop.get("mentionText")
-                            elif prop.get("type_") in ["quantity"]:
-                                try:
-                                    quantity = float(prop.get("mentionText").replace(",", "."))
-                                except Exception:
-                                    pass
-                            elif prop.get("type_") in ["unit_price", "price"]:
-                                try:
-                                    price_unit = float(prop.get("mentionText").replace(",", "."))
-                                except Exception:
-                                    pass
-                            elif prop.get("type_") in ["amount", "total_amount", "line_total"]:
-                                try:
-                                    total = float(prop.get("mentionText").replace(",", "."))
-                                except Exception:
-                                    pass
-
-                        new_lines.append((0, 0, {
-                            "name": description,
-                            "quantity": quantity,
-                            "price_unit": price_unit or total,
-                            "account_id": move.journal_id.default_account_id.id,
-                        }))
-
-                    if new_lines:
-                        move.write({"invoice_line_ids": new_lines})
-                        _logger.info(f"✅ Facture {move.id} lignes mises à jour depuis JSON ({len(new_lines)} lignes)")
-
-                else:
-                    _logger.warning(f"⚠️ Facture {move.id} : aucune ligne trouvée dans JSON")
+                    if lines:
+                        move.write({"invoice_line_ids": lines})
+                        _logger.info(f"✅ {len(lines)} lignes ajoutées depuis JSON simplifié pour facture {move.id}")
+                    else:
+                        _logger.warning(f"⚠️ Facture {move.id} : aucune ligne trouvée dans JSON simplifié")
 
             except Exception as e:
                 _logger.error(f"❌ Erreur parsing JSON DocAI facture {move.id} : {e}")
+                raise UserError(_("Erreur parsing JSON : %s") % e)
+
+    # -------------------------------------------------------------------------
+    # Bouton Debug JSON
+    # -------------------------------------------------------------------------
+    def action_docai_debug_json(self):
+        """
+        Debug : affiche les clés principales du JSON simplifié
+        """
+        for move in self:
+            if not move.docai_json:
+                raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
+
+            try:
+                data = json.loads(move.docai_json)
+                top_keys = list(data.keys())
+                _logger.info(f"🔍 Facture {move.id} - clés JSON : {top_keys}")
+                raise UserError(_("Clés JSON détectées : %s") % ", ".join(top_keys))
+            except Exception as e:
                 raise UserError(_("Erreur parsing JSON : %s") % e)
