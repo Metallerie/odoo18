@@ -35,14 +35,15 @@
                 type="object"
                 string="Rafraîchir JSON"
                 class="oe_secondary"/>
-        <button name="action_docai_download_json_raw"
-                type="object"
-                string="⬇ Télécharger JSON Complet"
-                class="oe_secondary"/>
-        <button name="action_docai_download_json_min"
-                type="object"
-                string="⬇ Télécharger JSON Simplifié"
-                class="oe_secondary"/>
+ <button name="action_docai_download_json_raw"
+        type="object"
+        string="⬇ Télécharger JSON Complet"
+        class="oe_secondary"/>
+
+<button name="action_docai_download_json_min"
+        type="object"
+        string="⬇ Télécharger JSON Simplifié"
+        class="oe_secondary"/>
       </xpath>
 
    
