@@ -1,5 +1,5 @@
 <odoo>
-  <!-- Inherit vue formulaire des factures pour ajouter le champ + l’onglet OCR -->
+  <!-- Inherit vue formulaire des factures pour ajouter le champ docai_json + l’onglet OCR  docai_json_runner.xml -->
     <record id="view_move_form_inherit_ocr_json" model="ir.ui.view">
         <field name="name">account.move.form.inherit.ocr.json</field>
         <field name="model">account.move</field>
