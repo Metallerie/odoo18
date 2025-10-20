@@ -1,0 +1,13 @@
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_mindee_auto_import" model="ir.cron">
+            <field name="name">Import factures PDF - Docai</field>
+            <field name="model_id" ref="docai_ai.model_docai_ai_invoice_import"/>
+            <field name="state">code</field>
+            <field name="code">model.import_pdf_invoices()</field>
+            <field name="interval_type">minutes</field>
+            <field name="interval_number">10</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>
