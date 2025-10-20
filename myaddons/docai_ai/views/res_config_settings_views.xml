@@ -8,7 +8,7 @@
         <div class="app_settings_block" data-string="Google Document AI">
         <block title="Google Document AI" name="google_document_AI_setting_container">
               <div class="row mt16">
-                <label string="Project ID"  class="o_form_label" />
+                <div class="o_form_label">Project ID</div>
                 <div class="o_form_field"><field name="docai_project_id"/>
               </div>
 
