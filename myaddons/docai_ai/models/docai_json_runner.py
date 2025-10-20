@@ -7,6 +7,8 @@ import logging
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 from google.cloud import documentai_v1 as documentai
+from odoo import http
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
@@ -99,33 +101,51 @@ class AccountMove(models.Model):
         return self.action_docai_analyze_attachment(force=True)
 
     # -------------------------------------------------------------------------
-    # MÉTHODES DE TÉLÉCHARGEMENT
+    # MÉTHODES DE TÉLÉCHARGEMENT (redirection vers controller)
     # -------------------------------------------------------------------------
-    def action_docai_download_json(self, raw=False):
-        """
-        Télécharge le JSON DocAI (brut ou simplifié).
-        """
+    def action_docai_download_json_raw(self):
         self.ensure_one()
-
-        filename = f"facture_{self.id}_{'raw' if raw else 'min'}.json"
-        content = self.docai_json_raw if raw else self.docai_json
-
-        if not content:
-            raise UserError(_("Aucun JSON DocAI disponible pour cette facture."))
-
-        # Encode en base64 pour un data:URL
-        data = base64.b64encode(content.encode("utf-8")).decode("utf-8")
-
         return {
             "type": "ir.actions.act_url",
-            "url": f"data:application/json;base64,{data}",
+            "url": f"/docai/download/{self.id}/raw",
             "target": "self",
         }
 
-    def action_docai_download_json_raw(self):
-        """Télécharger le JSON complet"""
-        return self.action_docai_download_json(raw=True)
-
     def action_docai_download_json_min(self):
-        """Télécharger le JSON simplifié"""
-        return self.action_docai_download_json(raw=False)
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/docai/download/{self.id}/min",
+            "target": "self",
+        }
+
+
+# -------------------------------------------------------------------------
+# CONTROLLER POUR LE TÉLÉCHARGEMENT
+# -------------------------------------------------------------------------
+class DocaiDownloadController(http.Controller):
+
+    @http.route('/docai/download/<int:move_id>/<string:kind>', type='http', auth='user')
+    def download_json(self, move_id, kind="min", **kwargs):
+        """
+        Télécharge le JSON d'une facture
+        - kind = "raw" → JSON complet
+        - kind = "min" → JSON simplifié
+        """
+        move = request.env['account.move'].browse(move_id)
+        if not move.exists():
+            return request.not_found()
+
+        content = move.docai_json_raw if kind == "raw" else move.docai_json
+        if not content:
+            return request.not_found()
+
+        filename = f"facture_{move.id}_{kind}.json"
+
+        return request.make_response(
+            content,
+            headers=[
+                ('Content-Type', 'application/json'),
+                ('Content-Disposition', f'attachment; filename={filename}')
+            ]
+        )
