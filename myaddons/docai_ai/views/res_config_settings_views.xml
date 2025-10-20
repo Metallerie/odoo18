@@ -7,10 +7,10 @@
       <xpath expr="//form[@js_class='base_settings']" position="inside">       
         <div class="app_settings_block" data-string="Google Document AI">
         <block title="Google Document AI" name="google_document_AI_setting_container">
-          <h2>Google Document AI</h2>
-              <div class="o_setting_left_pane">
-                <div class="o_form_label">Project ID</div>
+              <div class="row mt16">
+                <label string="Project ID"  class="col-lg-3 o_light_label"/>
                 <div class="o_form_field"><field name="docai_project_id"/></div>
+              </div>
 
                 <div class="o_form_label">Location</div>
                 <div class="o_form_field"><field name="docai_location"/></div>
