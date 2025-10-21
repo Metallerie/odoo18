@@ -12,8 +12,8 @@
           <button name="action_docai_scan_json"
                   type="object"
                   string="Scan from JSON"
-                  class="oe_secondary"
-                  states="draft"/>
+                  class="btn-secondary"
+                  invisible="not in_draft"/>
         </xpath>
       </field>
     </record>
@@ -36,21 +36,21 @@
           <button name="action_docai_analyze_attachment"
                   type="object"
                   string="Analyser PDF avec DocAI"
-                  class="oe_highlight"
-                  states="draft"/>
+                  class="btn-primary"
+                  invisible="not in_draft"/>
           <button name="action_docai_refresh_json"
                   type="object"
                   string="Rafraîchir JSON"
-                  class="oe_secondary"
-                  states="draft"/>
+                  class="btn-secondary"
+                  invisible="not in_draft"/>
           <button name="action_docai_download_json_raw"
                   type="object"
                   string="⬇ Télécharger JSON Complet"
-                  class="oe_secondary"/>
+                  class="btn-secondary"/>
           <button name="action_docai_download_json_min"
                   type="object"
                   string="⬇ Télécharger JSON Simplifié"
-                  class="oe_secondary"/>
+                  class="btn-secondary"/>
         </xpath>
       </field>
     </record>
