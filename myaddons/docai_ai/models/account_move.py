@@ -64,6 +64,47 @@ class AccountMove(models.Model):
                 m[t] = txt
         return m
 
+    def _find_tax_from_docai(self, ent_map):
+        """Retourne une taxe d'achat correspondant au taux détecté (ex: 20%)."""
+        rate_txt = None
+        for k, v in ent_map.items():
+            if k in ("vat", "vat/tax_rate") or "tax_rate" in k:
+                rate_txt = v
+                break
+
+        if not rate_txt:
+            print("⚠️ Aucun taux de TVA trouvé dans le JSON")
+            return None
+
+        rate = _to_float(rate_txt)
+        if rate > 1.0:  # '20' ou '20%' -> 20%
+            pass
+        elif 0.0 < rate < 1.0:  # ex: 0.2 -> 20
+            rate = rate * 100.0
+        else:
+            print(f"⚠️ Taux invalide : {rate_txt}")
+            return None
+
+        Tax = self.env["account.tax"].with_context(active_test=False)
+        company = self.env.company
+        tax = Tax.search([
+            ("company_id", "=", company.id),
+            ("type_tax_use", "in", ["purchase", "none"]),
+            ("amount", "=", rate),
+            ("price_include", "=", False),
+            ("amount_type", "=", "percent"),
+        ], limit=1)
+
+        if tax:
+            print(f"✅ Taxe trouvée : {tax.name} ({tax.amount}%)")
+        else:
+            print(f"⚠️ Pas de taxe trouvée pour {rate}%")
+
+        return tax or None
+
+    # -------------------------------------------------------------------------
+    # Action principale : lecture du JSON brut Document AI
+    # -------------------------------------------------------------------------
     def action_docai_scan_json(self):
         for move in self:
             if not move.docai_json:
@@ -98,8 +139,6 @@ class AccountMove(models.Model):
 
             # TVA détectée
             tax = self._find_tax_from_docai(ent_map)
-            if tax:
-                print(f"🧾 Taxe trouvée : {tax.name} ({tax.amount}%)")
 
             # Lignes
             line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
