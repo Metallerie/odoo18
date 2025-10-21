@@ -2,6 +2,7 @@
 import json
 import logging
 import re
+from datetime import datetime
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 
@@ -30,6 +31,21 @@ def _norm_type(t):
     if not t:
         return ""
     return str(t).split("/")[-1]
+
+
+def _to_date(val):
+    """Convertit une date 'DD/MM/YYYY' ou 'YYYY-MM-DD' vers ISO."""
+    if not val:
+        return False
+    try:
+        if re.match(r"^\d{4}-\d{2}-\d{2}$", val):  # format ISO déjà OK
+            return val
+        if re.match(r"^\d{2}/\d{2}/\d{4}$", val):  # format FR
+            dt = datetime.strptime(val, "%d/%m/%Y")
+            return dt.strftime("%Y-%m-%d")
+    except Exception as e:
+        print(f"❌ Erreur conversion date {val}: {e}")
+    return False
 
 
 class AccountMove(models.Model):
@@ -73,7 +89,8 @@ class AccountMove(models.Model):
             if ent_map.get("invoice_id"):
                 vals["ref"] = ent_map["invoice_id"]
             if ent_map.get("invoice_date"):
-                vals["invoice_date"] = ent_map["invoice_date"]
+                vals["invoice_date"] = _to_date(ent_map["invoice_date"])
+                print(f"📅 Date convertie : {vals['invoice_date']}")
 
             if vals:
                 move.write(vals)
