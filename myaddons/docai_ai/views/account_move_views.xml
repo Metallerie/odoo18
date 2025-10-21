@@ -80,11 +80,7 @@
                   string="Scan from JSON"
                   class="oe_secondary"
                   states="draft"/>
-          <button name="action_docai_debug_json"
-                  type="object"
-                  string="Debug JSON"
-                  class="oe_link"
-                  states="draft"/>
+    
         </xpath>
       </field>
     </record>
