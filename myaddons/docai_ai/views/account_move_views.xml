@@ -74,7 +74,7 @@
     <field name="model">account.move</field>
     <field name="inherit_id" ref="account.view_move_form"/>
     <field name="arch" type="xml">
-    
+   <xpath expr="//header" position="inside">
         <button name="action_docai_debug_json"
                 type="object"
                 string="Debug JSON"
