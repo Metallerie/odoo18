@@ -13,7 +13,8 @@
                   type="object"
                   string="Scan from JSON"
                   class="btn-secondary"
-                  states="draft" />        </xpath>
+                  invisible="state != 'draft'"/>
+        </xpath>
       </field>
     </record>
 
@@ -36,11 +37,13 @@
                   type="object"
                   string="Analyser PDF avec DocAI"
                   class="btn-primary"
-                  states="draft" />          <button name="action_docai_refresh_json"
+                  invisible="state != 'draft'"/>
+          <button name="action_docai_refresh_json"
                   type="object"
                   string="Rafraîchir JSON"
                   class="btn-secondary"
-                  states="draft" />          <button name="action_docai_download_json_raw"
+                  invisible="state != 'draft'"/>
+          <button name="action_docai_download_json_raw"
                   type="object"
                   string="⬇ Télécharger JSON Complet"
                   class="btn-secondary"/>
