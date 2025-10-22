@@ -2,6 +2,7 @@
 import json
 import logging
 import re
+from datetime import datetime
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 
@@ -23,52 +24,56 @@ MONTHS_FR = {
     "décembre": 12, "decembre": 12, "déc": 12, "dec": 12,
 }
 
-def _safe_int(x):
-    try:
-        return int(x)
-    except Exception:
+def _parse_date_any(value):
+    """Retourne 'YYYY-MM-DD' à partir de formats FR/ISO ou normalizedValue."""
+    if not value:
         return None
+    if isinstance(value, dict):
+        # Si c'est un bloc normalizedValue venant de DocAI
+        if value.get("dateValue"):
+            try:
+                y = int(value["dateValue"]["year"])
+                m = int(value["dateValue"]["month"])
+                d = int(value["dateValue"]["day"])
+                return f"{y:04d}-{m:02d}-{d:02d}"
+            except Exception:
+                pass
+        if value.get("text"):
+            value = value["text"]
+        else:
+            value = str(value)
 
-
-def _parse_date_any(s):
-    """Retourne une date au format ISO 'YYYY-MM-DD' à partir de formats FR/US courants.
-    Gère : '09/10/2025', '09-10-2025', '09.10.2025', '2025-10-09', '9 octobre 2025', etc.
-    """
-    if not s:
-        return None
-    if isinstance(s, (bytes, bytearray)):
+    s = str(value).strip()
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"):
         try:
-            s = s.decode("utf-8", errors="ignore")
+            return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
         except Exception:
-            s = str(s)
-    s = str(s).strip()
-    # ISO direct
-    m = re.fullmatch(r"(\d{4})-(\d{1,2})-(\d{1,2})", s)
-    if m:
-        y, M, d = map(int, m.groups())
-        if 1 <= M <= 12 and 1 <= d <= 31:
-            return f"{y:04d}-{M:02d}-{d:02d}"
-    # FR dd/mm/yyyy ou dd-mm-yyyy ou dd.mm.yyyy
-    m = re.fullmatch(r"(\d{1,2})[\./-](\d{1,2})[\./-](\d{4})", s)
-    if m:
-        d, M, y = map(int, m.groups())
-        if 1 <= M <= 12 and 1 <= d <= 31:
-            return f"{y:04d}-{M:02d}-{d:02d}"
-    # Texte: '9 octobre 2025' (insensible aux accents)
-    lower = s.lower().replace("\u00a0", " ")
-    m = re.fullmatch(r"(\d{1,2})\s+([a-zéèêëàâîïôöùûüç\.]+)\s+(\d{4})", lower)
-    if m:
-        d = _safe_int(m.group(1))
-        month_name = m.group(2).strip(" .")
-        y = _safe_int(m.group(3))
+            pass
+    # Mois en toutes lettres (fr)
+    low = s.lower().replace("\u00a0", " ")
+    tokens = [t.strip(" .,") for t in low.split() if t.strip()]
+    for i in range(len(tokens) - 2):
+        d_tok, m_tok, y_tok = tokens[i], tokens[i+1], tokens[i+2]
+        if d_tok.isdigit() and len(y_tok) == 4 and y_tok.isdigit():
+            m_num = MONTHS_FR.get(m_tok)
+            if m_num:
+                try:
+                    d = int(d_tok)
+                    y = int(y_tok)
+                    if 1 <= d <= 31:
+                        return f"{y:04d}-{m_num:02d}-{d:02d}"
+                except Exception:
+                    pass
+    return None
+
+
 def _to_float(val):
-    """Convertit '12,50' -> 12.50 ; ' 3 974 ' -> 3974.0 ; None -> 0.0"""
     if val is None:
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
     s = str(val).strip()
-    s = s.replace(" ", "").replace("\u00A0", "")  # espaces insécables
+    s = s.replace(" ", "").replace("\u00A0", "")
     s = s.replace(",", ".")
     m = re.findall(r"-?\d+(?:\.\d+)?", s)
     if not m:
@@ -98,7 +103,11 @@ class AccountMove(models.Model):
             t = ent.get("type") or ent.get("type_")
             txt = ent.get("mentionText")
             if t and txt and t not in m:
-                m[t] = txt
+                # On stocke aussi normalizedValue si dispo
+                if ent.get("normalizedValue"):
+                    m[t] = ent["normalizedValue"]
+                else:
+                    m[t] = txt
         return m
 
     def action_docai_scan_json(self):
@@ -126,18 +135,20 @@ class AccountMove(models.Model):
             if ent_map.get("invoice_id"):
                 vals["ref"] = ent_map["invoice_id"]
             if ent_map.get("invoice_date"):
-                vals["invoice_date"] = ent_map["invoice_date"]
+                iso_date = _parse_date_any(ent_map["invoice_date"])
+                if iso_date:
+                    vals["invoice_date"] = iso_date
+                else:
+                    _logger.warning(f"Facture {move.id}: date illisible '{ent_map['invoice_date']}' — inchangée")
 
             if vals:
                 move.write(vals)
                 print(f"✅ Facture {move.id} mise à jour avec {vals}")
 
-            # TVA détectée
             tax = self._find_tax_from_docai(ent_map)
             if tax:
                 print(f"🧾 Taxe trouvée : {tax.name} ({tax.amount}%)")
 
-            # Lignes
             line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
             new_lines = []
             print(f"🛠 Analyse des lignes : {len(line_items)} candidates")
@@ -184,7 +195,7 @@ class AccountMove(models.Model):
                 entities = self._docai_entities(data)
                 print(f"🔍 DEBUG JSON Facture {move.id} : {len(entities)} entités")
                 for e in entities[:10]:
-                    print(f"   - {e.get('type') or e.get('type_')} = {e.get('mentionText')}")
+                    print(f"   - {e.get('type') or e.get('type_')} = {e.get('mentionText')} (normalized={e.get('normalizedValue')})")
             except Exception as e:
                 print(f"❌ Erreur parsing JSON : {e}")
                 raise UserError(_("Erreur parsing JSON : %s") % e)
