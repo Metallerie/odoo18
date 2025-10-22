@@ -28,9 +28,6 @@ class AccountMove(models.Model):
             _logger.info("🔎 Facture %s → lecture JSON…", move.name)
 
             # --- Fournisseur ---
-            supplier_name = ent_map.get("supplier_name")
-            if not supplier_name:
-                raise UserError("Nom du fournisseur manquant dans le JSON")
 
             partner = self.env["res.partner"].search(
                 [("name", "ilike", supplier_name)], limit=1
