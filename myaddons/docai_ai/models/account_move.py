@@ -1,166 +1,137 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-from odoo import models, fields
+import re
+from odoo import models, fields, _
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
 
+def _to_float(val):
+    """Convertit '12,50' -> 12.50 ; ' 3 974 ' -> 3974.0 ; None -> 0.0"""
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    s = str(val).strip()
+    s = s.replace(" ", "").replace("\u00A0", "")  # espaces insécables
+    s = s.replace(",", ".")
+    m = re.findall(r"-?\d+(?:\.\d+)?", s)
+    if not m:
+        return 0.0
+    try:
+        return float(m[0])
+    except Exception:
+        return 0.0
+
+
+def _norm_type(t):
+    if not t:
+        return ""
+    return str(t).split("/")[-1]
+
+
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    docai_json = fields.Text("Document AI JSON brut")
+    def _docai_entities(self, data):
+        ents = data.get("entities")
+        return ents if isinstance(ents, list) else []
+
+    def _docai_first_map(self, entities):
+        m = {}
+        for ent in entities:
+            t = ent.get("type") or ent.get("type_")
+            txt = ent.get("mentionText")
+            if t and txt and t not in m:
+                m[t] = txt
+        return m
 
     def action_docai_scan_json(self):
-        """Analyse le JSON stocké en base, crée ou met à jour le fournisseur,
-        puis met à jour la facture (en brouillon si nécessaire)."""
-
         for move in self:
             if not move.docai_json:
-                raise UserError("Aucun JSON Document AI trouvé sur cette facture.")
+                raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
 
-            # Charger JSON
+            print(f"🔎 Facture {move.id} → lecture JSON…")
             try:
-                ent_map = json.loads(move.docai_json)
+                data = json.loads(move.docai_json)
             except Exception as e:
-                raise UserError(f"JSON invalide : {e}")
+                print(f"❌ Erreur JSON : {e}")
+                raise UserError(_("JSON invalide : %s") % e)
 
-            _logger.info("🔎 Facture %s → lecture JSON…", move.name)
+            entities = self._docai_entities(data)
+            print(f"📄 {len(entities)} entités détectées")
+            if not entities:
+                _logger.warning(f"⚠️ Facture {move.id} : JSON sans 'entities'")
+                continue
 
-            # --- Fournisseur ---
-            supplier_name = ent_map.get("supplier_name")
-            partner = False
+            ent_map = self._docai_first_map(entities)
+            print(f"📌 Mapping entête extrait : {ent_map}")
 
-            _logger.debug("📄 Valeur extraite supplier_name : %s", supplier_name)
-
-            # 1. Recherche par TVA
-            if ent_map.get("supplier_tax_id"):
-                partner = self.env["res.partner"].search(
-                    [("vat", "=", ent_map["supplier_tax_id"])], limit=1
-                )
-
-            # 2. Sinon registre du commerce
-            if not partner and ent_map.get("supplier_registration"):
-                partner = self.env["res.partner"].search(
-                    [("company_registry", "=", ent_map["supplier_registration"])], limit=1
-                )
-
-            # 3. Sinon IBAN
-            if not partner and ent_map.get("supplier_iban"):
-                partner = self.env["res.partner"].search(
-                    [("iban", "=", ent_map["supplier_iban"])], limit=1
-                )
-
-            # 4. Sinon par nom
-            if not partner and supplier_name:
-                partner = self.env["res.partner"].search(
-                    [("name", "ilike", supplier_name)], limit=1
-                )
-
-            if partner:
-                _logger.info("✅ Fournisseur trouvé : %s", partner.name)
-                vals = {}
-                if ent_map.get("supplier_website"):
-                    vals["website"] = ent_map["supplier_website"]
-                if ent_map.get("supplier_registration"):
-                    vals["company_registry"] = ent_map["supplier_registration"]
-                if ent_map.get("supplier_iban"):
-                    vals["iban"] = ent_map["supplier_iban"]
-                if ent_map.get("supplier_tax_id"):
-                    vals["vat"] = ent_map["supplier_tax_id"]
-                if ent_map.get("supplier_address"):
-                    vals["street"] = ent_map["supplier_address"]
-                if vals:
-                    partner.write(vals)
-            elif supplier_name:
-                _logger.info("➕ Création nouveau fournisseur : %s", supplier_name)
-                partner = self.env["res.partner"].create({
-                    "name": supplier_name,
-                    "website": ent_map.get("supplier_website"),
-                    "company_registry": ent_map.get("supplier_registration"),
-                    "iban": ent_map.get("supplier_iban"),
-                    "vat": ent_map.get("supplier_tax_id"),
-                    "street": ent_map.get("supplier_address"),
-                    "supplier_rank": 1,
-                })
-            else:
-                _logger.warning("⚠️ Aucun fournisseur trouvé dans le JSON → facture sans partenaire")
-
-            if partner:
-                move.partner_id = partner.id
-
-            # --- Gestion de l'état ---
-            if move.state == "posted":
-                _logger.warning("⚠️ Facture postée → remise en brouillon forcée")
-                move.button_draft()
-
-            # --- Nettoyage lignes ---
-            move.invoice_line_ids.unlink()
-
-            # --- Mise à jour entête facture ---
-            vals_update = {}
+            vals = {}
             if ent_map.get("invoice_id"):
-                vals_update["ref"] = ent_map["invoice_id"]
-
+                vals["ref"] = ent_map["invoice_id"]
             if ent_map.get("invoice_date"):
-                try:
-                    # convertit jj/mm/aaaa → aaaa-mm-jj
-                    d, m, y = ent_map["invoice_date"].split("/")
-                    vals_update["invoice_date"] = f"{y}-{m}-{d}"
-                except Exception:
-                    _logger.warning("⚠️ Date facture illisible : %s", ent_map["invoice_date"])
+                vals["invoice_date"] = ent_map["invoice_date"]
 
-            if vals_update:
-                vals_update["is_manually_modified"] = True
-                move.write(vals_update)
-                _logger.info("✅ Facture mise à jour avec %s", vals_update)
+            if vals:
+                move.write(vals)
+                print(f"✅ Facture {move.id} mise à jour avec {vals}")
 
-            # --- Taxe (exemple simplifié) ---
-            tax_val = None
-            vat = ent_map.get("vat")
-            if vat:
-                vat_clean = vat.replace("%", "").replace(",", ".").strip()
-                try:
-                    percent = float(vat_clean)
-                    tax_val = self.env["account.tax"].search([("amount", "=", percent)], limit=1)
-                except Exception:
-                    _logger.warning("⚠️ Impossible de parser la TVA : %s", vat)
+            # TVA détectée
+            tax = self._find_tax_from_docai(ent_map)
+            if tax:
+                print(f"🧾 Taxe trouvée : {tax.name} ({tax.amount}%)")
 
-            # --- Lignes ---
-            line_items = ent_map.get("line_items") or []
-            if not line_items and ent_map.get("line_item"):
-                line_items = [ent_map["line_item"]]
-
+            # Lignes
+            line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
             new_lines = []
-            for raw in line_items:
-                if isinstance(raw, str):
-                    desc = raw
-                    qty, price, total = 1, 0, 0
-                else:
-                    desc = raw.get("description") or raw.get("product_code") or "Ligne"
-                    qty = float(raw.get("quantity") or 1)
-                    price = float(raw.get("unit_price") or 0)
-                    total = float(raw.get("amount") or qty * price)
+            print(f"🛠 Analyse des lignes : {len(line_items)} candidates")
 
-                vals_line = {
-                    "move_id": move.id,
-                    "name": desc,
-                    "quantity": qty,
-                    "price_unit": price,
+            for li in line_items:
+                props = li.get("properties", []) or []
+                pmap = {}
+                for p in props:
+                    t = _norm_type(p.get("type") or p.get("type_"))
+                    txt = p.get("mentionText")
+                    if t and txt and t not in pmap:
+                        pmap[t] = txt
+                print(f"   ➡️ Ligne brute : {pmap}")
+
+                name = pmap.get("description") or "Ligne"
+                qty = _to_float(pmap.get("quantity") or 1.0)
+                unit_price = _to_float(pmap.get("unit_price") or 0.0)
+                amount = _to_float(pmap.get("amount") or 0.0)
+                if unit_price <= 0 and qty > 0 and amount > 0:
+                    unit_price = amount / qty
+
+                line_vals = {
+                    "name": name,
+                    "quantity": qty if qty > 0 else 1.0,
+                    "price_unit": unit_price,
+                    "account_id": move.journal_id.default_account_id.id if move.journal_id.default_account_id else False,
                 }
-                if tax_val:
-                    vals_line["tax_ids"] = [(6, 0, tax_val.ids)]
-                new_lines.append((0, 0, vals_line))
+                if tax:
+                    line_vals["tax_ids"] = [(6, 0, [tax.id])]
+                new_lines.append((0, 0, line_vals))
 
             if new_lines:
-                move.write({"invoice_line_ids": new_lines})
-                _logger.info("✅ %s lignes importées pour facture %s", len(new_lines), move.name)
+                move.write({"invoice_line_ids": [(5, 0, 0)] + new_lines})
+                print(f"✅ {len(new_lines)} lignes importées pour facture {move.id}")
+            else:
+                print(f"⚠️ Aucune ligne détectée pour facture {move.id}")
 
-            # --- Revalider facture si besoin ---
-            if move.state == "draft":
-                try:
-                    move.action_post()
-                    _logger.info("📌 Facture %s validée automatiquement", move.name)
-                except Exception as e:
-                    _logger.warning("⚠️ Impossible de valider facture %s : %s", move.name, e)
+    def action_docai_debug_json(self):
+        for move in self:
+            if not move.docai_json:
+                raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
+            try:
+                data = json.loads(move.docai_json)
+                entities = self._docai_entities(data)
+                print(f"🔍 DEBUG JSON Facture {move.id} : {len(entities)} entités")
+                for e in entities[:10]:
+                    print(f"   - {e.get('type') or e.get('type_')} = {e.get('mentionText')}")
+            except Exception as e:
+                print(f"❌ Erreur parsing JSON : {e}")
+                raise UserError(_("Erreur parsing JSON : %s") % e)
