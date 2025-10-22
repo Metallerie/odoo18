@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-from odoo import models, fields, api
+from odoo import models, fields
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -28,14 +28,35 @@ class AccountMove(models.Model):
             _logger.info("🔎 Facture %s → lecture JSON…", move.name)
 
             # --- Fournisseur ---
+            supplier_name = ent_map.get("supplier_name")
+            partner = False
 
-            partner = self.env["res.partner"].search(
-                [("name", "ilike", supplier_name)], limit=1
-            )
+            # 1. Recherche par TVA
+            if ent_map.get("supplier_tax_id"):
+                partner = self.env["res.partner"].search(
+                    [("vat", "=", ent_map["supplier_tax_id"])], limit=1
+                )
+
+            # 2. Sinon registre du commerce
+            if not partner and ent_map.get("supplier_registration"):
+                partner = self.env["res.partner"].search(
+                    [("company_registry", "=", ent_map["supplier_registration"])], limit=1
+                )
+
+            # 3. Sinon IBAN
+            if not partner and ent_map.get("supplier_iban"):
+                partner = self.env["res.partner"].search(
+                    [("iban", "=", ent_map["supplier_iban"])], limit=1
+                )
+
+            # 4. Sinon par nom
+            if not partner and supplier_name:
+                partner = self.env["res.partner"].search(
+                    [("name", "ilike", supplier_name)], limit=1
+                )
 
             if partner:
                 _logger.info("✅ Fournisseur trouvé : %s", partner.name)
-                # Mise à jour des infos
                 vals = {}
                 if ent_map.get("supplier_website"):
                     vals["website"] = ent_map["supplier_website"]
@@ -49,7 +70,7 @@ class AccountMove(models.Model):
                     vals["street"] = ent_map["supplier_address"]
                 if vals:
                     partner.write(vals)
-            else:
+            elif supplier_name:
                 _logger.info("➕ Création nouveau fournisseur : %s", supplier_name)
                 partner = self.env["res.partner"].create({
                     "name": supplier_name,
@@ -60,8 +81,11 @@ class AccountMove(models.Model):
                     "street": ent_map.get("supplier_address"),
                     "supplier_rank": 1,
                 })
+            else:
+                _logger.warning("⚠️ Aucun fournisseur trouvé dans le JSON → facture sans partenaire")
 
-            move.partner_id = partner.id
+            if partner:
+                move.partner_id = partner.id
 
             # --- Gestion de l'état ---
             if move.state == "posted":
