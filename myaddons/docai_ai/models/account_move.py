@@ -154,95 +154,22 @@ class AccountMove(models.Model):
             print(f"📌 Mapping entête extrait : {ent_map}")
 
             vals = {}
+            # --- Référence facture ---
             if ent_map.get("invoice_id"):
                 vals["ref"] = ent_map["invoice_id"]
+            # --- Date facture ---
             if ent_map.get("invoice_date"):
                 iso_date = _parse_date_any(ent_map["invoice_date"])
                 if iso_date:
                     vals["invoice_date"] = iso_date
                 else:
                     _logger.warning(f"Facture {move.id}: date illisible '{ent_map['invoice_date']}' — inchangée")
-
-            # Enregistrer le fournisseur
+            # --- Fournisseur simplifié ---
             if ent_map.get("supplier_name"):
-                supplier_name = ent_map["supplier_name"]
-                supplier = self.env["res.partner"].search([("name", "=", supplier_name)], limit=1)
-                if supplier:
-                    vals["partner_id"] = supplier.id
-                    print(f"✅ Fournisseur trouvé : {supplier_name}")
-                else:
-                    print(f"⚠️ Fournisseur non trouvé pour '{supplier_name}' — inchangé")
-
-            if vals:
-                move.write(vals)
-                print(f"✅ Facture {move.id} mise à jour avec {vals}")
-
-            tax = self._find_tax_from_docai(ent_map)
-            if tax:
-                print(f"🧾 Taxe trouvée : {tax.name} ({tax.amount}%)")
-
-            # Lignes
-            line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
-            new_lines = []
-            print(f"🛠 Analyse des lignes : {len(line_items)} candidates")
-
-            for li in line_items:
-                props = li.get("properties", []) or []
-                pmap = {}
-                for p in props:
-                    t = _norm_type(p.get("type") or p.get("type_"))
-                    txt = p.get("mentionText")
-                    if t and txt and t not in pmap:
-                        pmap[t] = txt
-                print(f"   ➡️ Ligne brute : {pmap}")
-
-                name = pmap.get("description") or "Ligne"
-                qty = _to_float(pmap.get("quantity") or 1.0)
-                unit_price = _to_float(pmap.get("unit_price") or 0.0)
-                amount = _to_float(pmap.get("amount") or 0.0)
-                if unit_price <= 0 and qty > 0 and amount > 0:
-                    unit_price = amount / qty
-
-                line_vals = {
-                    "name": name,
-                    "quantity": qty if qty > 0 else 1.0,
-                    "price_unit": unit_price,
-                    "account_id": move.journal_id.default_account_id.id if move.journal_id.default_account_id else False,
-                }
-                if tax:
-                    line_vals["tax_ids"] = [(6, 0, [tax.id])]
-                new_lines.append((0, 0, line_vals))
-
-            if new_lines:
-        for move in self:
-            if not move.docai_json:
-                raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
-
-            print(f"🔎 Facture {move.id} → lecture JSON…")
-            try:
-                data = json.loads(move.docai_json)
-            except Exception as e:
-                print(f"❌ Erreur JSON : {e}")
-                raise UserError(_("JSON invalide : %s") % e)
-
-            entities = self._docai_entities(data)
-            print(f"📄 {len(entities)} entités détectées")
-            if not entities:
-                _logger.warning(f"⚠️ Facture {move.id} : JSON sans 'entities'")
-                continue
-
-            ent_map = self._docai_first_map(entities)
-            print(f"📌 Mapping entête extrait : {ent_map}")
-
-            vals = {}
-            if ent_map.get("invoice_id"):
-                vals["ref"] = ent_map["invoice_id"]
-            if ent_map.get("invoice_date"):
-                iso_date = _parse_date_any(ent_map["invoice_date"])
-                if iso_date:
-                    vals["invoice_date"] = iso_date
-                else:
-                    _logger.warning(f"Facture {move.id}: date illisible '{ent_map['invoice_date']}' — inchangée")
+                supplier = self.env["res.partner"].search([("name", "ilike", ent_map["supplier_name"])], limit=1)
+                if not supplier:
+                    supplier = self.env["res.partner"].create({"name": ent_map["supplier_name"], "supplier_rank": 1})
+                vals["partner_id"] = supplier.id
 
             if vals:
                 move.write(vals)
