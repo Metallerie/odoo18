@@ -6,6 +6,7 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -30,6 +31,8 @@ class AccountMove(models.Model):
             # --- Fournisseur ---
             supplier_name = ent_map.get("supplier_name")
             partner = False
+
+            _logger.debug("📄 Valeur extraite supplier_name : %s", supplier_name)
 
             # 1. Recherche par TVA
             if ent_map.get("supplier_tax_id"):
