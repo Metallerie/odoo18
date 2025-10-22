@@ -29,7 +29,6 @@ def _parse_date_any(value):
     if not value:
         return None
     if isinstance(value, dict):
-        # Si c'est un bloc normalizedValue venant de DocAI
         if value.get("dateValue"):
             try:
                 y = int(value["dateValue"]["year"])
@@ -49,7 +48,6 @@ def _parse_date_any(value):
             return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
         except Exception:
             pass
-    # Mois en toutes lettres (fr)
     low = s.lower().replace("\u00a0", " ")
     tokens = [t.strip(" .,") for t in low.split() if t.strip()]
     for i in range(len(tokens) - 2):
@@ -103,12 +101,36 @@ class AccountMove(models.Model):
             t = ent.get("type") or ent.get("type_")
             txt = ent.get("mentionText")
             if t and txt and t not in m:
-                # On stocke aussi normalizedValue si dispo
                 if ent.get("normalizedValue"):
                     m[t] = ent["normalizedValue"]
                 else:
                     m[t] = txt
         return m
+
+    def _find_tax_from_docai(self, ent_map):
+        """Trouve un objet account.tax à partir des entités DocAI (TVA)."""
+        tax_rate = None
+        for key in ("vat", "vat/tax_rate", "total_tax_amount"):
+            val = ent_map.get(key)
+            if isinstance(val, dict) and "text" in val:
+                txt = val["text"]
+            else:
+                txt = val
+            if txt:
+                txt = str(txt).replace("%", "").replace(",", ".").strip()
+                try:
+                    tax_rate = float(txt)
+                    if tax_rate > 1 and tax_rate <= 100:
+                        break
+                except Exception:
+                    continue
+        if tax_rate is None:
+            return False
+        tax = self.env["account.tax"].search([
+            ("amount", "=", tax_rate),
+            ("type_tax_use", "=", "purchase")
+        ], limit=1)
+        return tax or False
 
     def action_docai_scan_json(self):
         for move in self:
