@@ -112,13 +112,14 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     @classmethod
     def cron_docai_analyze_invoices(self):
-        moves = self.search([
+        moves = self.env["account.move"].search([
             ("move_type", "=", "in_invoice"),
             ("state", "=", "draft"),
             ("docai_analyzed", "=", False),
             ("docai_json", "=", False),
             ("amount_total", "=", 0),
         ], limit=10)
+
         _logger.info(f"[DocAI CRON] {len(moves)} factures à analyser")
         moves.action_docai_analyze_attachment(force=False)
 
