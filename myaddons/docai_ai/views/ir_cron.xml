@@ -11,7 +11,6 @@
         </record>
     </data>
 
-    <odoo>
     <record id="ir_cron_docai_analyze_invoices" model="ir.cron">
         <field name="name">Analyse DocAI des factures</field>
         <field name="model_id" ref="account.model_account_move"/>
@@ -24,7 +23,6 @@
         <!-- Mets une valeur simple, pas d'eval -->
         <field name="nextcall"></field>
     </record>
-</odoo>
 
 
 
