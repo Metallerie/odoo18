@@ -16,15 +16,14 @@
         <field name="name">Analyse DocAI des factures</field>
         <field name="model_id" ref="account.model_account_move"/>
         <field name="state">code</field>
-        <field name="code">
-            model.search([('move_type', '=', 'in_invoice'), ('state', '=', 'draft')]).action_docai_analyze_attachment()
-        </field>
-        <!-- Exécution toutes les nuits à 3h -->
-        <field name="interval_number">1</field>
-        <field name="interval_type">days</field>
+        <field name="code">model.cron_docai_analyze_invoices()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
         <field name="numbercall">-1</field>
         <field name="active">True</field>
-        <field name="nextcall" eval="(DateTime.now() + relativedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <!-- Première exécution immédiate, Odoo recalculera ensuite -->
+        <field name="nextcall">2025-10-29 20:00:00</field>
     </record>
+
 
 </odoo>
