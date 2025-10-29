@@ -110,8 +110,9 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     # MÉTHODE POUR LE CRON
     # -------------------------------------------------------------------------
-    @classmethod
+    @api.model
     def cron_docai_analyze_invoices(self):
+        """Méthode appelée par le CRON"""
         moves = self.env["account.move"].search([
             ("move_type", "=", "in_invoice"),
             ("state", "=", "draft"),
