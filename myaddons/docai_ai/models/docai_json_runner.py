@@ -111,13 +111,15 @@ class AccountMove(models.Model):
     # MÉTHODE POUR LE CRON
     # -------------------------------------------------------------------------
     @classmethod
-    def cron_docai_analyze_invoices(cls):
-        """Méthode appelée par le CRON"""
-        moves = cls.env["account.move"].search([
+    def cron_docai_analyze_invoices(self):
+        moves = self.search([
             ("move_type", "=", "in_invoice"),
             ("state", "=", "draft"),
-        ])
-        _logger.info(f"[DocAI CRON] Analyse de {len(moves)} factures fournisseurs")
+            ("docai_analyzed", "=", False),
+            ("docai_json", "=", False),
+            ("amount_total", "=", 0),
+        ], limit=10)
+        _logger.info(f"[DocAI CRON] {len(moves)} factures à analyser")
         moves.action_docai_analyze_attachment(force=False)
 
     # -------------------------------------------------------------------------
