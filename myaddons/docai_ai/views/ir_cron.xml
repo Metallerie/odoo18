@@ -11,6 +11,7 @@
         </record>
     </data>
 
+    <odoo>
     <record id="ir_cron_docai_analyze_invoices" model="ir.cron">
         <field name="name">Analyse DocAI des factures</field>
         <field name="model_id" ref="account.model_account_move"/>
@@ -20,9 +21,10 @@
         <field name="interval_type">minutes</field>
         <field name="numbercall">-1</field>
         <field name="active">True</field>
-        <!-- Mets une date/heure de départ simple -->
+        <!-- Mets une valeur simple, pas d'eval -->
         <field name="nextcall">2025-10-29 20:00:00</field>
     </record>
+</odoo>
 
 
 
