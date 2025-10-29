@@ -21,7 +21,6 @@
         <field name="numbercall">-1</field>
         <field name="active">True</field>
         <!-- Mets une valeur simple, pas d'eval -->
-        <field name="nextcall"></field>
     </record>
 
 
