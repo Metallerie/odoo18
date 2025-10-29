@@ -9,6 +9,7 @@ from odoo.exceptions import UserError
 from google.cloud import documentai_v1 as documentai
 from odoo import http
 from odoo.http import request
+from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
