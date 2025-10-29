@@ -11,7 +11,6 @@
         </record>
     </data>
 
-    <!-- CRON : Analyse automatique des factures avec DocAI -->
     <record id="ir_cron_docai_analyze_invoices" model="ir.cron">
         <field name="name">Analyse DocAI des factures</field>
         <field name="model_id" ref="account.model_account_move"/>
@@ -21,8 +20,10 @@
         <field name="interval_type">minutes</field>
         <field name="numbercall">-1</field>
         <field name="active">True</field>
-        <field name="nextcall" eval="(datetime.datetime.now() + datetime.timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <!-- Mets une date/heure de départ simple -->
+        <field name="nextcall">2025-10-29 20:00:00</field>
     </record>
+
 
 
 </odoo>
