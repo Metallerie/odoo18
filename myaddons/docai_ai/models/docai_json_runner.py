@@ -31,12 +31,13 @@ class AccountMove(models.Model):
     def action_docai_analyze_attachment(self, force=False):
         """
         Analyse avec Google Document AI.
-        - En cron (force=False) : ne lance l'analyse que si docai_json est vide.
+        - En cron (force=False) : analyse uniquement si JSON absent et pas de total_amount.
         - En manuel (force=True) : réanalyse et écrase les JSON.
         """
         for move in self:
-            if move.docai_analyzed and not force:
-                _logger.info(f"[DocAI] Facture {move.id} déjà analysée, skip")
+            # ⚡ Skip si déjà analysée ou montant déjà présent
+            if (move.docai_analyzed and not force) or (move.amount_total and not force):
+                _logger.info(f"[DocAI] Facture {move.id} ignorée (déjà analysée ou total présent)")
                 continue
 
             # 🔎 Récupérer le PDF attaché
@@ -47,7 +48,8 @@ class AccountMove(models.Model):
             ], limit=1)
 
             if not attachment:
-                raise UserError(_("Aucun PDF trouvé pour cette facture."))
+                _logger.warning(f"[DocAI] Aucun PDF trouvé pour facture {move.id}, skip")
+                continue
 
             # ⚙️ Charger config DocAI
             ICP = self.env["ir.config_parameter"].sudo()
@@ -80,25 +82,43 @@ class AccountMove(models.Model):
                 parsed = json.loads(raw_json)
                 minimal = {"entities": parsed.get("entities", [])}
 
-                # 💾 Écriture dans la facture
-                move.write({
-                    "docai_json_raw": raw_json,
-                    "docai_json": json.dumps(minimal, indent=2, ensure_ascii=False),
-                    "docai_analyzed": True,
-                })
+                # 💾 Écriture uniquement si JSON absent OU mode force
+                vals = {}
+                if not move.docai_json_raw or force:
+                    vals["docai_json_raw"] = raw_json
+                if not move.docai_json or force:
+                    vals["docai_json"] = json.dumps(minimal, indent=2, ensure_ascii=False)
 
-                _logger.info(f"✅ Facture {move.id} analysée par DocAI")
+                if vals:
+                    vals["docai_analyzed"] = True
+                    move.write(vals)
+                    _logger.info(f"✅ Facture {move.id} analysée et sauvegardée par DocAI")
+                else:
+                    _logger.info(f"ℹ️ Facture {move.id} déjà avec JSON, pas de mise à jour")
 
             except Exception as e:
                 _logger.error(f"❌ Erreur DocAI facture {move.id} : {e}")
                 raise UserError(_("Erreur analyse Document AI : %s") % e)
 
     # -------------------------------------------------------------------------
-    # MÉTHODE POUR RAFRAÎCHIR
+    # MÉTHODE POUR RAFRAÎCHIR (forcer réanalyse)
     # -------------------------------------------------------------------------
     def action_docai_refresh_json(self):
         """Rafraîchir les JSON même si déjà analysé"""
         return self.action_docai_analyze_attachment(force=True)
+
+    # -------------------------------------------------------------------------
+    # MÉTHODE POUR LE CRON
+    # -------------------------------------------------------------------------
+    @classmethod
+    def cron_docai_analyze_invoices(cls):
+        """Méthode appelée par le CRON"""
+        moves = cls.env["account.move"].search([
+            ("move_type", "=", "in_invoice"),
+            ("state", "=", "draft"),
+        ])
+        _logger.info(f"[DocAI CRON] Analyse de {len(moves)} factures fournisseurs")
+        moves.action_docai_analyze_attachment(force=False)
 
     # -------------------------------------------------------------------------
     # MÉTHODES DE TÉLÉCHARGEMENT (redirection vers controller)
