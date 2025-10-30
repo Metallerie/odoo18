@@ -1,3 +1,4 @@
+#    docai_ai/models/res_config_settings.py
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import os
