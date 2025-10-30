@@ -1,4 +1,3 @@
-#    docai_ai/models/res_config_settings.py
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import os
@@ -15,7 +14,9 @@ class ResConfigSettings(models.TransientModel):
     docai_location = fields.Char("Location", default="eu")
     docai_key_path = fields.Char("Chemin Clé JSON")
     docai_invoice_processor_id = fields.Char("Processor Facture")
+    docai_expense_processor_id = fields.Char("Processor Ticket de caisse")
     docai_test_invoice_path = fields.Char("Facture de test")
+    docai_test_expense_path = fields.Char("Ticket de caisse de test")
 
     @api.model
     def get_values(self):
@@ -26,7 +27,9 @@ class ResConfigSettings(models.TransientModel):
             docai_location=ICP.get_param("docai_ai.location", "eu"),
             docai_key_path=ICP.get_param("docai_ai.key_path", ""),
             docai_invoice_processor_id=ICP.get_param("docai_ai.invoice_processor_id", ""),
+            docai_expense_processor_id=ICP.get_param("docai_ai.expense_processor_id", ""),
             docai_test_invoice_path=ICP.get_param("docai_ai.test_invoice_path", ""),
+            docai_test_expense_path=ICP.get_param("docai_ai.test_expense_path", ""),
         )
         return res
 
@@ -37,16 +40,14 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param("docai_ai.location", self.docai_location or "eu")
         ICP.set_param("docai_ai.key_path", self.docai_key_path or "")
         ICP.set_param("docai_ai.invoice_processor_id", self.docai_invoice_processor_id or "")
+        ICP.set_param("docai_ai.expense_processor_id", self.docai_expense_processor_id or "")
         ICP.set_param("docai_ai.test_invoice_path", self.docai_test_invoice_path or "")
+        ICP.set_param("docai_ai.test_expense_path", self.docai_test_expense_path or "")
 
-    def action_test_docai_connection(self):
-        self.ensure_one()
-
+    def _docai_test_connection(self, processor_id, test_file, label="Document AI"):
         project_id = (self.docai_project_id or "").strip()
         location = (self.docai_location or "eu").strip()
         key_path = (self.docai_key_path or "").strip()
-        processor_id = (self.docai_invoice_processor_id or "").strip()
-        test_invoice = (self.docai_test_invoice_path or "").strip()
 
         name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
 
@@ -57,25 +58,24 @@ class ResConfigSettings(models.TransientModel):
                 client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
             )
 
-            with open(test_invoice, "rb") as f:
-                pdf_content = f.read()
+            with open(test_file, "rb") as f:
+                file_content = f.read()
 
-            raw_document = documentai.RawDocument(content=pdf_content, mime_type="application/pdf")
+            raw_document = documentai.RawDocument(content=file_content, mime_type="application/pdf")
             request = documentai.ProcessRequest(name=name, raw_document=raw_document)
             result = client.process_document(request=request)
 
             document = result.document
             sample_text = document.text[:300].replace("\n", " ")
 
-            msg = _("✅ Connexion réussie à Google Document AI !\nExtrait : %s") % sample_text
+            msg = _("✅ Connexion réussie à %s !\nExtrait : %s") % (label, sample_text)
             _logger.info(msg)
 
-            # Retourne une notification à l’utilisateur
             return {
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": _("Test Document AI"),
+                    "title": _("Test %s" % label),
                     "message": msg,
                     "sticky": False,
                     "type": "success",
@@ -83,15 +83,31 @@ class ResConfigSettings(models.TransientModel):
             }
 
         except Exception as e:
-            msg = _("❌ Erreur connexion Document AI : %s") % str(e)
+            msg = _("❌ Erreur connexion %s : %s") % (label, str(e))
             _logger.error(msg)
             return {
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": _("Test Document AI"),
+                    "title": _("Test %s" % label),
                     "message": msg,
                     "sticky": True,
                     "type": "danger",
                 },
             }
+
+    def action_test_docai_invoice(self):
+        self.ensure_one()
+        return self._docai_test_connection(
+            self.docai_invoice_processor_id,
+            self.docai_test_invoice_path,
+            label="Document AI (Facture)",
+        )
+
+    def action_test_docai_expense(self):
+        self.ensure_one()
+        return self._docai_test_connection(
+            self.docai_expense_processor_id,
+            self.docai_test_expense_path,
+            label="Document AI (Ticket de caisse)",
+        )
