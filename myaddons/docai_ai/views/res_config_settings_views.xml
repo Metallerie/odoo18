@@ -6,38 +6,56 @@
     <field name="arch" type="xml">
       <xpath expr="//form[@js_class='base_settings']" position="inside">       
         <div class="app_settings_block" data-string="Google Document AI">
-        <block title="Google Document AI" name="google_document_AI_setting_container">
-              <div class="row mt16">
-                <div class="o_form_label">Project ID</div>
-                <div class="o_form_field"><field name="docai_project_id"/>
+          <block title="Google Document AI" name="google_document_AI_setting_container">
+            <div class="row mt16">
+
+              <!-- Infos générales -->
+              <div class="o_form_label">Project ID</div>
+              <div class="o_form_field"><field name="docai_project_id"/></div>
+
+              <div class="o_form_label">Location</div>
+              <div class="o_form_field"><field name="docai_location"/></div>
+
+              <div class="o_form_label">Clé JSON</div>
+              <div class="o_form_field"><field name="docai_key_path"/></div>
+
+              <!-- Section Factures -->
+              <div class="o_form_label">Processor Facture</div>
+              <div class="o_form_field"><field name="docai_invoice_processor_id"/></div>
+
+              <div class="o_form_label">Facture de test</div>
+              <div class="o_form_field">
+                <field name="docai_test_invoice_path" placeholder="/data/Documents/factures_archive/test.pdf"/>
               </div>
 
-                <div class="o_form_label">Location</div>
-                <div class="o_form_field"><field name="docai_location"/></div>
+              <!-- Section Tickets de caisse -->
+              <div class="o_form_label">Processor Ticket de caisse</div>
+              <div class="o_form_field"><field name="docai_expense_processor_id"/></div>
 
-                <div class="o_form_label">Clé JSON</div>
-                <div class="o_form_field"><field name="docai_key_path"/></div>
-
-                <div class="o_form_label">Processor Facture</div>
-                <div class="o_form_field"><field name="docai_invoice_processor_id"/></div>
-
-                <div class="o_form_label">Facture de test</div>
-                <div class="o_form_field">
-                  <field name="docai_test_invoice_path" placeholder="/data/Documents/factures_archive/test.pdf"/>
-                </div>
+              <div class="o_form_label">Ticket de test</div>
+              <div class="o_form_field">
+                <field name="docai_test_expense_path" placeholder="/data/Documents/tickets/test_ticket.pdf"/>
               </div>
-              <div class="o_setting_right_pane">
-                <p>
-                  Configure ici tes identifiants Google Document AI :
-                  <br/>• Processor factures fournisseur
-                  <br/>• Clé JSON + chemin facture de test
-                </p>
-                <button name="action_test_docai_connection"
-                        type="object"
-                        string="Tester connexion"
-                        class="btn btn-primary"/>
-              </div>
-           </block>
+
+            </div>
+
+            <div class="o_setting_right_pane">
+              <p>
+                Configure ici tes identifiants Google Document AI :
+                <br/>• Processor factures fournisseur
+                <br/>• Processor tickets de caisse (Expense Parser)
+                <br/>• Clé JSON + fichiers de test
+              </p>
+              <button name="action_test_docai_invoice"
+                      type="object"
+                      string="Tester Factures"
+                      class="btn btn-primary"/>
+              <button name="action_test_docai_expense"
+                      type="object"
+                      string="Tester Tickets de caisse"
+                      class="btn btn-secondary"/>
+            </div>
+          </block>
         </div>
       </xpath>
     </field>
