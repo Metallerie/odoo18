@@ -185,3 +185,31 @@ class DocaiDownloadController(http.Controller):
                 ('Content-Disposition', f'attachment; filename={filename}')
             ]
         )
+
+    # -------------------------------------------------------------------------
+    # Boutons de téléchargement JSON (appelés depuis la vue XML)
+    # -------------------------------------------------------------------------
+    def action_docai_download_json_raw(self):
+        """Téléchargement du JSON complet (DocAI brut)."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/docai/download/{self.id}/raw",
+            "target": "new",
+        }
+
+    def action_docai_download_json_min(self):
+        """Téléchargement du JSON simplifié (DocAI minimal)."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/docai/download/{self.id}/min",
+            "target": "new",
+        }
+
+
+
+
+
+
+
