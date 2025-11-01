@@ -9,7 +9,6 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-# --- Dates helpers -----------------------------------------------------------
 MONTHS_FR = {
     "janvier": 1, "janv": 1, "jan": 1,
     "février": 2, "fevrier": 2, "févr": 2, "fevr": 2, "fév": 2, "fev": 2,
@@ -194,6 +193,8 @@ class AccountMove(models.Model):
                 qty = _to_float(pmap.get("quantity") or 1.0)
                 unit_price = _to_float(pmap.get("unit_price") or 0.0)
                 amount = _to_float(pmap.get("amount") or 0.0)
+                unit_name = pmap.get("unit") or pmap.get("uom")
+
                 if unit_price <= 0 and qty > 0 and amount > 0:
                     unit_price = amount / qty
 
@@ -203,6 +204,10 @@ class AccountMove(models.Model):
                 if not product and name:
                     product = self.env["product.product"].search([("name", "ilike", name)], limit=1)
 
+                uom = False
+                if unit_name:
+                    uom = self.env["uom.uom"].search([("name", "ilike", unit_name)], limit=1)
+
                 line_vals = {
                     "product_id": product.id if product else False,
                     "name": product.display_name if product else name,
@@ -210,6 +215,8 @@ class AccountMove(models.Model):
                     "price_unit": unit_price,
                     "account_id": move.journal_id.default_account_id.id if move.journal_id.default_account_id else False,
                 }
+                if uom:
+                    line_vals["product_uom_id"] = uom.id
                 if tax:
                     line_vals["tax_ids"] = [(6, 0, [tax.id])]
                 new_lines.append((0, 0, line_vals))
