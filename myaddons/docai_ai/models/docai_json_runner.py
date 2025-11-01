@@ -5,8 +5,6 @@ import base64
 import os
 import json
 import logging
-from io import BytesIO
-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from google.cloud import documentai_v1 as documentai
@@ -127,7 +125,6 @@ class AccountMove(models.Model):
 
             except Exception as e:
                 _logger.error(f"❌ Erreur DocAI sur {move.name or move.id} : {e}")
-                # continue au lieu de raise → pour ne pas bloquer le cron
                 continue
 
     # -------------------------------------------------------------------------
@@ -158,8 +155,28 @@ class AccountMove(models.Model):
 
         except Exception as e:
             _logger.error(f"❌ Erreur CRON DocAI : {e}")
-            # on ne lève pas d’erreur pour ne pas bloquer Odoo
             return False
+
+    # -------------------------------------------------------------------------
+    # Boutons de téléchargement JSON (appelés depuis la vue XML)
+    # -------------------------------------------------------------------------
+    def action_docai_download_json_raw(self):
+        """Téléchargement du JSON complet (DocAI brut)."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/docai/download/{self.id}/raw",
+            "target": "new",
+        }
+
+    def action_docai_download_json_min(self):
+        """Téléchargement du JSON simplifié (DocAI minimal)."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/docai/download/{self.id}/min",
+            "target": "new",
+        }
 
 
 # -------------------------------------------------------------------------
@@ -185,31 +202,3 @@ class DocaiDownloadController(http.Controller):
                 ('Content-Disposition', f'attachment; filename={filename}')
             ]
         )
-
-    # -------------------------------------------------------------------------
-    # Boutons de téléchargement JSON (appelés depuis la vue XML)
-    # -------------------------------------------------------------------------
-    def action_docai_download_json_raw(self):
-        """Téléchargement du JSON complet (DocAI brut)."""
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_url",
-            "url": f"/docai/download/{self.id}/raw",
-            "target": "new",
-        }
-
-    def action_docai_download_json_min(self):
-        """Téléchargement du JSON simplifié (DocAI minimal)."""
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_url",
-            "url": f"/docai/download/{self.id}/min",
-            "target": "new",
-        }
-
-
-
-
-
-
-
