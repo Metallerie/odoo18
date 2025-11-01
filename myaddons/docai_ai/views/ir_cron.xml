@@ -9,7 +9,6 @@
             <field name="interval_number">10</field>
             <field name="active">True</field>
         </record>
-    </data>
 
     <record id="ir_cron_docai_analyze_invoices" model="ir.cron">
         <field name="name">Analyse DocAI des factures</field>
@@ -21,6 +20,16 @@
         <field name="active">True</field>
     </record>
 
-
+        <!-- CRON : Analyse du JSON DocAI vers Odoo -->
+        <record id="ir_cron_docai_parse_json" model="ir.cron">
+            <field name="name">Analyse JSON DocAI → Factures</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_docai_parse_json()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+            </data>
 
 </odoo>
