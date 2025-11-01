@@ -26,7 +26,6 @@ MONTHS_FR = {
 }
 
 def _parse_date_any(value):
-    """Retourne 'YYYY-MM-DD' à partir de formats FR/ISO ou normalizedValue."""
     if not value:
         return None
     if isinstance(value, dict):
@@ -65,7 +64,6 @@ def _parse_date_any(value):
                     pass
     return None
 
-
 def _to_float(val):
     if val is None:
         return 0.0
@@ -82,12 +80,10 @@ def _to_float(val):
     except Exception:
         return 0.0
 
-
 def _norm_type(t):
     if not t:
         return ""
     return str(t).split("/")[-1]
-
 
 class AccountMove(models.Model):
     _inherit = "account.move"
@@ -109,7 +105,6 @@ class AccountMove(models.Model):
         return m
 
     def _find_tax_from_docai(self, ent_map):
-        """Trouve un objet account.tax à partir des entités DocAI (TVA)."""
         tax_rate = None
         for key in ("vat", "vat/tax_rate", "total_tax_amount"):
             val = ent_map.get(key)
@@ -155,17 +150,14 @@ class AccountMove(models.Model):
             print(f"📌 Mapping entête extrait : {ent_map}")
 
             vals = {}
-            # --- Référence facture ---
             if ent_map.get("invoice_id"):
                 vals["ref"] = ent_map["invoice_id"]
-            # --- Date facture ---
             if ent_map.get("invoice_date"):
                 iso_date = _parse_date_any(ent_map["invoice_date"])
                 if iso_date:
                     vals["invoice_date"] = iso_date
                 else:
                     _logger.warning(f"Facture {move.id}: date illisible '{ent_map['invoice_date']}' — inchangée")
-            # --- Fournisseur simplifié ---
             if ent_map.get("supplier_name"):
                 supplier = self.env["res.partner"].search([("name", "ilike", ent_map["supplier_name"])], limit=1)
                 if not supplier:
@@ -188,21 +180,32 @@ class AccountMove(models.Model):
                 props = li.get("properties", []) or []
                 pmap = {}
                 for p in props:
-                    t = _norm_type(p.get("type") or p.get("type_"))
+                    t = p.get("type") or p.get("type_")
+                    if not t:
+                        continue
+                    t = _norm_type(t)
                     txt = p.get("mentionText")
                     if t and txt and t not in pmap:
                         pmap[t] = txt
                 print(f"   ➡️ Ligne brute : {pmap}")
 
                 name = pmap.get("description") or "Ligne"
+                product_code = pmap.get("product_code")
                 qty = _to_float(pmap.get("quantity") or 1.0)
                 unit_price = _to_float(pmap.get("unit_price") or 0.0)
                 amount = _to_float(pmap.get("amount") or 0.0)
                 if unit_price <= 0 and qty > 0 and amount > 0:
                     unit_price = amount / qty
 
+                product = False
+                if product_code:
+                    product = self.env["product.product"].search([("default_code", "=", product_code)], limit=1)
+                if not product and name:
+                    product = self.env["product.product"].search([("name", "ilike", name)], limit=1)
+
                 line_vals = {
-                    "name": name,
+                    "product_id": product.id if product else False,
+                    "name": product.display_name if product else name,
                     "quantity": qty if qty > 0 else 1.0,
                     "price_unit": unit_price,
                     "account_id": move.journal_id.default_account_id.id if move.journal_id.default_account_id else False,
