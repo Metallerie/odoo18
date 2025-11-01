@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from odoo import models, fields, _
 from odoo.exceptions import UserError
+from odoo import api
 
 _logger = logging.getLogger(__name__)
 
@@ -240,3 +241,36 @@ class AccountMove(models.Model):
             except Exception as e:
                 print(f"❌ Erreur parsing JSON : {e}")
                 raise UserError(_("Erreur parsing JSON : %s") % e)
+
+    @api.model
+    def cron_docai_parse_json(self):
+        """Analyse les JSON DocAI déjà générés pour compléter les factures"""
+        try:
+            moves = self.env["account.move"].search([
+                ("move_type", "=", "in_invoice"),     # uniquement les factures fournisseur
+                ("state", "=", "draft"),              # encore modifiables
+                ("docai_json", "!=", False),          # JSON DocAI déjà présent
+                ("invoice_line_ids", "=", False),     # pas encore de lignes
+                ("amount_total", "=", 0),             # total non calculé
+            ], limit=10)
+
+            _logger.info(f"[DocAI JSON CRON] {len(moves)} factures à interpréter")
+
+            for move in moves:
+                try:
+                    if not move.docai_json:
+                        _logger.warning(f"[DocAI JSON] Facture {move.id} sans JSON, ignorée")
+                        continue
+
+                    _logger.info(f"[DocAI JSON] Analyse du JSON pour facture {move.name or move.id}")
+                    move.action_docai_scan_json()  # méthode déjà présente dans ton code
+                    _logger.info(f"✅ Facture {move.name or move.id} mise à jour à partir du JSON")
+
+                except Exception as e:
+                    _logger.error(f"❌ Erreur sur {move.name or move.id} : {e}")
+                    continue
+
+        except Exception as e:
+            _logger.error(f"❌ Erreur globale du CRON DocAI JSON : {e}")
+            return False
+
