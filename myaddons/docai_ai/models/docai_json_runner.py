@@ -45,14 +45,14 @@ class AccountMove(models.Model):
             parsed = json.loads(raw_json)
 
             if not parsed.get("entities"):
-                _logger.warning(f"[DocAI] {label} → pas d’entités trouvées")
+                _logger.warning(f"[DocAI] {label} → aucune entité détectée")
                 return None, None
 
             minimal = {"entities": parsed.get("entities", [])}
             return raw_json, json.dumps(minimal, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            _logger.warning(f"[DocAI] {label} → erreur {e}")
+            _logger.warning(f"[DocAI] {label} → erreur lors de l’analyse : {e}")
             return None, None
 
     # -------------------------------------------------------------------------
@@ -69,45 +69,48 @@ class AccountMove(models.Model):
         if not all([project_id, location, key_path, invoice_processor, expense_processor]):
             raise UserError(_("Configuration Document AI incomplète."))
 
-        # 1. Essayer Facture
+        # 1. Facture
         raw_json, minimal = self._try_processor(pdf_content, invoice_processor, "Facture", project_id, location, key_path)
         if raw_json:
             return raw_json, minimal, "Facture"
 
-        # 2. Sinon → Ticket de caisse
+        # 2. Ticket de caisse
         raw_json, minimal = self._try_processor(pdf_content, expense_processor, "Ticket de caisse", project_id, location, key_path)
         if raw_json:
             return raw_json, minimal, "Ticket de caisse"
 
-        # 3. Plus tard → autres processors (Kbis, RIB, etc.)
-
-        raise UserError(_("Aucun processor n’a pu analyser le document."))
+        # 3. Autres processors (Kbis, RIB, etc.) à venir
+        return None, None, None
 
     # -------------------------------------------------------------------------
     # Méthode principale : analyse DocAI
     # -------------------------------------------------------------------------
     def action_docai_analyze_attachment(self, force=False):
         for move in self:
-            if (move.docai_analyzed and not force) or (move.amount_total and not force):
-                _logger.info(f"[DocAI] Document {move.id} ignoré (déjà analysé ou total présent)")
-                continue
-
-            # Attachement PDF
-            attachment = self.env["ir.attachment"].search([
-                ("res_model", "=", "account.move"),
-                ("res_id", "=", move.id),
-                ("mimetype", "=", "application/pdf")
-            ], limit=1)
-
-            if not attachment:
-                _logger.warning(f"[DocAI] Aucun PDF trouvé pour document {move.id}, skip")
-                continue
-
-            pdf_content = base64.b64decode(attachment.datas)
-
             try:
-                # Cascade d’analyse
+                if (move.docai_analyzed and not force) or (move.amount_total and not force):
+                    _logger.info(f"[DocAI] {move.name or move.id} ignoré (déjà analysé ou total présent)")
+                    continue
+
+                attachment = self.env["ir.attachment"].search([
+                    ("res_model", "=", "account.move"),
+                    ("res_id", "=", move.id),
+                    ("mimetype", "=", "application/pdf")
+                ], limit=1)
+
+                if not attachment:
+                    _logger.warning(f"[DocAI] Aucun PDF trouvé pour {move.name or move.id}, skip")
+                    continue
+
+                pdf_content = base64.b64decode(attachment.datas or b"")
+                if not pdf_content:
+                    _logger.warning(f"[DocAI] PDF vide ou illisible pour {move.name or move.id}")
+                    continue
+
                 raw_json, minimal, label = self.analyze_with_fallback(pdf_content)
+                if not raw_json:
+                    _logger.warning(f"[DocAI] Aucun résultat pour {move.name or move.id}")
+                    continue
 
                 vals = {}
                 if not move.docai_json_raw or force:
@@ -118,13 +121,14 @@ class AccountMove(models.Model):
                 if vals:
                     vals["docai_analyzed"] = True
                     move.write(vals)
-                    _logger.info(f"✅ {label} {move.id} analysé et sauvegardé par DocAI")
+                    _logger.info(f"✅ {label} {move.name or move.id} analysé et sauvegardé par DocAI")
                 else:
-                    _logger.info(f"ℹ️ {label} {move.id} déjà avec JSON, pas de mise à jour")
+                    _logger.info(f"ℹ️ {label} {move.name or move.id} déjà avec JSON, aucune mise à jour")
 
             except Exception as e:
-                _logger.error(f"❌ Erreur DocAI document {move.id} : {e}")
-                raise UserError(_("Erreur analyse Document AI : %s") % e)
+                _logger.error(f"❌ Erreur DocAI sur {move.name or move.id} : {e}")
+                # continue au lieu de raise → pour ne pas bloquer le cron
+                continue
 
     # -------------------------------------------------------------------------
     # Rafraîchir (forcer réanalyse)
@@ -133,20 +137,29 @@ class AccountMove(models.Model):
         return self.action_docai_analyze_attachment(force=True)
 
     # -------------------------------------------------------------------------
-    # CRON
+    # CRON — robuste et non bloquant
     # -------------------------------------------------------------------------
     @api.model
     def cron_docai_analyze_invoices(self):
-        moves = self.env["account.move"].search([
-            ("move_type", "=", "in_invoice"),
-            ("state", "=", "draft"),
-            ("docai_analyzed", "=", False),
-            ("docai_json", "=", False),
-            ("amount_total", "=", 0),
-        ], limit=10)
+        try:
+            moves = self.env["account.move"].search([
+                ("move_type", "=", "in_invoice"),
+                ("state", "=", "draft"),
+                ("docai_analyzed", "=", False),
+                ("docai_json", "=", False),
+            ], limit=10)
 
-        _logger.info(f"[DocAI CRON] {len(moves)} documents à analyser")
-        moves.action_docai_analyze_attachment(force=False)
+            _logger.info(f"[DocAI CRON] {len(moves)} documents à analyser")
+
+            if not moves:
+                return
+
+            moves.action_docai_analyze_attachment(force=False)
+
+        except Exception as e:
+            _logger.error(f"❌ Erreur CRON DocAI : {e}")
+            # on ne lève pas d’erreur pour ne pas bloquer Odoo
+            return False
 
 
 # -------------------------------------------------------------------------
