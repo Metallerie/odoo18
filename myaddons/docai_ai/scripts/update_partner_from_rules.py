@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-update_partner_from_rules.py
+debug_reconcile_rules.py
 --------------------------------
-Met à jour les partenaires des lignes de relevé bancaire
-en fonction des règles de rapprochement bancaire (account.reconcile.model).
-
-Usage depuis le shell Odoo :
-    odoo shell -d metal-prod-18
-    >>> exec(open('/data/odoo/metal-odoo18-p8179/myaddons/docai_ai/scripts/update_partner_from_rules.py').read())
+Affiche le contenu réel des règles de rapprochement bancaire (Odoo 18)
+et leurs lignes associées.
 """
 
 from odoo import api, SUPERUSER_ID
@@ -15,44 +11,35 @@ from odoo import api, SUPERUSER_ID
 
 def run(env):
     ReconcileModel = env["account.reconcile.model"]
-    BankLine = env["account.bank.statement.line"]
-
     rules = ReconcileModel.search([])
     print(f"🔹 {len(rules)} règles de rapprochement détectées\n")
 
-    lines = BankLine.search([])
-    print(f"🔹 {len(lines)} lignes de relevé à analyser\n")
+    for rule in rules:
+        print(f"🧩 Règle : {rule.name} (ID: {rule.id})")
+        print(f"   - Type : {rule.rule_type}")
+        print(f"   - Label : {getattr(rule, 'label', '-')}")
+        print(f"   - Match Label : {getattr(rule, 'match_label', False)}")
+        print(f"   - Match Narration : {getattr(rule, 'match_narration', False)}")
+        print(f"   - Auto Reconcile : {getattr(rule, 'auto_reconcile', False)}")
 
-    updated = 0
+        # Lignes associées
+        if not rule.line_ids:
+            print("   ⚠️  Aucune ligne associée (line_ids est vide)")
+        else:
+            print(f"   🔸 {len(rule.line_ids)} lignes associées :")
+            for l in rule.line_ids:
+                partner = getattr(l, "partner_id", False)
+                account = getattr(l, "account_id", False)
+                label = getattr(l, "label", "")
+                print(
+                    f"      • line_id={l.id} | "
+                    f"label='{label or '-'}' | "
+                    f"compte={account.display_name if account else '-'} | "
+                    f"partenaire={partner.display_name if partner else '-'}"
+                )
+        print("--------------------------------------------------")
 
-    for line in lines:
-        if line.partner_id:
-            continue
-
-        label = (line.name or "").lower()
-
-        for rule in rules:
-            # On vérifie les conditions d'une règle
-            has_match_label = getattr(rule, "match_label", False)
-            has_match_narration = getattr(rule, "match_narration", False)
-            keyword = (rule.label or "").strip().lower()
-
-            if not keyword:
-                continue
-
-            # Si le libellé contient le mot-clé défini dans la règle
-            if keyword in label:
-                # On regarde la première ligne d'action de la règle
-                line_rule = rule.line_ids[:1]
-                if line_rule and getattr(line_rule, "account_id", False):
-                    partner = getattr(line_rule, "partner_id", False)
-                    if partner:
-                        line.partner_id = partner.id
-                        updated += 1
-                        print(f"✅ {line.name[:60]}... → {partner.display_name}")
-                        break
-
-    print(f"\n✅ {updated} lignes bancaires mises à jour selon les règles.\n")
+    print("✅ Fin du diagnostic.\n")
 
 
 def main(cr, registry):
@@ -61,4 +48,4 @@ def main(cr, registry):
 
 
 if __name__ == "__main__":
-    print("❌ Ce script doit être exécuté via l'Odoo shell (pas directement).")
+    print("❌ Ce script doit être exécuté via l'Odoo shell.")
