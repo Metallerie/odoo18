@@ -1,1 +1,4 @@
-from import update_partner_from_rules
+# -*- coding: utf-8 -*-
+
+from . import update_partner_from_rules
+ 
