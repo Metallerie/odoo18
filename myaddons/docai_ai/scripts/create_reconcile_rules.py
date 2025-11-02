@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 create_reconcile_rules.py
-Crée automatiquement les règles de rapprochement bancaire à partir des fournisseurs connus.
+Compatible Odoo 18 — crée des règles de rapprochement bancaire propres.
 """
 
 from odoo import api, SUPERUSER_ID
@@ -28,18 +28,22 @@ def run(env):
     env.cr.commit()
 
     created = 0
+
     for s in suppliers:
         account = Account.search([("code", "=", s["account"])], limit=1)
         if not account:
             print(f"⚠️ Compte {s['account']} introuvable, règle ignorée.")
             continue
 
+        # 🧠 création de la règle
         rule = Reconcile.create({
             "name": f"Paiement {s['partner']}",
             "rule_type": "invoice_matching",
-            "match_label": True,
-            "match_text_location": s["name"],
+            "match_label": "contains",
+            "match_label_param": s["name"],
+            "match_partner": False,
             "auto_reconcile": True,
+            "company_id": Company.id,
             "line_ids": [(0, 0, {
                 "label": s["name"],
                 "account_id": account.id,
@@ -47,6 +51,7 @@ def run(env):
                 "amount_string": "([\\d,\\.]+)",
             })],
         })
+
         created += 1
         print(f"✅ Règle créée : {rule.name}")
 
