@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action serveur "Assigner les partenaires bancaires" -->
+    <record id="action_assign_bank_partners" model="ir.actions.server">
+        <field name="name">Assigner partenaires sur relevés</field>
+        <field name="model_id" ref="account.model_account_bank_statement_line"/>
+        <field name="state">code</field>
+        <field name="code">
+result = env['docai.bank.partner.assign'].assign_bank_partners()
+        </field>
+    </record>
+
+    <!-- Option : Bouton dans la liste des relevés -->
+    <record id="view_statement_line_tree_inherit_assign_partner" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.assign.partner.tree</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account.view_bank_statement_line_tree"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="%(action_assign_bank_partners)d"
+                        type="action"
+                        string="Assigner partenaires"
+                        class="oe_highlight"/>
+            </header>
+        </field>
+    </record>
+</odoo>
