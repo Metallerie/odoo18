@@ -26,6 +26,7 @@ des factures fournisseurs (account.move).
         'views/res_config_settings_views.xml',
         'views/account_move_views.xml',
         'views/ir_cron.xml',
+        'views/bank_partner_assign_action.xml',
     ],
 
     # mode démo (pas obligatoire)
