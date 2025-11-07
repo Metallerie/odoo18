@@ -29,7 +29,6 @@ class ResConfigSettings(models.TransientModel):
             unknown_supplier_id=int(ICP.get_param("docai_ai.unknown_supplier_id", 0)) or False,
             unknown_product_id=int(ICP.get_param("docai_ai.unknown_product_id", 0)) or False,
             docai_project_id=ICP.get_param("docai_ai.project_id", ""),
-            docai_project_id=ICP.get_param("docai_ai.project_id", ""),
             docai_location=ICP.get_param("docai_ai.location", "eu"),
             docai_key_path=ICP.get_param("docai_ai.key_path", ""),
             docai_invoice_processor_id=ICP.get_param("docai_ai.invoice_processor_id", ""),
