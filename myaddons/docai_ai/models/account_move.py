@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.tools import float_round
 
 _logger = logging.getLogger(__name__)
 
@@ -26,7 +27,6 @@ MONTHS_FR = {
 }
 
 def _parse_date_any(value):
-    """Retourne 'YYYY-MM-DD' à partir de formats FR/ISO ou normalizedValue."""
     if not value:
         return None
     if isinstance(value, dict):
@@ -90,9 +90,6 @@ def _norm_type(t):
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    # -------------------------------------------------------------------------
-    # Extraction / mapping JSON DocAI
-    # -------------------------------------------------------------------------
     def _docai_entities(self, data):
         ents = data.get("entities")
         return ents if isinstance(ents, list) else []
@@ -107,7 +104,6 @@ class AccountMove(models.Model):
         return m
 
     def _find_tax_from_docai(self, ent_map):
-        """Trouve un objet account.tax à partir des entités DocAI (TVA)."""
         tax_rate = None
         for key in ("vat", "vat/tax_rate", "total_tax_amount"):
             val = ent_map.get(key)
@@ -131,9 +127,6 @@ class AccountMove(models.Model):
         ], limit=1)
         return tax or False
 
-    # -------------------------------------------------------------------------
-    # Analyse et import depuis JSON DocAI
-    # -------------------------------------------------------------------------
     def action_docai_scan_json(self):
         for move in self:
             if not move.docai_json:
@@ -153,7 +146,6 @@ class AccountMove(models.Model):
             ent_map = self._docai_first_map(entities)
             vals = {}
 
-            # --- Référence et date facture ---
             if ent_map.get("invoice_id"):
                 vals["ref"] = ent_map["invoice_id"]
             if ent_map.get("invoice_date"):
@@ -161,7 +153,6 @@ class AccountMove(models.Model):
                 if iso_date:
                     vals["invoice_date"] = iso_date
 
-            # --- Fournisseur ---
             if ent_map.get("supplier_name"):
                 supplier = self.env["res.partner"].search([
                     ("name", "ilike", ent_map["supplier_name"])
@@ -177,12 +168,10 @@ class AccountMove(models.Model):
                 move.write(vals)
                 _logger.info(f"✅ Facture {move.id} mise à jour avec {vals}")
 
-            # --- Taxe ---
             tax = self._find_tax_from_docai(ent_map)
             if tax:
                 _logger.info(f"🧾 Taxe détectée : {tax.name} ({tax.amount}%)")
 
-            # --- Lignes ---
             line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
             new_lines = []
             for li in line_items:
@@ -195,13 +184,12 @@ class AccountMove(models.Model):
                         pmap[t] = txt
 
                 name = pmap.get("description") or "Ligne"
-                qty = _to_float(pmap.get("quantity") or 1.0)
-                unit_price = _to_float(pmap.get("unit_price") or 0.0)
-                amount = _to_float(pmap.get("amount") or 0.0)
+                qty = float_round(_to_float(pmap.get("quantity") or 1.0), precision_digits=3)
+                unit_price = float_round(_to_float(pmap.get("unit_price") or 0.0), precision_digits=3)
+                amount = float_round(_to_float(pmap.get("amount") or 0.0), precision_digits=3)
                 if unit_price <= 0 and qty > 0 and amount > 0:
                     unit_price = amount / qty
 
-                # --- Produit (référence > nom) ---
                 product = None
                 if pmap.get("product_code"):
                     product = self.env["product.product"].search([
@@ -212,33 +200,10 @@ class AccountMove(models.Model):
                         ("name", "ilike", name)
                     ], limit=1)
 
-                # --- Unité de mesure ---
                 uom = None
                 if pmap.get("unit") or pmap.get("uom"):
-                    uom_name = (pmap.get("unit") or pmap.get("uom")).strip()
-                    uom = self.env["uom.uom"].search([
-                        "|",
-                        ("name", "ilike", uom_name),
-                        ("name", "=", uom_name)
-                    ], limit=1)
+                    uom_name = (
 
-                line_vals = {
-                    "name": name,
-                    "quantity": qty if qty > 0 else 1.0,
-                    "price_unit": unit_price,
-                    "product_id": product.id if product else False,
-                    "product_uom_id": uom.id if uom else False,
-                    "account_id": move.journal_id.default_account_id.id if move.journal_id.default_account_id else False,
-                }
-                if tax:
-                    line_vals["tax_ids"] = [(6, 0, [tax.id])]
-                new_lines.append((0, 0, line_vals))
-
-            if new_lines:
-                move.write({"invoice_line_ids": [(5, 0, 0)] + new_lines})
-                _logger.info(f"✅ {len(new_lines)} lignes importées pour facture {move.id}")
-            else:
-                _logger.warning(f"⚠️ Aucune ligne détectée pour facture {move.id}")
 
     # -------------------------------------------------------------------------
     # CRON : Analyse automatique des JSON DocAI existants
