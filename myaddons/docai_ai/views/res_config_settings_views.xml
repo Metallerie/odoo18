@@ -39,6 +39,13 @@
 
             </div>
 
+            
+              <div class="o_form_label">Fournisseur inconnu</div>
+              <div class="o_form_field"><field name="unknown_supplier_id" options="{'no_create': True}"/></div>
+
+              <div class="o_form_label">Produit inconnu</div>
+              <div class="o_form_field"><field name="unknown_product_id" options="{'no_create': True}"/></div>
+
             <div class="o_setting_right_pane">
               <p>
                 Configure ici tes identifiants Google Document AI :
