@@ -27,7 +27,6 @@ result = env['docai.bank.partner.assign'].assign_bank_partners()
     </field>
 </record>
 
-</odoo>
 
 
 </odoo>
