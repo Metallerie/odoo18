@@ -6,7 +6,6 @@ from google.cloud import documentai_v1 as documentai
 
 _logger = logging.getLogger(__name__)
 
-
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
@@ -18,11 +17,18 @@ class ResConfigSettings(models.TransientModel):
     docai_test_invoice_path = fields.Char("Facture de test")
     docai_test_expense_path = fields.Char("Ticket de caisse de test")
 
+    # Fournisseur / Produit inconnus
+    unknown_supplier_id = fields.Many2one("res.partner", string="Fournisseur inconnu")
+    unknown_product_id = fields.Many2one("product.product", string="Produit inconnu")
+
     @api.model
     def get_values(self):
         res = super().get_values()
         ICP = self.env["ir.config_parameter"].sudo()
         res.update(
+            unknown_supplier_id=int(ICP.get_param("docai_ai.unknown_supplier_id", 0)) or False,
+            unknown_product_id=int(ICP.get_param("docai_ai.unknown_product_id", 0)) or False,
+            docai_project_id=ICP.get_param("docai_ai.project_id", ""),
             docai_project_id=ICP.get_param("docai_ai.project_id", ""),
             docai_location=ICP.get_param("docai_ai.location", "eu"),
             docai_key_path=ICP.get_param("docai_ai.key_path", ""),
@@ -43,6 +49,19 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param("docai_ai.expense_processor_id", self.docai_expense_processor_id or "")
         ICP.set_param("docai_ai.test_invoice_path", self.docai_test_invoice_path or "")
         ICP.set_param("docai_ai.test_expense_path", self.docai_test_expense_path or "")
+
+        # Auto-create defaults if missing
+        partner = self.unknown_supplier_id or self.env["res.partner"].search([("name", "=", "Fournisseur Inconnu")], limit=1)
+        if not partner:
+            partner = self.env["res.partner"].create({"name": "Fournisseur Inconnu", "supplier_rank": 1})
+        self.unknown_supplier_id = partner
+        ICP.set_param("docai_ai.unknown_supplier_id", partner.id)
+
+        product = self.unknown_product_id or self.env["product.product"].search([("name", "=", "Produit Inconnu")], limit=1)
+        if not product:
+            product = self.env["product.product"].create({"name": "Produit Inconnu", "type": "service"})
+        self.unknown_product_id = product
+        ICP.set_param("docai_ai.unknown_product_id", product.id)
 
     def _docai_test_connection(self, processor_id, test_file, label="Document AI"):
         project_id = (self.docai_project_id or "").strip()
