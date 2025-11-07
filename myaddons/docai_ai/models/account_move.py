@@ -154,15 +154,12 @@ class AccountMove(models.Model):
                     vals["invoice_date"] = iso_date
 
             if ent_map.get("supplier_name"):
-                supplier = self.env["res.partner"].search([
-                    ("name", "ilike", ent_map["supplier_name"])
-                ], limit=1)
-                if not supplier:
-                    supplier = self.env["res.partner"].create({
-                        "name": ent_map["supplier_name"],
-                        "supplier_rank": 1
-                    })
-                vals["partner_id"] = supplier.id
+                unknown_supplier_id = int(self.env["ir.config_parameter"].sudo().get_param("docai_ai.unknown_supplier_id", 0)) or False
+                if unknown_supplier_id:
+                    supplier = self.env["res.partner"].browse(unknown_supplier_id)
+                else:
+                    supplier = self.env["res.partner"].search([("name", "ilike", ent_map.get("supplier_name"))], limit=1)
+                vals["partner_id"] = supplier.id if supplier else False
 
             if vals:
                 move.write(vals)
@@ -190,6 +187,7 @@ class AccountMove(models.Model):
                 if unit_price <= 0 and qty > 0 and amount > 0:
                     unit_price = amount / qty
 
+                unknown_product_id = int(self.env["ir.config_parameter"].sudo().get_param("docai_ai.unknown_product_id", 0)) or False
                 product = None
                 if pmap.get("product_code"):
                     product = self.env["product.product"].search([
@@ -199,10 +197,39 @@ class AccountMove(models.Model):
                     product = self.env["product.product"].search([
                         ("name", "ilike", name)
                     ], limit=1)
+                if not product and unknown_product_id:
+                    product = self.env["product.product"].browse(unknown_product_id)
 
                 uom = None
                 if pmap.get("unit") or pmap.get("uom"):
-                    uom_name = (
+                    uom_name = (pmap.get("unit") or pmap.get("uom") or "").strip()
+                    uom = self.env["uom.uom"].search([
+                        '|',
+                        ('name', 'ilike', uom_name),
+                        ('name', '=', uom_name)
+                    ], limit=1)
+
+                # Conserver l'intitulé d'origine en commentaire
+                display_name = f"{product.name} / {name}" if product else name
+
+                line_vals = {
+                    "name": display_name,
+                    "quantity": qty if qty > 0 else 1.0,
+                    "price_unit": unit_price,
+                    "product_id": product.id if product else False,
+                    "product_uom_id": uom.id if uom else False,
+                    "account_id": move.journal_id.default_account_id.id if move.journal_id.default_account_id else False,
+                }
+                if tax:
+                    line_vals["tax_ids"] = [(6, 0, [tax.id])]
+                new_lines.append((0, 0, line_vals))
+
+            if new_lines:
+                move.write({"invoice_line_ids": [(5, 0, 0)] + new_lines})
+                move._recompute_dynamic_lines(recompute_all_taxes=True)
+                _logger.info(f"✅ {len(new_lines)} lignes importées pour facture {move.id}")
+            else:
+                _logger.warning(f"⚠️ Aucune ligne détectée pour facture {move.id}")
 
 
     # -------------------------------------------------------------------------
