@@ -10,22 +10,23 @@ result = env['docai.bank.partner.assign'].assign_bank_partners()
         </field>
     </record>
 
-<record id="view_statement_line_reconcile_inherit_assign_partner" model="ir.ui.view">
-    <field name="name">account.bank.statement.line.reconcile.assign.partner</field>
-    <field name="model">account.bank.statement.line</field>
-    <field name="inherit_id" ref="account.bank.statement.line.reconcile"/>
-    <field name="arch" type="xml">
+    <record id="view_statement_line_reconcile_inherit_assign_partner" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.assign.partner</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_form_reconcile_view"/>
+        <field name="arch" type="xml">
 
-        <!-- On ajoute le bouton dans la barre d’actions -->
-        <xpath expr="//div[@class='o_statusbar_buttons']" position="inside">
-            <button name="%(action_assign_bank_partners)d"
-                    type="action"
-                    string="Assigner partenaires"
-                    class="btn btn-info mx-1"/>
-        </xpath>
+            <!-- On ajoute le bouton dans la barre d’actions -->
+            <xpath expr="//div[@class='o_statusbar_buttons']" position="inside">
+                <button name="%(action_assign_bank_partners)d"
+                        type="action"
+                        string="Assigner partenaires"
+                        class="btn btn-info mx-1"/>
+            </xpath>
 
-    </field>
-</record>
+        </field>
+    </record>
+
 
 
 
