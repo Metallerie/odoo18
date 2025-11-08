@@ -166,11 +166,10 @@ class AccountMove(models.Model):
                 _logger.info(f"✅ Facture {move.id} mise à jour avec {vals}")
 
             tax = self._find_tax_from_docai(ent_map)
-            if tax:
-                _logger.info(f"🧾 Taxe détectée : {tax.name} ({tax.amount}%)")
 
             line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
             new_lines = []
+
             for li in line_items:
                 props = li.get("properties", []) or []
                 pmap = {}
@@ -188,17 +187,37 @@ class AccountMove(models.Model):
                     unit_price = amount / qty
 
                 unknown_product_id = int(self.env["ir.config_parameter"].sudo().get_param("docai_ai.unknown_product_id", 0)) or False
+
+                # -------- Recherche produit améliorée --------
                 product = None
+
                 if pmap.get("product_code"):
+                    code = pmap["product_code"].strip().upper()
+
                     product = self.env["product.product"].search([
-                        ("default_code", "=", pmap["product_code"])
+                        ("default_code", "=", code)
                     ], limit=1)
+
+                    if not product:
+                        product = self.env["product.product"].search([
+                            ("default_code", "ilike", code)
+                        ], limit=1)
+
+                    if not product:
+                        supplierinfo = self.env["product.supplierinfo"].search([
+                            ("product_code", "=", code)
+                        ], limit=1)
+                        if supplierinfo and supplierinfo.product_tmpl_id:
+                            product = supplierinfo.product_tmpl_id.product_variant_id
+
                 if not product and name:
                     product = self.env["product.product"].search([
                         ("name", "ilike", name)
                     ], limit=1)
+
                 if not product and unknown_product_id:
                     product = self.env["product.product"].browse(unknown_product_id)
+                # ------------------------------------------------
 
                 uom = None
                 if pmap.get("unit") or pmap.get("uom"):
@@ -209,7 +228,6 @@ class AccountMove(models.Model):
                         ('name', '=', uom_name)
                     ], limit=1)
 
-                # Conserver l'intitulé d'origine en commentaire
                 display_name = f"{product.name} / {name}" if product else name
 
                 line_vals = {
@@ -222,6 +240,7 @@ class AccountMove(models.Model):
                 }
                 if tax:
                     line_vals["tax_ids"] = [(6, 0, [tax.id])]
+
                 new_lines.append((0, 0, line_vals))
 
             if new_lines:
@@ -231,10 +250,6 @@ class AccountMove(models.Model):
             else:
                 _logger.warning(f"⚠️ Aucune ligne détectée pour facture {move.id}")
 
-
-    # -------------------------------------------------------------------------
-    # CRON : Analyse automatique des JSON DocAI existants
-    # -------------------------------------------------------------------------
     @api.model
     def cron_docai_parse_json(self):
         moves = self.env["account.move"].search([
