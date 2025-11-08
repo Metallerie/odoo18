@@ -245,7 +245,7 @@ class AccountMove(models.Model):
 
             if new_lines:
                 move.write({"invoice_line_ids": [(5, 0, 0)] + new_lines})
-                move._recompute_tax_lines()
+                move._compute_amount()   # ✅ Odoo 18 compatible
                 _logger.info(f"✅ {len(new_lines)} lignes importées pour facture {move.id}")
             else:
                 _logger.warning(f"⚠️ Aucune ligne détectée pour facture {move.id}")
