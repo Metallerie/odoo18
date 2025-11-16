@@ -23,8 +23,8 @@ MONTHS_FR = {
     "juillet": 7, "juil": 7,
     "août": 8, "aout": 8,
     "septembre": 9, "sept": 9,
-    "octobre": 10, "oct": 10,
-    "novembre": 11, "nov": 11,
+    "octobre": 10,
+    "novembre": 11,
     "décembre": 12, "decembre": 12, "déc": 12, "dec": 12,
 }
 
@@ -146,6 +146,134 @@ class AccountMove(models.Model):
             limit=1,
         )
         return tax or False
+
+    # -------------------------------------------------------------------------
+    # Recherche produit DocAI
+    # -------------------------------------------------------------------------
+    def _docai_find_product(self, move, pmap, name, unknown_product_id):
+        """Trouve le produit correspondant à une ligne DocAI.
+        Priorité absolue : product_code.
+        """
+        Product = self.env["product.product"]
+        SupplierInfo = self.env["product.supplierinfo"]
+
+        partner = move.partner_id
+        product = None
+
+        # 1) PRIORITÉ : product_code direct
+        raw_code = (
+            pmap.get("product_code")
+            or pmap.get("item_code")
+            or pmap.get("code")
+            or pmap.get("reference")
+        )
+        if raw_code:
+            code = str(raw_code).strip()
+            if code:
+                # supplierinfo pour CE fournisseur
+                domain = [("product_code", "=", code)]
+                if partner:
+                    domain.append(("partner_id", "=", partner.id))
+                si = SupplierInfo.search(domain, limit=1)
+                if si and si.product_tmpl_id:
+                    product = si.product_tmpl_id.product_variant_id
+                    _logger.info(
+                        "✅ Produit trouvé via supplierinfo(partner) code=%s -> %s",
+                        code, product.display_name,
+                    )
+                    return product  # on s'arrête ici
+
+                # code interne exact
+                product = Product.search([("default_code", "=", code)], limit=1)
+                if product:
+                    _logger.info(
+                        "✅ Produit trouvé via default_code exact code=%s -> %s",
+                        code, product.display_name,
+                    )
+                    return product  # on s'arrête ici
+
+                # supplierinfo global (au cas où)
+                si = SupplierInfo.search([("product_code", "=", code)], limit=1)
+                if si and si.product_tmpl_id:
+                    product = si.product_tmpl_id.product_variant_id
+                    _logger.info(
+                        "✅ Produit trouvé via supplierinfo(global) code=%s -> %s",
+                        code, product.display_name,
+                    )
+                    return product  # on s'arrête ici
+
+        # 2) Heuristique : on cherche des codes numériques dans les champs texte
+        candidate_codes = set()
+        for key in ("product_code", "item_code", "code", "reference"):
+            if pmap.get(key):
+                raw = str(pmap[key]).strip()
+                if raw:
+                    for tok in re.findall(r"\d{3,}", raw):
+                        candidate_codes.add(tok)
+
+        if name:
+            for tok in re.findall(r"\d{3,}", str(name)):
+                candidate_codes.add(tok)
+
+        candidate_codes = list(candidate_codes)
+        if candidate_codes:
+            _logger.info(
+                "[DocAI] Codes candidats pour '%s' : %s", name, candidate_codes
+            )
+
+        # 2.a) supplierinfo pour CE fournisseur
+        for code in candidate_codes:
+            si_domain = [("product_code", "=", code)]
+            if partner:
+                si_domain.append(("partner_id", "=", partner.id))
+            si = SupplierInfo.search(si_domain, limit=1)
+            if si and si.product_tmpl_id:
+                product = si.product_tmpl_id.product_variant_id
+                _logger.info(
+                    "✅ Produit trouvé via supplierinfo(partner) candidat=%s -> %s",
+                    code, product.display_name,
+                )
+                return product
+
+        # 2.b) default_code exact / ilike
+        for code in candidate_codes:
+            product = Product.search([("default_code", "=", code)], limit=1)
+            if product:
+                _logger.info(
+                    "✅ Produit trouvé via default_code exact candidat=%s -> %s",
+                    code, product.display_name,
+                )
+                return product
+
+        for code in candidate_codes:
+            product = Product.search([("default_code", "ilike", code)], limit=1)
+            if product:
+                _logger.info(
+                    "✅ Produit trouvé via default_code ilike candidat=%s -> %s",
+                    code, product.display_name,
+                )
+                return product
+
+        # 3) Recherche par nom
+        if name:
+            product = Product.search([("name", "ilike", name)], limit=1)
+            if product:
+                _logger.info(
+                    "✅ Produit trouvé via nom ilike '%s' -> %s",
+                    name, product.display_name,
+                )
+                return product
+
+        # 4) Dernier recours : produit inconnu
+        if unknown_product_id:
+            product = Product.browse(unknown_product_id)
+            _logger.info(
+                "⚠️ Aucun produit trouvé pour ligne '%s', utilisation du produit inconnu",
+                name,
+            )
+            return product
+
+        return False
 
     # -------------------------------------------------------------------------
     # Action principale
@@ -279,110 +407,11 @@ class AccountMove(models.Model):
                     continue
 
                 # -----------------------------------------------------------------
-                # Recherche produit (on évite au maximum le produit inconnu)
+                # Produit : priorité absolue au product_code
                 # -----------------------------------------------------------------
-                product = None
-                partner = move.partner_id  # normalement CCL ici
-
-                # On récupère un ou plusieurs codes possibles depuis pmap
-                candidate_codes = []
-                for key in ("product_code", "item_code", "code", "reference"):
-                    if pmap.get(key):
-                        c = str(pmap[key]).strip()
-                        if c and c not in candidate_codes:
-                            candidate_codes.append(c)
-
-                # Si DocAI ne nous donne pas de clé claire, on peut tenter
-                # de récupérer un code depuis la description (ex: "70960 PLAT 60X20")
-                if not candidate_codes and name:
-                    first_token = str(name).strip().split()[0]
-                    if first_token.isdigit():
-                        candidate_codes.append(first_token)
-
-                # 1) Référence fournisseur (product.supplierinfo.product_code)
-                for code in candidate_codes:
-                    code_str = code.strip()
-
-                    # a) pour ce fournisseur
-                    si_domain = [("product_code", "=", code_str)]
-                    if partner:
-                        si_domain.append(("partner_id", "=", partner.id))
-
-                    supplierinfo = self.env["product.supplierinfo"].search(
-                        si_domain, limit=1
-                    )
-                    if supplierinfo and supplierinfo.product_tmpl_id:
-                        product = supplierinfo.product_tmpl_id.product_variant_id
-                        _logger.info(
-                            "✅ Produit trouvé via supplierinfo (%s) pour partenaire %s -> %s",
-                            code_str,
-                            partner.display_name if partner else "N/A",
-                            product.display_name,
-                        )
-                        break
-
-                    # b) sans filtrer sur le fournisseur (au cas où)
-                    if not product:
-                        supplierinfo = self.env["product.supplierinfo"].search(
-                            [("product_code", "=", code_str)], limit=1
-                        )
-                        if supplierinfo and supplierinfo.product_tmpl_id:
-                            product = supplierinfo.product_tmpl_id.product_variant_id
-                            _logger.info(
-                                "✅ Produit trouvé via supplierinfo global (%s) -> %s",
-                                code_str, product.display_name
-                            )
-                            break
-
-                # 2) Code interne (default_code)
-                if not product:
-                    for code in candidate_codes:
-                        code_str = code.strip()
-                        product = self.env["product.product"].search(
-                            [("default_code", "=", code_str)],
-                            limit=1,
-                        )
-                        if product:
-                            _logger.info(
-                                "✅ Produit trouvé via default_code exact (%s) -> %s",
-                                code_str, product.display_name
-                            )
-                            break
-
-                if not product:
-                    for code in candidate_codes:
-                        code_str = code.strip()
-                        product = self.env["product.product"].search(
-                            [("default_code", "ilike", code_str)],
-                            limit=1,
-                        )
-                        if product:
-                            _logger.info(
-                                "✅ Produit trouvé via default_code ilike (%s) -> %s",
-                                code_str, product.display_name
-                            )
-                            break
-
-                # 3) Recherche par nom de ligne
-                if not product and name:
-                    product = self.env["product.product"].search(
-                        [("name", "ilike", name)],
-                        limit=1,
-                    )
-                    if product:
-                        _logger.info(
-                            "✅ Produit trouvé via nom ilike (%s) -> %s",
-                            name, product.display_name
-                        )
-
-                # 4) Produit inconnu seulement si TOUT échoue
-                if not product and unknown_product_id:
-                    product = self.env["product.product"].browse(unknown_product_id)
-                    _logger.info(
-                        "⚠️ Aucun produit trouvé pour ligne '%s' (codes=%s), "
-                        "utilisation du produit inconnu",
-                        name, candidate_codes
-                    )
+                product = self._docai_find_product(
+                    move, pmap, name, unknown_product_id
+                )
 
                 # -----------------------------------------------------------------
                 # UoM sécurisée
