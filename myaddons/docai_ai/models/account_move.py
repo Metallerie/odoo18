@@ -272,7 +272,7 @@ class AccountMove(models.Model):
                     # 1) Référence fournisseur (product.supplierinfo.product_code)
                     si_domain = [("product_code", "=", code)]
                     if partner:
-                        si_domain.append(("name", "=", partner.id))
+                        si_domain.append(("partner_id", "=", partner.id))
                     supplierinfo = self.env["product.supplierinfo"].search(
                         si_domain, limit=1
                     )
