@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 # account_move.py
+
 import json
 import logging
 import re
 from datetime import datetime
+
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools import float_round
@@ -20,16 +22,19 @@ MONTHS_FR = {
     "juin": 6,
     "juillet": 7, "juil": 7,
     "août": 8, "aout": 8,
-    "septembre": 9,
-    "octobre": 10,
-    "novembre": 11,
+    "septembre": 9, "sept": 9,
+    "octobre": 10, "oct": 10,
+    "novembre": 11, "nov": 11,
     "décembre": 12, "decembre": 12, "déc": 12, "dec": 12,
 }
 
 
 def _parse_date_any(value):
+    """Essaye d'interpréter une date DocAI ou texte libre en YYYY-MM-DD."""
     if not value:
         return None
+
+    # DocAI dateValue
     if isinstance(value, dict):
         if value.get("dateValue"):
             try:
@@ -45,11 +50,15 @@ def _parse_date_any(value):
             value = str(value)
 
     s = str(value).strip()
+
+    # Formats classiques
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"):
         try:
             return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
         except Exception:
             pass
+
+    # Formats "14 novembre 2025"
     low = s.lower().replace("\u00a0", " ")
     tokens = [t.strip(" .,") for t in low.split() if t.strip()]
     for i in range(len(tokens) - 2):
@@ -68,11 +77,14 @@ def _parse_date_any(value):
 
 
 def _to_float(val):
+    """Nettoie un nombre au format FR/texte libre -> float."""
     if val is None:
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
-    s = str(val).strip().replace(" ", "").replace("\u00A0", "").replace(",", ".")
+
+    s = str(val).strip()
+    s = s.replace(" ", "").replace("\u00A0", "").replace(",", ".")
     m = re.findall(r"-?\d+(?:\.\d+)?", s)
     if not m:
         return 0.0
@@ -99,6 +111,7 @@ class AccountMove(models.Model):
         return ents if isinstance(ents, list) else []
 
     def _docai_first_map(self, entities):
+        """Map simple type -> première valeur normalisée."""
         m = {}
         for ent in entities:
             t = ent.get("type") or ent.get("type_")
@@ -108,6 +121,7 @@ class AccountMove(models.Model):
         return m
 
     def _find_tax_from_docai(self, ent_map):
+        """Tente de déduire le taux de TVA depuis les entités DocAI."""
         tax_rate = None
         for key in ("vat", "vat/tax_rate", "total_tax_amount"):
             val = ent_map.get(key)
@@ -123,8 +137,10 @@ class AccountMove(models.Model):
                         break
                 except Exception:
                     continue
+
         if tax_rate is None:
             return False
+
         tax = self.env["account.tax"].search(
             [("amount", "=", tax_rate), ("type_tax_use", "=", "purchase")],
             limit=1,
@@ -135,11 +151,13 @@ class AccountMove(models.Model):
     # Action principale
     # -------------------------------------------------------------------------
     def action_docai_scan_json(self):
+        """Analyse le JSON DocAI et génère les lignes de facture."""
         for move in self:
             if not move.docai_json:
                 raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
 
-            _logger.info("🔎 Analyse JSON pour facture %s (%s)", move.id, move.name or "")
+            _logger.info("🔎 Analyse JSON pour facture %s (%s)",
+                         move.id, move.name or "")
 
             try:
                 data = json.loads(move.docai_json)
@@ -163,7 +181,7 @@ class AccountMove(models.Model):
                 if iso_date:
                     vals["invoice_date"] = iso_date
 
-            # Fournisseur : on NE remplace PAS un vrai fournisseur par l'inconnu
+            # Fournisseur
             unknown_supplier_id = int(
                 self.env["ir.config_parameter"]
                 .sudo()
@@ -174,19 +192,17 @@ class AccountMove(models.Model):
             if ent_map.get("supplier_name"):
                 supplier_name = str(ent_map["supplier_name"]).strip()
 
-                # 1) on cherche un vrai fournisseur
+                # 1) on cherche un vrai fournisseur par son nom
                 supplier = self.env["res.partner"].search(
                     [("name", "ilike", supplier_name)],
                     limit=1,
                 )
 
-                # 2) si rien trouvé, on prend l'inconnu
+                # 2) si rien trouvé, on prend l'inconnu (si défini)
                 if not supplier and unknown_supplier_id:
                     supplier = self.env["res.partner"].browse(unknown_supplier_id)
 
-            # 3) écriture : seulement si
-            #    - aucun fournisseur sur la facture, ou
-            #    - le fournisseur actuel est déjà "inconnu"
+            # 3) on ne remplace pas un vrai fournisseur par l'inconnu
             if supplier:
                 if (not move.partner_id) or (
                     unknown_supplier_id and move.partner_id.id == unknown_supplier_id
@@ -209,10 +225,17 @@ class AccountMove(models.Model):
             ]
             new_lines = []
 
+            # Compte d'achat par défaut optionnel (ex: 607000)
             purchase_account_id = int(
                 self.env["ir.config_parameter"]
                 .sudo()
                 .get_param("docai_ai.default_purchase_account_id", 0)
+            ) or False
+
+            unknown_product_id = int(
+                self.env["ir.config_parameter"]
+                .sudo()
+                .get_param("docai_ai.unknown_product_id", 0)
             ) or False
 
             for li in line_items:
@@ -230,6 +253,7 @@ class AccountMove(models.Model):
                 unit_price = _to_float(pmap.get("unit_price") or 0.0)
                 amount = _to_float(pmap.get("amount") or 0.0)
 
+                # Arrondis propres
                 qty = float_round(qty, precision_digits=3)
                 unit_price = float_round(unit_price, precision_digits=3)
                 amount = float_round(amount, precision_digits=3)
@@ -255,41 +279,89 @@ class AccountMove(models.Model):
                     continue
 
                 # -----------------------------------------------------------------
-                # Recherche produit : priorité à la réf fournisseur pour ce partenaire
+                # Recherche produit (on évite au maximum le produit inconnu)
                 # -----------------------------------------------------------------
-                unknown_product_id = int(
-                    self.env["ir.config_parameter"]
-                    .sudo()
-                    .get_param("docai_ai.unknown_product_id", 0)
-                ) or False
-
                 product = None
                 partner = move.partner_id  # normalement CCL ici
 
-                if pmap.get("product_code"):
-                    code = pmap["product_code"].strip().upper()
+                # On récupère un ou plusieurs codes possibles depuis pmap
+                candidate_codes = []
+                for key in ("product_code", "item_code", "code", "reference"):
+                    if pmap.get(key):
+                        c = str(pmap[key]).strip()
+                        if c and c not in candidate_codes:
+                            candidate_codes.append(c)
 
-                    # 1) Référence fournisseur (product.supplierinfo.product_code)
-                    si_domain = [("product_code", "=", code)]
+                # Si DocAI ne nous donne pas de clé claire, on peut tenter
+                # de récupérer un code depuis la description (ex: "70960 PLAT 60X20")
+                if not candidate_codes and name:
+                    first_token = str(name).strip().split()[0]
+                    if first_token.isdigit():
+                        candidate_codes.append(first_token)
+
+                # 1) Référence fournisseur (product.supplierinfo.product_code)
+                for code in candidate_codes:
+                    code_str = code.strip()
+
+                    # a) pour ce fournisseur
+                    si_domain = [("product_code", "=", code_str)]
                     if partner:
                         si_domain.append(("partner_id", "=", partner.id))
+
                     supplierinfo = self.env["product.supplierinfo"].search(
                         si_domain, limit=1
                     )
                     if supplierinfo and supplierinfo.product_tmpl_id:
                         product = supplierinfo.product_tmpl_id.product_variant_id
+                        _logger.info(
+                            "✅ Produit trouvé via supplierinfo (%s) pour partenaire %s -> %s",
+                            code_str,
+                            partner.display_name if partner else "N/A",
+                            product.display_name,
+                        )
+                        break
 
-                    # 2) Code interne (default_code)
+                    # b) sans filtrer sur le fournisseur (au cas où)
                     if not product:
+                        supplierinfo = self.env["product.supplierinfo"].search(
+                            [("product_code", "=", code_str)], limit=1
+                        )
+                        if supplierinfo and supplierinfo.product_tmpl_id:
+                            product = supplierinfo.product_tmpl_id.product_variant_id
+                            _logger.info(
+                                "✅ Produit trouvé via supplierinfo global (%s) -> %s",
+                                code_str, product.display_name
+                            )
+                            break
+
+                # 2) Code interne (default_code)
+                if not product:
+                    for code in candidate_codes:
+                        code_str = code.strip()
                         product = self.env["product.product"].search(
-                            [("default_code", "=", code)],
+                            [("default_code", "=", code_str)],
                             limit=1,
                         )
-                    if not product:
+                        if product:
+                            _logger.info(
+                                "✅ Produit trouvé via default_code exact (%s) -> %s",
+                                code_str, product.display_name
+                            )
+                            break
+
+                if not product:
+                    for code in candidate_codes:
+                        code_str = code.strip()
                         product = self.env["product.product"].search(
-                            [("default_code", "ilike", code)],
+                            [("default_code", "ilike", code_str)],
                             limit=1,
                         )
+                        if product:
+                            _logger.info(
+                                "✅ Produit trouvé via default_code ilike (%s) -> %s",
+                                code_str, product.display_name
+                            )
+                            break
 
                 # 3) Recherche par nom de ligne
                 if not product and name:
@@ -297,17 +369,23 @@ class AccountMove(models.Model):
                         [("name", "ilike", name)],
                         limit=1,
                     )
+                    if product:
+                        _logger.info(
+                            "✅ Produit trouvé via nom ilike (%s) -> %s",
+                            name, product.display_name
+                        )
 
-                # 4) Produit inconnu seulement si rien trouvé
+                # 4) Produit inconnu seulement si TOUT échoue
                 if not product and unknown_product_id:
                     product = self.env["product.product"].browse(unknown_product_id)
                     _logger.info(
-                        "⚠️ Aucun produit trouvé, utilisation du produit inconnu pour %s",
-                        name,
+                        "⚠️ Aucun produit trouvé pour ligne '%s' (codes=%s), "
+                        "utilisation du produit inconnu",
+                        name, candidate_codes
                     )
 
                 # -----------------------------------------------------------------
-                # UoM
+                # UoM sécurisée
                 # -----------------------------------------------------------------
                 uom = None
                 if pmap.get("unit") or pmap.get("uom"):
@@ -322,8 +400,28 @@ class AccountMove(models.Model):
                             limit=1,
                         )
 
+                product_uom_id = False
+                if product and uom:
+                    if product.uom_id.category_id == uom.category_id:
+                        product_uom_id = uom.id
+                    else:
+                        _logger.info(
+                            "⚠️ UoM incompatible (%s) ignorée pour le produit %s — on garde %s",
+                            uom.name, product.name, product.uom_id.name
+                        )
+                        product_uom_id = product.uom_id.id
+                elif product:
+                    product_uom_id = product.uom_id.id
+                else:
+                    product_uom_id = False
+
+                # Si produit inconnu → impose l’UdM du produit inconnu
+                if product and unknown_product_id and product.id == unknown_product_id:
+                    product_uom_id = product.uom_id.id
+
                 display_name = f"{product.name} / {name}" if product else name
 
+                # Compte comptable : paramètre > compte du journal
                 account_id = False
                 if purchase_account_id:
                     account_id = purchase_account_id
@@ -335,7 +433,7 @@ class AccountMove(models.Model):
                     "quantity": qty if qty > 0 else 1.0,
                     "price_unit": unit_price,
                     "product_id": product.id if product else False,
-                    "product_uom_id": uom.id if uom else False,
+                    "product_uom_id": product_uom_id,
                     "account_id": account_id,
                 }
                 if tax:
@@ -343,9 +441,12 @@ class AccountMove(models.Model):
 
                 new_lines.append((0, 0, line_vals))
 
+            # -----------------------------------------------------------------
+            # Écriture sur la facture
+            # -----------------------------------------------------------------
             if new_lines:
                 move.write({"invoice_line_ids": [(5, 0, 0)] + new_lines})
-                move._compute_amount()
+                move._compute_amount()  # Odoo 18
                 _logger.info(
                     "✅ %s lignes importées pour facture %s", len(new_lines), move.id
                 )
@@ -359,6 +460,7 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     @api.model
     def cron_docai_parse_json(self):
+        """CRON : applique le parsing JSON sur les factures fournisseurs en brouillon."""
         moves = self.env["account.move"].search(
             [
                 ("move_type", "=", "in_invoice"),
