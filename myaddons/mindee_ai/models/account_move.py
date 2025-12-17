@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # account_move.py (Version attente : ligne unique avec HT + TVA 20%)
+# Variante: date comptable = date facture, date d'échéance = date facture (FORCÉ)
 
 import base64
 import json
@@ -9,8 +10,6 @@ import subprocess
 import tempfile
 import unicodedata
 from datetime import date
-
-from dateutil.relativedelta import relativedelta  # (optionnel, gardé si tu veux des fallback J+X)
 
 from odoo import models, fields
 from odoo.exceptions import UserError
@@ -95,34 +94,13 @@ class AccountMove(models.Model):
         )
         return hist.json_content if hist and hist.json_content else ''
 
-    def _set_accounting_and_due_dates_from_invoice_date(self, move):
-        """Date comptable + échéance à partir de la date de facture."""
+    def _force_accounting_and_due_dates_from_invoice_date(self, move):
+        """FORCE: date comptable + échéance = date de facture."""
         inv_date = move.invoice_date
         if not inv_date:
             return
-
-        # Date comptable = date facture (classique en achat)
         move.date = inv_date
-
-        # Terme de paiement: d'abord celui de la facture, sinon celui du fournisseur
-        payment_term = move.invoice_payment_term_id or move.partner_id.property_supplier_payment_term_id
-
-        if payment_term:
-            res = payment_term.compute(value=1.0, date_ref=inv_date, currency=move.currency_id)
-            due_dates = []
-
-            if isinstance(res, dict):
-                if "line_ids" in res:
-                    due_dates = [d for (d, _amt) in res["line_ids"] if d]
-                elif "date" in res and res["date"]:
-                    due_dates = [res["date"]]
-            elif isinstance(res, (list, tuple)):
-                due_dates = [d for (d, _amt) in res if d]
-
-            move.invoice_date_due = max(due_dates) if due_dates else inv_date
-        else:
-            # Pas de terme de paiement => échéance = date facture
-            move.invoice_date_due = inv_date
+        move.invoice_date_due = inv_date
 
     # === Main OCR Fetch ===
     def action_ocr_fetch(self):
@@ -185,13 +163,13 @@ class AccountMove(models.Model):
                 inv_num_clean = re.sub(r"facture\s*(n°|no|num)?[:\-]?", "", inv_num, flags=re.I).strip()
                 move.ref = inv_num_clean
 
-            # --- Date facture + date comptable + échéance ---
+            # --- Date facture + date comptable + échéance (FORCÉ) ---
             inv_date = _pick_zone(["invoice date", "date facture"])
             if inv_date:
                 d = self._normalize_date(inv_date)
                 if d:
                     move.invoice_date = d
-                    move._set_accounting_and_due_dates_from_invoice_date(move)
+                    self._force_accounting_and_due_dates_from_invoice_date(move)
 
             # --- Totaux ---
             total_ht = self._to_float(_pick_zone(["total ht", "brut ht", "net ht"]))
