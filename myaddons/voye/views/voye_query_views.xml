@@ -26,14 +26,14 @@
   </record>
 
   <record id="view_voye_query_tree" model="ir.ui.view">
-    <field name="name">voye.query.tree</field>
+    <field name="name">voye.query.list</field>
     <field name="model">voye.query</field>
     <field name="arch" type="xml">
-      <tree>
+      <list>
         <field name="create_date"/>
         <field name="state"/>
         <field name="question"/>
-      </tree>
+      </liste>
     </field>
   </record>
 
