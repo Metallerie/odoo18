@@ -1,0 +1,4 @@
+<odoo>
+  <menuitem id="menu_voye_root" name="Voye" parent="account.menu_finance" sequence="50"/>
+  <menuitem id="menu_voye_query" name="Console" parent="menu_voye_root" action="action_voye_query" sequence="10"/>
+</odoo>
