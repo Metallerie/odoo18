@@ -1,0 +1,45 @@
+<odoo>
+  <record id="view_voye_query_form" model="ir.ui.view">
+    <field name="name">voye.query.form</field>
+    <field name="model">voye.query</field>
+    <field name="arch" type="xml">
+      <form string="Voye">
+        <sheet>
+          <group>
+            <field name="question" placeholder="Ex: Donne-moi la liste des écritures non lettrées"/>
+            <button name="action_ask_voye" type="object" string="Envoyer à Voye" class="btn-primary"/>
+          </group>
+          <group>
+            <field name="state" readonly="1"/>
+          </group>
+          <notebook>
+            <page string="Réponse">
+              <field name="answer" readonly="1" nolabel="1"/>
+            </page>
+            <page string="JSON">
+              <field name="answer_json" readonly="1" nolabel="1"/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_voye_query_tree" model="ir.ui.view">
+    <field name="name">voye.query.tree</field>
+    <field name="model">voye.query</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="create_date"/>
+        <field name="state"/>
+        <field name="question"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_voye_query" model="ir.actions.act_window">
+    <field name="name">Voye</field>
+    <field name="res_model">voye.query</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+</odoo>
