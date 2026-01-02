@@ -25,17 +25,17 @@
     </field>
   </record>
 
-  <record id="view_voye_query_tree" model="ir.ui.view">
-    <field name="name">voye.query.list</field>
-    <field name="model">voye.query</field>
-    <field name="arch" type="xml">
-      <list>
-        <field name="create_date"/>
-        <field name="state"/>
-        <field name="question"/>
-      </liste>
-    </field>
-  </record>
+<record id="view_voye_query_list" model="ir.ui.view">
+  <field name="name">voye.query.list</field>
+  <field name="model">voye.query</field>
+  <field name="arch" type="xml">
+    <list>
+      <field name="create_date"/>
+      <field name="state"/>
+      <field name="question"/>
+    </list>
+  </field>
+</record>
 
   <record id="action_voye_query" model="ir.actions.act_window">
     <field name="name">Voye</field>
