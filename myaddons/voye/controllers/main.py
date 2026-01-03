@@ -1,29 +1,21 @@
 # -*- coding: utf-8 -*-
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import UserError
 
+from ..services.ollama_client import OllamaClient
 
-class VoyeController(http.Controller):
+class VoyeChatController(http.Controller):
 
-    @http.route("/voye/chart_of_accounts", type="json", auth="user", methods=["POST"], csrf=False)
-    def voye_chart_of_accounts(self, include_deprecated=False, company_id=None):
-        """
-        Retourne le plan comptable complet pour la société courante (ou company_id si autorisée).
-        Auth: user (session Odoo). Utilisable depuis Voye via un compte technique.
-        """
-        env = request.env
+    @http.route("/voye/chat", type="json", auth="user", methods=["POST"], csrf=False)
+    def voye_chat(self, prompt=None, **kwargs):
+        if not prompt:
+            raise UserError("prompt manquant")
 
-        # Sécurité multi-sociétés : on n’autorise company_id que s’il est dans les sociétés accessibles
-        if company_id:
-            allowed = env.companies.ids  # sociétés accessibles par l'utilisateur
-            if company_id not in allowed:
-                return {"error": "company_id not allowed", "allowed_company_ids": allowed}
+        icp = request.env["ir.config_parameter"].sudo()
+        base_url = icp.get_param("voye.ollama_base_url", "http://127.0.0.1:11434")
+        model = icp.get_param("voye.ollama_model", "deepseek-r1:latest")
 
-        svc = env["voye.chart_of_accounts.service"]
-        data = svc.get_full_chart_of_accounts(company_id=company_id, include_deprecated=bool(include_deprecated))
-        return data
-
-    @http.route("/voye/ping", type="http", auth="user", methods=["GET"], csrf=False)
-    def voye_ping(self, **kwargs):
-        """Petit endpoint de test."""
-        return "ok"
+        client = OllamaClient(base_url=base_url, model=model)
+        answer = client.chat(prompt)
+        return {"answer": answer}
