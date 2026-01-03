@@ -11,6 +11,7 @@
         <field name="state"/>
         <field name="duration_ms"/>
         <field name="error_message"/>
+        <field name="rating"/>
       </list>
     </field>
   </record>
@@ -31,6 +32,12 @@
         <group>
           <field name="prompt" readonly="1"/>
           <field name="answer" readonly="1"/>
+        </group>
+         <group string="Appréciation">
+         <field name="rating" widget="radio"/>
+         <field name="rating_comment"
+           placeholder="Pourquoi cette réponse est-elle mauvaise ?"
+           attrs="{'invisible': [('rating','!=','down')]}"/>
         </group>
       </form>
     </field>
