@@ -22,14 +22,17 @@ Long description of module's purpose
 
     # always loaded
     'data': [
-        'security/security.xml',
-        'views/views.xml',
-        'views/templates.xml',
-        "security/ir.model.access.csv",
-        "views/voye_query_views.xml",
-        "views/menu.xml",
-        "views/voye_ai_wizard_views.xml",
-    ],
+    'security/security.xml',
+    'security/ir.model.access.csv',
+
+    'views/menu.xml',
+    'views/voye_ai_wizard_views.xml',
+
+    'views/views.xml',
+    'views/templates.xml',
+    "views/voye_query_views.xml",
+],
+
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
