@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_voye_ai_wizard_form" model="ir.ui.view">
+    <field name="name">voye.ai.wizard.form</field>
+    <field name="model">voye.ai.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Assistant IA Voye">
+        <group>
+          <field name="prompt" placeholder="Pose ta question..." nolabel="1"/>
+          <field name="answer" nolabel="1" readonly="1"/>
+          <field name="model_name" invisible="1"/>
+        </group>
+        <footer>
+          <button name="action_ask" type="object" string="Envoyer" class="btn-primary"/>
+          <button special="cancel" string="Fermer" class="btn-secondary"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_voye_ai_wizard" model="ir.actions.act_window">
+    <field name="name">Assistant IA</field>
+    <field name="res_model">voye.ai.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+  </record>
+
+  <menuitem id="menu_voye_ai_root"
+            name="Voye IA"
+            parent="voye.menu_root"
+            groups="voye.group_voye_ai_user"/>
+
+  <menuitem id="menu_voye_ai_assistant"
+            name="Assistant"
+            parent="menu_voye_ai_root"
+            action="action_voye_ai_wizard"
+            groups="voye.group_voye_ai_user"/>
+</odoo>
