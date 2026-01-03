@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_voye_ai_log_tree" model="ir.ui.view">
+    <field name="name">voye.ai.log.tree</field>
+    <field name="model">voye.ai.log</field>
+    <field name="arch" type="xml">
+      <list string="Historique IA">
+        <field name="create_date"/>
+        <field name="user_id"/>
+        <field name="model_name"/>
+        <field name="state"/>
+        <field name="duration_ms"/>
+        <field name="error_message"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_voye_ai_log_form" model="ir.ui.view">
+    <field name="name">voye.ai.log.form</field>
+    <field name="model">voye.ai.log</field>
+    <field name="arch" type="xml">
+      <form string="Historique IA">
+        <group>
+          <field name="create_date" readonly="1"/>
+          <field name="user_id" readonly="1"/>
+          <field name="model_name" readonly="1"/>
+          <field name="state" readonly="1"/>
+          <field name="duration_ms" readonly="1"/>
+          <field name="error_message" readonly="1"/>
+        </group>
+        <group>
+          <field name="prompt" readonly="1"/>
+          <field name="answer" readonly="1"/>
+        </group>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_voye_ai_log" model="ir.actions.act_window">
+    <field name="name">Historique IA</field>
+    <field name="res_model">voye.ai.log</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <menuitem id="menu_voye_ai_history" name="Historique IA"
+            parent="menu_voye_root"
+            action="action_voye_ai_log"
+            sequence="30"
+            groups="voye.group_voye_ai_user"/>
+</odoo>
