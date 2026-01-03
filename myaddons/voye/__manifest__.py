@@ -21,12 +21,12 @@ Long description of module's purpose
     'depends': ['base','account'],
 
     # always loaded
-    'data': [
+'data': [
     'security/security.xml',
     'security/ir.model.access.csv',
 
-    'views/menu.xml',
-    'views/voye_ai_wizard_views.xml',
+    "views/voye_ai_wizard_views.xml",
+    "views/menu.xml",
 
     'views/views.xml',
     'views/templates.xml',
