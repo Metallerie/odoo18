@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="group_voye_ai_user" model="res.groups">
+    <field name="name">Voye / IA</field>
+    <field name="category_id" ref="base.module_category_tools"/>
+  </record>
+</odoo>
