@@ -2,3 +2,4 @@
 
 from . import voye_query
 from . import voye_ai_wizard
+from . import voye_ai_log
