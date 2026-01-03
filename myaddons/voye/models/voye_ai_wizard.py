@@ -15,6 +15,16 @@ class VoyeAiWizard(models.TransientModel):
     answer = fields.Text(string="Réponse", readonly=True)
     model_name = fields.Char(string="Modèle", readonly=True)
 
+    # Lien vers l'historique créé pour cette question
+    log_id = fields.Many2one("voye.ai.log", string="Historique", readonly=True)
+
+    # Pouces dans le wizard (écrits dans le log)
+    rating = fields.Selection(
+        [("up", "👍 Utile"), ("down", "👎 Inutile")],
+        string="Appréciation",
+    )
+    rating_comment = fields.Text(string="Commentaire")
+
     def _get_ollama_config(self):
         icp = self.env["ir.config_parameter"].sudo()
         base_url = icp.get_param("voye.ollama_base_url", "http://127.0.0.1:11434")
@@ -22,26 +32,21 @@ class VoyeAiWizard(models.TransientModel):
         return base_url, model
 
     def _build_system_prompt(self) -> str:
-        """
-        System prompt configurable depuis Paramètres système:
-        - voye.ai_system_prompt
-        """
         icp = self.env["ir.config_parameter"].sudo()
         sp = icp.get_param("voye.ai_system_prompt")
         if sp and sp.strip():
             return sp.strip()
 
-        # Fallback si pas défini
         return (
             "Tu es l’assistant interne de la Métallerie de Franck. "
-            "Ton rôle est d’aider à comprendre et relier les différentes facettes de l’entreprise : "
-            "comptabilité, clients, fournisseurs et fabrication en atelier. "
-            "Tu réponds en français, de façon claire, courte et concrète. "
+            "Tu n'es pas un assistant générique et tu ne cites jamais d'autre entreprise ou marque. "
+            "Ton rôle est d’aider à comprendre et relier comptabilité, clients, fournisseurs et atelier. "
+            "Réponses courtes, concrètes, en français. "
             "Si une information manque, tu poses 1 à 2 questions. "
-            "Tu n’inventes jamais de données. "
-            "Tu ne demandes jamais de mots de passe, clés ou informations sensibles. "
-            "Si on te demande 'que sais-tu de la Métallerie' et qu'aucun fait n'est fourni, "
-            "tu dis que tu n'as pas d'informations factuelles et tu demandes une courte description."
+            "Tu n’inventes jamais de faits, noms, chiffres ou historiques. "
+            "Si on te demande 'que sais-tu de la Métallerie' sans faits fournis, "
+            "tu dis que tu n'as pas d'informations factuelles et tu demandes une courte description. "
+            "Ne demande jamais de mots de passe, clés ou informations sensibles."
         )
 
     def _validate_prompt(self, prompt: str):
@@ -49,6 +54,25 @@ class VoyeAiWizard(models.TransientModel):
             raise UserError("Écris un prompt.")
         if len(prompt) > 4000:
             raise UserError("Prompt trop long (max 4000 caractères).")
+
+    def _sync_rating_to_log(self):
+        """Recopie rating / rating_comment du wizard vers le log."""
+        self.ensure_one()
+        if not self.log_id:
+            return
+        # Écriture autorisée par voye.ai.log.write (seulement ces champs)
+        self.log_id.write({
+            "rating": self.rating or False,
+            "rating_comment": (self.rating_comment or "").strip() or False,
+        })
+
+    def write(self, vals):
+        res = super().write(vals)
+        # Si l'utilisateur change l'appréciation/commentaire dans le wizard, on synchronise
+        if any(k in vals for k in ("rating", "rating_comment")):
+            for wiz in self:
+                wiz._sync_rating_to_log()
+        return res
 
     def action_ask(self):
         self.ensure_one()
@@ -66,8 +90,7 @@ class VoyeAiWizard(models.TransientModel):
             answer = client.chat(prompt=prompt, system=system, temperature=0.2)
             duration_ms = int((time.time() - t0) * 1000)
 
-            # Log structuré (création en sudo)
-            self.env["voye.ai.log"].sudo().create({
+            log = self.env["voye.ai.log"].sudo().create({
                 "user_id": self.env.user.id,
                 "model_name": model,
                 "prompt": prompt,
@@ -78,11 +101,16 @@ class VoyeAiWizard(models.TransientModel):
 
             self.answer = answer
             self.model_name = model
+            self.log_id = log.id
+
+            # reset des pouces pour la nouvelle réponse
+            self.rating = False
+            self.rating_comment = False
 
         except Exception as e:
             duration_ms = int((time.time() - t0) * 1000)
 
-            self.env["voye.ai.log"].sudo().create({
+            log = self.env["voye.ai.log"].sudo().create({
                 "user_id": self.env.user.id,
                 "model_name": model,
                 "prompt": prompt,
@@ -91,6 +119,9 @@ class VoyeAiWizard(models.TransientModel):
                 "state": "error",
                 "error_message": str(e)[:250],
             })
+
+            self.model_name = model
+            self.log_id = log.id
             raise
 
         return {
