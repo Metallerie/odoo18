@@ -17,4 +17,14 @@ class VoyeAiLog(models.Model):
         required=True,
         index=True,
     )
+    rating = fields.Selection(
+    [
+        ("up", "👍 Utile"),
+        ("down", "👎 Inutile"),
+    ],
+    string="Appréciation",
+    index=True,
+    )
+
+    rating_comment = fields.Text(string="Commentaire")
     error_message = fields.Char(string="Erreur")
