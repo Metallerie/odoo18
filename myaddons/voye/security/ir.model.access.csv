@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_voye_query_user,voye.query user,model_voye_query,base.group_user,1,1,1,0
 access_voye_ai_wizard,voye.ai.wizard,model_voye_ai_wizard,voye.group_voye_ai_user,1,1,1,0
+access_voye_ai_log,voye.ai.log,model_voye_ai_log,voye.group_voye_ai_user,1,0,0,0
