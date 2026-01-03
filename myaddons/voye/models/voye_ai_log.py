@@ -8,6 +8,11 @@ class VoyeAiLog(models.Model):
     _description = "Voye - Historique IA"
     _order = "create_date desc"
 
+    # Qui parle / contexte (lisible + technique)
+    speaker_label = fields.Char(string="Interlocuteur", readonly=True, index=True)
+    context_label = fields.Char(string="Contexte", readonly=True, index=True)
+    context_ref = fields.Char(string="Réf contexte", readonly=True, index=True)  # ex: account.move:123
+
     user_id = fields.Many2one(
         "res.users",
         string="Utilisateur",
@@ -15,7 +20,7 @@ class VoyeAiLog(models.Model):
         index=True,
         readonly=True,
     )
-    model_name = fields.Char(string="Modèle", index=True, readonly=True)
+    model_name = fields.Char(string="Modèle IA", index=True, readonly=True)
     prompt = fields.Text(string="Prompt", required=True, readonly=True)
     answer = fields.Text(string="Réponse", readonly=True)
     duration_ms = fields.Integer(string="Durée (ms)", readonly=True)
@@ -29,12 +34,9 @@ class VoyeAiLog(models.Model):
     )
     error_message = fields.Char(string="Erreur", readonly=True)
 
-    # Notation (seuls champs modifiables par les utilisateurs)
+    # Notation
     rating = fields.Selection(
-        [
-            ("up", "👍 Utile"),
-            ("down", "👎 Inutile"),
-        ],
+        [("up", "👍 Utile"), ("down", "👎 Inutile")],
         string="Appréciation",
         index=True,
     )
@@ -42,8 +44,8 @@ class VoyeAiLog(models.Model):
 
     def write(self, vals):
         """
-        Sécurité: on autorise l'écriture uniquement sur rating / rating_comment
-        (sauf admin/superuser).
+        Sécurité: seuls rating / rating_comment sont modifiables par les utilisateurs.
+        Tout le reste est figé (traçabilité).
         """
         allowed = {"rating", "rating_comment"}
         if not self.env.is_superuser():
