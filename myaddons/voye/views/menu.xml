@@ -4,5 +4,7 @@
   <menuitem id="menu_voye_query" name="Console" parent="menu_voye_root" action="action_voye_query" sequence="10"
             groups="voye.group_voye_ai_user"/>
 
- 
+  <menuitem id="menu_voye_ai" name="Assistant IA" parent="menu_voye_root"
+            action="action_voye_ai_wizard" sequence="20"
+            groups="voye.group_voye_ai_user"/>
 </odoo>
