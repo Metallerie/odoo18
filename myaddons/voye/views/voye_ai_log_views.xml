@@ -34,6 +34,11 @@
           <field name="prompt" readonly="1"/>
           <field name="answer" readonly="1"/>
         </group>
+        <group>
+        <field name="speaker_label" readonly="1"/>
+        <field name="context_label" readonly="1"/>
+        <field name="context_ref" readonly="1" invisible="not context_ref"/>
+        </group>
 
         <group string="Appréciation">
           <field name="rating" widget="radio"/>
