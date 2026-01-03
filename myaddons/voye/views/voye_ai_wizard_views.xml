@@ -25,14 +25,6 @@
     <field name="target">new</field>
   </record>
 
-  <menuitem id="menu_voye_ai_root"
-            name="Voye IA"
-            parent="voye.menu_root"
-            groups="voye.group_voye_ai_user"/>
 
-  <menuitem id="menu_voye_ai_assistant"
-            name="Assistant"
-            parent="menu_voye_ai_root"
-            action="action_voye_ai_wizard"
-            groups="voye.group_voye_ai_user"/>
+  
 </odoo>
