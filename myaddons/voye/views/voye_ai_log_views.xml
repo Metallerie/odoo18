@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="view_voye_ai_log_tree" model="ir.ui.view">
-    <field name="name">voye.ai.log.tree</field>
+  <record id="view_voye_ai_log_list" model="ir.ui.view">
+    <field name="name">voye.ai.log.list</field>
     <field name="model">voye.ai.log</field>
     <field name="arch" type="xml">
       <list string="Historique IA">
