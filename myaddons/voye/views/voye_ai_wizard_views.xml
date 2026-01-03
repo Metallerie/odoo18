@@ -12,6 +12,14 @@
 
         <group>
           <field name="model_name" readonly="1"/>
+          <field name="log_id" invisible="1"/>
+        </group>
+
+        <group string="Appréciation" invisible="not log_id">
+          <field name="rating" widget="radio"/>
+          <field name="rating_comment"
+                 placeholder="Pourquoi cette réponse est-elle mauvaise ?"
+                 invisible="rating != 'down'"/>
         </group>
 
         <footer>
