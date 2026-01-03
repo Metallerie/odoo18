@@ -27,6 +27,7 @@ Long description of module's purpose
 
     "views/voye_ai_wizard_views.xml",
     "views/menu.xml",
+    "views/voye_ai_log_views.xml",
 
     'views/views.xml',
     'views/templates.xml',
