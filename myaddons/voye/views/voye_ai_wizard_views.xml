@@ -21,6 +21,12 @@
                  placeholder="Pourquoi cette réponse est-elle mauvaise ?"
                  invisible="rating != 'down'"/>
         </group>
+        <group>
+        <field name="speaker_label" readonly="1"/>
+        <field name="context_label" readonly="1"/>
+        <field name="context_ref" readonly="1" invisible="not context_ref"/>
+        </group>
+
 
         <footer>
           <button name="action_ask" type="object" string="Envoyer" class="btn-primary"/>
