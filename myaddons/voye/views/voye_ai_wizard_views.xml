@@ -8,8 +8,12 @@
         <group>
           <field name="prompt" placeholder="Pose ta question..." nolabel="1"/>
           <field name="answer" nolabel="1" readonly="1"/>
-          <field name="model_name" invisible="1"/>
         </group>
+
+        <group>
+          <field name="model_name" readonly="1"/>
+        </group>
+
         <footer>
           <button name="action_ask" type="object" string="Envoyer" class="btn-primary"/>
           <button special="cancel" string="Fermer" class="btn-secondary"/>
@@ -24,7 +28,4 @@
     <field name="view_mode">form</field>
     <field name="target">new</field>
   </record>
-
-
-  
 </odoo>
