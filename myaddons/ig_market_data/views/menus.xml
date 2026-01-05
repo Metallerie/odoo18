@@ -1,0 +1,6 @@
+<!-- ig_market_data/views/menus.xml -->
+<odoo>
+  <menuitem id="menu_ig_root" name="IG Market" sequence="10"/>
+  <menuitem id="menu_ig_instruments" name="Instruments" parent="menu_ig_root" action="action_ig_instruments" sequence="10"/>
+  <menuitem id="menu_ig_asia" name="Asie (1ère heure)" parent="menu_ig_root" action="action_ig_asia_sessions" sequence="20"/>
+</odoo>
