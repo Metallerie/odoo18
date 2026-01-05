@@ -1,2 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ig_instrument,access_ig_instrument,model_ig_instrument,,1,1,1,1
+access_ig_candle,access_ig_candle,model_ig_candle,,1,0,0,0
+access_ig_asia_session,access_ig_asia_session,model_ig_asia_session,,1,1,1,1
 access_myaddons/ig_market_data_myaddons/ig_market_data,myaddons/ig_market_data.myaddons/ig_market_data,model_myaddons/ig_market_data_myaddons/ig_market_data,base.group_user,1,1,1,1
