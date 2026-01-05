@@ -34321,3 +34321,959 @@ Traceback (most recent call last):
     revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 20:34:36,619 386299 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-02 20:34:36,942 386299 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 487, in button_immediate_install
+    return self._button_immediate_function(self.env.registry[self._name].button_install)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 489, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 555, in _tag_root
+    raise ParseError(msg) from None  # Restart with "--log-handler odoo.tools.convert:DEBUG" for complete traceback
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/voye/views/voye_query_views.xml:28
+Invalid view type: 'tree'.
+You might have used an invalid starting tag in the architecture.
+Allowed types are: list, form, graph, pivot, calendar, kanban, search, qweb, activity
+
+View error context:
+'-no context-'
+
+2026-01-02 20:39:59,427 386299 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-02 20:39:59,709 386299 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 487, in button_immediate_install
+    return self._button_immediate_function(self.env.registry[self._name].button_install)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 489, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 665, in convert_xml_import
+    doc = etree.parse(xmlfile)
+          ^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3570, in lxml.etree.parse
+  File "src/lxml/parser.pxi", line 1973, in lxml.etree._parseDocument
+  File "src/lxml/parser.pxi", line 1993, in lxml.etree._parseFilelikeDocument
+  File "src/lxml/parser.pxi", line 1887, in lxml.etree._parseDocFromFilelike
+  File "src/lxml/parser.pxi", line 1224, in lxml.etree._BaseParser._parseDocFromFilelike
+  File "src/lxml/parser.pxi", line 633, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 743, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 672, in lxml.etree._raiseParseError
+  File "/data/odoo/metal-odoo18-p8179/myaddons/voye/views/voye_query_views.xml", line 36
+lxml.etree.XMLSyntaxError: Opening and ending tag mismatch: list line 32 and liste, line 36, column 15
+2026-01-02 20:42:37,957 386299 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-02 20:42:38,293 386299 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 487, in button_immediate_install
+    return self._button_immediate_function(self.env.registry[self._name].button_install)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 489, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 609, in convert_file
+    with file_open(pathname, 'rb') as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/misc.py", line 248, in file_open
+    path = file_path(name, filter_ext=filter_ext, env=env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/misc.py", line 226, in file_path
+    raise FileNotFoundError("File not found: " + file_path)
+FileNotFoundError: File not found: voye/views/menu.xml
+2026-01-02 20:45:44,199 386299 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 20:45:44,208 386299 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 20:50:50,047 386299 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 20:50:50,050 386299 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 20:51:51,803 386299 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 20:51:51,806 386299 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 22:37:46,632 405134 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-02 22:37:46,638 405134 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 12:03:39,371 552540 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 12:03:39,377 552540 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 12:28:31,643 558361 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-03 12:28:31,963 558361 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/cache.py", line 103, in lookup
+    r = d[key]
+        ~^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: ('ir.model.data', <function IrModelData._xmlid_lookup at 0x7219889f8c20>, 'voye.action_voye_ai_wizard')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 544, in _tag_root
+    f(rec)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 293, in _tag_menuitem
+    act = self.env.ref(a_action).sudo()
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 660, in ref
+    res_model, res_id = self['ir.model.data']._xmlid_to_res_model_res_id(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_model.py", line 2258, in _xmlid_to_res_model_res_id
+    return self._xmlid_lookup(xmlid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/cache.py", line 110, in lookup
+    value = d[key] = self.method(*args, **kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_model.py", line 2251, in _xmlid_lookup
+    raise ValueError('External ID not found in the system: %s' % xmlid)
+ValueError: External ID not found in the system: voye.action_voye_ai_wizard
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 678, in button_immediate_upgrade
+    return self._button_immediate_function(self.env.registry[self._name].button_upgrade)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 557, in _tag_root
+    raise ParseError('while parsing %s:%s, somewhere inside\n%s' % (
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/voye/views/menu.xml:9, somewhere inside
+<menuitem id="menu_voye_ai" name="Assistant IA" parent="menu_voye_root" action="action_voye_ai_wizard" sequence="20" groups="voye.group_voye_ai_user"/>
+2026-01-03 12:31:04,021 558921 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-03 12:31:04,339 558921 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/cache.py", line 103, in lookup
+    r = d[key]
+        ~^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: ('ir.model.data', <function IrModelData._xmlid_lookup at 0x75df2a01cc20>, 'voye.menu_root')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 544, in _tag_root
+    f(rec)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 280, in _tag_menuitem
+    values['parent_id'] = self.id_get(rec.attrib['parent'])
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 526, in id_get
+    res = self.model_id_get(id_str, raise_if_not_found)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 532, in model_id_get
+    return self.env['ir.model.data']._xmlid_to_res_model_res_id(id_str, raise_if_not_found=raise_if_not_found)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_model.py", line 2258, in _xmlid_to_res_model_res_id
+    return self._xmlid_lookup(xmlid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/cache.py", line 110, in lookup
+    value = d[key] = self.method(*args, **kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_model.py", line 2251, in _xmlid_lookup
+    raise ValueError('External ID not found in the system: %s' % xmlid)
+ValueError: External ID not found in the system: voye.menu_root
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 678, in button_immediate_upgrade
+    return self._button_immediate_function(self.env.registry[self._name].button_upgrade)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 557, in _tag_root
+    raise ParseError('while parsing %s:%s, somewhere inside\n%s' % (
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/voye/views/voye_ai_wizard_views.xml:31, somewhere inside
+<menuitem id="menu_voye_ai_root" name="Voye IA" parent="voye.menu_root" groups="voye.group_voye_ai_user"/>
+2026-01-03 12:40:18,808 560195 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 12:40:18,813 560195 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 13:24:01,784 568178 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 13:24:01,793 568178 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 13:49:20,103 573463 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-03 13:49:20,719 573463 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 678, in button_immediate_upgrade
+    return self._button_immediate_function(self.env.registry[self._name].button_upgrade)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 555, in _tag_root
+    raise ParseError(msg) from None  # Restart with "--log-handler odoo.tools.convert:DEBUG" for complete traceback
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/voye/views/voye_ai_log_views.xml:19
+Depuis 17.0, les attributs "attrs" et "states" ne sont plus utilisés.
+Vue : voye.ai.log.form (voye.view_voye_ai_log_form) dans voye/views/voye_ai_log_views.xml
+
+View error context:
+{'name': 'invalid view'}
+
+2026-01-03 13:56:30,141 574597 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 13:56:30,148 574597 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 14:39:29,052 583232 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 14:39:29,060 583232 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 15:02:25,499 588099 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 15:02:25,519 588099 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 19:05:54,182 631679 ERROR metal-prod-18 odoo.modules.registry: Failed to load registry 
+2026-01-03 19:05:54,483 631679 ERROR metal-prod-18 odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/service/model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/web/controllers/dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 678, in button_immediate_upgrade
+    return self._button_immediate_function(self.env.registry[self._name].button_upgrade)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "/data/odoo/metal-odoo18-p8179/odoo/modules/loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 601, in parse
+    self._tag_root(de)
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/convert.py", line 555, in _tag_root
+    raise ParseError(msg) from None  # Restart with "--log-handler odoo.tools.convert:DEBUG" for complete traceback
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+odoo.tools.convert.ParseError: while parsing /data/odoo/metal-odoo18-p8179/myaddons/voye/views/voye_query_views.xml:2
+Erreur lors de la validation de la vue :
+
+<form string="Voye" __validate__="1">
+        <sheet>
+          <group>
+            <field name="question" placeholder="Ex: Donne-moi la liste des écritures non lettrées"/>
+
+Modèle non trouvé : voye.query
+
+View error context:
+{'file': '/data/odoo/metal-odoo18-p8179/myaddons/voye/views/voye_query_views.xml',
+ 'line': 2,
+ 'name': 'voye.query.form',
+ 'view': ir.ui.view(3716,),
+ 'view.model': 'voye.query',
+ 'view.parent': ir.ui.view(),
+ 'xmlid': 'view_voye_query_form'}
+
+2026-01-03 19:08:56,669 632061 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 19:08:56,676 632061 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 22:37:35,574 632061 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-03 22:37:35,577 632061 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-05 11:46:01,259 1068952 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-05 11:46:01,266 1068952 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-05 14:42:38,058 1068952 ERROR metal-prod-18 odoo.addons.base.models.ir_cron: Job 'PEPPOL: retrieve new documents' (20) server action #303 failed 
+Traceback (most recent call last):
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 537, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/connection.py", line 461, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1428, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/ssl.py", line 1252, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/ssl.py", line 1104, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/requests/adapters.py", line 486, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 845, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/util/retry.py", line 470, in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/util/util.py", line 39, in reraise
+    raise value
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 791, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 539, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 371, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='peppol.api.odoo.com', port=443): Read timed out. (read timeout=30)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/addons/account_edi_proxy_client/models/account_edi_proxy_user.py", line 119, in _make_request
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/requests/api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/requests/adapters.py", line 532, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='peppol.api.odoo.com', port=443): Read timed out. (read timeout=30)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/addons/account_peppol/models/account_edi_proxy_user.py", line 47, in _call_peppol_proxy
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/account_edi_proxy_client/models/account_edi_proxy_user.py", line 126, in _make_request
+    raise AccountEdiProxyError('connection_error',
+odoo.addons.account_edi_proxy_client.models.account_edi_proxy_user.AccountEdiProxyError: L'URL demandée par ce service a renvoyé une erreur. L'URL qu'il a essayé de contacter était https://peppol.api.odoo.com/api/peppol/1/get_all_documents
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_cron.py", line 570, in _callback
+    self.env['ir.actions.server'].browse(server_action_id).run()
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_actions.py", line 995, in run
+    res = runner(run_self, eval_context=eval_context)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/website/models/ir_actions_server.py", line 60, in _run_action_code_multi
+    res = super(ServerAction, self)._run_action_code_multi(eval_context)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_actions.py", line 827, in _run_action_code_multi
+    safe_eval(self.code.strip(), eval_context, mode="exec", nocopy=True, filename=str(self))  # nocopy allows to return 'action'
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/odoo/tools/safe_eval.py", line 397, in safe_eval
+    return unsafe_eval(c, globals_dict, locals_dict)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "ir.actions.server(303,)", line 1, in <module>
+  File "/data/odoo/metal-odoo18-p8179/addons/account_peppol/models/account_edi_proxy_user.py", line 99, in _cron_peppol_get_new_documents
+    edi_users._peppol_get_new_documents()
+  File "/data/odoo/metal-odoo18-p8179/addons/account_peppol/models/account_edi_proxy_user.py", line 174, in _peppol_get_new_documents
+    messages = edi_user._call_peppol_proxy(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/odoo18-venv/lib/python3.12/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/account_peppol/tools/demo_utils.py", line 220, in handle_demo
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/odoo/metal-odoo18-p8179/addons/account_peppol/models/account_edi_proxy_user.py", line 65, in _call_peppol_proxy
+    raise UserError(e.message)
+odoo.exceptions.UserError: L'URL demandée par ce service a renvoyé une erreur. L'URL qu'il a essayé de contacter était https://peppol.api.odoo.com/api/peppol/1/get_all_documents
+2026-01-05 15:55:38,986 1068952 ERROR metal-prod-18 odoo.sql_db: bad query: b"\n                WITH visitor AS (\n                    \n            INSERT INTO website_visitor (\n                partner_id, access_token, last_connection_datetime, visit_count, lang_id,\n                website_id, timezone, write_uid, create_uid, write_date, create_date, country_id)\n            VALUES (\n                3, 3, now() at time zone 'UTC', 1, 30,\n                1, 'Europe/Paris', 2, 2,\n                now() at time zone 'UTC', now() at time zone 'UTC', (\n                    SELECT id FROM res_country WHERE code = NULL\n                )\n            )\n            ON CONFLICT (access_token)\n            DO UPDATE SET\n                last_connection_datetime=excluded.last_connection_datetime,\n                visit_count = CASE WHEN website_visitor.last_connection_datetime < NOW() AT TIME ZONE 'UTC' - INTERVAL '8 hours'\n                                    THEN website_visitor.visit_count + 1\n                                    ELSE website_visitor.visit_count\n                                END\n            RETURNING id, CASE WHEN create_date = now() at time zone 'UTC' THEN 'inserted' ELSE 'updated' END AS upsert\n        , 'http://www.metallerie.xyz/shop/corniere-egale-16' AS url, NULL AS page_id\n                ), track AS (\n                    INSERT INTO website_track (visitor_id, url, page_id, visit_datetime)\n                    SELECT id, url, page_id::integer, now() at time zone 'UTC' FROM visitor\n                )\n                SELECT id, upsert from visitor;\n                "
+ERROR: could not serialize access due to concurrent update
+ 

@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="myaddons/ig_market_data.list">
+      <field name="name">myaddons/ig_market_data list</field>
+      <field name="model">myaddons/ig_market_data.myaddons/ig_market_data</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </list>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="myaddons/ig_market_data.action_window">
+      <field name="name">myaddons/ig_market_data window</field>
+      <field name="res_model">myaddons/ig_market_data.myaddons/ig_market_data</field>
+      <field name="view_mode">list,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="myaddons/ig_market_data.action_server">
+      <field name="name">myaddons/ig_market_data server</field>
+      <field name="model_id" ref="model_myaddons/ig_market_data_myaddons/ig_market_data"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="myaddons/ig_market_data" id="myaddons/ig_market_data.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="myaddons/ig_market_data.menu_1" parent="myaddons/ig_market_data.menu_root"/>
+    <menuitem name="Menu 2" id="myaddons/ig_market_data.menu_2" parent="myaddons/ig_market_data.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="myaddons/ig_market_data.menu_1_list" parent="myaddons/ig_market_data.menu_1"
+              action="myaddons/ig_market_data.action_window"/>
+    <menuitem name="Server to list" id="myaddons/ig_market_data" parent="myaddons/ig_market_data.menu_2"
+              action="myaddons/ig_market_data.action_server"/>
+-->
+  </data>
+</odoo>
