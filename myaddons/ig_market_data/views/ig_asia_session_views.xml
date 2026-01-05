@@ -1,0 +1,47 @@
+<!-- ig_market_data/views/ig_asia_session_views.xml -->
+<odoo>
+  <record id="view_ig_asia_session_tree" model="ir.ui.view">
+    <field name="name">ig.asia.session.tree</field>
+    <field name="model">ig.asia.session</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="date"/>
+        <field name="instrument_id"/>
+        <field name="range_pts"/>
+        <field name="max_up_pts"/>
+        <field name="max_down_pts"/>
+        <field name="signal"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_ig_asia_session_form" model="ir.ui.view">
+    <field name="name">ig.asia.session.form</field>
+    <field name="model">ig.asia.session</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="date"/>
+            <field name="instrument_id"/>
+            <field name="open_ts"/>
+            <field name="close_ts"/>
+          </group>
+          <group>
+            <field name="range_pts"/>
+            <field name="max_up_pts"/>
+            <field name="max_down_pts"/>
+            <field name="signal"/>
+          </group>
+          <field name="note"/>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_ig_asia_sessions" model="ir.actions.act_window">
+    <field name="name">Asie (1ère heure)</field>
+    <field name="res_model">ig.asia.session</field>
+    <field name="view_mode">list,form</field>
+  </record>
+</odoo>
