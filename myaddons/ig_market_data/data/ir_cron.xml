@@ -1,5 +1,5 @@
 <odoo>
-  <record id="ir_cron_ig_asia_compute" model="ir.cron">
+  <!--record id="ir_cron_ig_asia_compute" model="ir.cron">
     <field name="name">IG Asia Session Compute</field>
     <field name="model_id" ref="model_ig_instrument"/>
     <field name="state">code</field>
@@ -8,5 +8,5 @@
     <field name="interval_type">days</field>
     <field name="numbercall">-1</field>
     <field name="active">True</field>
-  </record>
+  </record-->
 </odoo>
