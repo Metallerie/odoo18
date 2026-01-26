@@ -2,6 +2,7 @@
 <!-- Copyright 2019 Tecnativa - Sergio Teruel
      License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <odoo>
+
     <template id="secondary_qty">
         <div
             t-attf-class="css_quantity secondary_qty input-group {{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-inline-flex'}} me-2 mb-2 align-middle"
@@ -32,6 +33,7 @@
             </a>
         </div>
     </template>
+
     <template id="second_qty_description">
         <t
             t-set="factor"
@@ -44,6 +46,7 @@
         />
         <span t-else="" t-out="'{} {}'.format(secondary_uom.name, factor)" />
     </template>
+
     <template
         id="product"
         inherit_id="website_sale.product"
@@ -89,23 +92,27 @@
             </t>
         </xpath>
     </template>
+
+    <!-- ✅ ICI : on ne change pas le prix (tu l'as déjà en €/m via list_price),
+         on change juste l'unité affichée -->
     <template id="product_price" inherit_id="website_sale.product_price">
         <xpath expr="//span[hasclass('oe_price')]" position="after">
             <t t-if="secondary_uom_ids">
-                / <span
-                class="css_editable_mode_hidden price_uom"
-                t-field="product.uom_id"
-            />
+                /
+                <span class="css_editable_mode_hidden price_uom"
+                      t-out="(product.sudo().sale_secondary_uom_id and product.sudo().sale_secondary_uom_id.name) or product.uom_id.sudo().name"/>
             </t>
         </xpath>
     </template>
+
     <template id="product_quantity" inherit_id="website_sale.product_quantity">
         <xpath expr="//input[@name='add_qty']/.." position="attributes">
-            <attribute
-                name="t-attf-class"
-            >css_quantity input-group {{'d-none' if combination_info['prevent_zero_price_sale'] or secondary_uom_ids else 'd-inline-flex'}} me-2 mb-2 align-middle</attribute>
+            <attribute name="t-attf-class">
+                css_quantity input-group {{'d-none' if combination_info['prevent_zero_price_sale'] or secondary_uom_ids else 'd-inline-flex'}} me-2 mb-2 align-middle
+            </attribute>
         </xpath>
     </template>
+
     <template id="cart_lines" inherit_id="website_sale.cart_lines">
         <xpath expr="//div[@name='website_sale_cart_line_quantity']" position="before">
             <t t-if="line.secondary_uom_id">
@@ -137,24 +144,26 @@
                         <i class="fa fa-plus position-relative z-index-1" />
                     </a>
                 </div>
+
+                <!-- ✅ Ici c'est déjà bon : ça affiche l'unité secondaire (m) + conversion -->
                 <div>
                     <t t-call="website_sale_secondary_unit.second_qty_description">
-                    <t t-set="secondary_uom" t-value="line.secondary_uom_id" />
-                </t>
+                        <t t-set="secondary_uom" t-value="line.secondary_uom_id" />
+                    </t>
                     =
-                    <span
-                    t-out="int(line.product_uom_qty) == line.product_uom_qty and int(line.product_uom_qty) or line.product_uom_qty"
-                />
+                    <span t-out="int(line.product_uom_qty) == line.product_uom_qty and int(line.product_uom_qty) or line.product_uom_qty"/>
                     <span t-out="line.product_uom.sudo().name" />
                 </div>
             </t>
         </xpath>
+
         <xpath
             expr="//div[@name='website_sale_cart_line_quantity']//t[@t-if='show_qty']"
             position="attributes"
         >
             <attribute name="t-if">show_qty and not line.secondary_uom_id</attribute>
         </xpath>
+
         <xpath expr="//div[@name='website_sale_cart_line_quantity']" position="after">
             <t t-if="not line.secondary_uom_id">
                 <div class="mb-2">
@@ -163,6 +172,7 @@
             </t>
         </xpath>
     </template>
+
     <template id="checkout_layout" inherit_id="website_sale.checkout_layout">
         <xpath
             expr="//td[@name='website_sale_cart_summary_product_name']//h6"
@@ -170,6 +180,7 @@
         >
             <attribute name="t-if">not line.secondary_uom_id</attribute>
         </xpath>
+
         <xpath
             expr="//td[@name='website_sale_cart_summary_product_name']"
             position="inside"
@@ -178,28 +189,32 @@
                 <h6 name="secondary_uom_qty">
                     <t t-out="int(line.secondary_uom_qty)" />
                     <t t-call="website_sale_secondary_unit.second_qty_description">
-                    <t
-                        t-if="line.product_uom.sudo().name == line.secondary_uom_id.product_tmpl_id.sudo().uom_id.name"
-                        t-set="hide_uom_name"
-                        t-value="True"
-                    />
-                    <t t-set="secondary_uom" t-value="line.secondary_uom_id" />
-                </t>
+                        <t
+                            t-if="line.product_uom.sudo().name == line.secondary_uom_id.product_tmpl_id.sudo().uom_id.name"
+                            t-set="hide_uom_name"
+                            t-value="True"
+                        />
+                        <t t-set="secondary_uom" t-value="line.secondary_uom_id" />
+                    </t>
                     <t t-if="line._get_shop_warning(clear=False)">
-                    <i
-                        class="fa fa-warning text-warning"
-                        role="img"
-                        t-att-title="line._get_shop_warning()"
-                        aria-label="Warning"
-                    />
-                </t>
+                        <i
+                            class="fa fa-warning text-warning"
+                            role="img"
+                            t-att-title="line._get_shop_warning()"
+                            aria-label="Warning"
+                        />
+                    </t>
                     x
                     <t t-out="line.name_short" />
                 </h6>
+
+                <!-- ✅ Ici tu affiches encore la conversion en unité produit (kg).
+                     C'est ok, et ça rassure (m -> kg). -->
                 <t t-out="int(line.product_uom_qty)" />
                 <span t-out="line.product_uom.sudo().name" />
             </t>
         </xpath>
+
         <xpath
             expr="//td[@name='website_sale_cart_summary_product_name']//t[@t-if='line._get_shop_warning(clear=False)']"
             position="before"
@@ -207,4 +222,5 @@
             <span t-out="line.product_uom.sudo().name" />
         </xpath>
     </template>
+
 </odoo>
