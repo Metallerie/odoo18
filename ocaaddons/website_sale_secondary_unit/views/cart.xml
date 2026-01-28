@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
   <template id="cart_lines_secondary_unit_readonly"
-            inherit_id="website_sale.cart_lines"
+            inherit_id="website_sale_secondary_unit.cart_lines"
             name="Cart lines - secondary unit readonly">
 
-    <!-- 1) Remplacer l'input secondaire + boutons +/- -->
+    <!-- Remplace le bloc input +/– -->
     <xpath expr="//div[contains(@class,'css_secondary_quantity')]" position="replace">
       <t t-if="line.secondary_uom_id">
         <div class="mb-2">
@@ -15,8 +15,8 @@
       </t>
     </xpath>
 
-    <!-- 2) Remplacer la ligne qui affiche '= X KG' (juste après le bloc) -->
-    <xpath expr="//t[t-call='website_sale_secondary_unit.second_qty_description']/parent::div" position="replace">
+    <!-- Remplace le bloc "= X KG" -->
+    <xpath expr="//t[@t-call='website_sale_secondary_unit.second_qty_description']/ancestor::div[1]" position="replace">
       <t t-if="line.secondary_uom_id">
         <div class="text-muted small mb-2">
           ≈ <span t-out="line.product_uom_qty"/>
