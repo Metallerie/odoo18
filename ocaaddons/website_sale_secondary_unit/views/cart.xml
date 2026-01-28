@@ -1,11 +1,29 @@
 <odoo>
-<t t-if="line.secondary_uom_id">
-  <div class="mb-2">
-    <strong>Quantité :</strong>
-    <span t-out="line.secondary_uom_qty"/> <span t-out="line.secondary_uom_id.uom_id.name"/>
-    <span class="text-muted"> (≈ </span>
-    <span t-out="line.product_uom_qty"/> <span t-out="line.product_uom.name"/>
-    <span class="text-muted">)</span>
-  </div>
-</t>
+  <!-- Panier : affichage lecture seule pour les lignes avec unité secondaire -->
+  <template id="cart_lines_secondary_unit"
+            inherit_id="website_sale.cart_lines"
+            name="Cart lines - secondary unit readonly">
+
+    <!-- On cible la colonne quantité -->
+    <xpath expr="//div[contains(@class, 'js_cart_line_quantity')]" position="replace">
+      <t t-if="line.secondary_uom_id">
+        <div class="js_cart_line_quantity">
+          <div>
+            <strong>Quantité :</strong>
+            <span t-out="line.secondary_uom_qty"/>
+            <span t-out="line.secondary_uom_id.uom_id.name"/>
+          </div>
+          <div class="text-muted small">
+            ≈ <span t-out="line.product_uom_qty"/>
+            <span t-out="line.product_uom.name"/>
+          </div>
+        </div>
+      </t>
+      <t t-else="">
+        <!-- fallback : comportement standard Odoo -->
+        <t t-call="website_sale.cart_line_quantity"/>
+      </t>
+    </xpath>
+
+  </template>
 </odoo>
