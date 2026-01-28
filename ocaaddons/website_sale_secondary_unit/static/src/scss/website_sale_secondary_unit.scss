@@ -14,6 +14,16 @@
     min-width: 60px;
     text-align: center;
 }
+
+/* ocaaddons/website_sale_secondary_unit/static/src/scss/website_sale_secondary_unit.scss */
+
 .oe_website_sale .o_secondary_quantity {
-    display: inline-flex !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.oe_website_sale .o_secondary_quantity input.secondary-quantity {
+  min-width: 70px;
+  text-align: center;
 }
