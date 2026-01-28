@@ -7,7 +7,7 @@
       <t t-if="combination_info.get('has_secondary_uom') and not combination_info['prevent_zero_price_sale']">
         <div class="mb8 secondary-unit">
           <!-- quantité secondaire unique -->
-          <div class="css_quantity secondary_qty input-group d-inline-flex me-2 mb-2 align-middle">
+          <div class="css_quantity o_secondary_quantity input-group d-inline-flex me-2 mb-2 align-middle">
             <a t-attf-href="#" class="btn btn-link js_add_cart_json" aria-label="Remove one" title="Remove one">
               <i class="fa fa-minus"/>
             </a>
