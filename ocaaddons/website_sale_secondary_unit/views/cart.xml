@@ -1,7 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data inherit_id="website_sale.cart_lines">
+  <template id="cart_lines_secondary_unit_readonly"
+            inherit_id="website_sale.cart_lines"
+            name="Cart lines - secondary unit readonly">
 
-    <!-- 1) Remplacer le bloc "secondary quantity" interactif par du readonly -->
+    <!-- 1) Injecte un bloc readonly AVANT le bloc quantité standard -->
     <xpath expr="//div[@name='website_sale_cart_line_quantity']" position="before">
       <t t-if="line.secondary_uom_id">
         <div class="mb-2">
@@ -19,12 +22,12 @@
       </t>
     </xpath>
 
-    <!-- 2) Ne pas afficher la qty standard Odoo si on est en secondaire -->
+    <!-- 2) Cache la quantité standard si unité secondaire -->
     <xpath expr="//div[@name='website_sale_cart_line_quantity']//t[@t-if='show_qty']" position="attributes">
       <attribute name="t-if">show_qty and not line.secondary_uom_id</attribute>
     </xpath>
 
-    <!-- 3) Garder l'unité standard affichée seulement si pas d'unité secondaire -->
+    <!-- 3) Unité standard affichée seulement si pas d'unité secondaire -->
     <xpath expr="//div[@name='website_sale_cart_line_quantity']" position="after">
       <t t-if="not line.secondary_uom_id">
         <div class="mb-2">
@@ -33,5 +36,5 @@
       </t>
     </xpath>
 
-  </data>
+  </template>
 </odoo>
