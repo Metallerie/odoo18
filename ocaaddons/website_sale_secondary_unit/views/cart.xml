@@ -4,7 +4,6 @@
             inherit_id="website_sale_secondary_unit.cart_lines"
             name="Cart lines - secondary unit readonly">
 
-    <!-- Remplace l'input secondaire + boutons +/- -->
     <xpath expr="//div[contains(@class,'css_secondary_quantity')]" position="replace">
       <t t-if="line.secondary_uom_id">
         <div class="mb-2">
@@ -15,7 +14,6 @@
       </t>
     </xpath>
 
-    <!-- Remplace le bloc '= X KG' -->
     <xpath expr="//t[@t-call='website_sale_secondary_unit.second_qty_description']/ancestor::div[1]" position="replace">
       <t t-if="line.secondary_uom_id">
         <div class="text-muted small mb-2">
