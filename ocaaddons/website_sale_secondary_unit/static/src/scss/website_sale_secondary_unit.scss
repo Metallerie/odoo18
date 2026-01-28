@@ -1,7 +1,16 @@
-.css_secondary_quantity {
-    max-width: 150px;
+/* Odoo 18 – force display secondary quantity on product page */
+
+.oe_website_sale .secondary-unit {
+    display: block !important;
 }
-.oe_website_sale input.js_secondary_quantity {
-    min-width: 48px;
+
+.oe_website_sale .secondary-unit .css_quantity {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.oe_website_sale .secondary-unit input {
+    min-width: 60px;
     text-align: center;
 }
