@@ -1,22 +1,15 @@
 # -*- coding: utf-8 -*-
 # ocaaddons/website_sale_secondary_unit/models/product_template.py
 #
-# DEBUG-heavy version (logs en console Odoo)
+# Patch Métallerie (Odoo 18):
+# - Injecte les infos d'unité secondaire dans combination_info
+# - ET SURTOUT: remplace combination_info['price'] par le prix en unité secondaire
+#   pour que le JS standard de website_sale mette à jour le prix à chaque changement de variante.
 #
-import logging
-import json
-
 from odoo import fields, models
+import logging
 
 _logger = logging.getLogger(__name__)
-
-
-def _j(obj):
-    """json pretty (safe)"""
-    try:
-        return json.dumps(obj, indent=2, ensure_ascii=False, default=str)
-    except Exception:
-        return str(obj)
 
 
 class ProductTemplate(models.Model):
@@ -35,7 +28,6 @@ class ProductTemplate(models.Model):
         parent_combination=False,
         only_template=False,
     ):
-        # --- SUPER ---
         combination_info = super()._get_combination_info(
             combination=combination,
             product_id=product_id,
@@ -44,121 +36,118 @@ class ProductTemplate(models.Model):
             only_template=only_template,
         )
 
-        # --- DEBUG HEADER ---
-        try:
-            tmpl = self.sudo()
-            _logger.info("=== WSU DEBUG (product.template._get_combination_info) ===")
-            _logger.info(
-                "tmpl=%s (%s) product_id(arg)=%s add_qty=%s only_template=%s",
-                tmpl.display_name,
-                tmpl.id,
-                product_id,
-                add_qty,
-                only_template,
-            )
-            _logger.info("combination(arg)=%s parent_combination=%s", bool(combination), bool(parent_combination))
+        tmpl = self.sudo()
+        product = self.env["product.product"].browse(product_id) if product_id else self.env["product.product"]
+        product_sudo = product.sudo() if product_id else False
 
-            # IMPORTANT: in website, product_id peut être False au 1er rendu
-            product = self.env["product.product"].browse(int(product_id)) if product_id else self.env["product.product"]
-            product_sudo = product.sudo() if product_id else False
+        # ========= DEBUG HEADER =========
+        _logger.info("=== WSU DEBUG (product.template._get_combination_info) ===")
+        _logger.info(
+            "tmpl=%s (%s) product_id(arg)=%s add_qty=%s only_template=%s",
+            tmpl.display_name,
+            tmpl.id,
+            product_id,
+            add_qty,
+            only_template,
+        )
+        if product_sudo and product_sudo.exists():
+            _logger.info("picked product=%s (%s)", product_sudo.display_name, product_sudo.id)
+        else:
+            _logger.info("picked product=<none>")
 
-            if product_sudo and product_sudo.exists():
-                _logger.info("picked product=%s (%s)", product_sudo.display_name, product_sudo.id)
-            else:
-                _logger.info("picked product=<none> (product_id was False or invalid)")
+        # ========= pick secondary unit (variant-first) =========
+        sale_secondary = False
+        if product_sudo and product_sudo.exists():
+            sale_secondary = product_sudo.sale_secondary_uom_id
+        if not sale_secondary:
+            sale_secondary = tmpl.sale_secondary_uom_id
 
-            # --- BASE PRICE INFO FROM SUPER ---
-            base_price = float(combination_info.get("price") or 0.0)
-            price_extra = float(combination_info.get("price_extra") or 0.0)
-            list_price = float(combination_info.get("list_price") or 0.0) if "list_price" in combination_info else None
+        _logger.info("variant sale_secondary_uom_id=%s", product_sudo.sale_secondary_uom_id.ids if product_sudo else None)
+        _logger.info("template sale_secondary_uom_id=%s", tmpl.sale_secondary_uom_id.ids)
 
-            _logger.info("base price (primary, combination_info['price'])=%s", base_price)
-            _logger.info("price_extra=%s", price_extra)
-            if list_price is not None:
-                _logger.info("list_price=%s", list_price)
+        has_secondary = bool(sale_secondary)
+        combination_info["has_secondary_uom"] = has_secondary
+        _logger.info("HAS secondary uom=%s", has_secondary)
 
-            # log un peu plus large (sans spammer comme un porc)
-            keys_of_interest = [
-                "price",
-                "list_price",
-                "price_extra",
-                "has_discounted_price",
-                "discounted_price",
-                "prevent_zero_price_sale",
-                "product_id",
-                "product_template_id",
-                "display_name",
-                "variant_name",
-                "currency_id",
-                "currency_symbol",
-                "is_combination_possible",
-            ]
-            snap = {k: combination_info.get(k) for k in keys_of_interest if k in combination_info}
-            _logger.info("combination_info snapshot=%s", _j(snap))
+        if not has_secondary:
+            _logger.warning("NO secondary UOM FOUND -> nothing injected")
+            _logger.info("=== END WSU DEBUG ===")
+            return combination_info
 
-            # --- PICK SECONDARY UOM (variant-first, fallback template) ---
-            sale_secondary = False
-            var_su = False
-            tmpl_su = False
+        su = sale_secondary.sudo()
 
-            if product_sudo and product_sudo.exists():
-                var_su = product_sudo.sale_secondary_uom_id
-            tmpl_su = tmpl.sale_secondary_uom_id
+        # Names: public website => sudo
+        secondary_uom_name = su.uom_id.sudo().name or ""
+        primary_uom_name = (
+            (product_sudo.uom_id.sudo().name if product_sudo and product_sudo.exists() else tmpl.uom_id.sudo().name)
+            or ""
+        )
 
-            _logger.info("variant sale_secondary_uom_id=%s", var_su.ids if var_su else [])
-            _logger.info("template sale_secondary_uom_id=%s", tmpl_su.ids if tmpl_su else [])
+        # Factor: chez toi = "kg par ML" (primary per secondary)
+        factor = float(su.factor or 0.0)
 
-            sale_secondary = var_su or tmpl_su
-            has_secondary = bool(sale_secondary)
+        # Base price as returned by website_sale (primary UoM)
+        price_primary = float(combination_info.get("price") or 0.0)
+        price_secondary = price_primary * factor
 
-            # on injecte toujours le bool, même False (pratique côté QWeb/JS)
-            combination_info.update(
-                {
-                    "has_secondary_uom": has_secondary,
-                    "wsu_debug_product_id_used": product_sudo.id if (product_sudo and product_sudo.exists()) else False,
-                }
-            )
-            _logger.info("HAS secondary uom=%s", has_secondary)
+        _logger.info("secondary unit: id=%s name=%s", su.id, secondary_uom_name)
+        _logger.info("primary uom name=%s", primary_uom_name)
+        _logger.info("factor (secondary -> primary)=%s", factor)
+        _logger.info("base price primary(from combination_info['price'])=%s", price_primary)
+        _logger.info("computed price_secondary=%s", price_secondary)
 
-            if not has_secondary:
-                _logger.warning("NO secondary UOM FOUND -> nothing injected")
-                _logger.info("=== END WSU DEBUG ===")
-                return combination_info
-
-            # --- COMPUTE SECONDARY PRICE + META ---
-            su = sale_secondary.sudo()
-
-            secondary_uom_name = su.uom_id.sudo().name
-            primary_uom_name = (
-                product_sudo.uom_id.sudo().name if (product_sudo and product_sudo.exists()) else tmpl.uom_id.sudo().name
-            )
-
-            factor = float(su.factor or 0.0)  # (chez toi: kg par ML)
-            price_primary = base_price
-            price_secondary = price_primary * factor
-
-            _logger.info("secondary unit: id=%s name=%s", su.id, secondary_uom_name)
-            _logger.info("primary uom name=%s", primary_uom_name)
-            _logger.info("factor (secondary -> primary)=%s", factor)
-            _logger.info("price_secondary=%s", price_secondary)
-
-            # injection finale
-            injected = {
+        # Inject custom keys
+        combination_info.update(
+            {
                 "sale_secondary_uom_id": su.id,
                 "sale_secondary_uom_name": secondary_uom_name,
                 "sale_secondary_rounding": su.uom_id.sudo().rounding,
                 "sale_secondary_factor": factor,
                 "primary_uom_name": primary_uom_name,
-                "price_primary_uom": price_primary,      # €/UoM primaire (souvent KG)
-                "price_secondary_uom": price_secondary,  # €/UoM secondaire (souvent ML)
+                # Keep both for display
+                "price_primary_uom": price_primary,      # €/KG
+                "price_secondary_uom": price_secondary,  # €/ML
+                "wsu_debug_product_id_used": product_sudo.id if product_sudo and product_sudo.exists() else False,
             }
-            combination_info.update(injected)
+        )
 
-            _logger.info("combination_info injected keys=%s", list(injected.keys()))
-            _logger.info("=== END WSU DEBUG ===")
-            return combination_info
+        # IMPORTANT:
+        # website_sale JS refreshes ONLY combination_info['price'] into .oe_price
+        # So we overwrite it with the secondary-unit price to get live updates.
+        combination_info["price"] = price_secondary
+        _logger.warning("OVERRIDE combination_info['price'] -> %s (secondary)", price_secondary)
 
-        except Exception as e:
-            # si jamais ton site crashe, on veut au moins la trace + retour super()
-            _logger.exception("WSU ERROR in _get_combination_info: %s", e)
-            return combination_info
+        # Bonus: if list_price exists (discount display), overwrite too
+        if "list_price" in combination_info and combination_info.get("list_price"):
+            list_price_primary = float(combination_info.get("list_price") or 0.0)
+            list_price_secondary = list_price_primary * factor
+            combination_info["list_price_primary_uom"] = list_price_primary
+            combination_info["list_price_secondary_uom"] = list_price_secondary
+            combination_info["list_price"] = list_price_secondary
+            _logger.warning("OVERRIDE combination_info['list_price'] -> %s (secondary)", list_price_secondary)
+
+        _logger.info(
+            "combination_info injected keys=%s",
+            [
+                k
+                for k in (
+                    "has_secondary_uom",
+                    "sale_secondary_uom_id",
+                    "sale_secondary_uom_name",
+                    "sale_secondary_rounding",
+                    "sale_secondary_factor",
+                    "primary_uom_name",
+                    "price_primary_uom",
+                    "price_secondary_uom",
+                    "price",
+                    "list_price",
+                    "list_price_primary_uom",
+                    "list_price_secondary_uom",
+                    "wsu_debug_product_id_used",
+                )
+                if k in combination_info
+            ],
+        )
+        _logger.info("=== END WSU DEBUG ===")
+
+        return combination_info
