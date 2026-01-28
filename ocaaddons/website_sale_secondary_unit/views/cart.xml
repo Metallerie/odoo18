@@ -1,0 +1,11 @@
+<odoo>
+<t t-if="line.secondary_uom_id">
+  <div class="mb-2">
+    <strong>Quantité :</strong>
+    <span t-out="line.secondary_uom_qty"/> <span t-out="line.secondary_uom_id.uom_id.name"/>
+    <span class="text-muted"> (≈ </span>
+    <span t-out="line.product_uom_qty"/> <span t-out="line.product_uom.name"/>
+    <span class="text-muted">)</span>
+  </div>
+</t>
+</odoo>
