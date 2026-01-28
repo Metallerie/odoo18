@@ -1,1 +1,4 @@
 addons/
+__pycache__/
+*.pyc
+*.pyo
