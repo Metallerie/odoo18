@@ -2,6 +2,7 @@
 <odoo>
   <template id="product" inherit_id="website_sale.product" name="Manage secondary units (forced)">
     <xpath expr="//div[@id='product_details']//t[@t-call='website_sale.product_price']" position="after">
+        <div style="border:2px solid red;padding:6px;margin:6px 0;">
       <t t-if="combination_info.get('has_secondary_uom') and not combination_info['prevent_zero_price_sale']">
         <div class="mb8 secondary-unit">
           <!-- quantité secondaire unique -->
@@ -26,6 +27,7 @@
           </div>
         </div>
       </t>
+      </div>
     </xpath>
   </template>
 
