@@ -2,49 +2,58 @@
 <odoo>
   <template id="product" inherit_id="website_sale.product" name="Manage secondary units (forced)">
     <xpath expr="//div[@id='product_details']//t[@t-call='website_sale.product_price']" position="after">
-        <div style="border:2px solid red;padding:6px;margin:6px 0;">
-              DEBUG: website_sale_secondary_unit templates OK
-      <t t-if="combination_info.get('has_secondary_uom') and not combination_info['prevent_zero_price_sale']">
-        <div class="mb8 secondary-unit">
-          <!-- quantité secondaire unique -->
-          <div class="css_quantity o_secondary_quantity input-group d-inline-flex me-2 mb-2 align-middle">
-            <a t-attf-href="#" class="btn btn-link js_add_cart_json" aria-label="Remove one" title="Remove one">
+
+      <!-- DEBUG visible quoi qu'il arrive -->
+      <div style="border:2px solid red;padding:6px;margin:6px 0;">
+        DEBUG: website_sale_secondary_unit templates OK
+        <span class="ms-2 text-muted small">
+          has_secondary_uom=<t t-esc="combination_info.get('has_secondary_uom')"/>
+          product_id=<t t-esc="combination_info.get('product_id')"/>
+        </span>
+      </div>
+
+      <!-- Bloc secondaire -->
+      <t t-if="combination_info.get('has_secondary_uom') and not combination_info.get('prevent_zero_price_sale')">
+        <div class="mb-2 secondary-unit">
+          <div class="o_secondary_quantity input-group d-inline-flex me-2 mb-2 align-middle">
+            <a href="#" class="btn btn-link js_add_cart_json" aria-label="Remove one" title="Remove one">
               <i class="fa fa-minus"/>
             </a>
             <input type="text"
                    class="form-control secondary-quantity text-center"
                    name="add_secondary_qty"
                    t-att-value="1"
-                   t-att-data-rounding="combination_info.get('sale_secondary_rounding')"
-            />
-            <a t-attf-href="#" class="btn btn-link js_add_cart_json" aria-label="Add one" title="Add one">
+                   t-att-data-rounding="combination_info.get('sale_secondary_rounding')"/>
+            <a href="#" class="btn btn-link js_add_cart_json" aria-label="Add one" title="Add one">
               <i class="fa fa-plus"/>
             </a>
           </div>
+
           <span class="ms-2" t-out="combination_info.get('sale_secondary_uom_name')"/>
+
           <div class="text-muted small mt-1">
-            ≈ <span class="js_primary_estimate">0</span> <span t-out="combination_info.get('primary_uom_name')"/>
-            — conversion automatique selon la variante
+            ≈ <span class="js_primary_estimate">0</span>
+            <span t-out="combination_info.get('primary_uom_name')"/>
           </div>
         </div>
       </t>
-      </div>
+
     </xpath>
   </template>
 
-  <!-- Affichage prix : €/unité secondaire -->
   <template id="product_price" inherit_id="website_sale.product_price">
-    <xpath expr="//span[hasclass('oe_price')]" position="replace">
+    <xpath expr="//span[contains(@class,'oe_price')]" position="replace">
       <t t-if="combination_info.get('has_secondary_uom')">
         <span class="oe_price" t-out="combination_info.get('price_secondary_uom')"/>
         <span class="ms-1">€ /</span>
         <span class="ms-1" t-out="combination_info.get('sale_secondary_uom_name')"/>
         <div class="text-muted small">
-          soit <t t-out="combination_info.get('price_primary_uom')"/> € / <t t-out="combination_info.get('primary_uom_name')"/>
+          soit <t t-out="combination_info.get('price_primary_uom')"/> € /
+          <t t-out="combination_info.get('primary_uom_name')"/>
         </div>
       </t>
       <t t-else="">
-        <span class="oe_price" t-out="combination_info['price']"/>
+        <span class="oe_price" t-out="combination_info.get('price')"/>
       </t>
     </xpath>
   </template>
