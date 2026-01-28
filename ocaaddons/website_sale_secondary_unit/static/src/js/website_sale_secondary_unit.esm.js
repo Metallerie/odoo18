@@ -1,44 +1,232 @@
-/* ocaaddons/website_sale_secondary_unit/static/src/js/website_sale_secondary_unit.esm.js */
+/* Copyright 2019 Sergio Teruel
+ * Copyright 2025 Franck / Tecnativa
+ * License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+ */
+
 import "@website_sale/js/website_sale";
 import VariantMixin from "@website_sale/js/sale_variant_mixin";
 import publicWidget from "@web/legacy/js/public/public_widget";
 
-const parseFRFloat = (v) => {
-    if (v === undefined || v === null) return 0;
-    if (typeof v === "number") return v;
-    const s = String(v).trim().replace(/\s/g, "").replace(",", ".");
-    const n = parseFloat(s);
-    return Number.isFinite(n) ? n : 0;
-};
-
+/* ============================================================
+ * FICHE PRODUIT
+ * ============================================================ */
 publicWidget.registry.sale_secondary_unit = publicWidget.Widget.extend(VariantMixin, {
     selector: ".secondary-unit",
-    start: function () {
-        this.$qty = this.$target.find("input[name='add_secondary_qty']");
-        this.$estimate = this.$target.find(".js_primary_estimate");
-        this.$qty.on("change keyup", this._refreshEstimate.bind(this));
-        this._refreshEstimate();
-        return this._super.apply(this, arguments);
+
+    init: function (parent, editableMode) {
+        this._super.apply(this, arguments);
+        this.$secondary_uom = null;
+        this.$secondary_uom_qty = null;
+        this.$product_qty = null;
+
+        this.secondary_uom_qty = null;
+        this.secondary_uom_factor = null;
+        this.product_uom_factor = null;
+        this.product_qty = null;
     },
-    _refreshEstimate: function () {
-        // On récupère le facteur via rootProduct (combination_info) si dispo,
-        // sinon on laisse 0 (le serveur restera la vérité)
-        const secQty = parseFRFloat(this.$qty.val());
-        const factor = parseFRFloat(this.rootProduct?.sale_secondary_factor || 0);
-        const primary = secQty * factor;
-        if (this.$estimate.length) {
-            this.$estimate.text(primary ? primary.toFixed(3) : "0");
+
+    start: function () {
+        const _this = this;
+
+        this.$secondary_uom = $("#secondary_uom");
+        this.$secondary_uom_qty = $(".secondary-quantity");
+        this.$product_qty = $(".quantity");
+
+        console.log("[WSU] start()", {
+            has_secondary_uom: this.$secondary_uom.length,
+            has_secondary_qty: this.$secondary_uom_qty.length,
+            has_product_qty: this.$product_qty.length,
+        });
+
+        this._setValues();
+
+        this.$target.on(
+            "change",
+            ".secondary-quantity",
+            this._onChangeSecondaryUom.bind(this)
+        );
+        this.$target.on(
+            "change",
+            "#secondary_uom",
+            this._onChangeSecondaryUom.bind(this)
+        );
+        this.$product_qty.on(
+            "change",
+            null,
+            this._onChangeProductQty.bind(this)
+        );
+
+        return this._super.apply(this, arguments).then(function () {
+            console.log("[WSU] initial _onChangeSecondaryUom()");
+            _this._onChangeSecondaryUom();
+        });
+    },
+
+    /* ------------------------------
+     * Lecture des valeurs
+     * ------------------------------ */
+    _setValues: function () {
+        this.secondary_uom_qty = Number(this.$secondary_uom_qty.val());
+        this.secondary_uom_factor = Number(
+            $("option:selected", this.$secondary_uom).data("secondary-uom-factor")
+        );
+        this.product_uom_factor = Number(
+            $("option:selected", this.$secondary_uom).data("product-uom-factor")
+        );
+        this.product_qty = Number(this.$product_qty.val());
+
+        console.log("[WSU] _setValues()", {
+            secondary_uom_qty: this.secondary_uom_qty,
+            secondary_uom_factor: this.secondary_uom_factor,
+            product_uom_factor: this.product_uom_factor,
+            product_qty: this.product_qty,
+            secondary_uom_id: this.$secondary_uom.val(),
+        });
+    },
+
+    /* ------------------------------
+     * Changement quantité secondaire
+     * ------------------------------ */
+    _onChangeSecondaryUom: function (ev) {
+        console.log("[WSU] _onChangeSecondaryUom() TRIGGERED");
+
+        if (!ev) {
+            ev = jQuery.Event("fakeEvent");
+            ev.currentTarget = $(".form-control.quantity");
         }
+
+        this._setValues();
+
+        const factor = this.secondary_uom_factor * this.product_uom_factor;
+        const newQty = this.secondary_uom_qty * factor;
+
+        console.log("[WSU] secondary → primary", {
+            factor,
+            newQty,
+        });
+
+        this.$product_qty.val(newQty);
+        this.onChangeAddQuantity(ev);
+
+        console.log("[WSU] product_qty UPDATED", {
+            product_qty: this.$product_qty.val(),
+        });
+    },
+
+    /* ------------------------------
+     * Changement quantité primaire
+     * ------------------------------ */
+    _onChangeProductQty: function () {
+        this._setValues();
+
+        const factor = this.secondary_uom_factor * this.product_uom_factor;
+        const newSecondaryQty = this.product_qty / factor;
+
+        console.log("[WSU] primary → secondary", {
+            factor,
+            newSecondaryQty,
+        });
+
+        this.$secondary_uom_qty.val(newSecondaryQty);
     },
 });
 
+/* ============================================================
+ * PANIER
+ * ============================================================ */
+publicWidget.registry.sale_secondary_unit_cart = publicWidget.Widget.extend({
+    selector: ".oe_cart",
+
+    init: function (parent, editableMode) {
+        this._super.apply(this, arguments);
+        this.$product_qty = null;
+
+        this.secondary_uom_qty = null;
+        this.secondary_uom_factor = null;
+        this.product_uom_factor = null;
+        this.product_qty = null;
+    },
+
+    start: function () {
+        console.log("[WSU][CART] start()");
+        this.$target.on(
+            "change",
+            "input.js_secondary_quantity[data-line-id]",
+            (ev) => {
+                this._onChangeSecondaryUom(ev.currentTarget);
+            }
+        );
+    },
+
+    _setValues: function (order_line) {
+        this.$product_qty = this.$target.find(
+            ".quantity[data-line-id=" + order_line.dataset.lineId + "]"
+        );
+
+        this.secondary_uom_qty = Number(order_line.value);
+        this.secondary_uom_factor = Number(order_line.dataset.secondaryUomFactor);
+        this.product_uom_factor = Number(order_line.dataset.productUomFactor);
+
+        console.log("[WSU][CART] _setValues()", {
+            line_id: order_line.dataset.lineId,
+            secondary_uom_qty: this.secondary_uom_qty,
+            secondary_uom_factor: this.secondary_uom_factor,
+            product_uom_factor: this.product_uom_factor,
+        });
+    },
+
+    _onChangeSecondaryUom: function (order_line) {
+        console.log("[WSU][CART] _onChangeSecondaryUom()");
+        this._setValues(order_line);
+
+        const factor = this.secondary_uom_factor * this.product_uom_factor;
+        const newQty = this.secondary_uom_qty * factor;
+
+        console.log("[WSU][CART] secondary → primary", {
+            factor,
+            newQty,
+        });
+
+        this.$product_qty.val(newQty);
+        this.$product_qty.trigger("change");
+    },
+});
+
+/* ============================================================
+ * OVERRIDE WEBSITE SALE
+ * ============================================================ */
 publicWidget.registry.WebsiteSale.include({
     _onChangeCombination: function (ev, $parent, combination) {
+        console.log("[WSU] _onChangeCombination()", combination);
+
+        const quantity = $parent.find(".css_quantity:not(.secondary_qty)");
         const res = this._super(...arguments);
-        // injecter le facteur dans rootProduct pour l'estimation
-        if (combination && combination.sale_secondary_factor) {
-            this.rootProduct.sale_secondary_factor = combination.sale_secondary_factor;
+
+        if (combination.has_secondary_uom) {
+            quantity.removeClass("d-inline-flex").addClass("d-none");
+        } else {
+            quantity.removeClass("d-none").addClass("d-inline-flex");
         }
         return res;
+    },
+
+    _submitForm: function () {
+        console.log("[WSU] _submitForm BEFORE", this.rootProduct);
+
+        if (
+            !("secondary_uom_id" in this.rootProduct) &&
+            $(this.$target).find("#secondary_uom").length
+        ) {
+            this.rootProduct.secondary_uom_id = $(this.$target)
+                .find("#secondary_uom")
+                .val();
+            this.rootProduct.secondary_uom_qty = $(this.$target)
+                .find(".secondary-quantity")
+                .val();
+        }
+
+        console.log("[WSU] _submitForm AFTER", this.rootProduct);
+
+        return this._super.apply(this, arguments);
     },
 });
