@@ -1,4 +1,8 @@
 addons/
-__pycache__/
-*.pyc
-*.pyo
+
+
+# python cache
+**/__pycache__/
+**/*.pyc
+*.log
+*.log.*
