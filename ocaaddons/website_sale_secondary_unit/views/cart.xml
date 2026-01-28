@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- modifier par franck -->
 <odoo>
   <template id="cart_lines_secondary_unit_readonly"
             inherit_id="website_sale_secondary_unit.cart_lines"
