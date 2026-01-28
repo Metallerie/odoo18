@@ -18,7 +18,7 @@
         "views/product_secondary_unit_views.xml",
         "views/product_template_views.xml",
         "views/templates.xml",
-        "views/cart.xml",
+    #    "views/cart.xml",
     ],
     "demo": ["data/demo.xml"],
     "post_init_hook": "post_init_hook",
