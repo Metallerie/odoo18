@@ -1,11 +1,11 @@
 <odoo>
-  <!-- Panier : affichage lecture seule pour les lignes avec unité secondaire -->
   <template id="cart_lines_secondary_unit"
             inherit_id="website_sale.cart_lines"
             name="Cart lines - secondary unit readonly">
 
-    <!-- On cible la colonne quantité -->
-    <xpath expr="//div[contains(@class, 'js_cart_line_quantity')]" position="replace">
+    <!-- Remplace l'appel au bloc quantité standard -->
+    <xpath expr="//t[@t-call='website_sale.cart_line_quantity']" position="replace">
+
       <t t-if="line.secondary_uom_id">
         <div class="js_cart_line_quantity">
           <div>
@@ -19,11 +19,11 @@
           </div>
         </div>
       </t>
+
       <t t-else="">
-        <!-- fallback : comportement standard Odoo -->
         <t t-call="website_sale.cart_line_quantity"/>
       </t>
-    </xpath>
 
+    </xpath>
   </template>
 </odoo>
