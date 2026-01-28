@@ -1,0 +1,36 @@
+2026-01-27 14:15:05,512 2611373 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_secondary_unit" WHERE id IN (13)'
+ERROR: update or delete on table "product_secondary_unit" violates foreign key constraint "sale_order_line_secondary_uom_id_fkey" on table "sale_order_line"
+DETAIL:  Key (id)=(13) is still referenced from table "sale_order_line".
+ 
+2026-01-27 14:15:12,669 2611373 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_secondary_unit" WHERE id IN (13)'
+ERROR: update or delete on table "product_secondary_unit" violates foreign key constraint "sale_order_line_secondary_uom_id_fkey" on table "sale_order_line"
+DETAIL:  Key (id)=(13) is still referenced from table "sale_order_line".
+ 
+2026-01-27 14:15:54,467 2611373 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_secondary_unit" WHERE id IN (13)'
+ERROR: update or delete on table "product_secondary_unit" violates foreign key constraint "sale_order_line_secondary_uom_id_fkey" on table "sale_order_line"
+DETAIL:  Key (id)=(13) is still referenced from table "sale_order_line".
+ 
+2026-01-27 14:16:14,487 2611373 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_secondary_unit" WHERE id IN (11)'
+ERROR: update or delete on table "product_secondary_unit" violates foreign key constraint "sale_order_line_secondary_uom_id_fkey" on table "sale_order_line"
+DETAIL:  Key (id)=(11) is still referenced from table "sale_order_line".
+ 
+2026-01-27 14:16:26,362 2611373 ERROR metal-prod-18 odoo.sql_db: bad query: b'DELETE FROM "product_secondary_unit" WHERE id IN (12)'
+ERROR: update or delete on table "product_secondary_unit" violates foreign key constraint "sale_order_line_secondary_uom_id_fkey" on table "sale_order_line"
+DETAIL:  Key (id)=(12) is still referenced from table "sale_order_line".
+ 
+2026-01-27 22:37:26,863 2611373 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device.log()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
+2026-01-27 22:37:26,868 2611373 ERROR metal-prod-18 odoo.addons.base.models.ir_autovacuum: Failed res.device()._ResDeviceLog__update_revoked() 
+Traceback (most recent call last):
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/ir_autovacuum.py", line 38, in _run_vacuum_cleaner
+    func(model)
+  File "/data/odoo/metal-odoo18-p8179/odoo/addons/base/models/res_device.py", line 162, in __update_revoked
+    revoked_session_identifiers = root.session_store.get_missing_session_identifiers(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FilesystemSessionStore' object has no attribute 'get_missing_session_identifiers'
