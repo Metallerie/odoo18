@@ -1,0 +1,6 @@
+"default_code","name","length","width","height","diameter","thickness","unite_vente","kg_par_barre","kg_par_metre","prix_net_ht"
+"IPN80-6M","Poutrelle IPN 80",6,42,80,,3.9,"KG",38.7,6.45,36.77
+"IPN80-12M","Poutrelle IPN 80",12,42,80,,3.9,"KG",74.42,6.20,73.68
+"IPN100-6M","Poutrelle IPN 100",6,50,100,,4.5,"KG",52.782,8.797,50.14
+"IPN100-12M","Poutrelle IPN 100",12,50,100,,4.5,"KG",104.699,8.724,99.46
+"IPN120-6M","Poutrelle IPN 120",6,58,120,,5.1,"KG",71.053,11.842,67.50
