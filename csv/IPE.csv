@@ -1,4 +1,4 @@
-default_code;name;length;width;height;diameter;thickness;unite_vente;kg_par_barre;kg_par_metre;prix_net_ht
+default_code,name,length,width,height,diameter,thickness,unite_vente,kg_par_barre,kg_par_metre,prix_net_ht
 IPE100-6M;Poutrelle IPE 100;6;55;100;;4.1;KG;51.386;8.564;48.82
 IPE100-12M;Poutrelle IPE 100;12;55;100;;4.1;KG;101.93;8.494;96.83
 IPE120-6M;Poutrelle IPE 120;6;64;120;;4.4;KG;65.978;10.996;62.68
