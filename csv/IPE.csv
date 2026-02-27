@@ -1,5 +1,5 @@
 "Réf","name","length","width","height","diameter","thickness","unite_vente","factor","prix_net_ht","eco_part_ht","sale_secondary_uom_id"
-"71056","Poutrelle IPE 100",55,,4.1,"KG",51.388.564,48.82,0.11,"ML"
+"71056","Poutrelle IPE 100",55,,4.1,"KG",8.563,48.82,0.11,"ML"
 "71057","Poutrelle IPE 120",64,,4.4,"KG",10.996,62.68,0.14,"ML"
 "71061","Poutrelle IPE 140",73,,4.7,"KG",13.639,81.02,0.17,"ML"
 "71063","Poutrelle IPE 160",82,,5,"KG",16.705,98.23,0.20,"ML"
