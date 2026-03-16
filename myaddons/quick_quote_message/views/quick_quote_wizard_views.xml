@@ -32,10 +32,7 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button name="action_close"
-                            type="object"
-                            string="Fermer"
-                            class="btn-secondary"/>
+                    <button string="Fermer" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>
