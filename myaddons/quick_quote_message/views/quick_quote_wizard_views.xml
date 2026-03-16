@@ -28,7 +28,7 @@
                     </group>
 
                     <group>
-                        <field name="generated_text" widget="copy" readonly="1" nolabel="1"/>
+                        <field name="generated_text" widget="text" readonly="1" nolabel="1"/>
                     </group>
                 </sheet>
                 <footer>
