@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="view_sale_order_tree_quick_quote" model="ir.ui.view">
         <field name="name">sale.order.tree.quick.quote</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.sale_order_view_tree"/>
         <field name="arch" type="xml">
-
             <xpath expr="//list" position="attributes">
                 <attribute name="js_class">sale_order_quick_quote_list</attribute>
             </xpath>
-
         </field>
     </record>
-
 </odoo>
