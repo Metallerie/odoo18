@@ -8,6 +8,7 @@
     "depends": ["sale_management", "product", "web"],
     "data": [
         "views/quick_quote_wizard_views.xml",
+        "views/sale_order_list_inherit.xml",
     ],
     "assets": {
         "web.assets_backend": [
