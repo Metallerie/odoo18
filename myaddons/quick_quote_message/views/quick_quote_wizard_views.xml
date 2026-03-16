@@ -32,14 +32,10 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button name="action_copy_placeholder"
-                            type="object"
-                            string="Copier"
-                            class="btn-primary"/>
-                    <button name="action_close"
-                            type="object"
-                            string="Fermer"
-                            class="btn-secondary"/>
+                <button name="action_close"
+                    type="object"
+                    string="Fermer"
+                    class="btn-secondary"/>
                 </footer>
             </form>
         </field>
