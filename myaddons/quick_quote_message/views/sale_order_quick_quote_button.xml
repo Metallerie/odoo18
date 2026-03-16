@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_quick_quote_button" model="ir.ui.view">
+        <field name="name">sale.order.form.quick.quote.button</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="%(action_quick_quote_wizard)d"
+                        type="action"
+                        string="Devis rapide"
+                        class="btn-primary"
+                        context="{'default_note': 'Retrait atelier possible.'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
