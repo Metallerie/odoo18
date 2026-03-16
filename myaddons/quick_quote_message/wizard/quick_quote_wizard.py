@@ -1,4 +1,21 @@
 from odoo import api, fields, models
+from odoo.exceptions import UserError
+
+
+class QuickQuoteWizard(models.TransientModel):
+    _name = "quick.quote.wizard"
+    _description = "Assistant devis rapide"
+
+    line_ids = fields.One2many(
+        "quick.quote.wizard.line",
+        "wizard_id",
+        string="Lignes",
+    )
+    note = fields.Text(string="Informations de fin")
+    amount_total = fields.Monetary(
+        string="Total",
+        compute="_compute_amount_total",
+        currency_field="currency_id",
     )
     currency_id = fields.Many2one(
         "res.currency",
