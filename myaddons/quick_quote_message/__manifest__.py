@@ -8,7 +8,7 @@
     "depends": ["sale_management", "product"],
     "data": [
         "views/quick_quote_wizard_views.xml",
-        "views/quick_quote_menu.xml",
+        "views/sale_order_quick_quote_button.xml",
     ],
     "installable": True,
     "application": False,
