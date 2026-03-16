@@ -1,4 +1,4 @@
-rom odoo import api, fields, models
+from odoo import api, fields, models
         "res.currency",
         string="Devise",
         default=lambda self: self.env.company.currency_id,
