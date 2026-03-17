@@ -7,6 +7,18 @@
             <form string="Devis rapide" create="false" edit="true" delete="false">
                 <sheet>
                     <group>
+                        <group string="Disponibilité">
+                            <field name="stock_status"/>
+                        </group>
+                        <group string="Options commerciales">
+                            <field name="option_confirm"/>
+                            <field name="option_validity_48h"/>
+                            <field name="option_subject_stock"/>
+                            <field name="option_price_change"/>
+                        </group>
+                    </group>
+
+                    <group>
                         <field name="currency_id" invisible="1"/>
                         <field name="line_ids" nolabel="1">
                             <list editable="bottom">
@@ -17,17 +29,19 @@
                                 <field name="uom_name" readonly="1"/>
                                 <field name="price_unit"/>
                                 <field name="subtotal" readonly="1"/>
+                                <field name="cut_count"/>
+                                <field name="cut_length_mm"/>
                                 <field name="line_note" string="Ligne libre"/>
                             </list>
                         </field>
                     </group>
 
                     <group>
-                        <field name="note" placeholder="Informations de fin"/>
+                        <field name="note" placeholder="Informations complémentaires"/>
                         <field name="amount_total" readonly="1"/>
                     </group>
 
-                    <group>
+                    <group string="Texte généré">
                         <field name="generated_text" widget="text" readonly="1" nolabel="1"/>
                     </group>
                 </sheet>
