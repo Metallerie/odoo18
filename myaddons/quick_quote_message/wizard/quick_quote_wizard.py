@@ -5,6 +5,19 @@ class QuickQuoteWizard(models.TransientModel):
     _name = "quick.quote.wizard"
     _description = "Assistant devis rapide"
 
+    sale_order_id = fields.Many2one(
+        "sale.order",
+        string="Devis",
+        readonly=True,
+    )
+
+    pricelist_id = fields.Many2one(
+        "product.pricelist",
+        string="Liste de prix",
+        compute="_compute_pricelist_id",
+        store=True,
+    )
+
     line_ids = fields.One2many(
         "quick.quote.wizard.line",
         "wizard_id",
@@ -16,8 +29,8 @@ class QuickQuoteWizard(models.TransientModel):
     currency_id = fields.Many2one(
         "res.currency",
         string="Devise",
-        default=lambda self: self.env.company.currency_id,
-        required=True,
+        compute="_compute_currency_id",
+        store=True,
     )
 
     amount_total = fields.Monetary(
@@ -30,6 +43,16 @@ class QuickQuoteWizard(models.TransientModel):
         string="Texte à copier",
         compute="_compute_generated_text",
     )
+
+    @api.depends("sale_order_id")
+    def _compute_pricelist_id(self):
+        for wizard in self:
+            wizard.pricelist_id = wizard.sale_order_id.pricelist_id
+
+    @api.depends("pricelist_id")
+    def _compute_currency_id(self):
+        for wizard in self:
+            wizard.currency_id = wizard.pricelist_id.currency_id or wizard.env.company.currency_id
 
     @api.depends("line_ids.subtotal")
     def _compute_amount_total(self):
@@ -69,14 +92,14 @@ class QuickQuoteWizard(models.TransientModel):
 
                 parts.append(f"{label} : {qty} {uom_name} x {unit_price} = {subtotal}")
 
+                if line.in_stock:
+                    parts.append("En stock")
+                else:
+                    parts.append("Produit non disponible en stock, merci de confirmer pour le prochain arrivage")
+
                 if line.cut_count and line.cut_length_mm:
                     parts.append(f"Découpe : {int(line.cut_count)} x {int(line.cut_length_mm)} mm")
 
-                if line.in_stock:
-                    parts.append("Disponible en stock")
-                else:
-                    parts.append("Non disponible en stock, merci de confirmer pour le prochain arrivage, le mardi après-midi.") 
-                    
                 if line.line_note:
                     parts.append(line.line_note)
 
