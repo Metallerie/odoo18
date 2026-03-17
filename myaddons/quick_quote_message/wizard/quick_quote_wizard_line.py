@@ -34,6 +34,10 @@ class QuickQuoteWizardLine(models.TransientModel):
         compute="_compute_uom_name",
         store=True,
     )
+    in_stock = fields.Boolean(
+        string="En stock",
+        default=True,
+    )
 
     price_unit = fields.Monetary(
         string="Prix unitaire",
