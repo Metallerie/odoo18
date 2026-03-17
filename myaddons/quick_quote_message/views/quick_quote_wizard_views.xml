@@ -33,7 +33,7 @@
                         <field name="amount_total" readonly="1"/>
                     </group>
                  <group string="Texte généré">
-                        <field name="generated_text" widget="text" widget="copy" readonly="1" nolabel="1"/>
+                        <field name="generated_text" widget="text,copy"  readonly="1" nolabel="1"/>
                     </group>
                     <group string="Texte généré">
                         <field name="generated_text" widget="copy" readonly="1" nolabel="1"/>
