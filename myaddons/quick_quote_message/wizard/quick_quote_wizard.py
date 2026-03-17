@@ -10,18 +10,35 @@ class QuickQuoteWizard(models.TransientModel):
         "wizard_id",
         string="Lignes",
     )
-    note = fields.Text(string="Informations de fin")
-    amount_total = fields.Monetary(
-        string="Total",
-        compute="_compute_amount_total",
-        currency_field="currency_id",
+
+    stock_status = fields.Selection(
+        [
+            ("in_stock", "En stock"),
+            ("out_stock", "Hors stock – merci de confirmer votre commande (arrivage mardi après-midi)"),
+        ],
+        string="Disponibilité",
     )
+
+    option_confirm = fields.Boolean(string="Merci de confirmer votre commande")
+    option_validity_48h = fields.Boolean(string="Devis valable 48h")
+    option_subject_stock = fields.Boolean(string="Sous réserve de disponibilité")
+    option_price_change = fields.Boolean(string="Prix susceptible d’évolution")
+
+    note = fields.Text(string="Informations complémentaires")
+
     currency_id = fields.Many2one(
         "res.currency",
         string="Devise",
         default=lambda self: self.env.company.currency_id,
         required=True,
     )
+
+    amount_total = fields.Monetary(
+        string="Total",
+        compute="_compute_amount_total",
+        currency_field="currency_id",
+    )
+
     generated_text = fields.Text(
         string="Texte à copier",
         compute="_compute_generated_text",
@@ -40,9 +57,16 @@ class QuickQuoteWizard(models.TransientModel):
         "line_ids.uom_name",
         "line_ids.price_unit",
         "line_ids.subtotal",
+        "line_ids.cut_count",
+        "line_ids.cut_length_mm",
         "line_ids.line_note",
-        "amount_total",
+        "stock_status",
+        "option_confirm",
+        "option_validity_48h",
+        "option_subject_stock",
+        "option_price_change",
         "note",
+        "amount_total",
         "currency_id",
     )
     def _compute_generated_text(self):
@@ -54,26 +78,51 @@ class QuickQuoteWizard(models.TransientModel):
                 if not line.product_id:
                     continue
 
-                qty = ("%g" % line.quantity).replace(".", ",")
+                qty = wizard._format_quantity(line.quantity)
                 unit_price = wizard._format_amount(line.price_unit)
                 subtotal = wizard._format_amount(line.subtotal)
                 label = line.name or line.product_id.display_name
                 uom_name = line.uom_name or "u"
 
                 parts.append(f"{label} : {qty} {uom_name} x {unit_price} = {subtotal}")
+
+                if line.cut_count and line.cut_length_mm:
+                    parts.append(f"Découpe : {int(line.cut_count)} x {int(line.cut_length_mm)} mm")
+
                 if line.line_note:
                     parts.append(line.line_note)
+
                 parts.append("")
 
             parts.append(f"Total : {wizard._format_amount(wizard.amount_total)}")
             parts.append("")
-            parts.append("TVA non applicable, art. 293 B du CGI")
+
+            if wizard.stock_status == "in_stock":
+                parts.append("En stock")
+            elif wizard.stock_status == "out_stock":
+                parts.append("Hors stock – merci de confirmer votre commande (arrivage mardi après-midi)")
+
+            if wizard.option_confirm:
+                parts.append("Merci de confirmer votre commande")
+
+            if wizard.option_validity_48h:
+                parts.append("Devis valable 48h")
+
+            if wizard.option_subject_stock:
+                parts.append("Sous réserve de disponibilité")
+
+            if wizard.option_price_change:
+                parts.append("Prix susceptible d’évolution")
 
             if wizard.note:
                 parts.append(wizard.note)
 
+            parts.append("")
+            parts.append("Retrait à l’atelier : La Métallerie, Corneilla-del-Vercol")
+            parts.append("TVA non applicable, art. 293 B du CGI")
             parts.append("Plus de prix sur le site metallerie.xyz")
-            wizard.generated_text = "\n".join(parts).strip()
+
+            wizard.generated_text = "\n".join([p for p in parts if p is not None]).strip()
 
     def _format_amount(self, amount):
         self.ensure_one()
@@ -82,3 +131,7 @@ class QuickQuoteWizard(models.TransientModel):
         if self.currency_id.position == "before":
             return f"{currency_symbol}{value}"
         return f"{value} {currency_symbol}"
+
+    def _format_quantity(self, qty):
+        value = f"{qty:g}"
+        return value.replace(".", ",")
