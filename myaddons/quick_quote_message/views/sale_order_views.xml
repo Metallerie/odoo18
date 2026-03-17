@@ -5,8 +5,13 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
         <field name="arch" type="xml">
-            <xpath expr="//list" position="attributes">
-                <attribute name="js_class">sale_order_quick_quote_list</attribute>
+            <xpath expr="//list" position="before">
+                <header>
+                    <button name="action_open_quick_quote"
+                            type="object"
+                            string="Devis rapide"
+                            class="btn-primary"/>
+                </header>
             </xpath>
         </field>
     </record>
