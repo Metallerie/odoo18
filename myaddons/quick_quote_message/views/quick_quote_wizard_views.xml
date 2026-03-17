@@ -6,18 +6,7 @@
         <field name="arch" type="xml">
             <form string="Devis rapide" create="false" edit="true" delete="false">
                 <sheet>
-                    <group>
-                        <group string="Disponibilité">
-                            <field name="stock_status"/>
-                        </group>
-                        <group string="Options commerciales">
-                            <field name="option_confirm"/>
-                            <field name="option_validity_48h"/>
-                            <field name="option_subject_stock"/>
-                            <field name="option_price_change"/>
-                        </group>
-                    </group>
-
+                   
                     <group>
                         <field name="currency_id" invisible="1"/>
                         <field name="line_ids" nolabel="1">
@@ -27,6 +16,7 @@
                                 <field name="name"/>
                                 <field name="quantity"/>
                                 <field name="uom_name" readonly="1"/>
+                                <field name="in_stock"/>
                                 <field name="price_unit"/>
                                 <field name="subtotal" readonly="1"/>
                                 <field name="cut_count"/>
