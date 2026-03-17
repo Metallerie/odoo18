@@ -11,19 +11,7 @@ class QuickQuoteWizard(models.TransientModel):
         string="Lignes",
     )
 
-    stock_status = fields.Selection(
-        [
-            ("in_stock", "En stock"),
-            ("out_stock", "Hors stock – merci de confirmer votre commande (arrivage mardi après-midi)"),
-        ],
-        string="Disponibilité",
-    )
-
-    option_confirm = fields.Boolean(string="Merci de confirmer votre commande")
-    option_validity_48h = fields.Boolean(string="Devis valable 48h")
-    option_subject_stock = fields.Boolean(string="Sous réserve de disponibilité")
-    option_price_change = fields.Boolean(string="Prix susceptible d’évolution")
-
+   
     note = fields.Text(string="Informations complémentaires")
 
     currency_id = fields.Many2one(
