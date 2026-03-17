@@ -20,9 +20,6 @@ class QuickQuoteWizardLine(models.TransientModel):
     )
     name = fields.Char(
         string="Libellé",
-        compute="_compute_name",
-        store=True,
-        readonly=False,
     )
     quantity = fields.Float(string="Quantité", default=1.0, required=True)
     uom_name = fields.Char(
@@ -48,18 +45,9 @@ class QuickQuoteWizardLine(models.TransientModel):
     line_note = fields.Text(string="Ligne libre")
 
     @api.depends("product_id")
-    def _compute_name(self):
-        for line in self:
-            if line.product_id and not line.name:
-                line.name = line.product_id.display_name
-
-    @api.depends("product_id")
     def _compute_uom_name(self):
         for line in self:
-            if line.product_id and line.product_id.uom_id:
-                line.uom_name = line.product_id.uom_id.name
-            else:
-                line.uom_name = ""
+            line.uom_name = line.product_id.uom_id.name if line.product_id.uom_id else ""
 
     @api.depends("quantity", "price_unit")
     def _compute_subtotal(self):
