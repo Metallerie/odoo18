@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_sale_order_tree_quick_quote" model="ir.ui.view">
-        <field name="name">sale.order.tree.quick.quote</field>
+    <record id="view_sale_order_form_quick_quote" model="ir.ui.view">
+        <field name="name">sale.order.form.quick.quote</field>
         <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//list/header" position="inside">
+            <xpath expr="//header" position="inside">
                 <button name="action_open_quick_quote"
                         type="object"
                         string="Devis rapide"
-                        class="btn-primary"
-                        display="always"/>
+                        class="btn-secondary"/>
             </xpath>
         </field>
     </record>
