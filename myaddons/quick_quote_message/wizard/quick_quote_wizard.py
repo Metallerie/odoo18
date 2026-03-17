@@ -72,9 +72,11 @@ class QuickQuoteWizard(models.TransientModel):
                 if line.cut_count and line.cut_length_mm:
                     parts.append(f"Découpe : {int(line.cut_count)} x {int(line.cut_length_mm)} mm")
 
-                if not line.in_stock:
-                    parts.append("Merci de confirmer pour le prochain arrivage")
-
+                if line.in_stock:
+                    parts.append("En stock")
+                else:
+                    parts.append("Produit non disponible en stock, merci de confirmer pour le prochain arrivage")
+                    
                 if line.line_note:
                     parts.append(line.line_note)
 
