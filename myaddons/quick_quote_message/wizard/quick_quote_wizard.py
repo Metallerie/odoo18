@@ -88,6 +88,9 @@ class QuickQuoteWizard(models.TransientModel):
                 unit_price = wizard._format_amount(line.price_unit)
                 subtotal = wizard._format_amount(line.subtotal)
                 label = line.name or line.product_id.display_name
+                # Nettoyage du code produit [XXXX]
+                if label.startswith("["):
+                    label = label.split("] ", 1)[-1]
                 uom_name = line.uom_name or "u"
 
                 parts.append(f"{label} : {qty} {uom_name} x {unit_price} = {subtotal}")
