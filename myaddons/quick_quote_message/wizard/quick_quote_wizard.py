@@ -118,7 +118,7 @@ class QuickQuoteWizard(models.TransientModel):
             parts.append("Retrait à l’atelier : La Métallerie, Corneilla-del-Vercol")
             parts.append("TEL: 0625159120 ")
             parts.append("TVA non applicable, art. 293 B du CGI")
-            parts.append("Plus de prix sur le site internet metallerie.xyz")
+            parts.append("Plus de prix sur le site internet metallerie.xyz ou La Métallerie – Corneilla-del-Vercol")
             wizard.generated_text = "\n".join([p for p in parts if p is not None]).strip()
 
     def _format_amount(self, amount):
