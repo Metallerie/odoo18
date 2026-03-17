@@ -34,10 +34,6 @@ class QuickQuoteWizardLine(models.TransientModel):
         compute="_compute_uom_name",
         store=True,
     )
-    in_stock = fields.Boolean(
-        string="En stock",
-        default=True,
-    )
 
     price_unit = fields.Monetary(
         string="Prix unitaire",
@@ -50,6 +46,11 @@ class QuickQuoteWizardLine(models.TransientModel):
         compute="_compute_subtotal",
         currency_field="currency_id",
         store=True,
+    )
+
+    in_stock = fields.Boolean(
+        string="En stock",
+        default=True,
     )
 
     cut_count = fields.Integer(
@@ -82,11 +83,27 @@ class QuickQuoteWizardLine(models.TransientModel):
         for line in self:
             line.subtotal = line.quantity * line.price_unit
 
-    @api.onchange("product_id")
+    @api.onchange("product_id", "quantity")
     def _onchange_product_id(self):
         for line in self:
             if not line.product_id:
                 continue
+
+            wizard = line.wizard_id
+            pricelist = wizard.pricelist_id
+            sale_order = wizard.sale_order_id
+            partner = sale_order.partner_id if sale_order else False
+
             line.name = line.product_id.display_name
-            line.price_unit = line.product_id.lst_price
             line.uom_name = line.product_id.uom_id.name or ""
+
+            qty = line.quantity or 1.0
+
+            if pricelist:
+                line.price_unit = pricelist._get_product_price(
+                    line.product_id,
+                    qty,
+                    partner=partner,
+                )
+            else:
+                line.price_unit = line.product_id.lst_price
