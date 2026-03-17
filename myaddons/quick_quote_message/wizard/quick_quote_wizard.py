@@ -11,7 +11,6 @@ class QuickQuoteWizard(models.TransientModel):
         string="Lignes",
     )
 
-   
     note = fields.Text(string="Informations complémentaires")
 
     currency_id = fields.Many2one(
@@ -45,14 +44,10 @@ class QuickQuoteWizard(models.TransientModel):
         "line_ids.uom_name",
         "line_ids.price_unit",
         "line_ids.subtotal",
+        "line_ids.in_stock",
         "line_ids.cut_count",
         "line_ids.cut_length_mm",
         "line_ids.line_note",
-        "stock_status",
-        "option_confirm",
-        "option_validity_48h",
-        "option_subject_stock",
-        "option_price_change",
         "note",
         "amount_total",
         "currency_id",
@@ -77,32 +72,18 @@ class QuickQuoteWizard(models.TransientModel):
                 if line.cut_count and line.cut_length_mm:
                     parts.append(f"Découpe : {int(line.cut_count)} x {int(line.cut_length_mm)} mm")
 
+                if not line.in_stock:
+                    parts.append("Merci de confirmer pour le prochain arrivage")
+
                 if line.line_note:
                     parts.append(line.line_note)
 
                 parts.append("")
 
             parts.append(f"Total : {wizard._format_amount(wizard.amount_total)}")
-            parts.append("")
-
-            if wizard.stock_status == "in_stock":
-                parts.append("En stock")
-            elif wizard.stock_status == "out_stock":
-                parts.append("Hors stock – merci de confirmer votre commande (arrivage mardi après-midi)")
-
-            if wizard.option_confirm:
-                parts.append("Merci de confirmer votre commande")
-
-            if wizard.option_validity_48h:
-                parts.append("Devis valable 48h")
-
-            if wizard.option_subject_stock:
-                parts.append("Sous réserve de disponibilité")
-
-            if wizard.option_price_change:
-                parts.append("Prix susceptible d’évolution")
 
             if wizard.note:
+                parts.append("")
                 parts.append(wizard.note)
 
             parts.append("")
