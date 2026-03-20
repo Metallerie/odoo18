@@ -27,7 +27,7 @@ Ce module constitue une base générique pour la vente de produits sur mesure
     'depends': ['base', 'product', 'sale', 'website'],
 
     'data': [
-        'security/ir.model.access.csv',
+        ""'security/ir.model.access.csv',"
         'views/product_composition_line_views.xml',
         'views/product_template_views.xml',
     ],
