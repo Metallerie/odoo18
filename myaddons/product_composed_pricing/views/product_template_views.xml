@@ -6,16 +6,15 @@
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//field[@name='detailed_type']" position="after">
-                <field name="is_composed_product"/>
-            </xpath>
-              <xpath expr="//field[@name='standard_price']" position="before">
+            <xpath expr="//field[@name='standard_price']" position="before">
                 <field name="purchase_sale_coef"/>
             </xpath>
 
-
-            <xpath expr="//page[@name='general_information']" position="after">
-                <page string="Composition" attrs="{'invisible': [('is_composed_product', '=', False)]}">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Composition">
+                    <group>
+                        <field name="is_composed_product"/>
+                    </group>
                     <field name="composition_line_ids">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
