@@ -8,8 +8,11 @@
 
             <xpath expr="//field[@name='detailed_type']" position="after">
                 <field name="is_composed_product"/>
-                <field name="purchase_sale_coef" attrs="{'invisible': [('is_composed_product', '=', False)]}"/>
             </xpath>
+              <xpath expr="//field[@name='standard_price']" position="after">
+                <field name="purchase_sale_coef"/>
+            </xpath>
+
 
             <xpath expr="//page[@name='general_information']" position="after">
                 <page string="Composition" attrs="{'invisible': [('is_composed_product', '=', False)]}">
