@@ -1,2 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="product_template_form_view_inherit_composed_pricing" model="ir.ui.view">
+        <field name="name">product.template.form.composed.pricing</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='detailed_type']" position="after">
+                <field name="is_composed_product"/>
+                <field name="purchase_sale_coef" attrs="{'invisible': [('is_composed_product', '=', False)]}"/>
+            </xpath>
+
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page string="Composition" attrs="{'invisible': [('is_composed_product', '=', False)]}">
+                    <field name="composition_line_ids">
+                        <tree editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="component_product_id"/>
+                            <field name="quantity_formula"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
 </odoo>
