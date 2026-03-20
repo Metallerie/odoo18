@@ -17,12 +17,12 @@
             <xpath expr="//page[@name='general_information']" position="after">
                 <page string="Composition" attrs="{'invisible': [('is_composed_product', '=', False)]}">
                     <field name="composition_line_ids">
-                        <tree editable="bottom">
+                        <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="component_product_id"/>
                             <field name="quantity_formula"/>
                             <field name="active"/>
-                        </tree>
+                        </list>
                     </field>
                 </page>
             </xpath>
