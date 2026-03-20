@@ -4,13 +4,15 @@
         <field name="name">product.composition.line.tree</field>
         <field name="model">product.composition.line</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="sequence"/>
-                <field name="product_tmpl_id"/>
-                <field name="component_product_id"/>
-                <field name="quantity_formula"/>
-                <field name="active"/>
-            </list>
+ <list>
+    <field name="sequence"/>
+    <field name="product_tmpl_id"/>
+    <field name="component_product_id"/>
+    <field name="attribute_id"/>
+    <field name="attribute_value_id"/>
+    <field name="quantity_formula"/>
+    <field name="active"/>
+</list>     
         </field>
     </record>
 
