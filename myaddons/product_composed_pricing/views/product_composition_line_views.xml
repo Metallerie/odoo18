@@ -1,2 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_product_composition_line_tree" model="ir.ui.view">
+        <field name="name">product.composition.line.tree</field>
+        <field name="model">product.composition.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence"/>
+                <field name="product_tmpl_id"/>
+                <field name="component_product_id"/>
+                <field name="quantity_formula"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_product_composition_line_form" model="ir.ui.view">
+        <field name="name">product.composition.line.form</field>
+        <field name="model">product.composition.line</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="product_tmpl_id"/>
+                        <field name="component_product_id"/>
+                        <field name="quantity_formula"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
 </odoo>
