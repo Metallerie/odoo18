@@ -9,7 +9,7 @@
             <xpath expr="//field[@name='detailed_type']" position="after">
                 <field name="is_composed_product"/>
             </xpath>
-              <xpath expr="//field[@name='standard_price']" position="after">
+              <xpath expr="//field[@name='standard_price']" position="before">
                 <field name="purchase_sale_coef"/>
             </xpath>
 
