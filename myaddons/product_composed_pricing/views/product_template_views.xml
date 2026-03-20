@@ -15,14 +15,16 @@
                     <group>
                         <field name="is_composed_product"/>
                     </group>
-                    <field name="composition_line_ids">
-                        <list editable="bottom">
-                            <field name="sequence" widget="handle"/>
-                            <field name="component_product_id"/>
-                            <field name="quantity_formula"/>
-                            <field name="active"/>
-                        </list>
-                    </field>
+                <field name="composition_line_ids">
+                    <list editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="component_product_id"/>
+                        <field name="attribute_id"/>
+                        <field name="attribute_value_id"/>
+                        <field name="quantity_formula"/>
+                        <field name="active"/>
+                    </list>
+                </field>                 
                 </page>
             </xpath>
 
