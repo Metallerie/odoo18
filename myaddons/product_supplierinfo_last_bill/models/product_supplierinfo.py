@@ -4,7 +4,7 @@ from odoo import api, fields, models
 
 
 _logger = logging.getLogger(__name__)
-
+_logger.warning("SUPPLIERINFO account_move.py chargé")
 
 class ProductSupplierinfo(models.Model):
     _inherit = 'product.supplierinfo'
