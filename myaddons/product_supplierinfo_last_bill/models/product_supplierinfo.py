@@ -25,7 +25,6 @@ class ProductSupplierinfo(models.Model):
 
     @api.model
     def _prepare_supplierinfo_vals_from_move_line(self, line):
-        """Prépare les valeurs product.supplierinfo depuis une ligne de facture fournisseur."""
         product = line.product_id
         move = line.move_id
         partner = move.partner_id
@@ -35,7 +34,7 @@ class ProductSupplierinfo(models.Model):
             price = price * (1 - (line.discount / 100.0))
 
         vals = {
-            'name': partner.id,
+            'partner_id': partner.id,
             'product_tmpl_id': product.product_tmpl_id.id,
             'product_id': product.id,
             'price': price,
@@ -58,12 +57,11 @@ class ProductSupplierinfo(models.Model):
 
     @api.model
     def _find_matching_supplierinfo(self, line):
-        """Cherche la ligne supplierinfo correspondante par fournisseur + template + variante + société."""
         product = line.product_id
         move = line.move_id
 
         domain = [
-            ('name', '=', move.partner_id.id),
+            ('partner_id', '=', move.partner_id.id),
             ('product_tmpl_id', '=', product.product_tmpl_id.id),
             ('product_id', '=', product.id),
             ('company_id', 'in', [False, move.company_id.id]),
@@ -82,9 +80,6 @@ class ProductSupplierinfo(models.Model):
 
     @api.model
     def sync_from_move_line(self, line):
-        """
-        Crée ou met à jour supplierinfo depuis une ligne de facture fournisseur validée.
-        """
         _logger.info(
             "SUPPLIERINFO sync start | line=%s | move=%s | state=%s | type=%s | product=%s | display_type=%s",
             line.id,
@@ -191,10 +186,6 @@ class ProductSupplierinfo(models.Model):
 
     @api.model
     def rebuild_supplierinfo_for_product(self, product, partner=None, company=None):
-        """
-        Recalcule la ligne supplierinfo d'un produit à partir de la dernière
-        facture fournisseur encore validée.
-        """
         _logger.info(
             "SUPPLIERINFO rebuild product start | product=%s | partner=%s | company=%s",
             product.display_name,
@@ -221,7 +212,7 @@ class ProductSupplierinfo(models.Model):
             ('product_id', '=', product.id),
         ]
         if partner:
-            domain.append(('name', '=', partner.id))
+            domain.append(('partner_id', '=', partner.id))
         if company:
             domain.append(('company_id', 'in', [False, company.id]))
 
@@ -242,9 +233,6 @@ class ProductSupplierinfo(models.Model):
 
     @api.model
     def rebuild_all_from_posted_bills(self):
-        """
-        Reconstruit toute la table product.supplierinfo depuis les factures fournisseur validées.
-        """
         _logger.info("SUPPLIERINFO rebuild all start")
 
         existing = self.search([])
