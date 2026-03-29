@@ -1,8 +1,22 @@
 addons/
 
 
-# python cache
-**/__pycache__/
-**/*.pyc
+# Backups
+backup/*.dump
+backup/*.zip
+backup/*.sql
+
+# Logs
 *.log
 *.log.*
+logs-archive/
+odoo-server.log
+nginx_metal.error.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Odoo
+*.pid
+*.sock
