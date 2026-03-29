@@ -4,7 +4,7 @@ from odoo import models
 
 
 _logger = logging.getLogger(__name__)
-_logger.warning("SUPPLIERINFO account_move.py chargé")
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -12,10 +12,29 @@ class AccountMove(models.Model):
     def _supplierinfo_target_lines(self):
         self.ensure_one()
 
+        _logger.info(
+            "SUPPLIERINFO inspect move | name=%s | id=%s | type=%s | state=%s | all_invoice_lines=%s",
+            self.name,
+            self.id,
+            self.move_type,
+            self.state,
+            self.invoice_line_ids.ids,
+        )
+
+        for line in self.invoice_line_ids:
+            _logger.info(
+                "SUPPLIERINFO inspect line | line_id=%s | name=%s | product_id=%s | product=%s | display_type=%s | quantity=%s | price_unit=%s",
+                line.id,
+                line.name,
+                line.product_id.id if line.product_id else False,
+                line.product_id.display_name if line.product_id else False,
+                line.display_type,
+                line.quantity,
+                line.price_unit,
+            )
+
         lines = self.invoice_line_ids.filtered(
-            lambda l: l.product_id
-            and not l.display_type
-            and self.move_type == 'in_invoice'
+            lambda l: l.product_id and not l.display_type
         )
 
         _logger.info(
