@@ -1,6 +1,5 @@
 # `models/account_move.py`
 
-```python
 from odoo import models
 
 
@@ -71,7 +70,7 @@ from . import account_move
     'installable': True,
     'application': False,
 }
-```
+
 
 # `__init__.py`
 
