@@ -4,7 +4,7 @@ from odoo import api, fields, models
 
 
 _logger = logging.getLogger(__name__)
-_logger.warning("SUPPLIERINFO product_supplierinfo.py chargé")
+
 
 class ProductSupplierinfo(models.Model):
     _inherit = 'product.supplierinfo'
@@ -37,7 +37,7 @@ class ProductSupplierinfo(models.Model):
         vals = {
             'name': partner.id,
             'product_tmpl_id': product.product_tmpl_id.id,
-            'product_id': product.id,  # toujours la variante
+            'product_id': product.id,
             'price': price,
             'currency_id': move.currency_id.id,
             'product_uom': line.product_uom_id.id,
@@ -99,8 +99,12 @@ class ProductSupplierinfo(models.Model):
             _logger.info("SUPPLIERINFO skip | line=%s | reason=no_product", line.id)
             return False
 
-        if line.display_type:
-            _logger.info("SUPPLIERINFO skip | line=%s | reason=display_type", line.id)
+        if line.display_type != 'product':
+            _logger.info(
+                "SUPPLIERINFO skip | line=%s | reason=display_type_%s",
+                line.id,
+                line.display_type,
+            )
             return False
 
         if line.move_id.move_type != 'in_invoice':
@@ -161,7 +165,7 @@ class ProductSupplierinfo(models.Model):
     def _get_latest_posted_vendor_bill_line(self, product, partner=None, company=None):
         domain = [
             ('product_id', '=', product.id),
-            ('display_type', '=', False),
+            ('display_type', '=', 'product'),
             ('move_id.state', '=', 'posted'),
             ('move_id.move_type', '=', 'in_invoice'),
         ]
@@ -249,7 +253,7 @@ class ProductSupplierinfo(models.Model):
 
         lines = self.env['account.move.line'].search([
             ('product_id', '!=', False),
-            ('display_type', '=', False),
+            ('display_type', '=', 'product'),
             ('move_id.state', '=', 'posted'),
             ('move_id.move_type', '=', 'in_invoice'),
         ], order='move_id.invoice_date asc, move_id.id asc, id asc')
