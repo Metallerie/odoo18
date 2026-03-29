@@ -4,7 +4,7 @@ from odoo import models
 
 
 _logger = logging.getLogger(__name__)
-
+_logger.warning("SUPPLIERINFO account_move.py chargé")
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
