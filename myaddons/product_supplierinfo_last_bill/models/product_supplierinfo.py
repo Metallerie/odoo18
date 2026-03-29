@@ -37,6 +37,8 @@ class ProductSupplierinfo(models.Model):
             'partner_id': partner.id,
             'product_tmpl_id': product.product_tmpl_id.id,
             'product_id': product.id,
+            'product_name': product.product_tmpl_id.name,
+            'product_code': product.default_code,
             'price': price,
             'currency_id': move.currency_id.id,
             'product_uom': line.product_uom_id.id,
