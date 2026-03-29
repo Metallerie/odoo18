@@ -34,7 +34,7 @@ class AccountMove(models.Model):
             )
 
         lines = self.invoice_line_ids.filtered(
-            lambda l: l.product_id and not l.display_type
+            lambda l: l.product_id and l.display_type == 'product'
         )
 
         _logger.info(
