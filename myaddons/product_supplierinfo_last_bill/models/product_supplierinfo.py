@@ -143,6 +143,6 @@ class ProductSupplierinfo(models.Model):
             self.sync_from_move_line(line)
 
         return True
-```
+
 
 
