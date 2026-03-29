@@ -1,6 +1,5 @@
 # `models/product_supplierinfo.py`
 
-```python
 from odoo import api, fields, models
 
 
