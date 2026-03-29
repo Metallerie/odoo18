@@ -176,7 +176,7 @@ class ProductSupplierinfo(models.Model):
 
         line = self.env['account.move.line'].search(
             domain,
-            order='move_id.invoice_date desc, move_id.id desc, id desc',
+            order='date desc, id desc',
             limit=1,
         )
 
@@ -256,7 +256,7 @@ class ProductSupplierinfo(models.Model):
             ('display_type', '=', 'product'),
             ('move_id.state', '=', 'posted'),
             ('move_id.move_type', '=', 'in_invoice'),
-        ], order='move_id.invoice_date asc, move_id.id asc, id asc')
+        ], order='date asc, id asc')
 
         _logger.info("SUPPLIERINFO rebuild all source lines count=%s", len(lines))
 
