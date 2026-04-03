@@ -1,4 +1,3 @@
-```csv
 default_code,name,length,width,height,thickness,diameter,pitch,finish,sale_unit,purchase_price,public_price,eco_tax
 145542,DC1 Trèfle,2.00,1.00,0.000,0.000,0.000,0.000,,PI,44.67,67.01,0.00
 202076,Tôle perforée trou rond 3 T5 brut,2.00,1.00,0.000,0.0015,0.003,0.005,Brut,PI,30.24,45.36,0.03
@@ -19,4 +18,3 @@ default_code,name,length,width,height,thickness,diameter,pitch,finish,sale_unit,
 266691,Tôle perforée trou carré 10 U12 brut,2.00,1.00,0.000,0.0020,0.010,0.012,Brut,PI,59.73,89.60,0.02
 449360,Tôle perforée trou carré 10 U15 brut,2.00,1.00,0.000,0.0020,0.010,0.015,Brut,PI,55.12,82.68,0.04
 449361,Tôle perforée trou carré 20 U40 brut,2.00,1.00,0.000,0.0020,0.020,0.040,Brut,PI,66.94,100.41,0.00
-```
