@@ -1,20 +1,20 @@
 default_code,name,length,width,height,thickness,diameter,pitch,finish,sale_unit,purchase_price,public_price,eco_tax
 145542,DC1 Trèfle,2.00,1.00,0.000,0.000,0.000,0.000,,PI,44.67,67.01,0.00
-202076,Tôle perforée trou rond 3 T5 brut,2.00,1.00,0.000,0.0015,0.003,0.005,Brut,PI,30.24,45.36,0.03
-202078,Tôle perforée trou rond 4 T6 brut,2.00,1.00,0.000,0.0015,0.004,0.006,Brut,PI,59.73,89.60,0.03
-202077,Tôle perforée trou rond 5 T8 brut,2.00,1.00,0.000,0.0015,0.005,0.008,Brut,PI,34.89,52.33,0.03
-202079,Tôle perforée trou rond 6 T9 brut,2.00,1.00,0.000,0.0015,0.006,0.009,Brut,PI,43.59,65.38,0.03
-202080,Tôle perforée trou rond 8 T12 brut,2.00,1.00,0.000,0.0015,0.008,0.012,Brut,PI,31.61,47.42,0.03
+202076,Tôle perforée 1000x2000x1.5 mm trou rond 3 T5 brut,2.00,1.00,0.000,0.0015,0.003,0.005,Brut,PI,30.24,45.36,0.03
+202078,Tôle perforée 1000x2000x1.5 mm trou rond 4 T6 brut,2.00,1.00,0.000,0.0015,0.004,0.006,Brut,PI,59.73,89.60,0.03
+202077,Tôle perforée 1000x2000x1.5 mm trou rond 5 T8 brut,2.00,1.00,0.000,0.0015,0.005,0.008,Brut,PI,34.89,52.33,0.03
+202079,Tôle perforée 1000x2000x1.5 mm trou rond 6 T9 brut,2.00,1.00,0.000,0.0015,0.006,0.009,Brut,PI,43.59,65.38,0.03
+202080,Tôle perforée 1000x2000x1.5 mm trou rond 8 T12 brut,2.00,1.00,0.000,0.0015,0.008,0.012,Brut,PI,31.61,47.42,0.03
 202081,RD 10,2.00,1.00,0.000,0.0015,0.010,0.000,,PI,36.22,54.33,0.03
-365273,Tôle perforée trou rond 5 T7 brut,2.00,1.00,0.000,0.0015,0.005,0.007,Brut,PI,66.40,99.60,0.00
-266685,Tôle perforée galvanisée R5T8,2.00,1.00,0.000,0.0020,0.005,0.008,Galva,PI,39.57,59.36,0.00
-202102,Tôle perforée trou rond 8 T12 galva,2.00,1.00,0.000,0.0020,0.008,0.012,Galva,PI,44.56,66.85,0.04
+365273,Tôle perforée 1000x2000x1.5 mm trou rond 5 T7 brut,2.00,1.00,0.000,0.0015,0.005,0.007,Brut,PI,66.40,99.60,0.00
+266685,Tôle perforée galvanisée 1000x2000x2 mm R5T8,2.00,1.00,0.000,0.0020,0.005,0.008,Galva,PI,39.57,59.36,0.00
+202102,Tôle perforée 1000x2000x2 mm trou rond 8 T12 galva,2.00,1.00,0.000,0.0020,0.008,0.012,Galva,PI,44.56,66.85,0.04
 202082,RD 20,2.00,1.00,0.000,0.0020,0.020,0.000,,PI,53.07,79.60,0.03
-71353,Tôle perforée trou rond 5 T8 brut,2.00,1.00,0.000,0.0020,0.005,0.008,Brut,PI,44.54,66.80,0.04
-71354,Tôle perforée trou rond 8 T12 brut,2.00,1.00,0.000,0.0020,0.008,0.012,Brut,PI,34.36,51.55,0.04
-71356,Tôle perforée trou rond 15 T22 brut,2.00,1.00,0.000,0.0020,0.015,0.022,Brut,PI,68.18,102.27,0.00
-71357,Tôle perforée trou rond 20 T27 brut,2.00,1.00,0.000,0.0020,0.020,0.027,Brut,PI,70.37,105.56,0.03
-419497,Tôle perforée trou carré 8 U12 galva,2.00,1.00,0.000,0.0020,0.008,0.012,Galva,PI,50.03,75.05,0.04
-266691,Tôle perforée trou carré 10 U12 brut,2.00,1.00,0.000,0.0020,0.010,0.012,Brut,PI,59.73,89.60,0.02
-449360,Tôle perforée trou carré 10 U15 brut,2.00,1.00,0.000,0.0020,0.010,0.015,Brut,PI,55.12,82.68,0.04
-449361,Tôle perforée trou carré 20 U40 brut,2.00,1.00,0.000,0.0020,0.020,0.040,Brut,PI,66.94,100.41,0.00
+71353,Tôle perforée 1000x2000x2 mm trou rond 5 T8 brut,2.00,1.00,0.000,0.0020,0.005,0.008,Brut,PI,44.54,66.80,0.04
+71354,Tôle perforée 1000x2000x2 mm trou rond 8 T12 brut,2.00,1.00,0.000,0.0020,0.008,0.012,Brut,PI,34.36,51.55,0.04
+71356,Tôle perforée 1000x2000x2 mm trou rond 15 T22 brut,2.00,1.00,0.000,0.0020,0.015,0.022,Brut,PI,68.18,102.27,0.00
+71357,Tôle perforée 1000x2000x2 mm trou rond 20 T27 brut,2.00,1.00,0.000,0.0020,0.020,0.027,Brut,PI,70.37,105.56,0.03
+419497,Tôle perforée 1000x2000x2 mm trou carré 8 U12 galva,2.00,1.00,0.000,0.0020,0.008,0.012,Galva,PI,50.03,75.05,0.04
+266691,Tôle perforée 1000x2000x2 mm trou carré 10 U12 brut,2.00,1.00,0.000,0.0020,0.010,0.012,Brut,PI,59.73,89.60,0.02
+449360,Tôle perforée 1000x2000x2 mm trou carré 10 U15 brut,2.00,1.00,0.000,0.0020,0.010,0.015,Brut,PI,55.12,82.68,0.04
+449361,Tôle perforée 1000x2000x2 mm trou carré 20 U40 brut,2.00,1.00,0.000,0.0020,0.020,0.040,Brut,PI,66.94,100.41,0.00
