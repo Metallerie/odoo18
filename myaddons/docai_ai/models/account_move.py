@@ -374,7 +374,7 @@ class AccountMove(models.Model):
         if not existing and desc:
             existing = self._docai_find_product_by_name(desc)
         if existing:
-            return existing
+            return existing, False
 
         vals = {
             "name": product_name,
@@ -392,15 +392,13 @@ class AccountMove(models.Model):
 
         tmpl = ProductTemplate.create(vals)
         product = tmpl.product_variant_id
-        product.docai_just_created = True
         _logger.info("🆕 Produit DocAI créé : %s (code=%s)", product.display_name, code or "-")
-        return product
+        return product, True
 
     def _docai_find_or_create_product(self, move, pmap, name, unknown_product_id=False):
         product = self._docai_find_product(move, pmap, name)
         if product:
-            product.docai_just_created = False
-            return product
+            return product, False
 
         desc = str(name or "").strip()
         qty = _to_float(pmap.get("quantity"))
@@ -413,10 +411,9 @@ class AccountMove(models.Model):
         if unknown_product_id:
             product = self.env["product.product"].browse(unknown_product_id)
             if product.exists():
-                product.docai_just_created = False
                 _logger.info("⚠️ Aucun produit trouvé pour ligne '%s', utilisation du produit inconnu", name)
-                return product
-        return False
+                return product, False
+        return False, False
 
     # -------------------------------------------------------------------------
     # Action principale
@@ -522,7 +519,7 @@ class AccountMove(models.Model):
                     _logger.info("⚠️ Ligne ignorée (montant nul) : desc=%s pmap=%s", name, pmap)
                     continue
 
-                product = self._docai_find_or_create_product(move, pmap, name, unknown_product_id)
+                product, just_created = self._docai_find_or_create_product(move, pmap, name, unknown_product_id)
 
                 uom = False
                 uom_name = str(self._pick_first(pmap, "unit", "uom", default="") or "").strip()
@@ -548,7 +545,7 @@ class AccountMove(models.Model):
                 display_name = str(name)
                 if product:
                     display_name = product.name
-                    if getattr(product, "docai_just_created", False):
+                    if just_created:
                         display_name = f"{product.name} — Ce produit vient d'être créé"
 
                 account_id = False
