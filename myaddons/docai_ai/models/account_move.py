@@ -6,7 +6,7 @@ import logging
 import re
 from datetime import datetime
 
-from odoo import api, models, _
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools import float_round
 
@@ -34,6 +34,7 @@ def _parse_date_any(value):
     if not value:
         return None
 
+    # DocAI dateValue
     if isinstance(value, dict):
         if value.get("dateValue"):
             try:
@@ -50,12 +51,14 @@ def _parse_date_any(value):
 
     s = str(value).strip()
 
+    # Formats classiques
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"):
         try:
             return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
         except Exception:
             pass
 
+    # Formats "14 novembre 2025"
     low = s.lower().replace("\u00a0", " ")
     tokens = [t.strip(" .,") for t in low.split() if t.strip()]
     for i in range(len(tokens) - 2):
@@ -81,19 +84,12 @@ def _to_float(val):
         return float(val)
 
     s = str(val).strip()
-    s = s.replace("\u00A0", "").replace(" ", "")
-    s = re.sub(r"[^\d,.-]", "", s)
-
-    if "," in s and "." in s:
-        if s.rfind(",") > s.rfind("."):
-            s = s.replace(".", "").replace(",", ".")
-        else:
-            s = s.replace(",", "")
-    elif "," in s:
-        s = s.replace(",", ".")
-
+    s = s.replace(" ", "").replace("\u00A0", "").replace(",", ".")
+    m = re.findall(r"-?\d+(?:\.\d+)?", s)
+    if not m:
+        return 0.0
     try:
-        return float(s)
+        return float(m[0])
     except Exception:
         return 0.0
 
@@ -114,211 +110,50 @@ class AccountMove(models.Model):
         ents = data.get("entities")
         return ents if isinstance(ents, list) else []
 
-    def _docai_get_value(self, ent):
-        """Retourne la meilleure valeur : normalizedValue > mentionText."""
-        if not ent:
-            return None
-
-        norm = ent.get("normalizedValue")
-        if norm not in (None, "", {}):
-            if isinstance(norm, dict):
-                if "floatValue" in norm:
-                    return norm["floatValue"]
-                if "integerValue" in norm:
-                    return norm["integerValue"]
-                if "text" in norm:
-                    return norm["text"]
-                if "dateValue" in norm:
-                    return norm
-            else:
-                return norm
-
-        return ent.get("mentionText")
-
     def _docai_first_map(self, entities):
-        """Map simple type -> première valeur utile."""
-        mapping = {}
+        """Map simple type -> première valeur normalisée."""
+        m = {}
         for ent in entities:
-            field_type = ent.get("type") or ent.get("type_")
-            value = self._docai_get_value(ent)
-            if field_type and value not in (None, "", {}) and field_type not in mapping:
-                mapping[field_type] = value
-        return mapping
-
-    def _docai_property_map(self, props):
-        mapping = {}
-        for prop in props or []:
-            field_type = _norm_type(prop.get("type") or prop.get("type_"))
-            value = self._docai_get_value(prop)
-            if field_type and value not in (None, "", {}) and field_type not in mapping:
-                mapping[field_type] = value
-        return mapping
-
-    def _pick_first(self, data, *keys, default=None):
-        for key in keys:
-            value = data.get(key)
-            if value not in (None, "", {}):
-                return value
-        return default
-
-    def _docai_normalize_name(self, name):
-        if not name:
-            return ""
-        text = str(name).lower().strip()
-        text = text.replace(",", ".")
-        text = re.sub(r"[^a-z0-9xàâçéèêëîïôûùüÿñæœ.+\- ]", " ", text)
-        text = re.sub(r"\s+", " ", text).strip()
-        return text
+            t = ent.get("type") or ent.get("type_")
+            txt = ent.get("mentionText")
+            if t and txt and t not in m:
+                m[t] = ent.get("normalizedValue", txt)
+        return m
 
     def _looks_numeric_only(self, text):
         text = str(text or "").strip()
         return bool(text) and bool(re.fullmatch(r"[\d\s,.;:()\-€%/]+", text))
 
-    def _docai_is_special_charge(self, name, pmap=None):
-        txt = " ".join([
-            str(name or ""),
-            str((pmap or {}).get("description") or ""),
-            str((pmap or {}).get("product_code") or ""),
-            str((pmap or {}).get("reference") or ""),
-            str((pmap or {}).get("unit") or ""),
-        ]).lower()
-        keywords = (
-            "éco-part", "eco-part", "écopart", "ecopart",
-            "transport", "port", "emballage", "consigne", "frais",
-        )
-        return any(k in txt for k in keywords)
-
-    def _is_facturable_line(self, pmap, name):
-        """Règle métier :
-        - si montant > 0 => ligne produit
-        - si quantité > 0 et prix unitaire > 0 => ligne produit
-        - éco-part / charges spéciales avec montant ou PU => ligne produit
-        - sinon => commentaire / sous-ligne
-        """
-        amount = _to_float(pmap.get("amount"))
-        unit_price = _to_float(pmap.get("unit_price"))
-        qty = _to_float(pmap.get("quantity"))
-
-        if self._docai_is_special_charge(name, pmap) and (amount > 0 or unit_price > 0):
-            return True
-        if amount > 0:
-            return True
-        if qty > 0 and unit_price > 0:
-            return True
-        return False
-
-    def _is_comment_line(self, pmap, name):
-        return not self._is_facturable_line(pmap, name)
-
-    def _comment_suffix_from_line(self, pmap):
-        qty = _to_float(pmap.get("quantity"))
-        unit = str(self._pick_first(pmap, "unit", "uom", default="") or "").strip().upper()
-        code = str(self._pick_first(pmap, "product_code", "item_code", "code", "reference", default="") or "").strip()
-
-        if qty <= 0 and not unit and not code:
-            return ""
-
-        qty_txt = str(int(qty)) if float(qty).is_integer() else str(qty)
-        if unit == "PI":
-            return f"{qty_txt} barres"
-        if unit:
-            return f"{qty_txt} {unit}"
-        if code:
-            return f"réf. {code}"
-        return ""
-
-    def _merge_comment_on_last_line(self, new_lines, pmap):
-        if not new_lines:
-            return
-
-        suffix = self._comment_suffix_from_line(pmap)
-        if not suffix:
-            return
-
-        line_vals = new_lines[-1][2]
-        current_name = line_vals.get("name", "")
-        if suffix.lower() in current_name.lower():
-            return
-
-        line_vals["name"] = f"{current_name} ({suffix})"
-        _logger.info("ℹ️ Ligne commentaire fusionnée sur la ligne précédente : %s", suffix)
-
-    def _docai_extract_label_from_text(self, full_text, unit_price=None, amount=None):
-        """Fallback simple quand DocAI ne renvoie que les montants.
-        Cas typique : Leboncoin.
-        On cherche le motif :
-            description
-            prix HT
-            TVA
-            prix TTC
+    def _extract_leboncoin_label(self, full_text, unit_price, amount):
+        """Fallback simple pour les factures Leboncoin.
+        Cherche le motif : description / prix HT / TVA / prix TTC.
         """
         if not full_text:
             return False
 
-        lines = [line.strip() for line in str(full_text).splitlines() if line.strip()]
+        lines = [l.strip() for l in str(full_text).splitlines() if l.strip()]
         ht = f"{float(unit_price):.2f}€".replace(".", ",") if unit_price else ""
         ttc = f"{float(amount):.2f}€".replace(".", ",") if amount else ""
 
-        if not ht and not ttc:
+        if not ht or not ttc:
             return False
 
         for i in range(len(lines) - 3):
-            # Schéma standard : description / HT / TVA / TTC
-            if ht and ttc and lines[i + 1] == ht and lines[i + 3] == ttc:
-                candidate = lines[i].strip()
+            if lines[i + 1] == ht and "%" in lines[i + 2] and lines[i + 3] == ttc:
+                candidate = lines[i]
                 if candidate and not self._looks_numeric_only(candidate):
                     return candidate
-
-        # Fallback plus souple
-        for i, line in enumerate(lines):
-            if ht and line == ht and i > 0:
-                candidate = lines[i - 1].strip()
-                if candidate and not self._looks_numeric_only(candidate):
-                    return candidate
-            if ttc and line == ttc and i > 0:
-                candidate = lines[i - 1].strip()
-                if candidate and not self._looks_numeric_only(candidate):
-                    return candidate
-
-        return False
-
-        prices = []
-        if unit_price and unit_price > 0:
-            prices.append(f"{unit_price:.2f}".replace(".", ","))
-        if amount and amount > 0:
-            prices.append(f"{amount:.2f}".replace(".", ","))
-
-        if not prices:
-            return False
-
-        lines = [line.strip() for line in str(full_text).splitlines() if line.strip()]
-        for line in lines:
-            if all(price in line for price in prices):
-                candidate = line
-                for price in prices:
-                    candidate = candidate.replace(price, " ")
-                candidate = re.sub(r"\b\d+%\b", " ", candidate)
-                candidate = re.sub(r"\s+", " ", candidate).strip(" -;:|")
-                if candidate and not self._looks_numeric_only(candidate):
-                    return candidate
-
-        for line in lines:
-            if any(price in line for price in prices):
-                candidate = line
-                for price in prices:
-                    candidate = candidate.replace(price, " ")
-                candidate = re.sub(r"\b\d+%\b", " ", candidate)
-                candidate = re.sub(r"\s+", " ", candidate).strip(" -;:|")
-                if candidate and not self._looks_numeric_only(candidate):
-                    return candidate
-
         return False
 
     def _find_tax_from_docai(self, ent_map):
+        """Tente de déduire le taux de TVA depuis les entités DocAI."""
         tax_rate = None
-        for key in ("vat", "vat/tax_rate"):
+        for key in ("vat", "vat/tax_rate", "total_tax_amount"):
             val = ent_map.get(key)
-            txt = val.get("text") if isinstance(val, dict) and "text" in val else val
+            if isinstance(val, dict) and "text" in val:
+                txt = val["text"]
+            else:
+                txt = val
             if txt:
                 txt = str(txt).replace("%", "").replace(",", ".").strip()
                 try:
@@ -331,182 +166,140 @@ class AccountMove(models.Model):
         if tax_rate is None:
             return False
 
-        return self.env["account.tax"].search(
+        tax = self.env["account.tax"].search(
             [("amount", "=", tax_rate), ("type_tax_use", "=", "purchase")],
             limit=1,
-        ) or False
+        )
+        return tax or False
 
     # -------------------------------------------------------------------------
-    # Catégorie / UoM / comptes DocAI
+    # Recherche produit DocAI
     # -------------------------------------------------------------------------
-    def _get_docai_unvalidated_category(self):
-        ProductCategory = self.env["product.category"]
-
-        parent = ProductCategory.search([("name", "=", "DocAI"), ("parent_id", "=", False)], limit=1)
-        if not parent:
-            parent = ProductCategory.create({"name": "DocAI"})
-
-        child = ProductCategory.search([("name", "=", "Non validés"), ("parent_id", "=", parent.id)], limit=1)
-        if not child:
-            child = ProductCategory.create({"name": "Non validés", "parent_id": parent.id})
-        return child
-
-    def _get_docai_default_uom(self, pmap, is_special=False):
-        Uom = self.env["uom.uom"]
-        unit_name = str(self._pick_first(pmap, "unit", "uom", default="") or "").strip()
-        if unit_name and unit_name.upper() not in ("ÉCO-PART", "ECO-PART"):
-            uom = Uom.search(["|", ("name", "=", unit_name), ("name", "ilike", unit_name)], limit=1)
-            if uom:
-                return uom
-
-        fallback_names = ["Unité(s)", "Unité", "Units"] if is_special else []
-        for fallback in fallback_names:
-            uom = Uom.search([("name", "ilike", fallback)], limit=1)
-            if uom:
-                return uom
-        return False
-
-    def _get_docai_default_expense_account(self, is_special=False):
-        ICP = self.env["ir.config_parameter"].sudo()
-        key = "docai_ai.default_special_purchase_account_id" if is_special else "docai_ai.default_purchase_account_id"
-        account_id = int(ICP.get_param(key, 0) or 0)
-        return account_id or False
-
-    # -------------------------------------------------------------------------
-    # Recherche / création produit DocAI
-    # -------------------------------------------------------------------------
-    def _docai_find_product_by_name(self, name):
-        Product = self.env["product.product"]
-        if not name:
-            return False
-
-        name = str(name).strip()
-        if self._looks_numeric_only(name):
-            return False
-
-        product = Product.search([("name", "=ilike", name)], limit=1)
-        if product:
-            _logger.info("✅ Produit trouvé via nom exact '%s' -> %s", name, product.display_name)
-            return product
-
-        product = Product.search([("name", "ilike", name)], limit=1)
-        if product:
-            _logger.info("✅ Produit trouvé via nom ilike '%s' -> %s", name, product.display_name)
-            return product
-
-        normalized = self._docai_normalize_name(name)
-        tokens = [tok for tok in normalized.split() if len(tok) >= 2]
-        if not tokens:
-            return False
-
-        domain = []
-        for tok in tokens[:5]:
-            domain.append(("name", "ilike", tok))
-        product = Product.search(domain, limit=1)
-        if product:
-            _logger.info("✅ Produit trouvé via tokens '%s' -> %s", tokens[:5], product.display_name)
-            return product
-        return False
-
-    def _docai_find_product(self, move, pmap, name):
-        """Trouve le produit d'une vraie ligne facturable.
-        Priorité : code fournisseur > code interne > nom.
+    def _docai_find_product(self, move, pmap, name, unknown_product_id):
+        """Trouve le produit correspondant à une ligne DocAI.
+        Priorité absolue : product_code.
         """
         Product = self.env["product.product"]
         SupplierInfo = self.env["product.supplierinfo"]
-        partner = move.partner_id
 
-        raw_code = self._pick_first(pmap, "product_code", "item_code", "code", "reference")
+        partner = move.partner_id
+        product = None
+
+        # 1) PRIORITÉ : product_code direct
+        raw_code = (
+            pmap.get("product_code")
+            or pmap.get("item_code")
+            or pmap.get("code")
+            or pmap.get("reference")
+        )
         if raw_code:
             code = str(raw_code).strip()
             if code:
+                # supplierinfo pour CE fournisseur
                 domain = [("product_code", "=", code)]
                 if partner:
                     domain.append(("partner_id", "=", partner.id))
                 si = SupplierInfo.search(domain, limit=1)
                 if si and si.product_tmpl_id:
                     product = si.product_tmpl_id.product_variant_id
-                    _logger.info("✅ Produit trouvé via supplierinfo(partner) code=%s -> %s", code, product.display_name)
+                    _logger.info(
+                        "✅ Produit trouvé via supplierinfo(partner) code=%s -> %s",
+                        code, product.display_name,
+                    )
                     return product
 
+                # code interne exact
                 product = Product.search([("default_code", "=", code)], limit=1)
                 if product:
-                    _logger.info("✅ Produit trouvé via default_code exact code=%s -> %s", code, product.display_name)
+                    _logger.info(
+                        "✅ Produit trouvé via default_code exact code=%s -> %s",
+                        code, product.display_name,
+                    )
                     return product
 
+                # supplierinfo global
                 si = SupplierInfo.search([("product_code", "=", code)], limit=1)
                 if si and si.product_tmpl_id:
                     product = si.product_tmpl_id.product_variant_id
-                    _logger.info("✅ Produit trouvé via supplierinfo(global) code=%s -> %s", code, product.display_name)
+                    _logger.info(
+                        "✅ Produit trouvé via supplierinfo(global) code=%s -> %s",
+                        code, product.display_name,
+                    )
                     return product
 
-        return self._docai_find_product_by_name(name)
+        # 2) Heuristique : on cherche des codes numériques dans les champs texte
+        candidate_codes = set()
+        for key in ("product_code", "item_code", "code", "reference"):
+            if pmap.get(key):
+                raw = str(pmap[key]).strip()
+                if raw:
+                    for tok in re.findall(r"\d{3,}", raw):
+                        candidate_codes.add(tok)
 
-    def _docai_create_product_from_line(self, move, pmap, name):
-        ProductTemplate = self.env["product.template"]
+        if name and not self._looks_numeric_only(name):
+            for tok in re.findall(r"\d{3,}", str(name)):
+                candidate_codes.add(tok)
 
-        code = str(self._pick_first(pmap, "product_code", "item_code", "code", "reference", default="") or "").strip()
-        desc = str(name or self._pick_first(pmap, "description", "product_name", default="") or "").strip()
-        if not desc and not code:
-            return False, False
+        candidate_codes = list(candidate_codes)
+        if candidate_codes:
+            _logger.info(
+                "[DocAI] Codes candidats pour '%s' : %s", name, candidate_codes
+            )
 
-        if self._looks_numeric_only(desc):
-            return False, False
+        # 2.a) supplierinfo pour CE fournisseur
+        for code in candidate_codes:
+            si_domain = [("product_code", "=", code)]
+            if partner:
+                si_domain.append(("partner_id", "=", partner.id))
+            si = SupplierInfo.search(si_domain, limit=1)
+            if si and si.product_tmpl_id:
+                product = si.product_tmpl_id.product_variant_id
+                _logger.info(
+                    "✅ Produit trouvé via supplierinfo(partner) candidat=%s -> %s",
+                    code, product.display_name,
+                )
+                return product
 
-        is_special = self._docai_is_special_charge(desc, pmap)
-        categ = self._get_docai_unvalidated_category()
-        uom = self._get_docai_default_uom(pmap, is_special=is_special)
-        account_id = self._get_docai_default_expense_account(is_special=is_special)
+        # 2.b) default_code exact / ilike
+        for code in candidate_codes:
+            product = Product.search([("default_code", "=", code)], limit=1)
+            if product:
+                _logger.info(
+                    "✅ Produit trouvé via default_code exact candidat=%s -> %s",
+                    code, product.display_name,
+                )
+                return product
 
-        product_name = f"{code} - {desc}" if code and desc else (desc or code)
-        product_name = product_name or _("Produit DocAI")
+        for code in candidate_codes:
+            if len(code) >= 5:
+                product = Product.search([("default_code", "ilike", code)], limit=1)
+                if product:
+                    _logger.info(
+                        "✅ Produit trouvé via default_code ilike candidat=%s -> %s",
+                        code, product.display_name,
+                    )
+                    return product
 
-        existing = False
-        if code:
-            existing = self.env["product.product"].search([("default_code", "=", code)], limit=1)
-        if not existing and desc:
-            existing = self._docai_find_product_by_name(desc)
-        if existing:
-            return existing, False
+        # 3) Recherche par nom
+        if name and not self._looks_numeric_only(name):
+            product = Product.search([("name", "ilike", name)], limit=1)
+            if product:
+                _logger.info(
+                    "✅ Produit trouvé via nom ilike '%s' -> %s",
+                    name, product.display_name,
+                )
+                return product
 
-        vals = {
-            "name": product_name,
-            "default_code": code or False,
-            "categ_id": categ.id,
-            "sale_ok": False,
-            "purchase_ok": False,
-            "type": "service" if is_special else "consu",
-        }
-        if uom:
-            vals["uom_id"] = uom.id
-            vals["uom_po_id"] = uom.id
-        if account_id:
-            vals["property_account_expense_id"] = account_id
-
-        tmpl = ProductTemplate.create(vals)
-        product = tmpl.product_variant_id
-        _logger.info("🆕 Produit DocAI créé : %s (code=%s)", product.display_name, code or "-")
-        return product, True
-
-    def _docai_find_or_create_product(self, move, pmap, name, unknown_product_id=False):
-        product = self._docai_find_product(move, pmap, name)
-        if product:
-            return product, False
-
-        desc = str(name or "").strip()
-        qty = _to_float(pmap.get("quantity"))
-        unit_price = _to_float(pmap.get("unit_price"))
-        amount = _to_float(pmap.get("amount"))
-
-        if desc and not self._looks_numeric_only(desc) and (amount > 0 or (qty > 0 and unit_price > 0)):
-            return self._docai_create_product_from_line(move, pmap, name)
-
+        # 4) Dernier recours : produit inconnu
         if unknown_product_id:
-            product = self.env["product.product"].browse(unknown_product_id)
-            if product.exists():
-                _logger.info("⚠️ Aucun produit trouvé pour ligne '%s', utilisation du produit inconnu", name)
-                return product, False
-        return False, False
+            product = Product.browse(unknown_product_id)
+            _logger.info(
+                "⚠️ Aucun produit trouvé pour ligne '%s', utilisation du produit inconnu",
+                name,
+            )
+            return product
+
+        return False
 
     # -------------------------------------------------------------------------
     # Action principale
@@ -518,7 +311,8 @@ class AccountMove(models.Model):
             if not source_json:
                 raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
 
-            _logger.info("🔎 Analyse JSON pour facture %s (%s)", move.id, move.name or "")
+            _logger.info("🔎 Analyse JSON pour facture %s (%s)",
+                         move.id, move.name or "")
 
             try:
                 data = json.loads(source_json)
@@ -530,9 +324,9 @@ class AccountMove(models.Model):
                 _logger.warning("[DocAI] Facture %s : JSON sans 'entities'", move.id)
                 continue
 
-            full_text = data.get("text") or ""
             ent_map = self._docai_first_map(entities)
             vals = {}
+            full_text = data.get("text") or ""
 
             # --- En-tête facture ------------------------------------------------
             if ent_map.get("invoice_id"):
@@ -543,54 +337,93 @@ class AccountMove(models.Model):
                 if iso_date:
                     vals["invoice_date"] = iso_date
 
+            # Fournisseur
             unknown_supplier_id = int(
-                self.env["ir.config_parameter"].sudo().get_param("docai_ai.unknown_supplier_id", 0)
+                self.env["ir.config_parameter"]
+                .sudo()
+                .get_param("docai_ai.unknown_supplier_id", 0)
             ) or False
 
             supplier = False
             if ent_map.get("supplier_name"):
                 supplier_name = str(ent_map["supplier_name"]).strip()
-                supplier = self.env["res.partner"].search([("name", "ilike", supplier_name)], limit=1)
+
+                supplier = self.env["res.partner"].search(
+                    [("name", "ilike", supplier_name)],
+                    limit=1,
+                )
+
                 if not supplier and unknown_supplier_id:
                     supplier = self.env["res.partner"].browse(unknown_supplier_id)
 
             if supplier:
-                if (not move.partner_id) or (unknown_supplier_id and move.partner_id.id == unknown_supplier_id):
+                if (not move.partner_id) or (
+                    unknown_supplier_id and move.partner_id.id == unknown_supplier_id
+                ):
                     vals["partner_id"] = supplier.id
 
             if vals:
                 move.write(vals)
                 _logger.info("✅ Facture %s mise à jour avec %s", move.id, vals)
 
+            # TVA
             tax = self._find_tax_from_docai(ent_map)
 
             # -----------------------------------------------------------------
             # Lignes de facture
             # -----------------------------------------------------------------
-            line_items = [e for e in entities if (e.get("type") or e.get("type_")) == "line_item"]
+            line_items = [
+                e for e in entities
+                if (e.get("type") or e.get("type_")) == "line_item"
+            ]
             new_lines = []
 
             purchase_account_id = int(
-                self.env["ir.config_parameter"].sudo().get_param("docai_ai.default_purchase_account_id", 0)
+                self.env["ir.config_parameter"]
+                .sudo()
+                .get_param("docai_ai.default_purchase_account_id", 0)
             ) or False
 
             unknown_product_id = int(
-                self.env["ir.config_parameter"].sudo().get_param("docai_ai.unknown_product_id", 0)
+                self.env["ir.config_parameter"]
+                .sudo()
+                .get_param("docai_ai.unknown_product_id", 0)
             ) or False
 
             for li in line_items:
                 props = li.get("properties", []) or []
-                pmap = self._docai_property_map(props)
-                _logger.debug("[DocAI] mentionText=%s | pmap=%s", li.get("mentionText"), pmap)
+                pmap = {}
+                for p in props:
+                    t = _norm_type(p.get("type") or p.get("type_"))
+                    txt = p.get("mentionText")
+                    if t and txt and t not in pmap:
+                        pmap[t] = txt
 
-                qty = _to_float(self._pick_first(pmap, "quantity", "qty", default=1.0))
-                unit_price = _to_float(self._pick_first(pmap, "unit_price", "price", default=0.0))
-                amount = _to_float(self._pick_first(pmap, "amount", "line_amount", default=0.0))
+                name = pmap.get("description") or ""
 
+                qty = _to_float(pmap.get("quantity") or 1.0)
+                unit_price = _to_float(pmap.get("unit_price") or 0.0)
+                amount = _to_float(pmap.get("amount") or 0.0)
+
+                # Arrondis propres
                 qty = float_round(qty, precision_digits=3)
                 unit_price = float_round(unit_price, precision_digits=3)
                 amount = float_round(amount, precision_digits=3)
 
+                if not name or self._looks_numeric_only(name):
+                    fallback_name = self._extract_leboncoin_label(full_text, unit_price, amount)
+                    if fallback_name:
+                        name = fallback_name
+
+                if not name:
+                    name = "Ligne"
+
+                _logger.debug(
+                    "[DocAI] Ligne brute : desc=%s qty=%s unit_price=%s amount=%s pmap=%s",
+                    name, qty, unit_price, amount, pmap,
+                )
+
+                # Recalcule si un des trois manque
                 if amount <= 0 and qty > 0 and unit_price > 0:
                     amount = float_round(qty * unit_price, precision_digits=3)
                 if unit_price <= 0 and qty > 0 and amount > 0:
@@ -598,38 +431,35 @@ class AccountMove(models.Model):
                 if qty <= 0 and unit_price > 0 and amount > 0:
                     qty = float_round(amount / unit_price, precision_digits=3)
 
-                name = self._pick_first(
-                    pmap,
-                    "description",
-                    "product_name",
-                    default=(li.get("mentionText") or "Ligne"),
-                )
-                name = str(name or "").strip()
-
-                # Fallback sur le texte brut si DocAI ne sort qu'une ligne numérique
-                if not name or self._looks_numeric_only(name):
-                    extracted = self._docai_extract_label_from_text(full_text, unit_price=unit_price, amount=amount)
-                    if extracted:
-                        name = extracted
-
-                if not name:
-                    name = _("Produit sans libellé")
-
-                # 1) Ligne commentaire / complément : on la fusionne à la ligne précédente
-                if self._is_comment_line(pmap, name):
-                    self._merge_comment_on_last_line(new_lines, pmap)
+                # Ligne fantôme → on zappe
+                if abs(qty) < 1e-6 and abs(unit_price) < 1e-6 and abs(amount) < 1e-6:
+                    _logger.info(
+                        "⚠️ Ligne ignorée (montant nul) : desc=%s pmap=%s", name, pmap
+                    )
                     continue
 
-                # 2) Vraie ligne facturable
-                product, just_created = self._docai_find_or_create_product(move, pmap, name, unknown_product_id)
+                # -----------------------------------------------------------------
+                # Produit : priorité absolue au product_code
+                # -----------------------------------------------------------------
+                product = self._docai_find_product(
+                    move, pmap, name, unknown_product_id
+                )
 
-                uom = False
-                uom_name = str(self._pick_first(pmap, "unit", "uom", default="") or "").strip()
-                if uom_name and uom_name.upper() not in ("ÉCO-PART", "ECO-PART"):
-                    uom = self.env["uom.uom"].search(
-                        ["|", ("name", "ilike", uom_name), ("name", "=", uom_name)],
-                        limit=1,
-                    )
+                # -----------------------------------------------------------------
+                # UoM sécurisée
+                # -----------------------------------------------------------------
+                uom = None
+                if pmap.get("unit") or pmap.get("uom"):
+                    uom_name = (pmap.get("unit") or pmap.get("uom") or "").strip()
+                    if uom_name:
+                        uom = self.env["uom.uom"].search(
+                            [
+                                "|",
+                                ("name", "ilike", uom_name),
+                                ("name", "=", uom_name),
+                            ],
+                            limit=1,
+                        )
 
                 product_uom_id = False
                 if product and uom:
@@ -638,28 +468,23 @@ class AccountMove(models.Model):
                     else:
                         _logger.info(
                             "⚠️ UoM incompatible (%s) ignorée pour le produit %s — on garde %s",
-                            uom.name, product.name, product.uom_id.name,
+                            uom.name, product.name, product.uom_id.name
                         )
                         product_uom_id = product.uom_id.id
                 elif product:
                     product_uom_id = product.uom_id.id
+                else:
+                    product_uom_id = False
 
-                display_name = name
-                if product:
-                    display_name = product.name
-                    if just_created:
-                        display_name = f"{product.name} — Ce produit vient d'être créé"
+                if product and unknown_product_id and product.id == unknown_product_id:
+                    product_uom_id = product.uom_id.id
+
+                display_name = product.name if product else name
 
                 account_id = False
-                if product:
-                    account_id = (
-                        product.property_account_expense_id.id
-                        or product.categ_id.property_account_expense_categ_id.id
-                        or False
-                    )
-                if not account_id and purchase_account_id:
+                if purchase_account_id:
                     account_id = purchase_account_id
-                elif not account_id and move.journal_id.default_account_id:
+                elif move.journal_id.default_account_id:
                     account_id = move.journal_id.default_account_id.id
 
                 line_vals = {
@@ -675,12 +500,19 @@ class AccountMove(models.Model):
 
                 new_lines.append((0, 0, line_vals))
 
+            # -----------------------------------------------------------------
+            # Écriture sur la facture
+            # -----------------------------------------------------------------
             if new_lines:
                 move.write({"invoice_line_ids": [(5, 0, 0)] + new_lines})
-                move._compute_amount()
-                _logger.info("✅ %s lignes importées pour facture %s", len(new_lines), move.id)
+                move._compute_amount()  # Odoo 18
+                _logger.info(
+                    "✅ %s lignes importées pour facture %s", len(new_lines), move.id
+                )
             else:
-                _logger.warning("⚠️ Aucune ligne détectée/importée pour facture %s", move.id)
+                _logger.warning(
+                    "⚠️ Aucune ligne détectée/importée pour facture %s", move.id
+                )
 
     # -------------------------------------------------------------------------
     # CRON
@@ -704,7 +536,11 @@ class AccountMove(models.Model):
         for move in moves:
             try:
                 move.action_docai_scan_json()
-                _logger.info("✅ Facture %s (%s) mise à jour via JSON", move.id, move.name or "")
+                _logger.info(
+                    "✅ Facture %s (%s) mise à jour via JSON",
+                    move.id,
+                    move.name or "",
+                )
             except Exception as e:
                 _logger.error("❌ Erreur JSON Facture %s: %s", move.id, e)
                 continue
