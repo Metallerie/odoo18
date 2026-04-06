@@ -137,38 +137,42 @@ class AccountMove(models.Model):
 
     def _docai_first_map(self, entities):
         """Map simple type -> première valeur utile."""
-        m = {}
+        mapping = {}
         for ent in entities:
-            t = ent.get("type") or ent.get("type_")
-            val = self._docai_get_value(ent)
-            if t and val not in (None, "", {}) and t not in m:
-                m[t] = val
-        return m
+            field_type = ent.get("type") or ent.get("type_")
+            value = self._docai_get_value(ent)
+            if field_type and value not in (None, "", {}) and field_type not in mapping:
+                mapping[field_type] = value
+        return mapping
 
     def _docai_property_map(self, props):
-        pmap = {}
-        for p in props or []:
-            t = _norm_type(p.get("type") or p.get("type_"))
-            val = self._docai_get_value(p)
-            if t and val not in (None, "", {}) and t not in pmap:
-                pmap[t] = val
-        return pmap
+        mapping = {}
+        for prop in props or []:
+            field_type = _norm_type(prop.get("type") or prop.get("type_"))
+            value = self._docai_get_value(prop)
+            if field_type and value not in (None, "", {}) and field_type not in mapping:
+                mapping[field_type] = value
+        return mapping
 
     def _pick_first(self, data, *keys, default=None):
         for key in keys:
-            val = data.get(key)
-            if val not in (None, "", {}):
-                return val
+            value = data.get(key)
+            if value not in (None, "", {}):
+                return value
         return default
 
     def _docai_normalize_name(self, name):
         if not name:
             return ""
-        s = str(name).lower().strip()
-        s = s.replace(",", ".")
-        s = re.sub(r"[^a-z0-9x.+\- ]", " ", s)
-        s = re.sub(r"\s+", " ", s).strip()
-        return s
+        text = str(name).lower().strip()
+        text = text.replace(",", ".")
+        text = re.sub(r"[^a-z0-9xàâçéèêëîïôûùüÿñæœ.+\- ]", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        return text
+
+    def _looks_numeric_only(self, text):
+        text = str(text or "").strip()
+        return bool(text) and bool(re.fullmatch(r"[\d\s,.;:()\-€%/]+", text))
 
     def _docai_is_special_charge(self, name, pmap=None):
         txt = " ".join([
@@ -185,9 +189,11 @@ class AccountMove(models.Model):
         return any(k in txt for k in keywords)
 
     def _is_facturable_line(self, pmap, name):
-        """Produit facturable si montant > 0, ou qty + prix unit > 0.
-        Exception : les lignes spéciales (éco-part, transport...) sont facturables
-        même sans description produit classique.
+        """Règle métier :
+        - si montant > 0 => ligne produit
+        - si quantité > 0 et prix unitaire > 0 => ligne produit
+        - éco-part / charges spéciales avec montant ou PU => ligne produit
+        - sinon => commentaire / sous-ligne
         """
         amount = _to_float(pmap.get("amount"))
         unit_price = _to_float(pmap.get("unit_price"))
@@ -195,19 +201,13 @@ class AccountMove(models.Model):
 
         if self._docai_is_special_charge(name, pmap) and (amount > 0 or unit_price > 0):
             return True
-
         if amount > 0:
             return True
-
         if qty > 0 and unit_price > 0:
             return True
-
         return False
 
     def _is_comment_line(self, pmap, name):
-        """Ligne de commentaire / complément : pas de montant, pas de PU.
-        Même si une référence existe.
-        """
         return not self._is_facturable_line(pmap, name)
 
     def _comment_suffix_from_line(self, pmap):
@@ -219,7 +219,6 @@ class AccountMove(models.Model):
             return ""
 
         qty_txt = str(int(qty)) if float(qty).is_integer() else str(qty)
-
         if unit == "PI":
             return f"{qty_txt} barres"
         if unit:
@@ -244,8 +243,47 @@ class AccountMove(models.Model):
         line_vals["name"] = f"{current_name} ({suffix})"
         _logger.info("ℹ️ Ligne commentaire fusionnée sur la ligne précédente : %s", suffix)
 
+    def _docai_extract_label_from_text(self, full_text, unit_price=None, amount=None):
+        """Fallback quand DocAI n'extrait pas de description.
+        On cherche une ligne du texte brut contenant le prix/montant et on garde
+        la partie texte située avant les colonnes numériques.
+        """
+        if not full_text:
+            return False
+
+        prices = []
+        if unit_price and unit_price > 0:
+            prices.append(f"{unit_price:.2f}".replace(".", ","))
+        if amount and amount > 0:
+            prices.append(f"{amount:.2f}".replace(".", ","))
+
+        if not prices:
+            return False
+
+        lines = [line.strip() for line in str(full_text).splitlines() if line.strip()]
+        for line in lines:
+            if all(price in line for price in prices):
+                candidate = line
+                for price in prices:
+                    candidate = candidate.replace(price, " ")
+                candidate = re.sub(r"\b\d+%\b", " ", candidate)
+                candidate = re.sub(r"\s+", " ", candidate).strip(" -;:|")
+                if candidate and not self._looks_numeric_only(candidate):
+                    return candidate
+
+        for line in lines:
+            if any(price in line for price in prices):
+                candidate = line
+                for price in prices:
+                    candidate = candidate.replace(price, " ")
+                candidate = re.sub(r"\b\d+%\b", " ", candidate)
+                candidate = re.sub(r"\s+", " ", candidate).strip(" -;:|")
+                if candidate and not self._looks_numeric_only(candidate):
+                    return candidate
+
+        return False
+
     def _find_tax_from_docai(self, ent_map):
-        """Tente de déduire le taux de TVA depuis DocAI."""
         tax_rate = None
         for key in ("vat", "vat/tax_rate"):
             val = ent_map.get(key)
@@ -268,7 +306,7 @@ class AccountMove(models.Model):
         ) or False
 
     # -------------------------------------------------------------------------
-    # Catégories / UoM / comptes DocAI
+    # Catégorie / UoM / comptes DocAI
     # -------------------------------------------------------------------------
     def _get_docai_unvalidated_category(self):
         ProductCategory = self.env["product.category"]
@@ -304,7 +342,7 @@ class AccountMove(models.Model):
         return account_id or False
 
     # -------------------------------------------------------------------------
-    # Recherche produit DocAI
+    # Recherche / création produit DocAI
     # -------------------------------------------------------------------------
     def _docai_find_product_by_name(self, name):
         Product = self.env["product.product"]
@@ -312,6 +350,9 @@ class AccountMove(models.Model):
             return False
 
         name = str(name).strip()
+        if self._looks_numeric_only(name):
+            return False
+
         product = Product.search([("name", "=ilike", name)], limit=1)
         if product:
             _logger.info("✅ Produit trouvé via nom exact '%s' -> %s", name, product.display_name)
@@ -337,7 +378,7 @@ class AccountMove(models.Model):
         return False
 
     def _docai_find_product(self, move, pmap, name):
-        """Trouve le produit correspondant à une vraie ligne facturable.
+        """Trouve le produit d'une vraie ligne facturable.
         Priorité : code fournisseur > code interne > nom.
         """
         Product = self.env["product.product"]
@@ -368,7 +409,6 @@ class AccountMove(models.Model):
                     _logger.info("✅ Produit trouvé via supplierinfo(global) code=%s -> %s", code, product.display_name)
                     return product
 
-        # Recherche par nom obligatoire si pas de référence exploitable
         return self._docai_find_product_by_name(name)
 
     def _docai_create_product_from_line(self, move, pmap, name):
@@ -377,6 +417,9 @@ class AccountMove(models.Model):
         code = str(self._pick_first(pmap, "product_code", "item_code", "code", "reference", default="") or "").strip()
         desc = str(name or self._pick_first(pmap, "description", "product_name", default="") or "").strip()
         if not desc and not code:
+            return False, False
+
+        if self._looks_numeric_only(desc):
             return False, False
 
         is_special = self._docai_is_special_charge(desc, pmap)
@@ -424,7 +467,7 @@ class AccountMove(models.Model):
         unit_price = _to_float(pmap.get("unit_price"))
         amount = _to_float(pmap.get("amount"))
 
-        if desc and (amount > 0 or (qty > 0 and unit_price > 0)):
+        if desc and not self._looks_numeric_only(desc) and (amount > 0 or (qty > 0 and unit_price > 0)):
             return self._docai_create_product_from_line(move, pmap, name)
 
         if unknown_product_id:
@@ -440,13 +483,14 @@ class AccountMove(models.Model):
     def action_docai_scan_json(self):
         """Analyse le JSON DocAI et génère les lignes de facture."""
         for move in self:
-            if not move.docai_json:
+            source_json = move.docai_json_raw or move.docai_json
+            if not source_json:
                 raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
 
             _logger.info("🔎 Analyse JSON pour facture %s (%s)", move.id, move.name or "")
 
             try:
-                data = json.loads(move.docai_json)
+                data = json.loads(source_json)
             except Exception as e:
                 raise UserError(_("JSON invalide : %s") % e)
 
@@ -455,6 +499,7 @@ class AccountMove(models.Model):
                 _logger.warning("[DocAI] Facture %s : JSON sans 'entities'", move.id)
                 continue
 
+            full_text = data.get("text") or ""
             ent_map = self._docai_first_map(entities)
             vals = {}
 
@@ -505,15 +550,7 @@ class AccountMove(models.Model):
             for li in line_items:
                 props = li.get("properties", []) or []
                 pmap = self._docai_property_map(props)
-
                 _logger.debug("[DocAI] mentionText=%s | pmap=%s", li.get("mentionText"), pmap)
-
-                name = self._pick_first(
-                    pmap,
-                    "description",
-                    "product_name",
-                    default=(li.get("mentionText") or "Ligne"),
-                )
 
                 qty = _to_float(self._pick_first(pmap, "quantity", "qty", default=1.0))
                 unit_price = _to_float(self._pick_first(pmap, "unit_price", "price", default=0.0))
@@ -529,6 +566,23 @@ class AccountMove(models.Model):
                     unit_price = float_round(amount / qty, precision_digits=3)
                 if qty <= 0 and unit_price > 0 and amount > 0:
                     qty = float_round(amount / unit_price, precision_digits=3)
+
+                name = self._pick_first(
+                    pmap,
+                    "description",
+                    "product_name",
+                    default=(li.get("mentionText") or "Ligne"),
+                )
+                name = str(name or "").strip()
+
+                # Fallback sur le texte brut si DocAI ne sort qu'une ligne numérique
+                if not name or self._looks_numeric_only(name):
+                    extracted = self._docai_extract_label_from_text(full_text, unit_price=unit_price, amount=amount)
+                    if extracted:
+                        name = extracted
+
+                if not name:
+                    name = _("Produit sans libellé")
 
                 # 1) Ligne commentaire / complément : on la fusionne à la ligne précédente
                 if self._is_comment_line(pmap, name):
@@ -559,7 +613,7 @@ class AccountMove(models.Model):
                 elif product:
                     product_uom_id = product.uom_id.id
 
-                display_name = str(name)
+                display_name = name
                 if product:
                     display_name = product.name
                     if just_created:
