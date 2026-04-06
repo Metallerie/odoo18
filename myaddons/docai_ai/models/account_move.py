@@ -401,7 +401,7 @@ class AccountMove(models.Model):
             "categ_id": categ.id,
             "sale_ok": False,
             "purchase_ok": False,
-            "detailed_type": "service" if is_special else "consu",
+            "type": "service" if is_special else "consu",
         }
         if uom:
             vals["uom_id"] = uom.id
