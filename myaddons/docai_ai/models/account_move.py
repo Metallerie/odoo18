@@ -244,12 +244,43 @@ class AccountMove(models.Model):
         _logger.info("ℹ️ Ligne commentaire fusionnée sur la ligne précédente : %s", suffix)
 
     def _docai_extract_label_from_text(self, full_text, unit_price=None, amount=None):
-        """Fallback quand DocAI n'extrait pas de description.
-        On cherche une ligne du texte brut contenant le prix/montant et on garde
-        la partie texte située avant les colonnes numériques.
+        """Fallback simple quand DocAI ne renvoie que les montants.
+        Cas typique : Leboncoin.
+        On cherche le motif :
+            description
+            prix HT
+            TVA
+            prix TTC
         """
         if not full_text:
             return False
+
+        lines = [line.strip() for line in str(full_text).splitlines() if line.strip()]
+        ht = f"{float(unit_price):.2f}€".replace(".", ",") if unit_price else ""
+        ttc = f"{float(amount):.2f}€".replace(".", ",") if amount else ""
+
+        if not ht and not ttc:
+            return False
+
+        for i in range(len(lines) - 3):
+            # Schéma standard : description / HT / TVA / TTC
+            if ht and ttc and lines[i + 1] == ht and lines[i + 3] == ttc:
+                candidate = lines[i].strip()
+                if candidate and not self._looks_numeric_only(candidate):
+                    return candidate
+
+        # Fallback plus souple
+        for i, line in enumerate(lines):
+            if ht and line == ht and i > 0:
+                candidate = lines[i - 1].strip()
+                if candidate and not self._looks_numeric_only(candidate):
+                    return candidate
+            if ttc and line == ttc and i > 0:
+                candidate = lines[i - 1].strip()
+                if candidate and not self._looks_numeric_only(candidate):
+                    return candidate
+
+        return False
 
         prices = []
         if unit_price and unit_price > 0:
