@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_quick_quote_wizard_form" model="ir.ui.view">
+        <field name="name">quick.quote.wizard.form</field>
+        <field name="model">quick.quote.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Devis rapide">
+                <sheet>
+                    <group>
+                        <field name="sale_order_id"/>
+                        <field name="communication_text" placeholder="Message complémentaire pour le client..."/>
+                        <field name="generated_text" widget="text" readonly="1" nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_quick_quote_wizard" model="ir.actions.act_window">
+        <field name="name">Devis rapide</field>
+        <field name="res_model">quick.quote.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_quick_quote_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>
