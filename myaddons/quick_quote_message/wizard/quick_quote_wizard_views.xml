@@ -9,7 +9,22 @@
                     <group>
                         <field name="sale_order_id" readonly="1"/>
                         <field name="communication_text" placeholder="Message complémentaire pour le client..."/>
-                        <field name="en_stock"/>
+                    </group>
+
+                    <group string="Stock par référence">
+                        <field name="line_ids" nolabel="1">
+                            <list editable="bottom" create="false" delete="false">
+                                <field name="name" readonly="1"/>
+                                <field name="qty" readonly="1"/>
+                                <field name="uom_name" readonly="1"/>
+                                <field name="price_unit" readonly="1"/>
+                                <field name="subtotal" readonly="1"/>
+                                <field name="en_stock"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Texte généré">
                         <field name="generated_text" widget="text" readonly="1" nolabel="1"/>
                     </group>
                 </sheet>
