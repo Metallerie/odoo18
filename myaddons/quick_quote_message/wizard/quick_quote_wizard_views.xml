@@ -7,8 +7,9 @@
             <form string="Devis rapide">
                 <sheet>
                     <group>
-                        <field name="sale_order_id"/>
+                        <field name="sale_order_id" readonly="1"/>
                         <field name="communication_text" placeholder="Message complémentaire pour le client..."/>
+                        <field name="en_stock"/>
                         <field name="generated_text" widget="text" readonly="1" nolabel="1"/>
                     </group>
                 </sheet>
