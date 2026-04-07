@@ -4,7 +4,7 @@ from odoo import models
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
-    def action_open_quick_quote(self):
+    def action_open_quick_quote_wizard(self):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
