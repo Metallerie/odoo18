@@ -16,6 +16,11 @@ class QuickQuoteWizard(models.TransientModel):
         string="Texte libre de communication"
     )
 
+    en_stock = fields.Boolean(
+        string="En stock",
+        default=True,
+    )
+
     generated_text = fields.Text(
         string="Texte à copier",
         compute="_compute_generated_text",
@@ -31,6 +36,7 @@ class QuickQuoteWizard(models.TransientModel):
 
     @api.depends(
         "sale_order_id",
+        "sale_order_id.amount_total",
         "sale_order_id.order_line.sequence",
         "sale_order_id.order_line.display_type",
         "sale_order_id.order_line.name",
@@ -39,6 +45,7 @@ class QuickQuoteWizard(models.TransientModel):
         "sale_order_id.order_line.price_unit",
         "sale_order_id.order_line.price_subtotal",
         "communication_text",
+        "en_stock",
     )
     def _compute_generated_text(self):
         for wizard in self:
@@ -52,26 +59,43 @@ class QuickQuoteWizard(models.TransientModel):
             order = wizard.sale_order_id
             lines = order.order_line.sorted(key=lambda l: (l.sequence, l.id))
 
+            last_was_product = False
+
             for line in lines:
                 if line.display_type == "line_section":
                     if line.name:
-                        parts.append(line.name)
+                        if parts and parts[-1] != "":
+                            parts.append("")
+                        parts.append(line.name.strip())
                         parts.append("")
+                    last_was_product = False
                     continue
 
                 if line.display_type == "line_note":
                     if line.name:
-                        parts.append(line.name)
-                        parts.append("")
+                        parts.append(line.name.strip())
+                    last_was_product = False
                     continue
 
                 label = (line.name or line.product_id.display_name or "").strip()
                 qty = wizard._format_quantity(line.product_uom_qty)
-                uom_name = line.product_uom.name or ""
+                uom_name = (line.product_uom.name or "").strip()
                 unit_price = wizard._format_amount(line.price_unit)
                 subtotal = wizard._format_amount(line.price_subtotal)
 
+                if last_was_product and parts[-1] != "":
+                    parts.append("")
+
                 parts.append(f"{label} : {qty} {uom_name} x {unit_price} = {subtotal}")
+
+                if wizard.en_stock:
+                    parts.append("Disponible en stock")
+                else:
+                    parts.append("Hors stock")
+
+                last_was_product = True
+
+            if parts and parts[-1] != "":
                 parts.append("")
 
             parts.append(f"Total : {wizard._format_amount(order.amount_total)}")
@@ -79,6 +103,10 @@ class QuickQuoteWizard(models.TransientModel):
             if wizard.communication_text:
                 parts.append("")
                 parts.append(wizard.communication_text.strip())
+
+            if not wizard.en_stock:
+                parts.append("")
+                parts.append("Veuillez passer commande en ligne. Confirmation avant lundi pour l’arrivage de mardi.")
 
             parts.append("")
             parts.append("Retrait à l’atelier : La Métallerie, Corneilla-del-Vercol")
