@@ -54,7 +54,7 @@ class QuickQuoteWizard(models.TransientModel):
             order = wizard.sale_order_id
             lines = order.order_line.sorted(key=lambda l: (l.sequence, l.id))
             has_out_of_stock = False
-            previous_was_product = False
+            pending_extra_lines = []
 
             for line in lines:
                 if line.display_type == "line_section":
@@ -63,25 +63,25 @@ class QuickQuoteWizard(models.TransientModel):
                             parts.append("")
                         parts.append(line.name.strip())
                         parts.append("")
-                    previous_was_product = False
+                    pending_extra_lines = []
                     continue
 
                 if line.display_type == "line_note":
                     if line.name:
                         parts.append(line.name.strip())
-                    previous_was_product = False
                     continue
 
-                if previous_was_product and parts and parts[-1] != "":
-                    parts.append("")
+                product_label, inline_notes = wizard._split_product_and_notes(line)
 
-                label = (line.name or line.product_id.display_name or "").strip()
                 qty = wizard._format_quantity(line.product_uom_qty)
                 uom_name = (line.product_uom.name or "").strip()
                 unit_price = wizard._format_amount(line.price_unit)
                 subtotal = wizard._format_amount(line.price_subtotal)
 
-                parts.append(f"{label} : {qty} {uom_name} x {unit_price} = {subtotal}")
+                if parts and parts[-1] != "":
+                    parts.append("")
+
+                parts.append(f"{product_label} : {qty} {uom_name} x {unit_price} = {subtotal}")
 
                 if line.quick_quote_in_stock:
                     parts.append("Disponible en stock")
@@ -89,7 +89,8 @@ class QuickQuoteWizard(models.TransientModel):
                     parts.append("Hors stock")
                     has_out_of_stock = True
 
-                previous_was_product = True
+                for extra_line in inline_notes:
+                    parts.append(extra_line)
 
             if parts and parts[-1] != "":
                 parts.append("")
@@ -102,9 +103,8 @@ class QuickQuoteWizard(models.TransientModel):
 
             if has_out_of_stock:
                 parts.append("")
-                parts.append("Pour les commande hors stock Veuillez passer commande en ligne. Confirmation avant lundi pour l’arrivage de mardi.")
+                parts.append("Pour les commandes hors stock, veuillez passer commande en ligne. Confirmation avant lundi pour l’arrivage de mardi.")
                 parts.append("https://www.metallerie.xyz/shop ou La Métallerie – Corneilla-del-Vercol.")
-
 
             parts.append("")
             parts.append("Retrait à l’atelier : La Métallerie, Corneilla-del-Vercol")
@@ -113,6 +113,36 @@ class QuickQuoteWizard(models.TransientModel):
             parts.append("Plus de prix sur le site internet metallerie.xyz ou La Métallerie – Corneilla-del-Vercol")
 
             wizard.generated_text = "\n".join(parts).strip()
+
+    def _split_product_and_notes(self, line):
+        """
+        Retourne :
+        - le libellé produit propre
+        - les lignes complémentaires éventuelles venant du champ name
+        """
+        raw_name = (line.name or "").strip()
+        raw_lines = [l.strip() for l in raw_name.splitlines() if l.strip()]
+
+        product_label = (line.product_id.display_name or "").strip()
+
+        # Si display_name est vide, on prend la première ligne comme libellé
+        if not product_label and raw_lines:
+            product_label = raw_lines[0]
+
+        inline_notes = []
+
+        # On retire la première ligne si elle correspond au produit
+        if raw_lines:
+            first_line = raw_lines[0]
+            if product_label and first_line == product_label:
+                inline_notes = raw_lines[1:]
+            elif product_label:
+                inline_notes = raw_lines
+            else:
+                product_label = first_line
+                inline_notes = raw_lines[1:]
+
+        return product_label, inline_notes
 
     def _format_amount(self, amount):
         self.ensure_one()
