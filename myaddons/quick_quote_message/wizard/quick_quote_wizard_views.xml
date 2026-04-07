@@ -13,14 +13,14 @@
 
                     <group string="Stock par référence">
                         <field name="line_ids" nolabel="1">
-                            <list editable="bottom" create="false" delete="false">
+                            <tree editable="bottom" create="false" delete="false">
                                 <field name="name" readonly="1"/>
                                 <field name="qty" readonly="1"/>
                                 <field name="uom_name" readonly="1"/>
                                 <field name="price_unit" readonly="1"/>
                                 <field name="subtotal" readonly="1"/>
-                                <field name="en_stock"/>
-                            </list>
+                                <field name="en_stock" readonly="0"/>
+                            </tree>
                         </field>
                     </group>
 
