@@ -98,7 +98,7 @@ class QuickQuoteWizard(models.TransientModel):
             }
 
             has_out_of_stock = False
-            pending_blank_line = False
+            previous_was_product = False
 
             for line in lines:
                 if line.display_type == "line_section":
@@ -107,23 +107,23 @@ class QuickQuoteWizard(models.TransientModel):
                             parts.append("")
                         parts.append(line.name.strip())
                         parts.append("")
-                    pending_blank_line = False
+                    previous_was_product = False
                     continue
 
                 if line.display_type == "line_note":
                     if line.name:
                         parts.append(line.name.strip())
-                    pending_blank_line = True
+                    previous_was_product = False
                     continue
 
                 wizard_line = wizard_line_map.get(line.id)
                 if not wizard_line:
                     continue
 
-                if pending_blank_line and parts and parts[-1] != "":
+                if previous_was_product and parts and parts[-1] != "":
                     parts.append("")
 
-                label = wizard_line.name.strip()
+                label = (wizard_line.name or "").strip()
                 qty = wizard._format_quantity(wizard_line.qty)
                 uom_name = (wizard_line.uom_name or "").strip()
                 unit_price = wizard._format_amount(wizard_line.price_unit)
@@ -137,7 +137,7 @@ class QuickQuoteWizard(models.TransientModel):
                     parts.append("Hors stock")
                     has_out_of_stock = True
 
-                pending_blank_line = False
+                previous_was_product = True
 
             if parts and parts[-1] != "":
                 parts.append("")
@@ -159,6 +159,18 @@ class QuickQuoteWizard(models.TransientModel):
             parts.append("Plus de prix sur le site internet metallerie.xyz ou La Métallerie – Corneilla-del-Vercol")
 
             wizard.generated_text = "\n".join(parts).strip()
+
+    def _format_amount(self, amount):
+        self.ensure_one()
+        currency_symbol = self.currency_id.symbol or "€"
+        value = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", " ")
+        if self.currency_id.position == "before":
+            return f"{currency_symbol}{value}"
+        return f"{value} {currency_symbol}"
+
+    def _format_quantity(self, qty):
+        value = f"{qty:g}"
+        return value.replace(".", ",")
 
 
 class QuickQuoteWizardLine(models.TransientModel):
