@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_sale_order_form_quick_quote" model="ir.ui.view">
+    <record id="sale_order_form_quick_quote" model="ir.ui.view">
         <field name="name">sale.order.form.quick.quote</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
-                <button name="action_open_quick_quote"
-                        type="object"
-                        string="Devis rapide"
-                        class="btn-secondary"/>
+            <xpath expr="//field[@name='order_line']/following-sibling::group[1]" position="inside">
+                <button
+                    name="action_open_quick_quote_wizard"
+                    type="object"
+                    string="Devis rapide"
+                    class="btn-secondary"/>
             </xpath>
         </field>
     </record>
