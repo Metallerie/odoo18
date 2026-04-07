@@ -11,17 +11,6 @@
                         <field name="communication_text" placeholder="Message complémentaire pour le client..."/>
                     </group>
 
-                    <group string="Stock par référence">
-                        <field name="line_ids" nolabel="1">
-                            <form>
-                                <group>
-                                    <field name="name" readonly="1"/>
-                                    <field name="en_stock"/>
-                                </group>
-                            </form>
-                        </field>
-                    </group>
-
                     <group string="Texte généré">
                         <field name="generated_text" widget="text" readonly="1" nolabel="1"/>
                     </group>
