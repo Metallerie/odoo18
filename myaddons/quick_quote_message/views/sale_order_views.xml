@@ -5,6 +5,8 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+
+            <!-- Bouton devis rapide -->
             <xpath expr="//field[@name='order_line']/following-sibling::group[1]" position="inside">
                 <button
                     name="action_open_quick_quote_wizard"
@@ -12,6 +14,12 @@
                     string="Devis rapide"
                     class="btn-secondary"/>
             </xpath>
+
+            <!-- Colonne En stock dans les lignes de commande -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
+                <field name="quick_quote_in_stock" optional="show"/>
+            </xpath>
+
         </field>
     </record>
 </odoo>
