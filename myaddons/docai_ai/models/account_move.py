@@ -5,4 +5,5 @@ class AccountMove(models.Model):
     _inherit = "account.move"
 
     def action_docai_scan_json(self):
-        raise UserError("Le bouton entre bien dans la méthode")
+    _logger.error("######## DOCAI BOUTON CLIQUÉ ########")
+    raise UserError("Le bouton entre bien dans la méthode")
