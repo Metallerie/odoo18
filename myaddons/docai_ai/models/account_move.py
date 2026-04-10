@@ -29,6 +29,9 @@ MONTHS_FR = {
 }
 
 
+COMMENT_PRODUCT_CREATED = "Ce produit vient d'être créé automatiquement par DocAI."
+
+
 def _parse_date_any(value):
     """Essaye d'interpréter une date DocAI ou texte libre en YYYY-MM-DD."""
     if not value:
@@ -173,11 +176,168 @@ class AccountMove(models.Model):
         return tax or False
 
     # -------------------------------------------------------------------------
+    # Fournisseur
+    # -------------------------------------------------------------------------
+    def _docai_find_supplier_by_name(self, ent_map, unknown_supplier_id=False):
+        """Recherche simple du fournisseur par nom dans plusieurs champs DocAI.
+        On commence volontairement par le nom uniquement.
+        """
+        Partner = self.env["res.partner"]
+
+        candidate_names = [
+            ent_map.get("supplier_name"),
+            ent_map.get("receiver_name"),
+            ent_map.get("ship_to_name"),
+        ]
+
+        for raw_name in candidate_names:
+            name = str(raw_name or "").strip()
+            if not name:
+                continue
+
+            partner = Partner.search([("name", "ilike", name)], limit=1)
+            if partner:
+                _logger.info("✅ Fournisseur trouvé via nom '%s' -> %s", name, partner.display_name)
+                return partner
+
+        if unknown_supplier_id:
+            return Partner.browse(unknown_supplier_id)
+
+        return False
+
+    # -------------------------------------------------------------------------
+    # Catégorie / création produit
+    # -------------------------------------------------------------------------
+    def _docai_get_or_create_category(self, category_path):
+        """Crée au besoin une hiérarchie de catégories de type 'DocAI / Non validés'."""
+        ProductCategory = self.env["product.category"]
+        parent = False
+
+        parts = [p.strip() for p in str(category_path or "").split("/") if p.strip()]
+        if not parts:
+            parts = ["DocAI", "Non validés"]
+
+        for part in parts:
+            domain = [("name", "=", part)]
+            if parent:
+                domain.append(("parent_id", "=", parent.id))
+            else:
+                domain.append(("parent_id", "=", False))
+
+            category = ProductCategory.search(domain, limit=1)
+            if not category:
+                category = ProductCategory.create({
+                    "name": part,
+                    "parent_id": parent.id if parent else False,
+                })
+                _logger.info("📁 Catégorie créée : %s", category.complete_name)
+            parent = category
+
+        return parent
+
+    def _docai_prepare_product_name(self, name, pmap):
+        name = str(name or "").strip()
+        if name and not self._looks_numeric_only(name):
+            return name
+
+        for key in ("product_name", "item_name", "description", "reference"):
+            value = str(pmap.get(key) or "").strip()
+            if value and not self._looks_numeric_only(value):
+                return value
+
+        raw_code = (
+            pmap.get("product_code")
+            or pmap.get("item_code")
+            or pmap.get("code")
+            or pmap.get("reference")
+        )
+        raw_code = str(raw_code or "").strip()
+        if raw_code:
+            return f"Produit DocAI {raw_code}"
+
+        return "Produit DocAI à valider"
+
+    def _docai_create_product_from_line(self, move, pmap, name):
+        """Crée un produit minimal dans DocAI / Non validés.
+        On reste volontairement simple et réversible.
+        """
+        Product = self.env["product.product"]
+        SupplierInfo = self.env["product.supplierinfo"]
+
+        product_name = self._docai_prepare_product_name(name, pmap)
+        raw_code = (
+            pmap.get("product_code")
+            or pmap.get("item_code")
+            or pmap.get("code")
+            or pmap.get("reference")
+        )
+        raw_code = str(raw_code or "").strip()
+
+        category_path = (
+            self.env["ir.config_parameter"].sudo().get_param(
+                "docai_ai.unvalidated_product_category_path",
+                "DocAI / Non validés",
+            )
+            or "DocAI / Non validés"
+        )
+        category = self._docai_get_or_create_category(category_path)
+
+        vals = {
+            "name": product_name,
+            "categ_id": category.id,
+            "purchase_ok": True,
+            "sale_ok": False,
+            "detailed_type": "consu",
+            "description_purchase": COMMENT_PRODUCT_CREATED,
+        }
+        if raw_code:
+            vals["default_code"] = raw_code
+
+        product = Product.create(vals)
+        _logger.info(
+            "🆕 Produit créé automatiquement par DocAI : %s (id=%s)",
+            product.display_name,
+            product.id,
+        )
+
+        if move.partner_id:
+            existing_si = SupplierInfo.search([
+                ("partner_id", "=", move.partner_id.id),
+                ("product_tmpl_id", "=", product.product_tmpl_id.id),
+            ], limit=1)
+            if not existing_si:
+                SupplierInfo.create({
+                    "partner_id": move.partner_id.id,
+                    "product_tmpl_id": product.product_tmpl_id.id,
+                    "product_code": raw_code or False,
+                    "product_name": product_name,
+                })
+                _logger.info(
+                    "🔗 Supplierinfo créé pour %s / %s",
+                    move.partner_id.display_name,
+                    product.display_name,
+                )
+
+        try:
+            product.product_tmpl_id.message_post(body=COMMENT_PRODUCT_CREATED)
+        except Exception:
+            _logger.info("ℹ️ Impossible d'ajouter le commentaire chatter sur %s", product.display_name)
+
+        return product
+
+    # -------------------------------------------------------------------------
     # Recherche produit DocAI
     # -------------------------------------------------------------------------
     def _docai_find_product(self, move, pmap, name, unknown_product_id):
         """Trouve le produit correspondant à une ligne DocAI.
-        Priorité absolue : product_code.
+
+        Ordre :
+        1. JSON -> Odoo par code (supplierinfo du fournisseur, puis default_code)
+        2. Heuristiques code
+        3. Recherche par nom chez le fournisseur quand il est connu
+        4. Recherche globale prudente par nom
+        5. Création automatique dans 'DocAI / Non validés'
+        6. Produit inconnu seulement si la création échoue
         """
         Product = self.env["product.product"]
         SupplierInfo = self.env["product.supplierinfo"]
@@ -196,17 +356,18 @@ class AccountMove(models.Model):
             code = str(raw_code).strip()
             if code:
                 # supplierinfo pour CE fournisseur
-                domain = [("product_code", "=", code)]
                 if partner:
-                    domain.append(("partner_id", "=", partner.id))
-                si = SupplierInfo.search(domain, limit=1)
-                if si and si.product_tmpl_id:
-                    product = si.product_tmpl_id.product_variant_id
-                    _logger.info(
-                        "✅ Produit trouvé via supplierinfo(partner) code=%s -> %s",
-                        code, product.display_name,
-                    )
-                    return product
+                    si = SupplierInfo.search([
+                        ("partner_id", "=", partner.id),
+                        ("product_code", "=", code),
+                    ], limit=1)
+                    if si and si.product_tmpl_id:
+                        product = si.product_tmpl_id.product_variant_id
+                        _logger.info(
+                            "✅ Produit trouvé via supplierinfo(partner) code=%s -> %s",
+                            code, product.display_name,
+                        )
+                        return product
 
                 # code interne exact
                 product = Product.search([("default_code", "=", code)], limit=1)
@@ -242,23 +403,22 @@ class AccountMove(models.Model):
 
         candidate_codes = list(candidate_codes)
         if candidate_codes:
-            _logger.info(
-                "[DocAI] Codes candidats pour '%s' : %s", name, candidate_codes
-            )
+            _logger.info("[DocAI] Codes candidats pour '%s' : %s", name, candidate_codes)
 
         # 2.a) supplierinfo pour CE fournisseur
-        for code in candidate_codes:
-            si_domain = [("product_code", "=", code)]
-            if partner:
-                si_domain.append(("partner_id", "=", partner.id))
-            si = SupplierInfo.search(si_domain, limit=1)
-            if si and si.product_tmpl_id:
-                product = si.product_tmpl_id.product_variant_id
-                _logger.info(
-                    "✅ Produit trouvé via supplierinfo(partner) candidat=%s -> %s",
-                    code, product.display_name,
-                )
-                return product
+        if partner:
+            for code in candidate_codes:
+                si = SupplierInfo.search([
+                    ("partner_id", "=", partner.id),
+                    ("product_code", "=", code),
+                ], limit=1)
+                if si and si.product_tmpl_id:
+                    product = si.product_tmpl_id.product_variant_id
+                    _logger.info(
+                        "✅ Produit trouvé via supplierinfo(partner) candidat=%s -> %s",
+                        code, product.display_name,
+                    )
+                    return product
 
         # 2.b) default_code exact / ilike
         for code in candidate_codes:
@@ -280,7 +440,24 @@ class AccountMove(models.Model):
                     )
                     return product
 
-        # 3) Recherche par nom
+        # 3) Recherche par nom restreinte au fournisseur via supplierinfo
+        if partner and name and not self._looks_numeric_only(name):
+            sis = SupplierInfo.search([
+                ("partner_id", "=", partner.id),
+                "|",
+                ("product_name", "ilike", name),
+                ("product_tmpl_id.name", "ilike", name),
+            ], limit=5)
+            if sis:
+                product = sis[0].product_tmpl_id.product_variant_id
+                if product:
+                    _logger.info(
+                        "✅ Produit trouvé via supplierinfo(partner) nom='%s' -> %s",
+                        name, product.display_name,
+                    )
+                    return product
+
+        # 4) Recherche globale prudente par nom
         if name and not self._looks_numeric_only(name):
             product = Product.search([("name", "ilike", name)], limit=1)
             if product:
@@ -290,7 +467,15 @@ class AccountMove(models.Model):
                 )
                 return product
 
-        # 4) Dernier recours : produit inconnu
+        # 5) Création automatique d'un produit à valider
+        try:
+            product = self._docai_create_product_from_line(move, pmap, name)
+            if product:
+                return product
+        except Exception as e:
+            _logger.error("❌ Création produit DocAI impossible pour '%s' : %s", name, e)
+
+        # 6) Dernier recours : produit inconnu
         if unknown_product_id:
             product = Product.browse(unknown_product_id)
             _logger.info(
@@ -304,33 +489,6 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     # Action principale
     # -------------------------------------------------------------------------
-    def _docai_find_supplier_by_name(self, ent_map, unknown_supplier_id=False):
-        """Recherche simple du fournisseur par nom dans plusieurs champs DocAI.
-        On commence volontairement par le nom uniquement.
-        """
-        Partner = self.env["res.partner"]
-
-        candidate_names = [
-            ent_map.get("supplier_name"),
-            ent_map.get("receiver_name"),
-            ent_map.get("ship_to_name"),
-        ]
-
-        for raw_name in candidate_names:
-            name = str(raw_name or "").strip()
-            if not name:
-                continue
-
-            partner = Partner.search([("name", "ilike", name)], limit=1)
-            if partner:
-                _logger.info("✅ Fournisseur trouvé via nom '%s' -> %s", name, partner.display_name)
-                return partner
-
-        if unknown_supplier_id:
-            return Partner.browse(unknown_supplier_id)
-
-        return False
-
     def action_docai_scan_json(self):
         """Analyse le JSON DocAI et génère les lignes de facture."""
         for move in self:
@@ -338,8 +496,7 @@ class AccountMove(models.Model):
             if not source_json:
                 raise UserError(_("Aucun JSON DocAI trouvé sur cette facture."))
 
-            _logger.info("🔎 Analyse JSON pour facture %s (%s)",
-                         move.id, move.name or "")
+            _logger.info("🔎 Analyse JSON pour facture %s (%s)", move.id, move.name or "")
 
             try:
                 data = json.loads(source_json)
@@ -456,11 +613,9 @@ class AccountMove(models.Model):
                     continue
 
                 # -----------------------------------------------------------------
-                # Produit : priorité absolue au product_code
+                # Produit
                 # -----------------------------------------------------------------
-                product = self._docai_find_product(
-                    move, pmap, name, unknown_product_id
-                )
+                product = self._docai_find_product(move, pmap, name, unknown_product_id)
 
                 # -----------------------------------------------------------------
                 # UoM sécurisée
@@ -485,7 +640,7 @@ class AccountMove(models.Model):
                     else:
                         _logger.info(
                             "⚠️ UoM incompatible (%s) ignorée pour le produit %s — on garde %s",
-                            uom.name, product.name, product.uom_id.name
+                            uom.name, product.name, product.uom_id.name,
                         )
                         product_uom_id = product.uom_id.id
                 elif product:
