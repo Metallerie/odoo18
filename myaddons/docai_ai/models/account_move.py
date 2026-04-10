@@ -10,6 +10,20 @@ _logger = logging.getLogger(__name__)
 _logger.error("######## account_move.py CHARGÉ ########")
 
 
+def _to_float(val):
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+
+    s = str(val).strip()
+    s = s.replace(" ", "").replace("\u00A0", "").replace(",", ".")
+    try:
+        return float(s)
+    except Exception:
+        return 0.0
+
+
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -18,7 +32,6 @@ class AccountMove(models.Model):
             _logger.warning("######## DOCAI BOUTON CLIQUÉ ########")
 
             source_json = move.docai_json or move.docai_json_raw
-
             _logger.warning("[DocAI] source_json trouvé = %s", bool(source_json))
 
             if not source_json:
@@ -34,20 +47,14 @@ class AccountMove(models.Model):
             _logger.warning("[DocAI] invoice_date = %s", data.get("invoice_date"))
             _logger.warning("[DocAI] supplier_name = %s", data.get("supplier_name"))
 
-            # =========================
-            # Entête facture
-            # =========================
-
             supplier_name = data.get("supplier_name")
             invoice_id = data.get("invoice_id")
-            invoice_date = data.get("invoice_date")
 
             if supplier_name:
                 partner = self.env["res.partner"].search(
                     [("name", "ilike", supplier_name)],
                     limit=1
                 )
-
                 if partner:
                     _logger.warning("[DocAI] Fournisseur trouvé : %s", partner.name)
                     move.partner_id = partner.id
@@ -56,10 +63,6 @@ class AccountMove(models.Model):
 
             if invoice_id:
                 move.ref = invoice_id
-
-            # =========================
-            # Lignes facture
-            # =========================
 
             line_items = data.get("line_items") or []
             _logger.warning("[DocAI] Nombre de lignes détectées : %s", len(line_items))
@@ -83,9 +86,9 @@ class AccountMove(models.Model):
                     or ""
                 ).strip()
 
-                quantity = float(item.get("quantity") or 1.0)
-                price_unit = float(item.get("unit_price") or 0.0)
-                amount = float(item.get("amount") or item.get("total_amount") or 0.0)
+                quantity = _to_float(item.get("quantity") or 1.0)
+                price_unit = _to_float(item.get("unit_price") or 0.0)
+                amount = _to_float(item.get("amount") or item.get("total_amount") or 0.0)
 
                 _logger.warning(
                     "[DocAI] description=%s code=%s quantity=%s price=%s amount=%s",
@@ -96,21 +99,19 @@ class AccountMove(models.Model):
                     amount,
                 )
 
-                # Ligne commentaire
-                if amount == 0:
+                # ligne commentaire si aucun montant et aucun prix
+                if amount == 0 and price_unit == 0:
                     comment_text = description or code or "Ligne sans montant"
-
                     new_lines.append((0, 0, {
                         "display_type": "line_note",
                         "name": comment_text,
                     }))
-
                     _logger.warning("[DocAI] Ligne commentaire créée : %s", comment_text)
                     continue
 
-                # Recherche produit aller
                 product = False
 
+                # recherche aller par code
                 if code:
                     product = self.env["product.product"].search([
                         "|",
@@ -121,6 +122,7 @@ class AccountMove(models.Model):
                     if product:
                         _logger.warning("[DocAI] Produit trouvé par code : %s", product.display_name)
 
+                # recherche aller par description
                 if not product and description:
                     product = self.env["product.product"].search([
                         ("name", "ilike", description)
@@ -129,24 +131,20 @@ class AccountMove(models.Model):
                     if product:
                         _logger.warning("[DocAI] Produit trouvé par nom : %s", product.display_name)
 
-                # Recherche inverse
+                # recherche inverse simple
                 if not product and description:
-                    words = description.split()
-                    domain = []
-
+                    words = [w for w in description.split() if w]
                     for word in words[:3]:
-                        domain.append(("name", "ilike", word))
+                        product = self.env["product.product"].search([
+                            ("name", "ilike", word)
+                        ], limit=1)
+                        if product:
+                            _logger.warning("[DocAI] Produit trouvé en recherche inverse : %s", product.display_name)
+                            break
 
-                    if domain:
-                        product = self.env["product.product"].search(domain, limit=1)
-
-                    if product:
-                        _logger.warning("[DocAI] Produit trouvé en recherche inverse : %s", product.display_name)
-
-                # Création produit si absent
+                # création auto
                 if not product:
                     create_name = description or code or "Produit DocAI"
-
                     product = self.env["product.product"].create({
                         "name": create_name,
                         "default_code": code if code else False,
@@ -154,10 +152,8 @@ class AccountMove(models.Model):
                         "sale_ok": False,
                         "purchase_ok": True,
                     })
-
                     _logger.warning("[DocAI] Produit créé : %s", product.display_name)
 
-                    # Ligne commentaire
                     new_lines.append((0, 0, {
                         "display_type": "line_note",
                         "name": "Produit créé automatiquement depuis DocAI : %s" % product.display_name,
@@ -176,6 +172,9 @@ class AccountMove(models.Model):
                 if not price_unit and quantity and amount:
                     price_unit = amount / quantity
 
+                if not quantity:
+                    quantity = 1.0
+
                 new_lines.append((0, 0, {
                     "product_id": product.id,
                     "name": description or product.display_name,
@@ -184,13 +183,12 @@ class AccountMove(models.Model):
                     "account_id": account_id,
                 }))
 
-                _logger.warning("[DocAI] Ligne produit créée : %s", description)
+                _logger.warning("[DocAI] Ligne produit créée : %s", description or product.display_name)
 
             if new_lines:
                 move.write({
                     "invoice_line_ids": [(5, 0, 0)] + new_lines
                 })
-
                 _logger.warning("[DocAI] %s lignes écrites sur la facture", len(new_lines))
 
             raise UserError("Scan DocAI terminé. Vérifie les logs.")
