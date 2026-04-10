@@ -1,5 +1,8 @@
 from odoo import models
 from odoo.exceptions import UserError
+import logging
+_logger = logging.getLogger(__name__)
+_logger.warning("######## account_move.py DOCAI CHARGÉ ########")
 
 class AccountMove(models.Model):
     _inherit = "account.move"
