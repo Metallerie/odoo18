@@ -22,6 +22,164 @@ class AccountMove(models.Model):
     docai_analyzed = fields.Boolean("Analysée par DocAI", default=False, readonly=True)
 
     # -------------------------------------------------------------------------
+    # Outils JSON simplifié
+    # -------------------------------------------------------------------------
+    def _entity_mention(self, entity):
+        """Retourne la valeur texte principale d'une entité."""
+        if not entity:
+            return None
+
+        mention = entity.get("mentionText")
+        if mention not in (None, ""):
+            return mention
+
+        normalized = entity.get("normalizedValue", {})
+        if normalized.get("text"):
+            return normalized.get("text")
+
+        money_value = normalized.get("moneyValue", {})
+        units = money_value.get("units")
+        nanos = money_value.get("nanos")
+
+        if units is not None and nanos is not None:
+            return f"{units}.{str(abs(nanos)).zfill(9)[:2]}"
+        if units is not None:
+            return str(units)
+
+        return None
+
+    def _entity_normalized(self, entity):
+        """Retourne une valeur normalisée quand possible."""
+        if not entity:
+            return None
+
+        normalized = entity.get("normalizedValue", {})
+
+        if normalized.get("text"):
+            return normalized.get("text")
+
+        money_value = normalized.get("moneyValue", {})
+        units = money_value.get("units")
+        nanos = money_value.get("nanos")
+
+        if units is not None and nanos is not None:
+            value = float(units) + (float(nanos) / 1_000_000_000)
+            return round(value, 2)
+        if units is not None:
+            return float(units)
+
+        return self._entity_mention(entity)
+
+    def _get_first_entity(self, parsed, entity_type):
+        """Retourne la première entité d'un type donné."""
+        for entity in parsed.get("entities", []):
+            if entity.get("type") == entity_type:
+                return entity
+        return None
+
+    def _get_first_value(self, parsed, entity_type):
+        """Retourne la valeur texte de la première entité du type."""
+        entity = self._get_first_entity(parsed, entity_type)
+        return self._entity_mention(entity)
+
+    def _get_first_normalized(self, parsed, entity_type):
+        """Retourne la valeur normalisée de la première entité du type."""
+        entity = self._get_first_entity(parsed, entity_type)
+        return self._entity_normalized(entity)
+
+    def _build_simplified_json(self, parsed):
+        """Transforme le JSON DocAI brut en JSON simplifié structuré."""
+
+        simplified = {
+            "amount_due": self._get_first_value(parsed, "amount_due"),
+            "amount_paid_since_last_invoice": self._get_first_value(parsed, "amount_paid_since_last_invoice"),
+            "carrier": self._get_first_value(parsed, "carrier"),
+            "currency": self._get_first_value(parsed, "currency"),
+            "currency_exchange_rate": self._get_first_value(parsed, "currency_exchange_rate"),
+            "customer_tax_id": self._get_first_value(parsed, "customer_tax_id"),
+            "delivery_date": self._get_first_value(parsed, "delivery_date"),
+            "due_date": self._get_first_value(parsed, "due_date"),
+            "freight_amount": self._get_first_value(parsed, "freight_amount"),
+            "invoice_date": self._get_first_value(parsed, "invoice_date"),
+            "invoice_id": self._get_first_value(parsed, "invoice_id"),
+            "net_amount": self._get_first_value(parsed, "net_amount"),
+            "payment_terms": self._get_first_value(parsed, "payment_terms"),
+            "purchase_order": self._get_first_value(parsed, "purchase_order"),
+            "receiver_address": self._get_first_value(parsed, "receiver_address"),
+            "receiver_email": self._get_first_value(parsed, "receiver_email"),
+            "receiver_name": self._get_first_value(parsed, "receiver_name"),
+            "receiver_phone": self._get_first_value(parsed, "receiver_phone"),
+            "receiver_tax_id": self._get_first_value(parsed, "receiver_tax_id"),
+            "receiver_website": self._get_first_value(parsed, "receiver_website"),
+            "remit_to_address": self._get_first_value(parsed, "remit_to_address"),
+            "remit_to_name": self._get_first_value(parsed, "remit_to_name"),
+            "ship_from_address": self._get_first_value(parsed, "ship_from_address"),
+            "ship_from_name": self._get_first_value(parsed, "ship_from_name"),
+            "ship_to_address": self._get_first_value(parsed, "ship_to_address"),
+            "ship_to_name": self._get_first_value(parsed, "ship_to_name"),
+            "supplier_address": self._get_first_value(parsed, "supplier_address"),
+            "supplier_email": self._get_first_value(parsed, "supplier_email"),
+            "supplier_iban": self._get_first_value(parsed, "supplier_iban"),
+            "supplier_name": self._get_first_value(parsed, "supplier_name"),
+            "supplier_payment_ref": self._get_first_value(parsed, "supplier_payment_ref"),
+            "supplier_phone": self._get_first_value(parsed, "supplier_phone"),
+            "supplier_registration": self._get_first_value(parsed, "supplier_registration"),
+            "supplier_tax_id": self._get_first_value(parsed, "supplier_tax_id"),
+            "supplier_website": self._get_first_value(parsed, "supplier_website"),
+            "total_amount": self._get_first_value(parsed, "total_amount"),
+            "total_tax_amount": self._get_first_value(parsed, "total_tax_amount"),
+            "line_items": [],
+            "vat": [],
+        }
+
+        # -----------------------------
+        # Lignes de facture
+        # -----------------------------
+        for entity in parsed.get("entities", []):
+            if entity.get("type") != "line_item":
+                continue
+
+            line = {
+                "description": None,
+                "amount": None,
+                "product_code": None,
+                "purchase_order": None,
+                "quantity": None,
+                "unit": None,
+                "unit_price": None,
+            }
+
+            for prop in entity.get("properties", []):
+                prop_type = prop.get("type")
+                if prop_type in line:
+                    line[prop_type] = self._entity_mention(prop)
+
+            simplified["line_items"].append(line)
+
+        # -----------------------------
+        # TVA
+        # -----------------------------
+        for entity in parsed.get("entities", []):
+            if entity.get("type") != "vat":
+                continue
+
+            vat_line = {
+                "amount": None,
+                "category_code": None,
+                "tax_amount": None,
+                "tax_rate": None,
+            }
+
+            for prop in entity.get("properties", []):
+                prop_type = prop.get("type")
+                if prop_type in vat_line:
+                    vat_line[prop_type] = self._entity_mention(prop)
+
+            simplified["vat"].append(vat_line)
+
+        return simplified
+
+    # -------------------------------------------------------------------------
     # Essai avec un processor donné
     # -------------------------------------------------------------------------
     def _try_processor(self, pdf_content, processor_id, label, project_id, location, key_path):
@@ -32,12 +190,17 @@ class AccountMove(models.Model):
                 client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
             )
 
-            raw_document = documentai.RawDocument(content=pdf_content, mime_type="application/pdf")
-            request = documentai.ProcessRequest(
+            raw_document = documentai.RawDocument(
+                content=pdf_content,
+                mime_type="application/pdf"
+            )
+
+            process_request = documentai.ProcessRequest(
                 name=f"projects/{project_id}/locations/{location}/processors/{processor_id}",
                 raw_document=raw_document
             )
-            result = client.process_document(request=request)
+
+            result = client.process_document(request=process_request)
 
             raw_json = documentai.Document.to_json(result.document)
             parsed = json.loads(raw_json)
@@ -46,7 +209,7 @@ class AccountMove(models.Model):
                 _logger.warning(f"[DocAI] {label} → aucune entité détectée")
                 return None, None
 
-            minimal = {"entities": parsed.get("entities", [])}
+            minimal = self._build_simplified_json(parsed)
             return raw_json, json.dumps(minimal, indent=2, ensure_ascii=False)
 
         except Exception as e:
@@ -68,16 +231,20 @@ class AccountMove(models.Model):
             raise UserError(_("Configuration Document AI incomplète."))
 
         # 1. Facture
-        raw_json, minimal = self._try_processor(pdf_content, invoice_processor, "Facture", project_id, location, key_path)
+        raw_json, minimal = self._try_processor(
+            pdf_content, invoice_processor, "Facture", project_id, location, key_path
+        )
         if raw_json:
             return raw_json, minimal, "Facture"
 
         # 2. Ticket de caisse
-        raw_json, minimal = self._try_processor(pdf_content, expense_processor, "Ticket de caisse", project_id, location, key_path)
+        raw_json, minimal = self._try_processor(
+            pdf_content, expense_processor, "Ticket de caisse", project_id, location, key_path
+        )
         if raw_json:
             return raw_json, minimal, "Ticket de caisse"
 
-        # 3. Autres processors (Kbis, RIB, etc.) à venir
+        # 3. Autres processors à venir
         return None, None, None
 
     # -------------------------------------------------------------------------
@@ -105,7 +272,7 @@ class AccountMove(models.Model):
                     _logger.warning(f"[DocAI] PDF vide ou illisible pour {move.name or move.id}")
                     continue
 
-                raw_json, minimal, label = self.analyze_with_fallback(pdf_content)
+                raw_json, minimal, label = move.analyze_with_fallback(pdf_content)
                 if not raw_json:
                     _logger.warning(f"[DocAI] Aucun résultat pour {move.name or move.id}")
                     continue
@@ -158,7 +325,7 @@ class AccountMove(models.Model):
             return False
 
     # -------------------------------------------------------------------------
-    # Boutons de téléchargement JSON (appelés depuis la vue XML)
+    # Boutons de téléchargement JSON
     # -------------------------------------------------------------------------
     def action_docai_download_json_raw(self):
         """Téléchargement du JSON complet (DocAI brut)."""
@@ -170,7 +337,7 @@ class AccountMove(models.Model):
         }
 
     def action_docai_download_json_min(self):
-        """Téléchargement du JSON simplifié (DocAI minimal)."""
+        """Téléchargement du JSON simplifié."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_url",
