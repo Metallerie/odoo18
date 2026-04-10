@@ -8,9 +8,10 @@ import logging
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-from google.cloud import documentai_v1 as documentai
 from odoo import http
 from odoo.http import request
+
+from google.cloud import documentai_v1 as documentai
 
 _logger = logging.getLogger(__name__)
 
@@ -29,12 +30,6 @@ class AccountMove(models.Model):
         """
         Retourne la valeur brute la plus directe possible d'une entité DocAI,
         sans normalisation ni interprétation.
-        Priorité :
-        - mentionText
-        - normalizedValue.text
-        - normalizedValue.moneyValue
-        - normalizedValue.floatValue
-        - normalizedValue.integerValue
         """
         if not entity:
             return None
@@ -77,9 +72,9 @@ class AccountMove(models.Model):
         """
         Transforme les properties d'une entité en dict lisible.
         Exemple :
-        line_item/product_code -> product_code
-        line_item/description  -> description
-        vat/tax_rate           -> tax_rate
+        - line_item/product_code -> product_code
+        - line_item/description  -> description
+        - vat/tax_rate           -> tax_rate
         """
         result = {}
 
@@ -113,23 +108,18 @@ class AccountMove(models.Model):
             entity_type = entity.get("type")
             props = entity.get("properties", []) or []
 
-            # Cas line_item
             if entity_type == "line_item":
                 item = self._docai_format_properties(props)
-
-                # on garde aussi la ligne brute si utile
                 item["_mentionText"] = entity.get("mentionText")
                 line_items.append(item)
                 continue
 
-            # Cas vat
             if entity_type == "vat":
                 vat = self._docai_format_properties(props)
                 vat["_mentionText"] = entity.get("mentionText")
                 vat_items.append(vat)
                 continue
 
-            # Cas entité simple
             value = self._docai_entity_to_field_value(entity)
 
             if entity_type in result:
@@ -172,7 +162,7 @@ class AccountMove(models.Model):
             parsed = json.loads(raw_json)
 
             if not parsed.get("entities"):
-                _logger.warning(f"[DocAI] {label} → aucune entité détectée")
+                _logger.warning(f"[DocAI] {label} -> aucune entité détectée")
                 return None, None
 
             formatted = self._build_formatted_json(parsed)
@@ -180,7 +170,7 @@ class AccountMove(models.Model):
             return raw_json, json.dumps(formatted, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            _logger.warning(f"[DocAI] {label} → erreur lors de l’analyse : {e}")
+            _logger.warning(f"[DocAI] {label} -> erreur lors de l’analyse : {e}")
             return None, None
 
     # -------------------------------------------------------------------------
@@ -197,7 +187,6 @@ class AccountMove(models.Model):
         if not all([project_id, location, key_path, invoice_processor, expense_processor]):
             raise UserError(_("Configuration Document AI incomplète."))
 
-        # 1. Facture
         raw_json, formatted = self._try_processor(
             pdf_content=pdf_content,
             processor_id=invoice_processor,
@@ -209,7 +198,6 @@ class AccountMove(models.Model):
         if raw_json:
             return raw_json, formatted, "Facture"
 
-        # 2. Ticket de caisse
         raw_json, formatted = self._try_processor(
             pdf_content=pdf_content,
             processor_id=expense_processor,
@@ -227,51 +215,55 @@ class AccountMove(models.Model):
     # METHODE PRINCIPALE
     # -------------------------------------------------------------------------
     def action_docai_analyze_attachment(self, force=False):
-        for move in self:
-            try:
-                if (move.docai_analyzed and not force) or (move.amount_total and not force):
-                    _logger.info(f"[DocAI] {move.name or move.id} ignoré (déjà analysé ou total présent)")
-                    continue
+        self.ensure_one()
 
-                attachment = self.env["ir.attachment"].search([
-                    ("res_model", "=", "account.move"),
-                    ("res_id", "=", move.id),
-                    ("mimetype", "=", "application/pdf")
-                ], limit=1)
+        if (self.docai_analyzed and not force) or (self.amount_total and not force):
+            raise UserError(_("Document déjà analysé ou total déjà présent."))
 
-                if not attachment:
-                    _logger.warning(f"[DocAI] Aucun PDF trouvé pour {move.name or move.id}, skip")
-                    continue
+        attachment = self.env["ir.attachment"].search([
+            ("res_model", "=", "account.move"),
+            ("res_id", "=", self.id),
+            ("mimetype", "=", "application/pdf")
+        ], limit=1)
 
-                pdf_content = base64.b64decode(attachment.datas or b"")
-                if not pdf_content:
-                    _logger.warning(f"[DocAI] PDF vide ou illisible pour {move.name or move.id}")
-                    continue
+        if not attachment:
+            raise UserError(_("Aucun PDF trouvé sur cette facture."))
 
-                raw_json, formatted, label = move.analyze_with_fallback(pdf_content)
-                if not raw_json:
-                    _logger.warning(f"[DocAI] Aucun résultat pour {move.name or move.id}")
-                    continue
+        pdf_content = base64.b64decode(attachment.datas or b"")
+        if not pdf_content:
+            raise UserError(_("Le PDF est vide ou illisible."))
 
-                vals = {"docai_analyzed": True}
+        raw_json, formatted, label = self.analyze_with_fallback(pdf_content)
 
-                if not move.docai_json_raw or force:
-                    vals["docai_json_raw"] = raw_json
+        if not raw_json:
+            raise UserError(_("Aucun résultat retourné par Document AI."))
 
-                if not move.docai_json or force:
-                    vals["docai_json"] = formatted
+        vals = {
+            "docai_analyzed": True,
+            "docai_json_raw": raw_json,
+            "docai_json": formatted,
+        }
 
-                move.write(vals)
-                _logger.info(f"✅ {label} {move.name or move.id} analysé et sauvegardé par DocAI")
+        if not force:
+            if self.docai_json_raw:
+                vals.pop("docai_json_raw", None)
+            if self.docai_json:
+                vals.pop("docai_json", None)
 
-            except Exception as e:
-                _logger.error(f"❌ Erreur DocAI sur {move.name or move.id} : {e}")
-                continue
+        self.write(vals)
+
+        _logger.info(f"[DocAI] {label} {self.name or self.id} analysé et sauvegardé")
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "reload",
+        }
 
     # -------------------------------------------------------------------------
     # RAFRAICHIR
     # -------------------------------------------------------------------------
     def action_docai_refresh_json(self):
+        self.ensure_one()
         return self.action_docai_analyze_attachment(force=True)
 
     # -------------------------------------------------------------------------
@@ -279,25 +271,22 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     @api.model
     def cron_docai_analyze_invoices(self):
-        try:
-            moves = self.env["account.move"].search([
-                ("move_type", "=", "in_invoice"),
-                ("state", "=", "draft"),
-                ("docai_analyzed", "=", False),
-                ("docai_json", "=", False),
-            ], limit=10)
+        moves = self.env["account.move"].search([
+            ("move_type", "=", "in_invoice"),
+            ("state", "=", "draft"),
+            ("docai_analyzed", "=", False),
+            ("docai_json", "=", False),
+        ], limit=10)
 
-            _logger.info(f"[DocAI CRON] {len(moves)} documents à analyser")
+        _logger.info(f"[DocAI CRON] {len(moves)} documents à analyser")
 
-            if not moves:
-                return True
+        for move in moves:
+            try:
+                move.action_docai_analyze_attachment(force=False)
+            except Exception as e:
+                _logger.error(f"[DocAI CRON] Erreur sur {move.name or move.id} : {e}")
 
-            moves.action_docai_analyze_attachment(force=False)
-            return True
-
-        except Exception as e:
-            _logger.error(f"❌ Erreur CRON DocAI : {e}")
-            return False
+        return True
 
     # -------------------------------------------------------------------------
     # TELECHARGEMENT JSON
@@ -321,7 +310,7 @@ class AccountMove(models.Model):
 
 class DocaiDownloadController(http.Controller):
 
-    @http.route('/docai/download/<int:move_id>/<string:kind>', type='http', auth='user')
+    @http.route("/docai/download/<int:move_id>/<string:kind>", type="http", auth="user")
     def download_json(self, move_id, kind="min", **kwargs):
         move = request.env["account.move"].browse(move_id)
         if not move.exists():
