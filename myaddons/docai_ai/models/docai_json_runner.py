@@ -28,7 +28,6 @@ class AccountMove(models.Model):
     # OUTILS
     # -------------------------------------------------------------------------
     def _docai_clean_text(self, value):
-        """Nettoie les valeurs vides / parasites."""
         if value in (None, "", False):
             return None
         if isinstance(value, str):
@@ -38,7 +37,7 @@ class AccountMove(models.Model):
         return value
 
     def _docai_entity_value(self, entity):
-        """Retourne la meilleure valeur texte possible d'une entité DocAI."""
+        """Retourne la meilleure valeur possible d'une entité DocAI."""
         if not entity:
             return None
 
@@ -72,25 +71,22 @@ class AccountMove(models.Model):
         return None
 
     def _docai_find_first(self, parsed, entity_type):
-        """Retourne la première entité du type demandé."""
         for entity in parsed.get("entities", []):
             if entity.get("type") == entity_type:
                 return entity
         return None
 
     def _docai_first_value(self, parsed, entity_type):
-        """Retourne la valeur de la première entité du type demandé."""
         return self._docai_entity_value(self._docai_find_first(parsed, entity_type))
 
     def _docai_get_prop_value(self, props, prop_type):
-        """Retourne la valeur d'une propriété de line_item / vat."""
         for prop in props:
             if prop.get("type") == prop_type:
                 return self._docai_entity_value(prop)
         return None
 
     def _docai_normalize_amount(self, value):
-        """Normalise un montant texte en chaîne décimale simple."""
+        """Normalise un montant en chaîne décimale."""
         value = self._docai_clean_text(value)
         if value is None:
             return None
@@ -99,27 +95,17 @@ class AccountMove(models.Model):
             return str(value)
 
         cleaned = value.strip()
-
-        # Supprime symboles monétaires et textes annexes
-        cleaned = cleaned.replace("€", "")
-        cleaned = cleaned.replace("EUR", "")
-        cleaned = cleaned.replace("eur", "")
-        cleaned = cleaned.strip()
-
-        # Garde uniquement chiffres / séparateurs / signe
+        cleaned = cleaned.replace("€", "").replace("EUR", "").replace("eur", "").strip()
         cleaned = re.sub(r"[^0-9,.\-]", "", cleaned)
 
         if not cleaned:
             return None
 
-        # Cas FR : 1.234,56
         if "," in cleaned and "." in cleaned:
             if cleaned.rfind(",") > cleaned.rfind("."):
                 cleaned = cleaned.replace(".", "").replace(",", ".")
             else:
                 cleaned = cleaned.replace(",", "")
-
-        # Cas FR : 123,45
         elif "," in cleaned:
             cleaned = cleaned.replace(",", ".")
 
@@ -140,23 +126,13 @@ class AccountMove(models.Model):
 
         raw = value.strip()
 
-        # Déjà normalisée
-        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
             try:
                 dt = datetime.strptime(raw, fmt)
                 return dt.strftime("%Y-%m-%d")
             except Exception:
                 pass
 
-        # Formats courants
-        for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d", "%Y-%m-%d", "%Y-%m-%d"):
-            try:
-                dt = datetime.strptime(raw, fmt)
-                return dt.strftime("%Y-%m-%d")
-            except Exception:
-                pass
-
-        # Cas DocAI du style 2026-2-10
         match = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})$", raw)
         if match:
             y, m, d = match.groups()
@@ -165,7 +141,6 @@ class AccountMove(models.Model):
         return value
 
     def _docai_normalize_percent(self, value):
-        """Normalise un taux style 20% -> 20."""
         value = self._docai_clean_text(value)
         if value is None:
             return None
@@ -173,17 +148,29 @@ class AccountMove(models.Model):
         if not isinstance(value, str):
             return str(value)
 
-        cleaned = value.replace("%", "").strip()
-        cleaned = cleaned.replace(",", ".")
+        cleaned = value.replace("%", "").strip().replace(",", ".")
         try:
             num = float(cleaned)
             return f"{num:.6f}".rstrip("0").rstrip(".")
         except Exception:
             return value
 
-    def _docai_postprocess_simplified_json(self, simplified):
-        """Normalise les champs du JSON simplifié."""
+    def _docai_make_group_key(self, entity):
+        """
+        Clé de regroupement pour les entités imbriquées.
+        On essaye d'abord l'ancre parentale, sinon pageAnchor/textAnchor.
+        """
+        parent_id = entity.get("id")
+        if parent_id:
+            return f"id:{parent_id}"
 
+        page_anchor = json.dumps(entity.get("pageAnchor", {}), sort_keys=True, ensure_ascii=False)
+        text_anchor = json.dumps(entity.get("textAnchor", {}), sort_keys=True, ensure_ascii=False)
+        provenance = json.dumps(entity.get("provenance", {}), sort_keys=True, ensure_ascii=False)
+
+        return f"{page_anchor}|{text_anchor}|{provenance}"
+
+    def _docai_postprocess_simplified_json(self, simplified):
         amount_fields = [
             "amount_due",
             "amount_paid_since_last_invoice",
@@ -219,10 +206,11 @@ class AccountMove(models.Model):
         return simplified
 
     # -------------------------------------------------------------------------
-    # JSON SIMPLIFIÉ
+    # JSON SIMPLIFIE
     # -------------------------------------------------------------------------
     def _build_simplified_json(self, parsed):
         """Transforme le JSON DocAI brut en JSON simplifié structuré."""
+        entities = parsed.get("entities", []) or []
 
         simplified = {
             "amount_due": self._docai_first_value(parsed, "amount_due"),
@@ -266,10 +254,10 @@ class AccountMove(models.Model):
             "vat": [],
         }
 
-        # -----------------------------
-        # Lignes de facture
-        # -----------------------------
-        for entity in parsed.get("entities", []):
+        # -----------------------------------------------------------------
+        # 1) Méthode standard : line_item avec properties
+        # -----------------------------------------------------------------
+        for entity in entities:
             if entity.get("type") != "line_item":
                 continue
 
@@ -285,14 +273,45 @@ class AccountMove(models.Model):
                 "unit_price": self._docai_get_prop_value(props, "unit_price"),
             }
 
-            # Si la ligne n'a aucune donnée exploitable, on la saute
             if any(v not in (None, "", "--") for v in line.values()):
                 simplified["line_items"].append(line)
 
-        # -----------------------------
-        # TVA
-        # -----------------------------
-        for entity in parsed.get("entities", []):
+        # -----------------------------------------------------------------
+        # 2) Méthode secours : entités line_item/xxx regroupées
+        # -----------------------------------------------------------------
+        if not simplified["line_items"]:
+            grouped = {}
+
+            for entity in entities:
+                entity_type = entity.get("type") or ""
+                if not entity_type.startswith("line_item/"):
+                    continue
+
+                field_name = entity_type.split("/", 1)[1]
+                group_key = self._docai_make_group_key(entity)
+
+                if group_key not in grouped:
+                    grouped[group_key] = {
+                        "description": None,
+                        "amount": None,
+                        "product_code": None,
+                        "purchase_order": None,
+                        "quantity": None,
+                        "unit": None,
+                        "unit_price": None,
+                    }
+
+                if field_name in grouped[group_key]:
+                    grouped[group_key][field_name] = self._docai_entity_value(entity)
+
+            for _, line in grouped.items():
+                if any(v not in (None, "", "--") for v in line.values()):
+                    simplified["line_items"].append(line)
+
+        # -----------------------------------------------------------------
+        # 3) TVA standard : vat avec properties
+        # -----------------------------------------------------------------
+        for entity in entities:
             if entity.get("type") != "vat":
                 continue
 
@@ -308,11 +327,40 @@ class AccountMove(models.Model):
             if any(v not in (None, "", "--") for v in vat_line.values()):
                 simplified["vat"].append(vat_line)
 
+        # -----------------------------------------------------------------
+        # 4) TVA secours : entités vat/xxx regroupées
+        # -----------------------------------------------------------------
+        if not simplified["vat"]:
+            grouped_vat = {}
+
+            for entity in entities:
+                entity_type = entity.get("type") or ""
+                if not entity_type.startswith("vat/"):
+                    continue
+
+                field_name = entity_type.split("/", 1)[1]
+                group_key = self._docai_make_group_key(entity)
+
+                if group_key not in grouped_vat:
+                    grouped_vat[group_key] = {
+                        "amount": None,
+                        "category_code": None,
+                        "tax_amount": None,
+                        "tax_rate": None,
+                    }
+
+                if field_name in grouped_vat[group_key]:
+                    grouped_vat[group_key][field_name] = self._docai_entity_value(entity)
+
+            for _, vat_line in grouped_vat.items():
+                if any(v not in (None, "", "--") for v in vat_line.values()):
+                    simplified["vat"].append(vat_line)
+
         simplified = self._docai_postprocess_simplified_json(simplified)
         return simplified
 
     # -------------------------------------------------------------------------
-    # Essai avec un processor donné
+    # ESSAI AVEC UN PROCESSOR DONNE
     # -------------------------------------------------------------------------
     def _try_processor(self, pdf_content, processor_id, label, project_id, location, key_path):
         """Tente une analyse avec un processor spécifique."""
@@ -342,8 +390,16 @@ class AccountMove(models.Model):
                 _logger.warning(f"[DocAI] {label} → aucune entité détectée")
                 return None, None
 
-            minimal = self._build_simplified_json(parsed)
+            # Debug temporaire utile
+            for entity in parsed.get("entities", []):
+                _logger.info(
+                    "[DocAI] ENTITY type=%s mention=%s props=%s",
+                    entity.get("type"),
+                    entity.get("mentionText"),
+                    [p.get("type") for p in (entity.get("properties", []) or [])]
+                )
 
+            minimal = self._build_simplified_json(parsed)
             return raw_json, json.dumps(minimal, indent=2, ensure_ascii=False)
 
         except Exception as e:
@@ -351,7 +407,7 @@ class AccountMove(models.Model):
             return None, None
 
     # -------------------------------------------------------------------------
-    # Cascade d’analyse : facture, ticket, etc.
+    # CASCADE D'ANALYSE
     # -------------------------------------------------------------------------
     def analyze_with_fallback(self, pdf_content):
         ICP = self.env["ir.config_parameter"].sudo()
@@ -364,7 +420,6 @@ class AccountMove(models.Model):
         if not all([project_id, location, key_path, invoice_processor, expense_processor]):
             raise UserError(_("Configuration Document AI incomplète."))
 
-        # 1. Facture
         raw_json, minimal = self._try_processor(
             pdf_content=pdf_content,
             processor_id=invoice_processor,
@@ -376,7 +431,6 @@ class AccountMove(models.Model):
         if raw_json:
             return raw_json, minimal, "Facture"
 
-        # 2. Ticket de caisse
         raw_json, minimal = self._try_processor(
             pdf_content=pdf_content,
             processor_id=expense_processor,
@@ -388,11 +442,10 @@ class AccountMove(models.Model):
         if raw_json:
             return raw_json, minimal, "Ticket de caisse"
 
-        # 3. Autres processors à venir
         return None, None, None
 
     # -------------------------------------------------------------------------
-    # Méthode principale : analyse DocAI
+    # METHODE PRINCIPALE
     # -------------------------------------------------------------------------
     def action_docai_analyze_attachment(self, force=False):
         for move in self:
@@ -437,13 +490,13 @@ class AccountMove(models.Model):
                 continue
 
     # -------------------------------------------------------------------------
-    # Rafraîchir (forcer réanalyse)
+    # RAFRAICHIR
     # -------------------------------------------------------------------------
     def action_docai_refresh_json(self):
         return self.action_docai_analyze_attachment(force=True)
 
     # -------------------------------------------------------------------------
-    # CRON — robuste et non bloquant
+    # CRON
     # -------------------------------------------------------------------------
     @api.model
     def cron_docai_analyze_invoices(self):
@@ -468,10 +521,9 @@ class AccountMove(models.Model):
             return False
 
     # -------------------------------------------------------------------------
-    # Boutons de téléchargement JSON
+    # TELECHARGEMENT JSON
     # -------------------------------------------------------------------------
     def action_docai_download_json_raw(self):
-        """Téléchargement du JSON complet (DocAI brut)."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_url",
@@ -480,7 +532,6 @@ class AccountMove(models.Model):
         }
 
     def action_docai_download_json_min(self):
-        """Téléchargement du JSON simplifié."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_url",
@@ -490,7 +541,7 @@ class AccountMove(models.Model):
 
 
 # -------------------------------------------------------------------------
-# Controller téléchargement JSON
+# CONTROLLER TELECHARGEMENT JSON
 # -------------------------------------------------------------------------
 class DocaiDownloadController(http.Controller):
 
