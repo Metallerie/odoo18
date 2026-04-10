@@ -304,6 +304,33 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     # Action principale
     # -------------------------------------------------------------------------
+    def _docai_find_supplier_by_name(self, ent_map, unknown_supplier_id=False):
+        """Recherche simple du fournisseur par nom dans plusieurs champs DocAI.
+        On commence volontairement par le nom uniquement.
+        """
+        Partner = self.env["res.partner"]
+
+        candidate_names = [
+            ent_map.get("supplier_name"),
+            ent_map.get("receiver_name"),
+            ent_map.get("ship_to_name"),
+        ]
+
+        for raw_name in candidate_names:
+            name = str(raw_name or "").strip()
+            if not name:
+                continue
+
+            partner = Partner.search([("name", "ilike", name)], limit=1)
+            if partner:
+                _logger.info("✅ Fournisseur trouvé via nom '%s' -> %s", name, partner.display_name)
+                return partner
+
+        if unknown_supplier_id:
+            return Partner.browse(unknown_supplier_id)
+
+        return False
+
     def action_docai_scan_json(self):
         """Analyse le JSON DocAI et génère les lignes de facture."""
         for move in self:
@@ -344,17 +371,7 @@ class AccountMove(models.Model):
                 .get_param("docai_ai.unknown_supplier_id", 0)
             ) or False
 
-            supplier = False
-            if ent_map.get("supplier_name"):
-                supplier_name = str(ent_map["supplier_name"]).strip()
-
-                supplier = self.env["res.partner"].search(
-                    [("name", "ilike", supplier_name)],
-                    limit=1,
-                )
-
-                if not supplier and unknown_supplier_id:
-                    supplier = self.env["res.partner"].browse(unknown_supplier_id)
+            supplier = self._docai_find_supplier_by_name(ent_map, unknown_supplier_id)
 
             if supplier:
                 if (not move.partner_id) or (
