@@ -5,8 +5,6 @@ import base64
 import os
 import json
 import logging
-import re
-from datetime import datetime
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
@@ -21,278 +19,130 @@ class AccountMove(models.Model):
     _inherit = "account.move"
 
     docai_json_raw = fields.Text("JSON complet DocAI", readonly=True)
-    docai_json = fields.Text("JSON simplifié DocAI", readonly=True)
+    docai_json = fields.Text("JSON formaté DocAI", readonly=True)
     docai_analyzed = fields.Boolean("Analysée par DocAI", default=False, readonly=True)
 
     # -------------------------------------------------------------------------
     # OUTILS
     # -------------------------------------------------------------------------
-    def _docai_clean_text(self, value):
-        if value in (None, "", False):
-            return None
-        if isinstance(value, str):
-            value = value.strip()
-            if value in ("--", "-", "N/A", "n/a"):
-                return None
-        return value
-
-    def _docai_entity_value(self, entity):
-        """Retourne la meilleure valeur possible d'une entité DocAI."""
+    def _docai_entity_to_field_value(self, entity):
+        """
+        Retourne la valeur brute la plus directe possible d'une entité DocAI,
+        sans normalisation ni interprétation.
+        Priorité :
+        - mentionText
+        - normalizedValue.text
+        - normalizedValue.moneyValue
+        - normalizedValue.floatValue
+        - normalizedValue.integerValue
+        """
         if not entity:
             return None
 
-        mention = self._docai_clean_text(entity.get("mentionText"))
-        if mention is not None:
+        mention = entity.get("mentionText")
+        if mention not in (None, ""):
             return mention
 
         normalized = entity.get("normalizedValue", {}) or {}
 
-        text_value = self._docai_clean_text(normalized.get("text"))
-        if text_value is not None:
-            return text_value
+        if normalized.get("text") not in (None, ""):
+            return normalized.get("text")
 
         money_value = normalized.get("moneyValue", {}) or {}
         units = money_value.get("units")
         nanos = money_value.get("nanos")
 
+        if units is not None and nanos is not None:
+            return {
+                "units": units,
+                "nanos": nanos,
+                "currencyCode": money_value.get("currencyCode"),
+            }
+
         if units is not None:
-            nanos = nanos or 0
-            value = float(units) + (float(nanos) / 1_000_000_000)
-            return str(round(value, 6)).rstrip("0").rstrip(".")
+            return {
+                "units": units,
+                "currencyCode": money_value.get("currencyCode"),
+            }
 
-        float_value = normalized.get("floatValue")
-        if float_value is not None:
-            return str(float_value)
+        if normalized.get("floatValue") is not None:
+            return normalized.get("floatValue")
 
-        int_value = normalized.get("integerValue")
-        if int_value is not None:
-            return str(int_value)
+        if normalized.get("integerValue") is not None:
+            return normalized.get("integerValue")
 
         return None
 
-    def _docai_find_first(self, parsed, entity_type):
-        for entity in parsed.get("entities", []):
-            if entity.get("type") == entity_type:
-                return entity
-        return None
-
-    def _docai_first_value(self, parsed, entity_type):
-        return self._docai_entity_value(self._docai_find_first(parsed, entity_type))
-
-    def _docai_get_prop_value(self, props, prop_type):
+    def _docai_format_properties(self, props):
         """
-        Retourne la valeur d'une propriété DocAI.
-        Accepte par exemple :
-        - description
-        - line_item/description
-        - vat/tax_rate
+        Transforme les properties d'une entité en dict lisible.
+        Exemple :
+        line_item/product_code -> product_code
+        line_item/description  -> description
+        vat/tax_rate           -> tax_rate
         """
-        expected_types = {
-            prop_type,
-            f"line_item/{prop_type}",
-            f"vat/{prop_type}",
-        }
+        result = {}
 
-        for prop in props:
-            current_type = prop.get("type")
-            if current_type in expected_types:
-                return self._docai_entity_value(prop)
+        for prop in props or []:
+            prop_type = prop.get("type") or ""
+            key = prop_type.split("/")[-1] if "/" in prop_type else prop_type
+            value = self._docai_entity_to_field_value(prop)
 
-        return None
-
-    def _docai_normalize_amount(self, value):
-        """Normalise un montant en chaîne décimale."""
-        value = self._docai_clean_text(value)
-        if value is None:
-            return None
-
-        if not isinstance(value, str):
-            return str(value)
-
-        cleaned = value.strip()
-        cleaned = cleaned.replace("€", "").replace("EUR", "").replace("eur", "").strip()
-        cleaned = re.sub(r"[^0-9,.\-]", "", cleaned)
-
-        if not cleaned:
-            return None
-
-        if "," in cleaned and "." in cleaned:
-            if cleaned.rfind(",") > cleaned.rfind("."):
-                cleaned = cleaned.replace(".", "").replace(",", ".")
+            if key in result:
+                if not isinstance(result[key], list):
+                    result[key] = [result[key]]
+                result[key].append(value)
             else:
-                cleaned = cleaned.replace(",", "")
-        elif "," in cleaned:
-            cleaned = cleaned.replace(",", ".")
+                result[key] = value
 
-        try:
-            num = float(cleaned)
-            return f"{num:.6f}".rstrip("0").rstrip(".")
-        except Exception:
-            return value
+        return result
 
-    def _docai_normalize_date(self, value):
-        """Normalise une date en YYYY-MM-DD."""
-        value = self._docai_clean_text(value)
-        if value is None:
-            return None
+    def _build_formatted_json(self, parsed):
+        """
+        Version formatée en fields, sans traitement métier.
+        On garde :
+        - les entités simples en champs
+        - les line_item en tableau d'objets
+        - les vat en tableau d'objets
+        """
+        result = {}
+        line_items = []
+        vat_items = []
 
-        if not isinstance(value, str):
-            return str(value)
-
-        raw = value.strip()
-
-        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
-            try:
-                dt = datetime.strptime(raw, fmt)
-                return dt.strftime("%Y-%m-%d")
-            except Exception:
-                pass
-
-        match = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})$", raw)
-        if match:
-            y, m, d = match.groups()
-            return f"{int(y):04d}-{int(m):02d}-{int(d):02d}"
-
-        return value
-
-    def _docai_normalize_percent(self, value):
-        value = self._docai_clean_text(value)
-        if value is None:
-            return None
-
-        if not isinstance(value, str):
-            return str(value)
-
-        cleaned = value.replace("%", "").strip().replace(",", ".")
-        try:
-            num = float(cleaned)
-            return f"{num:.6f}".rstrip("0").rstrip(".")
-        except Exception:
-            return value
-
-    def _docai_postprocess_simplified_json(self, simplified):
-        amount_fields = [
-            "amount_due",
-            "amount_paid_since_last_invoice",
-            "currency_exchange_rate",
-            "freight_amount",
-            "net_amount",
-            "total_amount",
-            "total_tax_amount",
-        ]
-
-        date_fields = [
-            "delivery_date",
-            "due_date",
-            "invoice_date",
-        ]
-
-        for field_name in amount_fields:
-            simplified[field_name] = self._docai_normalize_amount(simplified.get(field_name))
-
-        for field_name in date_fields:
-            simplified[field_name] = self._docai_normalize_date(simplified.get(field_name))
-
-        for line in simplified.get("line_items", []):
-            line["amount"] = self._docai_normalize_amount(line.get("amount"))
-            line["quantity"] = self._docai_normalize_amount(line.get("quantity"))
-            line["unit_price"] = self._docai_normalize_amount(line.get("unit_price"))
-
-        for vat_line in simplified.get("vat", []):
-            vat_line["amount"] = self._docai_normalize_amount(vat_line.get("amount"))
-            vat_line["tax_amount"] = self._docai_normalize_amount(vat_line.get("tax_amount"))
-            vat_line["tax_rate"] = self._docai_normalize_percent(vat_line.get("tax_rate"))
-
-        return simplified
-
-    # -------------------------------------------------------------------------
-    # JSON SIMPLIFIE
-    # -------------------------------------------------------------------------
-    def _build_simplified_json(self, parsed):
-        """Transforme le JSON DocAI brut en JSON simplifié structuré."""
-        entities = parsed.get("entities", []) or []
-
-        simplified = {
-            "amount_due": self._docai_first_value(parsed, "amount_due"),
-            "amount_paid_since_last_invoice": self._docai_first_value(parsed, "amount_paid_since_last_invoice"),
-            "carrier": self._docai_first_value(parsed, "carrier"),
-            "currency": self._docai_first_value(parsed, "currency"),
-            "currency_exchange_rate": self._docai_first_value(parsed, "currency_exchange_rate"),
-            "customer_tax_id": self._docai_first_value(parsed, "customer_tax_id"),
-            "delivery_date": self._docai_first_value(parsed, "delivery_date"),
-            "due_date": self._docai_first_value(parsed, "due_date"),
-            "freight_amount": self._docai_first_value(parsed, "freight_amount"),
-            "invoice_date": self._docai_first_value(parsed, "invoice_date"),
-            "invoice_id": self._docai_first_value(parsed, "invoice_id"),
-            "net_amount": self._docai_first_value(parsed, "net_amount"),
-            "payment_terms": self._docai_first_value(parsed, "payment_terms"),
-            "purchase_order": self._docai_first_value(parsed, "purchase_order"),
-            "receiver_address": self._docai_first_value(parsed, "receiver_address"),
-            "receiver_email": self._docai_first_value(parsed, "receiver_email"),
-            "receiver_name": self._docai_first_value(parsed, "receiver_name"),
-            "receiver_phone": self._docai_first_value(parsed, "receiver_phone"),
-            "receiver_tax_id": self._docai_first_value(parsed, "receiver_tax_id"),
-            "receiver_website": self._docai_first_value(parsed, "receiver_website"),
-            "remit_to_address": self._docai_first_value(parsed, "remit_to_address"),
-            "remit_to_name": self._docai_first_value(parsed, "remit_to_name"),
-            "ship_from_address": self._docai_first_value(parsed, "ship_from_address"),
-            "ship_from_name": self._docai_first_value(parsed, "ship_from_name"),
-            "ship_to_address": self._docai_first_value(parsed, "ship_to_address"),
-            "ship_to_name": self._docai_first_value(parsed, "ship_to_name"),
-            "supplier_address": self._docai_first_value(parsed, "supplier_address"),
-            "supplier_email": self._docai_first_value(parsed, "supplier_email"),
-            "supplier_iban": self._docai_first_value(parsed, "supplier_iban"),
-            "supplier_name": self._docai_first_value(parsed, "supplier_name"),
-            "supplier_payment_ref": self._docai_first_value(parsed, "supplier_payment_ref"),
-            "supplier_phone": self._docai_first_value(parsed, "supplier_phone"),
-            "supplier_registration": self._docai_first_value(parsed, "supplier_registration"),
-            "supplier_tax_id": self._docai_first_value(parsed, "supplier_tax_id"),
-            "supplier_website": self._docai_first_value(parsed, "supplier_website"),
-            "total_amount": self._docai_first_value(parsed, "total_amount"),
-            "total_tax_amount": self._docai_first_value(parsed, "total_tax_amount"),
-            "line_items": [],
-            "vat": [],
-        }
-
-        # line_items
-        for entity in entities:
-            if entity.get("type") != "line_item":
-                continue
-
+        for entity in parsed.get("entities", []):
+            entity_type = entity.get("type")
             props = entity.get("properties", []) or []
 
-            line = {
-                "description": self._docai_get_prop_value(props, "description"),
-                "amount": self._docai_get_prop_value(props, "amount"),
-                "product_code": self._docai_get_prop_value(props, "product_code"),
-                "purchase_order": self._docai_get_prop_value(props, "purchase_order"),
-                "quantity": self._docai_get_prop_value(props, "quantity"),
-                "unit": self._docai_get_prop_value(props, "unit"),
-                "unit_price": self._docai_get_prop_value(props, "unit_price"),
-            }
+            # Cas line_item
+            if entity_type == "line_item":
+                item = self._docai_format_properties(props)
 
-            if any(v not in (None, "", "--") for v in line.values()):
-                simplified["line_items"].append(line)
-
-        # TVA
-        for entity in entities:
-            if entity.get("type") != "vat":
+                # on garde aussi la ligne brute si utile
+                item["_mentionText"] = entity.get("mentionText")
+                line_items.append(item)
                 continue
 
-            props = entity.get("properties", []) or []
+            # Cas vat
+            if entity_type == "vat":
+                vat = self._docai_format_properties(props)
+                vat["_mentionText"] = entity.get("mentionText")
+                vat_items.append(vat)
+                continue
 
-            vat_line = {
-                "amount": self._docai_get_prop_value(props, "amount"),
-                "category_code": self._docai_get_prop_value(props, "category_code"),
-                "tax_amount": self._docai_get_prop_value(props, "tax_amount"),
-                "tax_rate": self._docai_get_prop_value(props, "tax_rate"),
-            }
+            # Cas entité simple
+            value = self._docai_entity_to_field_value(entity)
 
-            if any(v not in (None, "", "--") for v in vat_line.values()):
-                simplified["vat"].append(vat_line)
+            if entity_type in result:
+                if not isinstance(result[entity_type], list):
+                    result[entity_type] = [result[entity_type]]
+                result[entity_type].append(value)
+            else:
+                result[entity_type] = value
 
-        simplified = self._docai_postprocess_simplified_json(simplified)
-        return simplified
+        result["line_items"] = line_items
+        result["vat"] = vat_items
+
+        return result
 
     # -------------------------------------------------------------------------
     # ESSAI AVEC UN PROCESSOR DONNE
@@ -325,8 +175,9 @@ class AccountMove(models.Model):
                 _logger.warning(f"[DocAI] {label} → aucune entité détectée")
                 return None, None
 
-            minimal = self._build_simplified_json(parsed)
-            return raw_json, json.dumps(minimal, indent=2, ensure_ascii=False)
+            formatted = self._build_formatted_json(parsed)
+
+            return raw_json, json.dumps(formatted, indent=2, ensure_ascii=False)
 
         except Exception as e:
             _logger.warning(f"[DocAI] {label} → erreur lors de l’analyse : {e}")
@@ -346,7 +197,8 @@ class AccountMove(models.Model):
         if not all([project_id, location, key_path, invoice_processor, expense_processor]):
             raise UserError(_("Configuration Document AI incomplète."))
 
-        raw_json, minimal = self._try_processor(
+        # 1. Facture
+        raw_json, formatted = self._try_processor(
             pdf_content=pdf_content,
             processor_id=invoice_processor,
             label="Facture",
@@ -355,9 +207,10 @@ class AccountMove(models.Model):
             key_path=key_path,
         )
         if raw_json:
-            return raw_json, minimal, "Facture"
+            return raw_json, formatted, "Facture"
 
-        raw_json, minimal = self._try_processor(
+        # 2. Ticket de caisse
+        raw_json, formatted = self._try_processor(
             pdf_content=pdf_content,
             processor_id=expense_processor,
             label="Ticket de caisse",
@@ -366,7 +219,7 @@ class AccountMove(models.Model):
             key_path=key_path,
         )
         if raw_json:
-            return raw_json, minimal, "Ticket de caisse"
+            return raw_json, formatted, "Ticket de caisse"
 
         return None, None, None
 
@@ -395,7 +248,7 @@ class AccountMove(models.Model):
                     _logger.warning(f"[DocAI] PDF vide ou illisible pour {move.name or move.id}")
                     continue
 
-                raw_json, minimal, label = move.analyze_with_fallback(pdf_content)
+                raw_json, formatted, label = move.analyze_with_fallback(pdf_content)
                 if not raw_json:
                     _logger.warning(f"[DocAI] Aucun résultat pour {move.name or move.id}")
                     continue
@@ -406,7 +259,7 @@ class AccountMove(models.Model):
                     vals["docai_json_raw"] = raw_json
 
                 if not move.docai_json or force:
-                    vals["docai_json"] = minimal
+                    vals["docai_json"] = formatted
 
                 move.write(vals)
                 _logger.info(f"✅ {label} {move.name or move.id} analysé et sauvegardé par DocAI")
@@ -466,9 +319,6 @@ class AccountMove(models.Model):
         }
 
 
-# -------------------------------------------------------------------------
-# CONTROLLER TELECHARGEMENT JSON
-# -------------------------------------------------------------------------
 class DocaiDownloadController(http.Controller):
 
     @http.route('/docai/download/<int:move_id>/<string:kind>', type='http', auth='user')
