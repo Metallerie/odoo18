@@ -440,32 +440,51 @@ class AccountMove(models.Model):
                     )
                     return product
 
-        # 3) Recherche par nom restreinte au fournisseur via supplierinfo
-        if partner and name and not self._looks_numeric_only(name):
-            sis = SupplierInfo.search([
-                ("partner_id", "=", partner.id),
-                "|",
-                ("product_name", "ilike", name),
-                ("product_tmpl_id.name", "ilike", name),
-            ], limit=5)
-            if sis:
-                product = sis[0].product_tmpl_id.product_variant_id
-                if product:
-                    _logger.info(
-                        "✅ Produit trouvé via supplierinfo(partner) nom='%s' -> %s",
-                        name, product.display_name,
-                    )
-                    return product
-
-        # 4) Recherche globale prudente par nom
+        # 3) Recherche aller simple par nom
         if name and not self._looks_numeric_only(name):
-            product = Product.search([("name", "ilike", name)], limit=1)
+            product = Product.search([
+                ("name", "ilike", name)
+            ], limit=1)
             if product:
                 _logger.info(
-                    "✅ Produit trouvé via nom ilike '%s' -> %s",
+                    "✅ Produit trouvé via nom '%s' -> %s",
                     name, product.display_name,
                 )
                 return product
+
+        # 4) Recherche retour : on regarde si un produit fournisseur apparaît dans le JSON
+        if partner:
+            supplier_products = Product.search([
+                ("seller_ids.partner_id", "=", partner.id)
+            ])
+
+            full_text_parts = [
+                str(name or ""),
+                str(raw_code or ""),
+                str(pmap.get("description") or ""),
+                str(pmap.get("reference") or ""),
+                str(pmap.get("product_code") or ""),
+                str(pmap.get("item_code") or ""),
+            ]
+            full_text = " ".join(full_text_parts).lower()
+
+            for prod in supplier_products:
+                code = str(prod.default_code or "").strip().lower()
+                prod_name = str(prod.name or "").strip().lower()
+
+                if code and code in full_text:
+                    _logger.info(
+                        "✅ Produit trouvé via recherche retour code='%s' -> %s",
+                        code, prod.display_name,
+                    )
+                    return prod
+
+                if prod_name and prod_name in full_text:
+                    _logger.info(
+                        "✅ Produit trouvé via recherche retour nom='%s' -> %s",
+                        prod_name, prod.display_name,
+                    )
+                    return prod
 
         # 5) Création automatique d'un produit à valider
         try:
