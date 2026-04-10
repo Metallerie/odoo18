@@ -24,6 +24,75 @@ class AccountMove(models.Model):
     docai_analyzed = fields.Boolean("Analysée par DocAI", default=False, readonly=True)
 
     # -------------------------------------------------------------------------
+    # MODELE DE SORTIE STABLE
+    # -------------------------------------------------------------------------
+    def _docai_empty_formatted_json(self):
+        """Structure stable du JSON formaté."""
+        return {
+            "amount_due": None,
+            "amount_paid_since_last_invoice": None,
+            "carrier": None,
+            "currency": None,
+            "currency_exchange_rate": None,
+            "customer_tax_id": None,
+            "delivery_date": None,
+            "due_date": None,
+            "freight_amount": None,
+            "invoice_date": None,
+            "invoice_id": None,
+            "invoice_type": None,
+            "net_amount": None,
+            "payment_terms": None,
+            "purchase_order": None,
+            "receiver_address": None,
+            "receiver_email": None,
+            "receiver_name": None,
+            "receiver_phone": None,
+            "receiver_tax_id": None,
+            "receiver_website": None,
+            "remit_to_address": None,
+            "remit_to_name": None,
+            "ship_from_address": None,
+            "ship_from_name": None,
+            "ship_to_address": None,
+            "ship_to_name": None,
+            "supplier_address": None,
+            "supplier_email": None,
+            "supplier_iban": None,
+            "supplier_name": None,
+            "supplier_payment_ref": None,
+            "supplier_phone": None,
+            "supplier_registration": None,
+            "supplier_tax_id": None,
+            "supplier_website": None,
+            "total_amount": None,
+            "total_tax_amount": None,
+            "line_items": [],
+            "vat": [],
+        }
+
+    def _docai_empty_line_item(self):
+        return {
+            "description": None,
+            "amount": None,
+            "product_code": None,
+            "purchase_order": None,
+            "quantity": None,
+            "unit": None,
+            "unit_price": None,
+            "_mentionText": None,
+        }
+
+    def _docai_empty_vat_item(self):
+        return {
+            "amount": None,
+            "category_code": None,
+            "tax_amount": None,
+            "tax_rate": None,
+            "_mentionText": None,
+        }
+
+    # -------------------------------------------------------------------------
     # OUTILS
     # -------------------------------------------------------------------------
     def _docai_entity_to_field_value(self, entity):
@@ -68,69 +137,79 @@ class AccountMove(models.Model):
 
         return None
 
-    def _docai_format_properties(self, props):
-        """
-        Transforme les properties d'une entité en dict lisible.
-        Exemple :
-        - line_item/product_code -> product_code
-        - line_item/description  -> description
-        - vat/tax_rate           -> tax_rate
-        """
-        result = {}
+    def _docai_field_name(self, entity_type):
+        """Nettoie un type DocAI pour en faire un nom de champ simple."""
+        if not entity_type:
+            return None
+        return entity_type.split("/")[-1]
 
+    def _docai_format_properties_into(self, target, props):
+        """
+        Remplit un dict cible avec les properties DocAI.
+        Exemple :
+        line_item/product_code -> product_code
+        vat/tax_rate -> tax_rate
+        """
         for prop in props or []:
             prop_type = prop.get("type") or ""
-            key = prop_type.split("/")[-1] if "/" in prop_type else prop_type
+            key = self._docai_field_name(prop_type)
             value = self._docai_entity_to_field_value(prop)
 
-            if key in result:
-                if not isinstance(result[key], list):
-                    result[key] = [result[key]]
-                result[key].append(value)
-            else:
-                result[key] = value
+            if not key:
+                continue
 
-        return result
+            if key in target:
+                if target[key] is None:
+                    target[key] = value
+                else:
+                    if not isinstance(target[key], list):
+                        target[key] = [target[key]]
+                    target[key].append(value)
 
     def _build_formatted_json(self, parsed):
         """
-        Version formatée en fields, sans traitement métier.
-        On garde :
-        - les entités simples en champs
-        - les line_item en tableau d'objets
-        - les vat en tableau d'objets
+        Version formatée en fields avec structure stable.
+        Tous les champs attendus existent, même absents dans DocAI.
         """
-        result = {}
-        line_items = []
-        vat_items = []
+        result = self._docai_empty_formatted_json()
 
         for entity in parsed.get("entities", []):
             entity_type = entity.get("type")
             props = entity.get("properties", []) or []
 
+            # line items
             if entity_type == "line_item":
-                item = self._docai_format_properties(props)
+                item = self._docai_empty_line_item()
+                self._docai_format_properties_into(item, props)
                 item["_mentionText"] = entity.get("mentionText")
-                line_items.append(item)
+                result["line_items"].append(item)
                 continue
 
+            # TVA
             if entity_type == "vat":
-                vat = self._docai_format_properties(props)
+                vat = self._docai_empty_vat_item()
+                self._docai_format_properties_into(vat, props)
                 vat["_mentionText"] = entity.get("mentionText")
-                vat_items.append(vat)
+                result["vat"].append(vat)
                 continue
 
+            # Entités simples
+            key = self._docai_field_name(entity_type)
             value = self._docai_entity_to_field_value(entity)
 
-            if entity_type in result:
-                if not isinstance(result[entity_type], list):
-                    result[entity_type] = [result[entity_type]]
-                result[entity_type].append(value)
-            else:
-                result[entity_type] = value
+            if not key:
+                continue
 
-        result["line_items"] = line_items
-        result["vat"] = vat_items
+            if key in result:
+                if result[key] is None:
+                    result[key] = value
+                else:
+                    if not isinstance(result[key], list):
+                        result[key] = [result[key]]
+                    result[key].append(value)
+            else:
+                # garde aussi les champs imprévus de DocAI
+                result[key] = value
 
         return result
 
