@@ -80,9 +80,24 @@ class AccountMove(models.Model):
         return self._docai_entity_value(self._docai_find_first(parsed, entity_type))
 
     def _docai_get_prop_value(self, props, prop_type):
+        """
+        Retourne la valeur d'une propriété DocAI.
+        Accepte par exemple :
+        - description
+        - line_item/description
+        - vat/tax_rate
+        """
+        expected_types = {
+            prop_type,
+            f"line_item/{prop_type}",
+            f"vat/{prop_type}",
+        }
+
         for prop in props:
-            if prop.get("type") == prop_type:
+            current_type = prop.get("type")
+            if current_type in expected_types:
                 return self._docai_entity_value(prop)
+
         return None
 
     def _docai_normalize_amount(self, value):
@@ -154,21 +169,6 @@ class AccountMove(models.Model):
             return f"{num:.6f}".rstrip("0").rstrip(".")
         except Exception:
             return value
-
-    def _docai_make_group_key(self, entity):
-        """
-        Clé de regroupement pour les entités imbriquées.
-        On essaye d'abord l'ancre parentale, sinon pageAnchor/textAnchor.
-        """
-        parent_id = entity.get("id")
-        if parent_id:
-            return f"id:{parent_id}"
-
-        page_anchor = json.dumps(entity.get("pageAnchor", {}), sort_keys=True, ensure_ascii=False)
-        text_anchor = json.dumps(entity.get("textAnchor", {}), sort_keys=True, ensure_ascii=False)
-        provenance = json.dumps(entity.get("provenance", {}), sort_keys=True, ensure_ascii=False)
-
-        return f"{page_anchor}|{text_anchor}|{provenance}"
 
     def _docai_postprocess_simplified_json(self, simplified):
         amount_fields = [
@@ -254,9 +254,7 @@ class AccountMove(models.Model):
             "vat": [],
         }
 
-        # -----------------------------------------------------------------
-        # 1) Méthode standard : line_item avec properties
-        # -----------------------------------------------------------------
+        # line_items
         for entity in entities:
             if entity.get("type") != "line_item":
                 continue
@@ -276,41 +274,7 @@ class AccountMove(models.Model):
             if any(v not in (None, "", "--") for v in line.values()):
                 simplified["line_items"].append(line)
 
-        # -----------------------------------------------------------------
-        # 2) Méthode secours : entités line_item/xxx regroupées
-        # -----------------------------------------------------------------
-        if not simplified["line_items"]:
-            grouped = {}
-
-            for entity in entities:
-                entity_type = entity.get("type") or ""
-                if not entity_type.startswith("line_item/"):
-                    continue
-
-                field_name = entity_type.split("/", 1)[1]
-                group_key = self._docai_make_group_key(entity)
-
-                if group_key not in grouped:
-                    grouped[group_key] = {
-                        "description": None,
-                        "amount": None,
-                        "product_code": None,
-                        "purchase_order": None,
-                        "quantity": None,
-                        "unit": None,
-                        "unit_price": None,
-                    }
-
-                if field_name in grouped[group_key]:
-                    grouped[group_key][field_name] = self._docai_entity_value(entity)
-
-            for _, line in grouped.items():
-                if any(v not in (None, "", "--") for v in line.values()):
-                    simplified["line_items"].append(line)
-
-        # -----------------------------------------------------------------
-        # 3) TVA standard : vat avec properties
-        # -----------------------------------------------------------------
+        # TVA
         for entity in entities:
             if entity.get("type") != "vat":
                 continue
@@ -326,35 +290,6 @@ class AccountMove(models.Model):
 
             if any(v not in (None, "", "--") for v in vat_line.values()):
                 simplified["vat"].append(vat_line)
-
-        # -----------------------------------------------------------------
-        # 4) TVA secours : entités vat/xxx regroupées
-        # -----------------------------------------------------------------
-        if not simplified["vat"]:
-            grouped_vat = {}
-
-            for entity in entities:
-                entity_type = entity.get("type") or ""
-                if not entity_type.startswith("vat/"):
-                    continue
-
-                field_name = entity_type.split("/", 1)[1]
-                group_key = self._docai_make_group_key(entity)
-
-                if group_key not in grouped_vat:
-                    grouped_vat[group_key] = {
-                        "amount": None,
-                        "category_code": None,
-                        "tax_amount": None,
-                        "tax_rate": None,
-                    }
-
-                if field_name in grouped_vat[group_key]:
-                    grouped_vat[group_key][field_name] = self._docai_entity_value(entity)
-
-            for _, vat_line in grouped_vat.items():
-                if any(v not in (None, "", "--") for v in vat_line.values()):
-                    simplified["vat"].append(vat_line)
 
         simplified = self._docai_postprocess_simplified_json(simplified)
         return simplified
@@ -389,15 +324,6 @@ class AccountMove(models.Model):
             if not parsed.get("entities"):
                 _logger.warning(f"[DocAI] {label} → aucune entité détectée")
                 return None, None
-
-            # Debug temporaire utile
-            for entity in parsed.get("entities", []):
-                _logger.info(
-                    "[DocAI] ENTITY type=%s mention=%s props=%s",
-                    entity.get("type"),
-                    entity.get("mentionText"),
-                    [p.get("type") for p in (entity.get("properties", []) or [])]
-                )
 
             minimal = self._build_simplified_json(parsed)
             return raw_json, json.dumps(minimal, indent=2, ensure_ascii=False)
