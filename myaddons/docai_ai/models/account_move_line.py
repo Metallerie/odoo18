@@ -46,6 +46,7 @@ class AccountMove(models.Model):
                 or item.get("label")
                 or ""
             ).strip(),
+            "mention_text": (item.get("_mentionText") or "").strip(),
             "quantity": item.get("quantity") or 0,
             "unit_price": item.get("unit_price") or 0,
             "amount": item.get("amount") or item.get("total") or 0,
@@ -74,14 +75,29 @@ class AccountMove(models.Model):
 
         product = Product.search([("default_code", "=", product_code)], limit=1)
         if product:
+            _logger.info(
+                "[DocAI] Produit trouvé par référence exacte pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         product = Product.search([("barcode", "=", product_code)], limit=1)
         if product:
+            _logger.info(
+                "[DocAI] Produit trouvé par barcode exact pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         product = Product.search([("default_code", "ilike", product_code)], limit=1)
         if product:
+            _logger.info(
+                "[DocAI] Produit trouvé par référence approchée pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         return False
@@ -94,8 +110,40 @@ class AccountMove(models.Model):
         if not description:
             return False
 
+        # 1. Nom exact
+        product = Product.search([("name", "=", description)], limit=1)
+        if product:
+            _logger.info(
+                "[DocAI] Produit trouvé par nom exact pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
+            return product
+
+        # 2. Nom exact normalisé
+        normalized_description = self._docai_normalize_text(description)
+        products = Product.search([("active", "=", True)])
+
+        for prod in products:
+            if self._docai_normalize_text(prod.name or "") == normalized_description:
+                _logger.info(
+                    "[DocAI] Produit trouvé par nom normalisé pour move %s : %s",
+                    self.id,
+                    prod.display_name,
+                )
+                return prod
+
+        # 3. Recherche approchée
         product = Product.search([("name", "ilike", description)], limit=1)
-        return product or False
+        if product:
+            _logger.info(
+                "[DocAI] Produit trouvé par nom approché pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
+            return product
+
+        return False
 
     def _docai_find_product_by_reverse_search(self, item_vals):
         self.ensure_one()
@@ -127,9 +175,21 @@ class AccountMove(models.Model):
                 partial_matches.append(product)
 
         if exact_matches:
+            if len(exact_matches) > 1:
+                _logger.warning(
+                    "[DocAI] Plusieurs produits trouvés en recherche inverse exacte pour move %s : %s",
+                    self.id,
+                    ", ".join(exact_matches.mapped("display_name")),
+                )
             return exact_matches[0]
 
         if partial_matches:
+            if len(partial_matches) > 1:
+                _logger.warning(
+                    "[DocAI] Plusieurs produits trouvés en recherche inverse partielle pour move %s : %s",
+                    self.id,
+                    ", ".join(partial_matches.mapped("display_name")),
+                )
             return partial_matches[0]
 
         return False
@@ -140,11 +200,14 @@ class AccountMove(models.Model):
         item_vals = self._docai_get_item_values(item)
         product = False
 
+        # 1. Référence
         product = self._docai_find_product_by_reference(item_vals)
 
+        # 2. Désignation
         if not product:
             product = self._docai_find_product_by_name(item_vals)
 
+        # 3. Inverse
         if not product:
             product = self._docai_find_product_by_reverse_search(item_vals)
 
@@ -228,7 +291,7 @@ class AccountMove(models.Model):
             "categ_id": category.id,
             "purchase_ok": True,
             "sale_ok": False,
-            "description_purchase": "Produit créé automatiquement par DocAI - à vérifier et valider",
+            "description_purchase": "Produit vient d'etre créé",
         }
 
         product = Product.create(vals)
