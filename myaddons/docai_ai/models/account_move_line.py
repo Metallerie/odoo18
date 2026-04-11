@@ -46,7 +46,6 @@ class AccountMove(models.Model):
         - "29,00"
         - ["29,00", "34,80"]
         - 34.80
-        Retourne la valeur la plus exploitable.
         """
         if value in (False, None, ""):
             return 0.0
@@ -63,11 +62,8 @@ class AccountMove(models.Model):
                 f = self._docai_to_float(v, default=0.0)
                 if f > 0:
                     amounts.append(f)
-
             if not amounts:
                 return 0.0
-
-            # on prend la plus grande valeur, souvent le TTC ou le montant final
             return max(amounts)
 
         return 0.0
@@ -107,17 +103,29 @@ class AccountMove(models.Model):
 
         product = Product.search([("default_code", "=", product_code)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par référence exacte pour move %s : %s", self.id, product.display_name)
+            _logger.info(
+                "[DocAI] Produit trouvé par référence exacte pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         product = Product.search([("barcode", "=", product_code)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par barcode exact pour move %s : %s", self.id, product.display_name)
+            _logger.info(
+                "[DocAI] Produit trouvé par barcode exact pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         product = Product.search([("default_code", "ilike", product_code)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par référence approchée pour move %s : %s", self.id, product.display_name)
+            _logger.info(
+                "[DocAI] Produit trouvé par référence approchée pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         return False
@@ -132,7 +140,11 @@ class AccountMove(models.Model):
 
         product = Product.search([("name", "=", description)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par nom exact pour move %s : %s", self.id, product.display_name)
+            _logger.info(
+                "[DocAI] Produit trouvé par nom exact pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         normalized_description = self._docai_normalize_text(description)
@@ -140,12 +152,20 @@ class AccountMove(models.Model):
 
         for prod in products:
             if self._docai_normalize_text(prod.name or "") == normalized_description:
-                _logger.info("[DocAI] Produit trouvé par nom normalisé pour move %s : %s", self.id, prod.display_name)
+                _logger.info(
+                    "[DocAI] Produit trouvé par nom normalisé pour move %s : %s",
+                    self.id,
+                    prod.display_name,
+                )
                 return prod
 
         product = Product.search([("name", "ilike", description)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par nom approché pour move %s : %s", self.id, product.display_name)
+            _logger.info(
+                "[DocAI] Produit trouvé par nom approché pour move %s : %s",
+                self.id,
+                product.display_name,
+            )
             return product
 
         return False
@@ -216,6 +236,54 @@ class AccountMove(models.Model):
         return product, item_vals
 
     # -------------------------------------------------------------------------
+    # PRIX FOURNISSEUR
+    # -------------------------------------------------------------------------
+    def _docai_is_exact_product_name_match(self, product, item_vals):
+        self.ensure_one()
+
+        if not product:
+            return False
+
+        description = (item_vals.get("description") or "").strip()
+        if not description:
+            return False
+
+        return (product.name or "").strip() == description
+
+    def _docai_get_last_supplier_price(self, product):
+        self.ensure_one()
+
+        if not product or not self.partner_id:
+            return 0.0
+
+        SupplierInfo = self.env["product.supplierinfo"].sudo()
+
+        supplierinfo = SupplierInfo.search([
+            ("partner_id", "=", self.partner_id.id),
+            ("product_tmpl_id", "=", product.product_tmpl_id.id),
+            ("product_id", "=", product.id),
+            ("company_id", "in", [False, self.company_id.id]),
+        ], order="id desc", limit=1)
+
+        if supplierinfo and supplierinfo.price:
+            _logger.info(
+                "[DocAI] Dernier prix fournisseur trouvé pour move %s | product=%s | partner=%s | price=%s",
+                self.id,
+                product.display_name,
+                self.partner_id.display_name,
+                supplierinfo.price,
+            )
+            return supplierinfo.price
+
+        _logger.info(
+            "[DocAI] Aucun dernier prix fournisseur trouvé pour move %s | product=%s | partner=%s",
+            self.id,
+            product.display_name,
+            self.partner_id.display_name if self.partner_id else None,
+        )
+        return 0.0
+
+    # -------------------------------------------------------------------------
     # CATEGORIE / CREATION PRODUIT
     # -------------------------------------------------------------------------
     def _docai_get_or_create_unvalidated_category(self):
@@ -282,7 +350,11 @@ class AccountMove(models.Model):
             ], limit=1)
 
         if existing:
-            _logger.info("[DocAI] Produit non validé déjà existant pour move %s : %s", self.id, existing.display_name)
+            _logger.info(
+                "[DocAI] Produit non validé déjà existant pour move %s : %s",
+                self.id,
+                existing.display_name,
+            )
             return existing
 
         vals = {
@@ -296,7 +368,11 @@ class AccountMove(models.Model):
 
         product = Product.create(vals)
 
-        _logger.warning("[DocAI] Produit créé dans DocAI / Non validés pour move %s : %s", self.id, product.display_name)
+        _logger.warning(
+            "[DocAI] Produit créé dans DocAI / Non validés pour move %s : %s",
+            self.id,
+            product.display_name,
+        )
 
         return product
 
@@ -313,15 +389,15 @@ class AccountMove(models.Model):
         unit_price = self._docai_to_float(item_vals.get("unit_price"), default=0.0)
         amount = self._docai_extract_best_amount(item_vals.get("amount"))
 
-        # règle validée :
-        # - quantité par défaut = 1
-        # - si pas de PU mais montant dispo, on prend le montant
-        # - sinon si qty > 0, on calcule à partir du montant
+        # Si nom exact = on prend le dernier prix fournisseur
+        if self._docai_is_exact_product_name_match(product, item_vals):
+            last_supplier_price = self._docai_get_last_supplier_price(product)
+            if last_supplier_price > 0:
+                unit_price = last_supplier_price
+
+        # Fallback DocAI
         if unit_price <= 0 and amount > 0:
-            if qty > 0:
-                unit_price = amount / qty
-            else:
-                unit_price = amount
+            unit_price = amount / qty if qty > 0 else amount
 
         name = item_vals.get("description") or product.display_name
 
