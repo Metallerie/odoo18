@@ -228,6 +228,7 @@ class AccountMove(models.Model):
             "categ_id": category.id,
             "purchase_ok": True,
             "sale_ok": False,
+            "description_purchase": "Produit créé automatiquement par DocAI - à vérifier et valider",
         }
 
         product = Product.create(vals)
