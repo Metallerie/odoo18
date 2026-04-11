@@ -73,22 +73,19 @@ class AccountMove(models.Model):
             return ""
         return re.sub(r"\D", "", str(value))
 
+    def _normalize_company_registry(self, value):
+        return self._clean_digits_only(value)
+
     def _normalize_search_text(self, value):
         if not value:
             return ""
 
         value = str(value).lower().strip()
 
-        for char in [
-            '"', "'", "\n", "\r", "\t", ",", ";", ":", ".", "(", ")",
-            "-", "_", "/", "\\", "[", "]", "{", "}"
-        ]:
+        for char in ['"', "'", "\n", "\r", "\t", ",", ";", ":", ".", "(", ")", "-", "_", "/", "\\", "[", "]", "{", "}"]:
             value = value.replace(char, " ")
 
         return " ".join(value.split())
-
-    def _normalize_company_registry(self, value):
-        return self._clean_digits_only(value)
 
     def _is_placeholder_supplier_name(self, value):
         name = self._normalize_search_text(value)
@@ -171,7 +168,7 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     def _find_partner_from_docai_header(self, header_vals, data=None):
         self.ensure_one()
-        Partner = self.env["res.partner"].sudo()
+        Partner = self.env["res.partner"].sudo().with_context(active_test=False)
 
         supplier_name = (header_vals.get("supplier_name") or "").strip()
         supplier_vat = self._clean_vat_value(header_vals.get("supplier_vat"))
@@ -179,52 +176,53 @@ class AccountMove(models.Model):
 
         partner = False
 
-        _logger.info(
+        _logger.warning(
             "[DocAI] Recherche fournisseur move %s | supplier_name=%s | supplier_vat=%s | supplier_registry=%s",
             self.id, supplier_name, supplier_vat, supplier_registry
         )
 
         # -----------------------------------------------------------------
-        # 1) TVA exacte sur vat
+        # 1) TVA exacte
         # -----------------------------------------------------------------
         if supplier_vat and len(supplier_vat) >= 8:
             partners = Partner.search([("vat", "!=", False)])
-            partner = partners.filtered(
-                lambda p: self._clean_vat_value(p.commercial_partner_id.vat) == supplier_vat
-            )[:1]
-
-            if partner:
-                _logger.info(
-                    "[DocAI] Fournisseur trouvé par TVA pour move %s : %s",
-                    self.id,
-                    partner.display_name,
-                )
+            for p in partners:
+                partner_vat = self._clean_vat_value(p.commercial_partner_id.vat)
+                if partner_vat == supplier_vat:
+                    partner = p.commercial_partner_id or p
+                    _logger.warning(
+                        "[DocAI] Fournisseur trouvé par TVA pour move %s : %s",
+                        self.id,
+                        partner.display_name,
+                    )
+                    break
 
         # -----------------------------------------------------------------
-        # 2) SIRET/SIREN exact sur company_registry du commercial_partner_id
+        # 2) SIRET/SIREN exact
         # -----------------------------------------------------------------
         if not partner and supplier_registry:
-            partners = Partner.search([
-                "|",
-                ("company_registry", "!=", False),
-                ("commercial_partner_id.company_registry", "!=", False),
-            ])
+            partners = Partner.search([])
 
-            partner = partners.filtered(
-                lambda p: self._normalize_company_registry(
-                    p.commercial_partner_id.company_registry
-                ) == supplier_registry
-            )[:1]
+            for p in partners:
+                reg_self = self._normalize_company_registry(p.company_registry)
+                reg_commercial = self._normalize_company_registry(p.commercial_partner_id.company_registry)
+                reg_parent = self._normalize_company_registry(p.parent_id.company_registry)
 
-            if partner:
-                _logger.info(
-                    "[DocAI] Fournisseur trouvé par company_registry/commercial_partner_id pour move %s : %s",
-                    self.id,
-                    partner.display_name,
-                )
-            else:
+                if supplier_registry in (reg_self, reg_commercial, reg_parent):
+                    partner = p.commercial_partner_id or p
+                    _logger.warning(
+                        "[DocAI] Fournisseur trouvé par SIRET pour move %s : %s | self=%s | commercial=%s | parent=%s",
+                        self.id,
+                        partner.display_name,
+                        reg_self,
+                        reg_commercial,
+                        reg_parent,
+                    )
+                    break
+
+            if not partner:
                 _logger.warning(
-                    "[DocAI] Aucun match company_registry pour move %s | JSON=%s",
+                    "[DocAI] Aucun match SIRET pour move %s | recherché=%s",
                     self.id,
                     supplier_registry,
                 )
@@ -234,38 +232,37 @@ class AccountMove(models.Model):
         # -----------------------------------------------------------------
         if not partner and supplier_registry:
             partners = Partner.search([("vat", "!=", False)])
-            partner = partners.filtered(
-                lambda p: self._clean_digits_only(p.commercial_partner_id.vat) == supplier_registry
-            )[:1]
 
-            if partner:
-                _logger.info(
-                    "[DocAI] Fournisseur trouvé par SIRET/SIREN dans VAT pour move %s : %s",
-                    self.id,
-                    partner.display_name,
-                )
+            for p in partners:
+                vat_digits = self._clean_digits_only(p.commercial_partner_id.vat)
+                if vat_digits == supplier_registry:
+                    partner = p.commercial_partner_id or p
+                    _logger.warning(
+                        "[DocAI] Fournisseur trouvé par SIRET dans VAT pour move %s : %s",
+                        self.id,
+                        partner.display_name,
+                    )
+                    break
 
         # -----------------------------------------------------------------
         # 4) TVA rangée dans company_registry
         # -----------------------------------------------------------------
         if not partner and supplier_vat and len(supplier_vat) >= 8:
-            partners = Partner.search([
-                "|",
-                ("company_registry", "!=", False),
-                ("commercial_partner_id.company_registry", "!=", False),
-            ])
-            partner = partners.filtered(
-                lambda p: self._clean_vat_value(
-                    p.commercial_partner_id.company_registry
-                ) == supplier_vat
-            )[:1]
+            partners = Partner.search([])
 
-            if partner:
-                _logger.info(
-                    "[DocAI] Fournisseur trouvé par TVA dans company_registry pour move %s : %s",
-                    self.id,
-                    partner.display_name,
-                )
+            for p in partners:
+                reg_self = self._clean_vat_value(p.company_registry)
+                reg_commercial = self._clean_vat_value(p.commercial_partner_id.company_registry)
+                reg_parent = self._clean_vat_value(p.parent_id.company_registry)
+
+                if supplier_vat in (reg_self, reg_commercial, reg_parent):
+                    partner = p.commercial_partner_id or p
+                    _logger.warning(
+                        "[DocAI] Fournisseur trouvé par TVA dans company_registry pour move %s : %s",
+                        self.id,
+                        partner.display_name,
+                    )
+                    break
 
         # -----------------------------------------------------------------
         # 5) Recherche par nom direct
@@ -274,7 +271,8 @@ class AccountMove(models.Model):
             partner = Partner.search([("name", "ilike", supplier_name)], limit=1)
 
             if partner:
-                _logger.info(
+                partner = partner.commercial_partner_id or partner
+                _logger.warning(
                     "[DocAI] Fournisseur trouvé par nom direct pour move %s : %s",
                     self.id,
                     partner.display_name,
