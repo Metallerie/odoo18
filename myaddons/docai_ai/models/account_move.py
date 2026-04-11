@@ -168,6 +168,40 @@ class AccountMove(models.Model):
         return False
 
     # -------------------------------------------------------------------------
+    # FOURNISSEUR INCONNU / DIVERS
+    # -------------------------------------------------------------------------
+    def _get_unknown_supplier_partner(self):
+        self.ensure_one()
+        Partner = self.env["res.partner"].sudo()
+
+        partner = Partner.search([
+            ("name", "=", "Fournisseur inconnu")
+        ], limit=1)
+
+        if partner:
+            return partner
+
+        partner = Partner.search([
+            ("name", "=", "Divers")
+        ], limit=1)
+
+        if partner:
+            return partner
+
+        partner = Partner.create({
+            "name": "Fournisseur inconnu",
+            "supplier_rank": 1,
+            "company_type": "company",
+        })
+
+        _logger.warning(
+            "[DocAI] Création automatique du partenaire fournisseur par défaut : %s",
+            partner.display_name,
+        )
+
+        return partner
+
+    # -------------------------------------------------------------------------
     # RECHERCHE FOURNISSEUR
     # -------------------------------------------------------------------------
     def _find_partner_from_docai_header(self, header_vals, data=None):
@@ -187,7 +221,11 @@ class AccountMove(models.Model):
             )[:1]
 
             if partner:
-                _logger.info("[DocAI] Fournisseur trouvé par TVA pour move %s : %s", self.id, partner.display_name)
+                _logger.info(
+                    "[DocAI] Fournisseur trouvé par TVA pour move %s : %s",
+                    self.id,
+                    partner.display_name,
+                )
 
         if not partner and supplier_siret:
             partners = Partner.search([("company_registry", "!=", False)])
@@ -196,7 +234,11 @@ class AccountMove(models.Model):
             )[:1]
 
             if partner:
-                _logger.info("[DocAI] Fournisseur trouvé par company_registry pour move %s : %s", self.id, partner.display_name)
+                _logger.info(
+                    "[DocAI] Fournisseur trouvé par company_registry pour move %s : %s",
+                    self.id,
+                    partner.display_name,
+                )
 
         if not partner and supplier_siret:
             partners = Partner.search([("vat", "!=", False)])
@@ -205,25 +247,38 @@ class AccountMove(models.Model):
             )[:1]
 
             if partner:
-                _logger.info("[DocAI] Fournisseur trouvé par SIRET dans VAT pour move %s : %s", self.id, partner.display_name)
+                _logger.info(
+                    "[DocAI] Fournisseur trouvé par SIRET dans VAT pour move %s : %s",
+                    self.id,
+                    partner.display_name,
+                )
 
         if not partner and supplier_name:
             partner = Partner.search([("name", "ilike", supplier_name)], limit=1)
 
             if partner:
-                _logger.info("[DocAI] Fournisseur trouvé par nom direct pour move %s : %s", self.id, partner.display_name)
+                _logger.info(
+                    "[DocAI] Fournisseur trouvé par nom direct pour move %s : %s",
+                    self.id,
+                    partner.display_name,
+                )
 
         if not partner and data:
             partner = self._find_partner_by_reverse_search_in_docai_json(data)
 
             if partner:
-                _logger.info("[DocAI] Fournisseur trouvé par recherche inverse pour move %s : %s", self.id, partner.display_name)
+                _logger.info(
+                    "[DocAI] Fournisseur trouvé par recherche inverse pour move %s : %s",
+                    self.id,
+                    partner.display_name,
+                )
 
         if not partner:
             _logger.warning(
                 "[DocAI] Fournisseur non trouvé pour move %s | name=%s | vat=%s | siret=%s",
                 self.id, supplier_name, supplier_vat, supplier_siret,
             )
+            partner = self._get_unknown_supplier_partner()
 
         return partner
 
@@ -289,6 +344,8 @@ class AccountMove(models.Model):
         """
         Met à jour directement les champs trouvés dans docai_json,
         qu'ils soient vides ou déjà remplis.
+        Si aucun fournisseur n'est trouvé, affecte "Fournisseur inconnu"
+        ou "Divers".
         """
         for move in self:
             if move.move_type not in ("in_invoice", "in_refund"):
