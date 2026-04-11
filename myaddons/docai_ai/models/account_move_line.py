@@ -269,17 +269,33 @@ class AccountMove(models.Model):
     def _docai_prepare_note_line_vals(self, item_vals):
         self.ensure_one()
 
-        code = item_vals.get("product_code") or ""
-        description = item_vals.get("description") or "Produit non identifié"
-        qty = item_vals.get("quantity") or ""
-        unit_price = item_vals.get("unit_price") or ""
-        amount = item_vals.get("amount") or ""
+        code = (item_vals.get("product_code") or "").strip()
+        description = (item_vals.get("description") or "").strip()
+        qty = item_vals.get("quantity")
+        unit_price = item_vals.get("unit_price")
+        amount = item_vals.get("amount")
 
-        note = (
-            f"[DocAI - données incomplètes] "
-            f"Réf: {code} | Désignation: {description} | "
-            f"Qté: {qty} | PU: {unit_price} | Montant: {amount}"
-        )
+        parts = []
+
+        if code:
+            parts.append(code)
+
+        if description:
+            parts.append(description)
+
+        if qty not in (False, None, "", 0):
+            parts.append(f"Qté: {qty}")
+
+        if unit_price not in (False, None, "", 0):
+            parts.append(f"PU: {unit_price}")
+
+        if amount not in (False, None, "", 0):
+            parts.append(f"Montant: {amount}")
+
+        note = " | ".join(parts)
+
+        if not note:
+            note = "Ligne DocAI non interprétée"
 
         return {
             "move_id": self.id,
@@ -314,9 +330,8 @@ class AccountMove(models.Model):
         for item in line_items:
             product, item_vals = self._docai_find_product_from_item(item)
 
-            if not product:
-                if self._docai_item_has_minimum_data_for_product_creation(item_vals):
-                    product = self._docai_create_unvalidated_product(item_vals)
+            if not product and self._docai_item_has_minimum_data_for_product_creation(item_vals):
+                product = self._docai_create_unvalidated_product(item_vals)
 
             if product:
                 vals = self._docai_prepare_invoice_line_vals(product, item_vals)
