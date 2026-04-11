@@ -91,7 +91,7 @@ class AccountMove(models.Model):
         }
 
     # -------------------------------------------------------------------------
-    # RECHERCHE PRODUIT
+    # RECHERCHE PRODUIT : REFERENCE / NOM / INVERSE
     # -------------------------------------------------------------------------
     def _docai_find_product_by_reference(self, item_vals):
         self.ensure_one()
@@ -219,6 +219,100 @@ class AccountMove(models.Model):
 
         return False
 
+    # -------------------------------------------------------------------------
+    # RECHERCHE PRODUIT : CONTEXTE FOURNISSEUR PAR PRIX
+    # -------------------------------------------------------------------------
+    def _docai_find_product_from_supplier_context(self, item_vals):
+        """
+        Utilisé seulement si description et product_code sont vides.
+        On cherche dans les supplierinfo du fournisseur courant avec le prix.
+        """
+        self.ensure_one()
+
+        if not self.partner_id:
+            return False
+
+        SupplierInfo = self.env["product.supplierinfo"].sudo()
+
+        description = (item_vals.get("description") or "").strip()
+        product_code = (item_vals.get("product_code") or "").strip()
+
+        if description or product_code:
+            return False
+
+        unit_price = self._docai_to_float(item_vals.get("unit_price"), default=0.0)
+        amount = self._docai_extract_best_amount(item_vals.get("amount"))
+
+        target_price = unit_price or amount
+        if target_price <= 0:
+            return False
+
+        supplierinfos = SupplierInfo.search([
+            ("partner_id", "=", self.partner_id.id),
+            ("product_id", "!=", False),
+            ("company_id", "in", [False, self.company_id.id]),
+        ], order="id desc")
+
+        if not supplierinfos:
+            _logger.info(
+                "[DocAI] Aucun supplierinfo pour recherche contexte fournisseur | move=%s | partner=%s",
+                self.id,
+                self.partner_id.display_name,
+            )
+            return False
+
+        tolerance = 0.02
+        exact_matches = []
+        near_matches = []
+
+        for si in supplierinfos:
+            si_price = si.price or 0.0
+            if si_price <= 0:
+                continue
+
+            diff = abs(si_price - target_price)
+
+            if diff <= tolerance:
+                exact_matches.append(si.product_id)
+            elif diff <= 1.0:
+                near_matches.append((diff, si.product_id))
+
+        if exact_matches:
+            uniq = []
+            seen = set()
+            for product in exact_matches:
+                if product.id not in seen:
+                    uniq.append(product)
+                    seen.add(product.id)
+
+            if len(uniq) > 1:
+                _logger.warning(
+                    "[DocAI] Plusieurs produits trouvés par contexte fournisseur pour move %s : %s",
+                    self.id,
+                    ", ".join(p.display_name for p in uniq),
+                )
+
+            _logger.info(
+                "[DocAI] Produit trouvé par contexte fournisseur pour move %s : %s | target_price=%s",
+                self.id,
+                uniq[0].display_name,
+                target_price,
+            )
+            return uniq[0]
+
+        if near_matches:
+            near_matches.sort(key=lambda x: x[0])
+            product = near_matches[0][1]
+            _logger.info(
+                "[DocAI] Produit trouvé par proximité prix fournisseur pour move %s : %s | target_price=%s",
+                self.id,
+                product.display_name,
+                target_price,
+            )
+            return product
+
+        return False
+
     def _docai_find_product_from_item(self, item):
         self.ensure_one()
 
@@ -232,6 +326,9 @@ class AccountMove(models.Model):
 
         if not product:
             product = self._docai_find_product_by_reverse_search(item_vals)
+
+        if not product:
+            product = self._docai_find_product_from_supplier_context(item_vals)
 
         return product, item_vals
 
@@ -389,13 +486,11 @@ class AccountMove(models.Model):
         unit_price = self._docai_to_float(item_vals.get("unit_price"), default=0.0)
         amount = self._docai_extract_best_amount(item_vals.get("amount"))
 
-        # Si nom exact = on prend le dernier prix fournisseur
         if self._docai_is_exact_product_name_match(product, item_vals):
             last_supplier_price = self._docai_get_last_supplier_price(product)
             if last_supplier_price > 0:
                 unit_price = last_supplier_price
 
-        # Fallback DocAI
         if unit_price <= 0 and amount > 0:
             unit_price = amount / qty if qty > 0 else amount
 
