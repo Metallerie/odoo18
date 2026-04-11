@@ -79,27 +79,16 @@ class AccountMove(models.Model):
 
         value = str(value).lower().strip()
 
-        for char in ['"', "'", "\n", "\r", "\t", ",", ";", ":", ".", "(", ")", "-", "_", "/", "\\", "[", "]", "{", "}"]:
+        for char in [
+            '"', "'", "\n", "\r", "\t", ",", ";", ":", ".", "(", ")",
+            "-", "_", "/", "\\", "[", "]", "{", "}"
+        ]:
             value = value.replace(char, " ")
 
         return " ".join(value.split())
 
     def _normalize_company_registry(self, value):
-        """
-        Normalise SIRET / SIREN :
-        - garde uniquement les chiffres
-        - retourne 14 chiffres si SIRET
-        - retourne 9 chiffres si SIREN
-        """
-        digits = self._clean_digits_only(value)
-
-        if len(digits) >= 14:
-            return digits[:14]
-
-        if len(digits) == 9:
-            return digits
-
-        return digits
+        return self._clean_digits_only(value)
 
     def _is_placeholder_supplier_name(self, value):
         name = self._normalize_search_text(value)
@@ -157,17 +146,11 @@ class AccountMove(models.Model):
         self.ensure_one()
         Partner = self.env["res.partner"].sudo()
 
-        partner = Partner.search([
-            ("name", "=", "Fournisseur inconnu")
-        ], limit=1)
-
+        partner = Partner.search([("name", "=", "Fournisseur inconnu")], limit=1)
         if partner:
             return partner
 
-        partner = Partner.search([
-            ("name", "=", "Divers")
-        ], limit=1)
-
+        partner = Partner.search([("name", "=", "Divers")], limit=1)
         if partner:
             return partner
 
@@ -181,7 +164,6 @@ class AccountMove(models.Model):
             "[DocAI] Création automatique du partenaire fournisseur par défaut : %s",
             partner.display_name,
         )
-
         return partner
 
     # -------------------------------------------------------------------------
@@ -208,7 +190,7 @@ class AccountMove(models.Model):
         if supplier_vat and len(supplier_vat) >= 8:
             partners = Partner.search([("vat", "!=", False)])
             partner = partners.filtered(
-                lambda p: self._clean_vat_value(p.vat) == supplier_vat
+                lambda p: self._clean_vat_value(p.commercial_partner_id.vat) == supplier_vat
             )[:1]
 
             if partner:
@@ -219,19 +201,32 @@ class AccountMove(models.Model):
                 )
 
         # -----------------------------------------------------------------
-        # 2) SIRET/SIREN exact sur company_registry
+        # 2) SIRET/SIREN exact sur company_registry du commercial_partner_id
         # -----------------------------------------------------------------
         if not partner and supplier_registry:
-            partners = Partner.search([("company_registry", "!=", False)])
+            partners = Partner.search([
+                "|",
+                ("company_registry", "!=", False),
+                ("commercial_partner_id.company_registry", "!=", False),
+            ])
+
             partner = partners.filtered(
-                lambda p: self._normalize_company_registry(p.company_registry) == supplier_registry
+                lambda p: self._normalize_company_registry(
+                    p.commercial_partner_id.company_registry
+                ) == supplier_registry
             )[:1]
 
             if partner:
                 _logger.info(
-                    "[DocAI] Fournisseur trouvé par company_registry pour move %s : %s",
+                    "[DocAI] Fournisseur trouvé par company_registry/commercial_partner_id pour move %s : %s",
                     self.id,
                     partner.display_name,
+                )
+            else:
+                _logger.warning(
+                    "[DocAI] Aucun match company_registry pour move %s | JSON=%s",
+                    self.id,
+                    supplier_registry,
                 )
 
         # -----------------------------------------------------------------
@@ -240,7 +235,7 @@ class AccountMove(models.Model):
         if not partner and supplier_registry:
             partners = Partner.search([("vat", "!=", False)])
             partner = partners.filtered(
-                lambda p: self._clean_digits_only(p.vat) == supplier_registry
+                lambda p: self._clean_digits_only(p.commercial_partner_id.vat) == supplier_registry
             )[:1]
 
             if partner:
@@ -254,9 +249,15 @@ class AccountMove(models.Model):
         # 4) TVA rangée dans company_registry
         # -----------------------------------------------------------------
         if not partner and supplier_vat and len(supplier_vat) >= 8:
-            partners = Partner.search([("company_registry", "!=", False)])
+            partners = Partner.search([
+                "|",
+                ("company_registry", "!=", False),
+                ("commercial_partner_id.company_registry", "!=", False),
+            ])
             partner = partners.filtered(
-                lambda p: self._clean_vat_value(p.company_registry) == supplier_vat
+                lambda p: self._clean_vat_value(
+                    p.commercial_partner_id.company_registry
+                ) == supplier_vat
             )[:1]
 
             if partner:
