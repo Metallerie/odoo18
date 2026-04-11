@@ -1,5 +1,7 @@
-from odoo import models
+# -*- coding: utf-8 -*-
+
 import logging
+from odoo import models
 
 _logger = logging.getLogger(__name__)
 
@@ -15,4 +17,8 @@ class AccountMove(models.Model):
             _logger.info("[DocAI] Aucun line_items pour move %s", self.id)
             return
 
-        # traitement des lignes ici
+        _logger.info("[DocAI] %s line_items détectés pour move %s", len(line_items), self.id)
+
+        # on codera ici la suite
+        for item in line_items:
+            _logger.info("[DocAI] item: %s", item)
