@@ -114,7 +114,9 @@ class AccountMove(models.Model):
         Partner = self.env["res.partner"].sudo()
 
         try:
-            json_text = self._normalize_search_text(json.dumps(data, ensure_ascii=False))
+            json_dump = json.dumps(data, ensure_ascii=False)
+            json_text = self._normalize_search_text(json_dump)
+            json_flat = self._clean_vat_value(json_dump)
         except Exception as e:
             _logger.warning(
                 "[DocAI] Impossible de sérialiser le JSON pour recherche inverse sur move %s : %s",
@@ -126,16 +128,37 @@ class AccountMove(models.Model):
             return False
 
         partners = Partner.search([
-            ("name", "!=", False),
             ("is_company", "=", True),
         ])
 
+        siret_matches = []
+        vat_matches = []
         exact_matches = []
         partial_matches = []
 
         for partner in partners:
-            partner_name = self._normalize_search_text(partner.name)
+            # ---------------------------------------------------------
+            # 1) Recherche inverse par SIRET
+            # ---------------------------------------------------------
+            partner_siret = self._clean_vat_value(partner.company_registry)
+            if partner_siret and len(partner_siret) >= 9:
+                if partner_siret in json_flat:
+                    siret_matches.append(partner)
+                    continue
 
+            # ---------------------------------------------------------
+            # 2) Recherche inverse par TVA
+            # ---------------------------------------------------------
+            partner_vat = self._clean_vat_value(partner.vat)
+            if partner_vat and len(partner_vat) >= 6:
+                if partner_vat in json_flat:
+                    vat_matches.append(partner)
+                    continue
+
+            # ---------------------------------------------------------
+            # 3) Recherche inverse par nom exact
+            # ---------------------------------------------------------
+            partner_name = self._normalize_search_text(partner.name)
             if not partner_name or len(partner_name) < 4:
                 continue
 
@@ -143,9 +166,30 @@ class AccountMove(models.Model):
                 exact_matches.append(partner)
                 continue
 
+            # ---------------------------------------------------------
+            # 4) Recherche inverse par mots
+            # ---------------------------------------------------------
             partner_words = [w for w in partner_name.split() if len(w) >= 4]
             if partner_words and all(word in json_text for word in partner_words):
                 partial_matches.append(partner)
+
+        if siret_matches:
+            if len(siret_matches) > 1:
+                _logger.warning(
+                    "[DocAI] Plusieurs fournisseurs trouvés par SIRET en recherche inverse pour move %s : %s",
+                    self.id,
+                    ", ".join(siret_matches.mapped("display_name")),
+                )
+            return siret_matches[0]
+
+        if vat_matches:
+            if len(vat_matches) > 1:
+                _logger.warning(
+                    "[DocAI] Plusieurs fournisseurs trouvés par TVA en recherche inverse pour move %s : %s",
+                    self.id,
+                    ", ".join(vat_matches.mapped("display_name")),
+                )
+            return vat_matches[0]
 
         if exact_matches:
             if len(exact_matches) > 1:
@@ -214,6 +258,7 @@ class AccountMove(models.Model):
 
         partner = False
 
+        # 1) TVA exacte sur champ VAT
         if supplier_vat:
             partners = Partner.search([("vat", "!=", False)])
             partner = partners.filtered(
@@ -227,6 +272,7 @@ class AccountMove(models.Model):
                     partner.display_name,
                 )
 
+        # 2) SIRET exact sur company_registry
         if not partner and supplier_siret:
             partners = Partner.search([("company_registry", "!=", False)])
             partner = partners.filtered(
@@ -235,11 +281,12 @@ class AccountMove(models.Model):
 
             if partner:
                 _logger.info(
-                    "[DocAI] Fournisseur trouvé par company_registry pour move %s : %s",
+                    "[DocAI] Fournisseur trouvé par SIRET/company_registry pour move %s : %s",
                     self.id,
                     partner.display_name,
                 )
 
+        # 3) SIRET rangé dans VAT
         if not partner and supplier_siret:
             partners = Partner.search([("vat", "!=", False)])
             partner = partners.filtered(
@@ -253,6 +300,21 @@ class AccountMove(models.Model):
                     partner.display_name,
                 )
 
+        # 4) TVA rangée dans company_registry
+        if not partner and supplier_vat:
+            partners = Partner.search([("company_registry", "!=", False)])
+            partner = partners.filtered(
+                lambda p: self._clean_vat_value(p.company_registry) == supplier_vat
+            )[:1]
+
+            if partner:
+                _logger.info(
+                    "[DocAI] Fournisseur trouvé par TVA dans company_registry pour move %s : %s",
+                    self.id,
+                    partner.display_name,
+                )
+
+        # 5) Recherche directe par nom
         if not partner and supplier_name:
             partner = Partner.search([("name", "ilike", supplier_name)], limit=1)
 
@@ -263,6 +325,7 @@ class AccountMove(models.Model):
                     partner.display_name,
                 )
 
+        # 6) Recherche inverse dans tout le JSON
         if not partner and data:
             partner = self._find_partner_by_reverse_search_in_docai_json(data)
 
