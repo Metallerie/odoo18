@@ -31,9 +31,6 @@ class AccountMove(models.Model):
         return line_items if isinstance(line_items, list) else []
 
     def _docai_get_item_values(self, item):
-        """
-        Normalise les clés possibles d'un line_item.
-        """
         return {
             "product_code": (
                 item.get("product_code")
@@ -65,7 +62,7 @@ class AccountMove(models.Model):
             return default
 
     # -------------------------------------------------------------------------
-    # RECHERCHE ALLER : REFERENCE
+    # RECHERCHE PRODUIT
     # -------------------------------------------------------------------------
     def _docai_find_product_by_reference(self, item_vals):
         self.ensure_one()
@@ -77,24 +74,18 @@ class AccountMove(models.Model):
 
         product = Product.search([("default_code", "=", product_code)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par référence exacte pour move %s : %s", self.id, product.display_name)
             return product
 
         product = Product.search([("barcode", "=", product_code)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par barcode exact pour move %s : %s", self.id, product.display_name)
             return product
 
         product = Product.search([("default_code", "ilike", product_code)], limit=1)
         if product:
-            _logger.info("[DocAI] Produit trouvé par référence approchée pour move %s : %s", self.id, product.display_name)
             return product
 
         return False
 
-    # -------------------------------------------------------------------------
-    # RECHERCHE ALLER : NOM
-    # -------------------------------------------------------------------------
     def _docai_find_product_by_name(self, item_vals):
         self.ensure_one()
         Product = self.env["product.product"].sudo()
@@ -104,15 +95,8 @@ class AccountMove(models.Model):
             return False
 
         product = Product.search([("name", "ilike", description)], limit=1)
-        if product:
-            _logger.info("[DocAI] Produit trouvé par nom direct pour move %s : %s", self.id, product.display_name)
-            return product
+        return product or False
 
-        return False
-
-    # -------------------------------------------------------------------------
-    # RECHERCHE INVERSE
-    # -------------------------------------------------------------------------
     def _docai_find_product_by_reverse_search(self, item_vals):
         self.ensure_one()
         Product = self.env["product.product"].sudo()
@@ -143,28 +127,13 @@ class AccountMove(models.Model):
                 partial_matches.append(product)
 
         if exact_matches:
-            if len(exact_matches) > 1:
-                _logger.warning(
-                    "[DocAI] Plusieurs produits trouvés en recherche inverse exacte pour move %s : %s",
-                    self.id,
-                    ", ".join(exact_matches.mapped("display_name")),
-                )
             return exact_matches[0]
 
         if partial_matches:
-            if len(partial_matches) > 1:
-                _logger.warning(
-                    "[DocAI] Plusieurs produits trouvés en recherche inverse partielle pour move %s : %s",
-                    self.id,
-                    ", ".join(partial_matches.mapped("display_name")),
-                )
             return partial_matches[0]
 
         return False
 
-    # -------------------------------------------------------------------------
-    # RECHERCHE COMPLETE D'UN PRODUIT
-    # -------------------------------------------------------------------------
     def _docai_find_product_from_item(self, item):
         self.ensure_one()
 
@@ -179,15 +148,97 @@ class AccountMove(models.Model):
         if not product:
             product = self._docai_find_product_by_reverse_search(item_vals)
 
-        if not product:
-            _logger.warning(
-                "[DocAI] Aucun produit trouvé pour move %s | code=%s | description=%s",
-                self.id,
-                item_vals.get("product_code"),
-                item_vals.get("description"),
-            )
-
         return product, item_vals
+
+    # -------------------------------------------------------------------------
+    # CATEGORIE / CREATION PRODUIT
+    # -------------------------------------------------------------------------
+    def _docai_get_or_create_unvalidated_category(self):
+        self.ensure_one()
+        Category = self.env["product.category"].sudo()
+
+        parent = Category.search([("name", "=", "DocAI")], limit=1)
+        if not parent:
+            parent = Category.create({"name": "DocAI"})
+
+        category = Category.search([
+            ("name", "=", "Non validés"),
+            ("parent_id", "=", parent.id),
+        ], limit=1)
+
+        if not category:
+            category = Category.create({
+                "name": "Non validés",
+                "parent_id": parent.id,
+            })
+
+        return category
+
+    def _docai_item_has_minimum_data_for_product_creation(self, item_vals):
+        self.ensure_one()
+
+        has_ref_or_name = bool(
+            (item_vals.get("product_code") or "").strip()
+            or (item_vals.get("description") or "").strip()
+        )
+
+        qty = self._docai_to_float(item_vals.get("quantity"), default=0.0)
+        unit_price = self._docai_to_float(item_vals.get("unit_price"), default=0.0)
+        amount = self._docai_to_float(item_vals.get("amount"), default=0.0)
+
+        return bool(
+            has_ref_or_name
+            and qty > 0
+            and unit_price > 0
+            and amount > 0
+        )
+
+    def _docai_create_unvalidated_product(self, item_vals):
+        self.ensure_one()
+        Product = self.env["product.product"].sudo()
+
+        category = self._docai_get_or_create_unvalidated_category()
+
+        product_code = (item_vals.get("product_code") or "").strip()
+        description = (item_vals.get("description") or "").strip()
+
+        product_name = description or product_code or "Produit DocAI non validé"
+
+        existing = False
+        if product_code:
+            existing = Product.search([("default_code", "=", product_code)], limit=1)
+
+        if not existing and description:
+            existing = Product.search([
+                ("name", "=", product_name),
+                ("categ_id", "=", category.id),
+            ], limit=1)
+
+        if existing:
+            _logger.info(
+                "[DocAI] Produit non validé déjà existant pour move %s : %s",
+                self.id,
+                existing.display_name,
+            )
+            return existing
+
+        vals = {
+            "name": product_name,
+            "default_code": product_code or False,
+            "categ_id": category.id,
+            "purchase_ok": True,
+            "sale_ok": False,
+        }
+
+        product = Product.create(vals)
+
+        _logger.warning(
+            "[DocAI] Produit créé dans DocAI / Non validés pour move %s : %s",
+            self.id,
+            product.display_name,
+        )
+
+        return product
 
     # -------------------------------------------------------------------------
     # PREPARATION DES LIGNES
@@ -225,7 +276,7 @@ class AccountMove(models.Model):
         amount = item_vals.get("amount") or ""
 
         note = (
-            f"[DocAI - produit non trouvé] "
+            f"[DocAI - données incomplètes] "
             f"Réf: {code} | Désignation: {description} | "
             f"Qté: {qty} | PU: {unit_price} | Montant: {amount}"
         )
@@ -237,10 +288,6 @@ class AccountMove(models.Model):
         }
 
     def _docai_clear_existing_lines(self):
-        """
-        Supprime les lignes existantes non section/note avant reconstruction.
-        Garde les notes/sections manuelles.
-        """
         self.ensure_one()
 
         product_lines = self.invoice_line_ids.filtered(lambda l: not l.display_type)
@@ -260,13 +307,16 @@ class AccountMove(models.Model):
 
         _logger.info("[DocAI] %s line_items détectés pour move %s", len(line_items), self.id)
 
-        # On repart proprement
         self._docai_clear_existing_lines()
 
         line_model = self.env["account.move.line"].sudo()
 
         for item in line_items:
             product, item_vals = self._docai_find_product_from_item(item)
+
+            if not product:
+                if self._docai_item_has_minimum_data_for_product_creation(item_vals):
+                    product = self._docai_create_unvalidated_product(item_vals)
 
             if product:
                 vals = self._docai_prepare_invoice_line_vals(product, item_vals)
@@ -280,7 +330,7 @@ class AccountMove(models.Model):
                 vals = self._docai_prepare_note_line_vals(item_vals)
                 line_model.create(vals)
                 _logger.info(
-                    "[DocAI] Ligne note créée pour move %s | code=%s | description=%s",
+                    "[DocAI] Ligne commentaire créée pour move %s | code=%s | description=%s",
                     self.id,
                     item_vals.get("product_code"),
                     item_vals.get("description"),
