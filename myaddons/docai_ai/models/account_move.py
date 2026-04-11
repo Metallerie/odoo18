@@ -338,14 +338,12 @@ class AccountMove(models.Model):
         return vals, header_vals
 
     # -------------------------------------------------------------------------
-    # ACTION UNIQUE
+    # TRAITEMENT COMPLET
     # -------------------------------------------------------------------------
     def action_docai_scan_json(self):
         """
-        Met à jour directement les champs trouvés dans docai_json,
-        qu'ils soient vides ou déjà remplis.
-        Si aucun fournisseur n'est trouvé, affecte "Fournisseur inconnu"
-        ou "Divers".
+        Met à jour l'en-tête puis appelle le traitement des line_items
+        défini dans account_move_line.py.
         """
         for move in self:
             if move.move_type not in ("in_invoice", "in_refund"):
@@ -374,3 +372,18 @@ class AccountMove(models.Model):
                 header_vals.get("due_date"),
                 header_vals.get("currency"),
             )
+
+            # Appel du traitement des lignes défini dans account_move_line.py
+            try:
+                move._docai_process_line_items(data)
+            except AttributeError:
+                _logger.warning(
+                    "[DocAI] La méthode _docai_process_line_items n'existe pas encore pour move %s",
+                    move.id,
+                )
+            except Exception as e:
+                _logger.error(
+                    "[DocAI] Erreur pendant le traitement des lignes pour move %s : %s",
+                    move.id,
+                    e,
+                )
