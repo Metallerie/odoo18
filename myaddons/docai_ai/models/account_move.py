@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from datetime import datetime
 
 from odoo import models, fields, _
@@ -67,6 +68,11 @@ class AccountMove(models.Model):
             return ""
         return "".join(str(value).strip().upper().split())
 
+    def _clean_digits_only(self, value):
+        if not value:
+            return ""
+        return re.sub(r"\D", "", str(value))
+
     def _normalize_search_text(self, value):
         if not value:
             return ""
@@ -78,6 +84,36 @@ class AccountMove(models.Model):
 
         return " ".join(value.split())
 
+    def _normalize_company_registry(self, value):
+        """
+        Normalise SIRET / SIREN :
+        - garde uniquement les chiffres
+        - retourne 14 chiffres si SIRET
+        - retourne 9 chiffres si SIREN
+        """
+        digits = self._clean_digits_only(value)
+
+        if len(digits) >= 14:
+            return digits[:14]
+
+        if len(digits) == 9:
+            return digits
+
+        return digits
+
+    def _is_placeholder_supplier_name(self, value):
+        name = self._normalize_search_text(value)
+        placeholders = {
+            "vos contacts",
+            "contact",
+            "contacts",
+            "service client",
+            "facturation",
+            "relation client",
+            "informations",
+        }
+        return name in placeholders
+
     # -------------------------------------------------------------------------
     # LECTURE HEADER JSON
     # -------------------------------------------------------------------------
@@ -86,7 +122,11 @@ class AccountMove(models.Model):
 
         return {
             "supplier_name": (data.get("supplier_name") or "").strip(),
-            "supplier_vat": (data.get("supplier_vat") or "").strip(),
+            "supplier_vat": (
+                data.get("supplier_vat")
+                or data.get("supplier_tax_id")
+                or ""
+            ).strip(),
             "supplier_siret": (
                 data.get("supplier_siret")
                 or data.get("supplier_registration")
@@ -103,113 +143,12 @@ class AccountMove(models.Model):
                 data.get("due_date") or data.get("invoice_date_due")
             ),
             "currency": (data.get("currency") or "").strip(),
-            "payment_reference": (data.get("payment_reference") or "").strip(),
+            "payment_reference": (
+                data.get("payment_reference")
+                or data.get("supplier_payment_ref")
+                or ""
+            ).strip(),
         }
-
-    # -------------------------------------------------------------------------
-    # RECHERCHE FOURNISSEUR INVERSE
-    # -------------------------------------------------------------------------
-    def _find_partner_by_reverse_search_in_docai_json(self, data):
-        self.ensure_one()
-        Partner = self.env["res.partner"].sudo()
-
-        try:
-            json_dump = json.dumps(data, ensure_ascii=False)
-            json_text = self._normalize_search_text(json_dump)
-            json_flat = self._clean_vat_value(json_dump)
-        except Exception as e:
-            _logger.warning(
-                "[DocAI] Impossible de sérialiser le JSON pour recherche inverse sur move %s : %s",
-                self.id, e
-            )
-            return False
-
-        if not json_text:
-            return False
-
-        partners = Partner.search([
-            ("is_company", "=", True),
-        ])
-
-        siret_matches = []
-        vat_matches = []
-        exact_matches = []
-        partial_matches = []
-
-        for partner in partners:
-            # ---------------------------------------------------------
-            # 1) Recherche inverse par SIRET
-            # ---------------------------------------------------------
-            partner_siret = self._clean_vat_value(partner.company_registry)
-            if partner_siret and len(partner_siret) >= 9:
-                if partner_siret in json_flat:
-                    siret_matches.append(partner)
-                    continue
-
-            # ---------------------------------------------------------
-            # 2) Recherche inverse par TVA
-            # ---------------------------------------------------------
-            partner_vat = self._clean_vat_value(partner.vat)
-            if partner_vat and len(partner_vat) >= 6:
-                if partner_vat in json_flat:
-                    vat_matches.append(partner)
-                    continue
-
-            # ---------------------------------------------------------
-            # 3) Recherche inverse par nom exact
-            # ---------------------------------------------------------
-            partner_name = self._normalize_search_text(partner.name)
-            if not partner_name or len(partner_name) < 4:
-                continue
-
-            if partner_name in json_text:
-                exact_matches.append(partner)
-                continue
-
-            # ---------------------------------------------------------
-            # 4) Recherche inverse par mots
-            # ---------------------------------------------------------
-            partner_words = [w for w in partner_name.split() if len(w) >= 4]
-            if partner_words and all(word in json_text for word in partner_words):
-                partial_matches.append(partner)
-
-        if siret_matches:
-            if len(siret_matches) > 1:
-                _logger.warning(
-                    "[DocAI] Plusieurs fournisseurs trouvés par SIRET en recherche inverse pour move %s : %s",
-                    self.id,
-                    ", ".join(siret_matches.mapped("display_name")),
-                )
-            return siret_matches[0]
-
-        if vat_matches:
-            if len(vat_matches) > 1:
-                _logger.warning(
-                    "[DocAI] Plusieurs fournisseurs trouvés par TVA en recherche inverse pour move %s : %s",
-                    self.id,
-                    ", ".join(vat_matches.mapped("display_name")),
-                )
-            return vat_matches[0]
-
-        if exact_matches:
-            if len(exact_matches) > 1:
-                _logger.warning(
-                    "[DocAI] Plusieurs fournisseurs trouvés par recherche inverse exacte pour move %s : %s",
-                    self.id,
-                    ", ".join(exact_matches.mapped("display_name")),
-                )
-            return exact_matches[0]
-
-        if partial_matches:
-            if len(partial_matches) > 1:
-                _logger.warning(
-                    "[DocAI] Plusieurs fournisseurs trouvés par recherche inverse partielle pour move %s : %s",
-                    self.id,
-                    ", ".join(partial_matches.mapped("display_name")),
-                )
-            return partial_matches[0]
-
-        return False
 
     # -------------------------------------------------------------------------
     # FOURNISSEUR INCONNU / DIVERS
@@ -252,14 +191,21 @@ class AccountMove(models.Model):
         self.ensure_one()
         Partner = self.env["res.partner"].sudo()
 
-        supplier_name = header_vals.get("supplier_name") or ""
+        supplier_name = (header_vals.get("supplier_name") or "").strip()
         supplier_vat = self._clean_vat_value(header_vals.get("supplier_vat"))
-        supplier_siret = self._clean_vat_value(header_vals.get("supplier_siret"))
+        supplier_registry = self._normalize_company_registry(header_vals.get("supplier_siret"))
 
         partner = False
 
-        # 1) TVA exacte sur champ VAT
-        if supplier_vat:
+        _logger.info(
+            "[DocAI] Recherche fournisseur move %s | supplier_name=%s | supplier_vat=%s | supplier_registry=%s",
+            self.id, supplier_name, supplier_vat, supplier_registry
+        )
+
+        # -----------------------------------------------------------------
+        # 1) TVA exacte sur vat
+        # -----------------------------------------------------------------
+        if supplier_vat and len(supplier_vat) >= 8:
             partners = Partner.search([("vat", "!=", False)])
             partner = partners.filtered(
                 lambda p: self._clean_vat_value(p.vat) == supplier_vat
@@ -272,36 +218,42 @@ class AccountMove(models.Model):
                     partner.display_name,
                 )
 
-        # 2) SIRET exact sur company_registry
-        if not partner and supplier_siret:
+        # -----------------------------------------------------------------
+        # 2) SIRET/SIREN exact sur company_registry
+        # -----------------------------------------------------------------
+        if not partner and supplier_registry:
             partners = Partner.search([("company_registry", "!=", False)])
             partner = partners.filtered(
-                lambda p: self._clean_vat_value(p.company_registry) == supplier_siret
+                lambda p: self._normalize_company_registry(p.company_registry) == supplier_registry
             )[:1]
 
             if partner:
                 _logger.info(
-                    "[DocAI] Fournisseur trouvé par SIRET/company_registry pour move %s : %s",
+                    "[DocAI] Fournisseur trouvé par company_registry pour move %s : %s",
                     self.id,
                     partner.display_name,
                 )
 
-        # 3) SIRET rangé dans VAT
-        if not partner and supplier_siret:
+        # -----------------------------------------------------------------
+        # 3) SIRET/SIREN rangé dans VAT
+        # -----------------------------------------------------------------
+        if not partner and supplier_registry:
             partners = Partner.search([("vat", "!=", False)])
             partner = partners.filtered(
-                lambda p: self._clean_vat_value(p.vat) == supplier_siret
+                lambda p: self._clean_digits_only(p.vat) == supplier_registry
             )[:1]
 
             if partner:
                 _logger.info(
-                    "[DocAI] Fournisseur trouvé par SIRET dans VAT pour move %s : %s",
+                    "[DocAI] Fournisseur trouvé par SIRET/SIREN dans VAT pour move %s : %s",
                     self.id,
                     partner.display_name,
                 )
 
+        # -----------------------------------------------------------------
         # 4) TVA rangée dans company_registry
-        if not partner and supplier_vat:
+        # -----------------------------------------------------------------
+        if not partner and supplier_vat and len(supplier_vat) >= 8:
             partners = Partner.search([("company_registry", "!=", False)])
             partner = partners.filtered(
                 lambda p: self._clean_vat_value(p.company_registry) == supplier_vat
@@ -314,8 +266,10 @@ class AccountMove(models.Model):
                     partner.display_name,
                 )
 
-        # 5) Recherche directe par nom
-        if not partner and supplier_name:
+        # -----------------------------------------------------------------
+        # 5) Recherche par nom direct
+        # -----------------------------------------------------------------
+        if not partner and supplier_name and not self._is_placeholder_supplier_name(supplier_name):
             partner = Partner.search([("name", "ilike", supplier_name)], limit=1)
 
             if partner:
@@ -325,21 +279,13 @@ class AccountMove(models.Model):
                     partner.display_name,
                 )
 
-        # 6) Recherche inverse dans tout le JSON
-        if not partner and data:
-            partner = self._find_partner_by_reverse_search_in_docai_json(data)
-
-            if partner:
-                _logger.info(
-                    "[DocAI] Fournisseur trouvé par recherche inverse pour move %s : %s",
-                    self.id,
-                    partner.display_name,
-                )
-
+        # -----------------------------------------------------------------
+        # 6) Rien trouvé
+        # -----------------------------------------------------------------
         if not partner:
             _logger.warning(
-                "[DocAI] Fournisseur non trouvé pour move %s | name=%s | vat=%s | siret=%s",
-                self.id, supplier_name, supplier_vat, supplier_siret,
+                "[DocAI] Fournisseur non trouvé pour move %s | name=%s | vat=%s | registry=%s",
+                self.id, supplier_name, supplier_vat, supplier_registry,
             )
             partner = self._get_unknown_supplier_partner()
 
@@ -427,16 +373,17 @@ class AccountMove(models.Model):
                 _logger.info("[DocAI] Aucun champ trouvé dans le JSON pour move %s", move.id)
 
             _logger.info(
-                "[DocAI] Header lu pour move %s | supplier=%s | invoice=%s | date=%s | due=%s | currency=%s",
+                "[DocAI] Header lu pour move %s | supplier=%s | vat=%s | siret=%s | invoice=%s | date=%s | due=%s | currency=%s",
                 move.id,
                 header_vals.get("supplier_name"),
+                header_vals.get("supplier_vat"),
+                header_vals.get("supplier_siret"),
                 header_vals.get("invoice_number"),
                 header_vals.get("invoice_date"),
                 header_vals.get("due_date"),
                 header_vals.get("currency"),
             )
 
-            # Appel du traitement des lignes défini dans account_move_line.py
             try:
                 move._docai_process_line_items(data)
             except AttributeError:
