@@ -26,7 +26,7 @@
       <field name="arch" type="xml">
 
         <!-- Journal cible libre -->
-        <xpath expr="//field[@name='journal_id']" position="after">
+        <xpath expr="//field[@name='journal_id']" position="before">
           <field name="x_target_journal_code" invisible="state != 'draft'"/>
         </xpath>
 
