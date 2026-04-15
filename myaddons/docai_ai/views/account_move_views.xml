@@ -26,6 +26,9 @@
       <field name="arch" type="xml">
 
         <!-- Champ visible à coup sûr avant les onglets -->
+        <xpath expr="//field[@name='journal_id']" position="attributes">
+        <attribute name="invisible">state == 'draft'</attribute>
+        </xpath>
         <xpath expr="//sheet/notebook" position="before">
           <group string="Requalification comptable">
             <field name="x_target_journal_code" invisible="state != 'draft'"/>
