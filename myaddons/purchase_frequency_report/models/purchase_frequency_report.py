@@ -49,11 +49,7 @@ class PurchaseFrequencyReport(models.TransientModel):
         if self.categ_id:
             domain.append(("product_id.categ_id", "child_of", self.categ_id.id))
 
-        invoice_lines = self.env["account.move.line"].search(
-            domain,
-            order="product_id, move_id.invoice_date",
-        )
-
+        invoice_lines = self.env["account.move.line"].search(domain)
         grouped_data = {}
 
         for line in invoice_lines:
