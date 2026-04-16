@@ -39,22 +39,24 @@ class PurchaseFrequencyReport(models.TransientModel):
         date_from = fields.Datetime.now() - timedelta(days=self.month_count * 30)
 
         domain = [
-            ("order_id.state", "in", ["purchase", "done"]),
+            ("move_id.move_type", "=", "in_invoice"),
+            ("move_id.state", "=", "posted"),
+            ("move_id.invoice_date", ">=", fields.Date.to_string(date_from.date())),
             ("product_id", "!=", False),
-            ("order_id.date_approve", ">=", fields.Datetime.to_string(date_from)),
+            ("display_type", "=", "product"),
         ]
 
         if self.categ_id:
             domain.append(("product_id.categ_id", "child_of", self.categ_id.id))
 
-        purchase_lines = self.env["purchase.order.line"].search(
+        invoice_lines = self.env["account.move.line"].search(
             domain,
-            order="product_id, order_id.date_approve",
+            order="product_id, move_id.invoice_date",
         )
 
         grouped_data = {}
 
-        for line in purchase_lines:
+        for line in invoice_lines:
             product = line.product_id
             if not product:
                 continue
@@ -73,14 +75,16 @@ class PurchaseFrequencyReport(models.TransientModel):
                 }
 
             grouped_data[product_id]["purchase_count"] += 1
-            grouped_data[product_id]["total_qty"] += line.product_qty
+            grouped_data[product_id]["total_qty"] += line.quantity
 
-            approve_date = line.order_id.date_approve
+            invoice_date = line.move_id.invoice_date
             last_date = grouped_data[product_id]["last_purchase_date"]
-            if approve_date and (not last_date or approve_date > last_date):
-                grouped_data[product_id]["last_purchase_date"] = approve_date
+            if invoice_date and (not last_date or invoice_date > last_date):
+                grouped_data[product_id]["last_purchase_date"] = invoice_date
 
         line_values = []
+        today = fields.Date.today()
+
         for values in grouped_data.values():
             purchase_count = values["purchase_count"]
             total_qty = values["total_qty"]
@@ -89,8 +93,7 @@ class PurchaseFrequencyReport(models.TransientModel):
             last_purchase_date = values["last_purchase_date"]
             days_since_last = 0
             if last_purchase_date:
-                delta = fields.Datetime.now() - last_purchase_date
-                days_since_last = delta.days
+                days_since_last = (today - last_purchase_date).days
 
             values.update({
                 "avg_qty": avg_qty,
@@ -140,7 +143,7 @@ class PurchaseFrequencyReportLine(models.TransientModel):
         readonly=True,
     )
     purchase_count = fields.Integer(
-        string="Nombre d'achats",
+        string="Nombre de lignes",
         readonly=True,
     )
     total_qty = fields.Float(
@@ -148,10 +151,10 @@ class PurchaseFrequencyReportLine(models.TransientModel):
         readonly=True,
     )
     avg_qty = fields.Float(
-        string="Qté moyenne / achat",
+        string="Qté moyenne / ligne",
         readonly=True,
     )
-    last_purchase_date = fields.Datetime(
+    last_purchase_date = fields.Date(
         string="Dernier achat",
         readonly=True,
     )
