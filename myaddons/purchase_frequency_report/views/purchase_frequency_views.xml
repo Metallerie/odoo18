@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_purchase_frequency_report_form" model="ir.ui.view">
+        <field name="name">purchase.frequency.report.form</field>
+        <field name="model">purchase.frequency.report</field>
+        <field name="arch" type="xml">
+            <form string="Fréquence d'achat">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="month_count"/>
+                            <field name="categ_id"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <button name="action_generate_report"
+                                string="Afficher"
+                                type="object"
+                                class="btn-primary"/>
+                    </group>
+
+                    <field name="line_ids" nolabel="1">
+                        <tree create="0" delete="0" edit="0">
+                            <field name="default_code"/>
+                            <field name="name"/>
+                            <field name="categ_id"/>
+                            <field name="purchase_count"/>
+                            <field name="total_qty"/>
+                            <field name="avg_qty"/>
+                            <field name="last_purchase_date"/>
+                            <field name="days_since_last_purchase"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_purchase_frequency_report" model="ir.actions.act_window">
+        <field name="name">Fréquence d'achat</field>
+        <field name="res_model">purchase.frequency.report</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="menu_purchase_frequency_report_root"
+              name="Rapport"
+              parent="purchase.menu_purchase"
+              sequence="60"/>
+
+    <menuitem id="menu_purchase_frequency_report"
+              name="Fréquence d'achat"
+              parent="menu_purchase_frequency_report_root"
+              action="action_purchase_frequency_report"
+              sequence="10"/>
+
+</odoo>
