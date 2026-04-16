@@ -1,2 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_purchase_frequency_report_purchase_frequency_report,purchase_frequency_report.purchase_frequency_report,model_purchase_frequency_report_purchase_frequency_report,base.group_user,1,1,1,1
+access_purchase_frequency_report_user,purchase.frequency.report.user,model_purchase_frequency_report,purchase.group_purchase_user,1,1,1,1
+access_purchase_frequency_report_line_user,purchase.frequency.report.line.user,model_purchase_frequency_report_line,purchase.group_purchase_user,1,1,1,1
