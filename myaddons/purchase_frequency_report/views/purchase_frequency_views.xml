@@ -46,9 +46,9 @@
     </record>
 
     <!-- À ajuster si ton menu exact diffère -->
-    <menuitem id="menu_purchase_frequency_report"
-              name="Fréquence d'achat"
-              parent="account.menu_action_invoice_tree2"
-              action="action_purchase_frequency_report"
-              sequence="90"/>
+   <menuitem id="menu_purchase_frequency_report"
+          name="Fréquence d'achat"
+          parent="account.menu_finance"
+          action="action_purchase_frequency_report"
+          sequence="90"/>
 </odoo>
