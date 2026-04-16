@@ -22,7 +22,7 @@
                     </group>
 
                     <field name="line_ids" nolabel="1">
-                        <tree create="0" delete="0" edit="0">
+                        <list create="0" delete="0" edit="0">
                             <field name="default_code"/>
                             <field name="name"/>
                             <field name="categ_id"/>
@@ -31,7 +31,7 @@
                             <field name="avg_qty"/>
                             <field name="last_purchase_date"/>
                             <field name="days_since_last_purchase"/>
-                        </tree>
+                        </list>
                     </field>
                 </sheet>
             </form>
@@ -45,15 +45,10 @@
         <field name="target">current</field>
     </record>
 
-    <menuitem id="menu_purchase_frequency_report_root"
-              name="Rapport"
-              parent="purchase.menu_purchase"
-              sequence="60"/>
-
+    <!-- À ajuster si ton menu exact diffère -->
     <menuitem id="menu_purchase_frequency_report"
               name="Fréquence d'achat"
-              parent="menu_purchase_frequency_report_root"
+              parent="account.menu_action_invoice_tree2"
               action="action_purchase_frequency_report"
-              sequence="10"/>
-
+              sequence="90"/>
 </odoo>
