@@ -96,23 +96,22 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "",
                 "Sens des colonnes :",
                 "- default_code : référence produit",
-                "- attribute_value : valeur de variante",
+                "- attribute_value : valeur d'option / variante",
                 "- uom_code : unité principale Odoo (KG, ML, PI...)",
                 "- standard_price : coût dans l'unité principale Odoo",
-                "- meter : longueur de référence utilisée pour le calcul",
-                "- factor : rapport Odoo par produit pour l'unité secondaire",
+                "- meter : longueur de référence",
+                "- factor : rapport Odoo pour l'unité secondaire",
                 "",
                 "Exemple :",
                 "default_code,attribute_value,uom_code,standard_price,meter,factor",
-                "73309,80,KG,1.0000,6,6.4500",
-                "71046,100,KG,0.9999,6,8.7970",
+                "71111,HEA 100,KG,1.1500,6,17.6575",
+                "71114,HEA 120,KG,1.0400,6,21.0410",
             ]
             if wizard.product_secondary_unit_id:
-                lines.extend(
-                    [
-                        "",
-                        f"Unité secondaire choisie dans le wizard : {wizard.product_secondary_unit_id.display_name}",
-                    ]
+                lines.append("")
+                lines.append(
+                    "Unité secondaire choisie : %s"
+                    % wizard.product_secondary_unit_id.display_name
                 )
             wizard.csv_format_help = "\n".join(lines)
 
@@ -143,7 +142,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             "meter",
             "factor",
         }
-
         header_keys = set(rows[0].keys())
         missing = required_columns - header_keys
         if missing:
@@ -151,23 +149,84 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 _("Colonnes CSV manquantes : %s") % ", ".join(sorted(missing))
             )
 
+        self.template_id.categ_id = self.category_id.id
+
+        imported_codes = set()
+        created_values = 0
+        updated_variants = 0
+        created_pricelist_items = 0
+        updated_pricelist_items = 0
+
+        for row in rows:
+            default_code = self._clean_str(row.get("default_code"))
+            attribute_value_name = self._clean_str(row.get("attribute_value"))
+            uom_code = self._clean_str(row.get("uom_code"))
+            standard_price = self._to_float(row.get("standard_price"))
+            factor = self._to_float(row.get("factor"))
+            meter = self._to_float(row.get("meter"))
+
+            if not default_code or not attribute_value_name or not uom_code:
+                continue
+
+            imported_codes.add(default_code)
+
+            uom = self._get_uom_by_code(uom_code)
+            attr_value, value_created = self._get_or_create_attribute_value(attribute_value_name)
+            if value_created:
+                created_values += 1
+
+            self._sync_template_attribute_line(attr_value)
+            self.template_id.invalidate_recordset(["attribute_line_ids", "product_variant_ids"])
+            self.template_id._create_variant_ids()
+
+            variant = self._find_variant_from_value(attr_value)
+            if not variant:
+                raise UserError(
+                    _("Impossible de trouver ou créer la variante pour la valeur '%s'.")
+                    % attribute_value_name
+                )
+
+            self._write_variant_data(
+                variant=variant,
+                default_code=default_code,
+                uom=uom,
+                standard_price=standard_price,
+                factor=factor,
+                meter=meter,
+            )
+            updated_variants += 1
+
+            item, created = self._create_or_update_pricelist_item(variant, standard_price)
+            if item:
+                if created:
+                    created_pricelist_items += 1
+                else:
+                    updated_pricelist_items += 1
+
+        if self.archive_missing_variants:
+            self._archive_missing_variants(imported_codes)
+
+        if self.remove_missing_pricelist_items:
+            self._remove_missing_pricelist_items(imported_codes)
+
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("Import CSV"),
+                "title": _("Import terminé"),
                 "message": _(
-                    "CSV lu avec succès : %s (%s ligne(s)). "
-                    "Unité secondaire : %s. "
-                    "Dependency type : %s."
-                ) % (
-                    self.csv_filename,
-                    len(rows),
-                    self.product_secondary_unit_id.display_name,
-                    dict(self._fields["dependency_type"].selection).get(self.dependency_type),
-                ),
+                    "Valeurs créées : %(values)s | "
+                    "Variantes mises à jour : %(variants)s | "
+                    "Lignes pricelist créées : %(pl_create)s | "
+                    "Lignes pricelist mises à jour : %(pl_update)s"
+                ) % {
+                    "values": created_values,
+                    "variants": updated_variants,
+                    "pl_create": created_pricelist_items,
+                    "pl_update": updated_pricelist_items,
+                },
                 "type": "success",
-                "sticky": False,
+                "sticky": True,
             },
         }
 
@@ -196,3 +255,203 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 return rows
         except Exception as exc:
             raise UserError(_("Impossible de lire le fichier CSV : %s") % exc)
+
+    def _clean_str(self, value):
+        return (value or "").strip()
+
+    def _to_float(self, value, default=0.0):
+        try:
+            return float(str(value or "").replace(",", ".").strip() or default)
+        except Exception:
+            return default
+
+    def _get_uom_by_code(self, code):
+        uom = self.env["uom.uom"].search([("name", "=", code)], limit=1)
+        if not uom:
+            uom = self.env["uom.uom"].search([("display_name", "=", code)], limit=1)
+        if not uom:
+            raise UserError(_("Unité introuvable : %s") % code)
+        return uom
+
+    def _get_or_create_attribute_value(self, value_name):
+        value = self.env["product.attribute.value"].search(
+            [
+                ("attribute_id", "=", self.attribute_id.id),
+                ("name", "=", value_name),
+            ],
+            limit=1,
+        )
+        if value:
+            return value, False
+
+        value = self.env["product.attribute.value"].create(
+            {
+                "attribute_id": self.attribute_id.id,
+                "name": value_name,
+            }
+        )
+        return value, True
+
+    def _sync_template_attribute_line(self, attr_value):
+        self.ensure_one()
+
+        line = self.template_id.attribute_line_ids.filtered(
+            lambda l: l.attribute_id.id == self.attribute_id.id
+        )[:1]
+
+        if line:
+            if attr_value.id not in line.value_ids.ids:
+                line.write({"value_ids": [(4, attr_value.id)]})
+        else:
+            self.template_id.write(
+                {
+                    "attribute_line_ids": [
+                        (
+                            0,
+                            0,
+                            {
+                                "attribute_id": self.attribute_id.id,
+                                "value_ids": [(6, 0, [attr_value.id])],
+                            },
+                        )
+                    ]
+                }
+            )
+
+    def _find_variant_from_value(self, attr_value):
+        self.ensure_one()
+
+        for variant in self.template_id.product_variant_ids:
+            value_ids = variant.product_template_attribute_value_ids.mapped(
+                "product_attribute_value_id"
+            )
+            if attr_value in value_ids:
+                return variant
+        return False
+
+    def _write_variant_data(self, variant, default_code, uom, standard_price, factor, meter):
+        vals = {
+            "default_code": default_code,
+            "uom_id": uom.id,
+            "uom_po_id": uom.id,
+        }
+
+        if self.update_standard_price:
+            vals["standard_price"] = standard_price
+
+        # Champ custom si tu veux garder la longueur source
+        if "x_meter" in variant._fields:
+            vals["x_meter"] = meter
+
+        variant.write(vals)
+
+        self._write_secondary_unit_data(variant, factor)
+
+    def _write_secondary_unit_data(self, variant, factor):
+        """
+        Essaie d'écrire sur les champs les plus probables.
+        Adapte ici si ton module OCA utilise d'autres noms.
+        """
+        written = False
+
+        # Cas 1 : champs directs sur product.product
+        direct_vals = {}
+        if "sale_secondary_uom_id" in variant._fields:
+            direct_vals["sale_secondary_uom_id"] = self.product_secondary_unit_id.id
+        if "secondary_uom_id" in variant._fields:
+            direct_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+        if "sale_secondary_uom_factor" in variant._fields:
+            direct_vals["sale_secondary_uom_factor"] = factor
+        if "secondary_uom_factor" in variant._fields:
+            direct_vals["secondary_uom_factor"] = factor
+        if "dependency_type" in variant._fields:
+            direct_vals["dependency_type"] = self.dependency_type
+
+        if direct_vals:
+            variant.write(direct_vals)
+            written = True
+
+        # Cas 2 : relation one2many vers product.secondary.unit
+        if not written and "secondary_unit_ids" in variant._fields:
+            existing = variant.secondary_unit_ids.filtered(
+                lambda r: r.secondary_uom_id.id == self.product_secondary_unit_id.id
+                or r.secondary_unit_id.id == self.product_secondary_unit_id.id
+            )[:1]
+
+            line_vals = {}
+            if existing:
+                if "factor" in existing._fields:
+                    line_vals["factor"] = factor
+                if "dependency_type" in existing._fields:
+                    line_vals["dependency_type"] = self.dependency_type
+                if line_vals:
+                    existing.write(line_vals)
+                written = True
+            else:
+                create_vals = {}
+                if "secondary_uom_id" in self.env["product.secondary.unit"]._fields:
+                    create_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+                elif "secondary_unit_id" in self.env["product.secondary.unit"]._fields:
+                    create_vals["secondary_unit_id"] = self.product_secondary_unit_id.id
+
+                if "factor" in self.env["product.secondary.unit"]._fields:
+                    create_vals["factor"] = factor
+                if "dependency_type" in self.env["product.secondary.unit"]._fields:
+                    create_vals["dependency_type"] = self.dependency_type
+
+                if create_vals:
+                    variant.write({"secondary_unit_ids": [(0, 0, create_vals)]})
+                    written = True
+
+        if not written:
+            raise UserError(
+                _(
+                    "Impossible d'écrire l'unité secondaire sur la variante '%s'. "
+                    "Il faut vérifier les noms de champs du module OCA."
+                )
+                % variant.display_name
+            )
+
+    def _create_or_update_pricelist_item(self, variant, standard_price):
+        fixed_price = standard_price * self.coefficient
+
+        item = self.env["product.pricelist.item"].search(
+            [
+                ("pricelist_id", "=", self.pricelist_id.id),
+                ("product_id", "=", variant.id),
+            ],
+            limit=1,
+        )
+
+        vals = {
+            "pricelist_id": self.pricelist_id.id,
+            "applied_on": "0_product_variant",
+            "product_id": variant.id,
+            "compute_price": "fixed",
+            "fixed_price": fixed_price,
+        }
+
+        if item:
+            item.write(vals)
+            return item, False
+
+        return self.env["product.pricelist.item"].create(vals), True
+
+    def _archive_missing_variants(self, imported_codes):
+        for variant in self.template_id.product_variant_ids:
+            if variant.default_code and variant.default_code not in imported_codes:
+                if "active" in variant._fields:
+                    variant.active = False
+
+    def _remove_missing_pricelist_items(self, imported_codes):
+        items = self.env["product.pricelist.item"].search(
+            [
+                ("pricelist_id", "=", self.pricelist_id.id),
+                ("product_id", "!=", False),
+                ("product_tmpl_id", "=", False),
+            ]
+        )
+        for item in items:
+            if item.product_id.product_tmpl_id == self.template_id:
+                if item.product_id.default_code not in imported_codes:
+                    item.unlink()
