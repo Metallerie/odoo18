@@ -1,1 +1,1 @@
-import . from product_variant_pricelist_import_wizard
+from . import product_variant_pricelist_import_wizard
