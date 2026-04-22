@@ -1,17 +1,18 @@
-
 # -*- coding: utf-8 -*-
 
-import base64
 import csv
 import io
+import os
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
 class ProductVariantPricelistImportWizard(models.TransientModel):
     _name = "product.variant.pricelist.import.wizard"
     _description = "Import variantes et pricelist"
+
+    CSV_DIR = "/data/odoo/metal-odoo18-p8179/csv"
 
     template_id = fields.Many2one(
         "product.template",
@@ -44,13 +45,10 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         required=True,
     )
 
-    csv_file = fields.Binary(
+    csv_filename = fields.Selection(
+        selection="_selection_csv_files",
         string="Fichier CSV",
         required=True,
-    )
-
-    csv_filename = fields.Char(
-        string="Nom du fichier",
     )
 
     update_standard_price = fields.Boolean(
@@ -68,6 +66,19 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         default=False,
     )
 
+    @api.model
+    def _selection_csv_files(self):
+        csv_dir = self.CSV_DIR
+        if not os.path.isdir(csv_dir):
+            return []
+
+        files = []
+        for filename in sorted(os.listdir(csv_dir)):
+            full_path = os.path.join(csv_dir, filename)
+            if os.path.isfile(full_path) and filename.lower().endswith(".csv"):
+                files.append((filename, filename))
+        return files
+
     def action_import_csv(self):
         self.ensure_one()
 
@@ -75,7 +86,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if not rows:
             raise UserError(_("Le fichier CSV est vide."))
 
-        # Pour ce premier jet on vérifie juste la structure
         required_columns = {
             "default_code",
             "attribute_value",
@@ -96,9 +106,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             "params": {
                 "title": _("Import CSV"),
                 "message": _(
-                    "CSV lu avec succès. %s ligne(s) détectée(s). "
-                    "La logique d'import complète sera branchée à l'étape suivante."
-                ) % len(rows),
+                    "CSV lu avec succès : %s (%s ligne(s)). "
+                    "La logique d'import complète sera branchée ensuite."
+                ) % (self.csv_filename, len(rows)),
                 "type": "success",
                 "sticky": False,
             },
@@ -107,22 +117,25 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     def _read_csv_file(self):
         self.ensure_one()
 
-        if not self.csv_file:
-            raise UserError(_("Aucun fichier CSV fourni."))
+        if not self.csv_filename:
+            raise UserError(_("Aucun fichier CSV sélectionné."))
+
+        csv_path = os.path.join(self.CSV_DIR, self.csv_filename)
+
+        if not os.path.isfile(csv_path):
+            raise UserError(_("Fichier introuvable : %s") % csv_path)
 
         try:
-            decoded = base64.b64decode(self.csv_file)
-            content = decoded.decode("utf-8-sig")
+            with io.open(csv_path, mode="r", encoding="utf-8-sig", newline="") as f:
+                reader = csv.DictReader(f)
+                rows = []
+                for row in reader:
+                    normalized = {
+                        str(k).strip(): (str(v).strip() if v is not None else "")
+                        for k, v in row.items()
+                    }
+                    if any(normalized.values()):
+                        rows.append(normalized)
+                return rows
         except Exception as exc:
             raise UserError(_("Impossible de lire le fichier CSV : %s") % exc)
-
-        buffer = io.StringIO(content)
-        reader = csv.DictReader(buffer)
-        rows = []
-
-        for row in reader:
-            normalized = {str(k).strip(): (str(v).strip() if v is not None else "") for k, v in row.items()}
-            if any(normalized.values()):
-                rows.append(normalized)
-
-        return rows
