@@ -1,1 +1,1 @@
-import from product_variant_pricelist_import_wizard
+import.from product_variant_pricelist_import_wizard
