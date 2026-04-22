@@ -51,40 +51,20 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         required=True,
     )
 
-    uom_id = fields.Many2one(
-        "uom.uom",
-        string="Unité principale",
-        required=True,
-        help="Exemple : KG",
-    )
-
-    sale_secondary_uom_id = fields.Many2one(
+    product_secondary_unit_id = fields.Many2one(
         "product.secondary.unit",
-        string="Seconde unité de vente",
+        string="Unité de mesure secondaire",
         required=True,
-        help="Exemple : ML ou PI",
     )
 
-    factor_mode = fields.Selection(
+    dependency_type = fields.Selection(
         [
-            ("csv", "Depuis une colonne du CSV"),
-            ("fixed", "Valeur fixe"),
+            ("dependent", "Dependent"),
+            ("independent", "Independent"),
         ],
-        string="Mode du rapport",
-        default="csv",
+        string="Dependency Type",
+        default="independent",
         required=True,
-    )
-
-    factor_column_name = fields.Char(
-        string="Nom de la colonne facteur",
-        default="factor",
-        help="Exemple : kg_par_metre, kg_par_barre, factor",
-    )
-
-    fixed_factor = fields.Float(
-        string="Rapport fixe",
-        default=1.0,
-        help="Utilisé seulement si le mode du rapport est sur valeur fixe.",
     )
 
     update_standard_price = fields.Boolean(
@@ -102,18 +82,51 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         default=False,
     )
 
+    csv_format_help = fields.Text(
+        string="Format CSV attendu",
+        compute="_compute_csv_format_help",
+    )
+
+    @api.depends("product_secondary_unit_id")
+    def _compute_csv_format_help(self):
+        for wizard in self:
+            lines = [
+                "Colonnes obligatoires :",
+                "default_code, attribute_value, uom_code, standard_price, meter, factor",
+                "",
+                "Sens des colonnes :",
+                "- default_code : référence produit",
+                "- attribute_value : valeur de variante",
+                "- uom_code : unité principale Odoo (KG, ML, PI...)",
+                "- standard_price : coût dans l'unité principale Odoo",
+                "- meter : longueur de référence utilisée pour le calcul",
+                "- factor : rapport Odoo par produit pour l'unité secondaire",
+                "",
+                "Exemple :",
+                "default_code,attribute_value,uom_code,standard_price,meter,factor",
+                "73309,80,KG,1.0000,6,6.4500",
+                "71046,100,KG,0.9999,6,8.7970",
+            ]
+            if wizard.product_secondary_unit_id:
+                lines.extend(
+                    [
+                        "",
+                        f"Unité secondaire choisie dans le wizard : {wizard.product_secondary_unit_id.display_name}",
+                    ]
+                )
+            wizard.csv_format_help = "\n".join(lines)
+
     @api.model
     def _selection_csv_files(self):
-        csv_dir = self.CSV_DIR
-        if not os.path.isdir(csv_dir):
+        if not os.path.isdir(self.CSV_DIR):
             return []
 
-        files = []
-        for filename in sorted(os.listdir(csv_dir)):
-            full_path = os.path.join(csv_dir, filename)
+        result = []
+        for filename in sorted(os.listdir(self.CSV_DIR)):
+            full_path = os.path.join(self.CSV_DIR, filename)
             if os.path.isfile(full_path) and filename.lower().endswith(".csv"):
-                files.append((filename, filename))
-        return files
+                result.append((filename, filename))
+        return result
 
     def action_import_csv(self):
         self.ensure_one()
@@ -125,15 +138,14 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         required_columns = {
             "default_code",
             "attribute_value",
+            "uom_code",
             "standard_price",
+            "meter",
+            "factor",
         }
 
-        if self.factor_mode == "csv":
-            if not self.factor_column_name:
-                raise UserError(_("Tu dois renseigner le nom de la colonne facteur."))
-            required_columns.add(self.factor_column_name.strip())
-
-        missing = required_columns - set(rows[0].keys())
+        header_keys = set(rows[0].keys())
+        missing = required_columns - header_keys
         if missing:
             raise UserError(
                 _("Colonnes CSV manquantes : %s") % ", ".join(sorted(missing))
@@ -146,15 +158,13 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "title": _("Import CSV"),
                 "message": _(
                     "CSV lu avec succès : %s (%s ligne(s)). "
-                    "Unité principale : %s. "
-                    "Seconde unité : %s. "
-                    "Mode du rapport : %s."
+                    "Unité secondaire : %s. "
+                    "Dependency type : %s."
                 ) % (
                     self.csv_filename,
                     len(rows),
-                    self.uom_id.display_name,
-                    self.sale_secondary_uom_id.display_name,
-                    dict(self._fields["factor_mode"].selection).get(self.factor_mode),
+                    self.product_secondary_unit_id.display_name,
+                    dict(self._fields["dependency_type"].selection).get(self.dependency_type),
                 ),
                 "type": "success",
                 "sticky": False,
