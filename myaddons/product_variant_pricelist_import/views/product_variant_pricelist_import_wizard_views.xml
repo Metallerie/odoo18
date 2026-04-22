@@ -14,12 +14,9 @@
                         <field name="csv_filename"/>
                     </group>
                     <group>
-                        <field name="uom_id"/>
-                        <field name="sale_secondary_uom_id"/>
+                        <field name="product_secondary_unit_id"/>
+                        <field name="dependency_type"/>
                         <field name="coefficient"/>
-                        <field name="factor_mode"/>
-                        <field name="factor_column_name" invisible="factor_mode != 'csv'"/>
-                        <field name="fixed_factor" invisible="factor_mode != 'fixed'"/>
                     </group>
                 </group>
 
@@ -27,6 +24,10 @@
                     <field name="update_standard_price"/>
                     <field name="archive_missing_variants"/>
                     <field name="remove_missing_pricelist_items"/>
+                </group>
+
+                <group string="Norme CSV">
+                    <field name="csv_format_help" nolabel="1" readonly="1"/>
                 </group>
 
                 <footer>
