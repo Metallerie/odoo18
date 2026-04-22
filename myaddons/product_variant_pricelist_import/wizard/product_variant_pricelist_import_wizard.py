@@ -51,6 +51,42 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         required=True,
     )
 
+    uom_id = fields.Many2one(
+        "uom.uom",
+        string="Unité principale",
+        required=True,
+        help="Exemple : KG",
+    )
+
+    sale_secondary_uom_id = fields.Many2one(
+        "product.secondary.unit",
+        string="Seconde unité de vente",
+        required=True,
+        help="Exemple : ML ou PI",
+    )
+
+    factor_mode = fields.Selection(
+        [
+            ("csv", "Depuis une colonne du CSV"),
+            ("fixed", "Valeur fixe"),
+        ],
+        string="Mode du rapport",
+        default="csv",
+        required=True,
+    )
+
+    factor_column_name = fields.Char(
+        string="Nom de la colonne facteur",
+        default="factor",
+        help="Exemple : kg_par_metre, kg_par_barre, factor",
+    )
+
+    fixed_factor = fields.Float(
+        string="Rapport fixe",
+        default=1.0,
+        help="Utilisé seulement si le mode du rapport est sur valeur fixe.",
+    )
+
     update_standard_price = fields.Boolean(
         string="Mettre à jour le coût d'achat",
         default=True,
@@ -89,11 +125,14 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         required_columns = {
             "default_code",
             "attribute_value",
-            "uom_id",
-            "factor",
             "standard_price",
-            "sale_secondary_uom_code",
         }
+
+        if self.factor_mode == "csv":
+            if not self.factor_column_name:
+                raise UserError(_("Tu dois renseigner le nom de la colonne facteur."))
+            required_columns.add(self.factor_column_name.strip())
+
         missing = required_columns - set(rows[0].keys())
         if missing:
             raise UserError(
@@ -107,8 +146,16 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "title": _("Import CSV"),
                 "message": _(
                     "CSV lu avec succès : %s (%s ligne(s)). "
-                    "La logique d'import complète sera branchée ensuite."
-                ) % (self.csv_filename, len(rows)),
+                    "Unité principale : %s. "
+                    "Seconde unité : %s. "
+                    "Mode du rapport : %s."
+                ) % (
+                    self.csv_filename,
+                    len(rows),
+                    self.uom_id.display_name,
+                    self.sale_secondary_uom_id.display_name,
+                    dict(self._fields["factor_mode"].selection).get(self.factor_mode),
+                ),
                 "type": "success",
                 "sticky": False,
             },
