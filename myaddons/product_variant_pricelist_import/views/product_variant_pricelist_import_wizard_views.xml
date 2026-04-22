@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-     <record id="view_product_variant_pricelist_import_wizard_form" model="ir.ui.view">
+    <record id="view_product_variant_pricelist_import_wizard_form" model="ir.ui.view">
         <field name="name">product.variant.pricelist.import.wizard.form</field>
         <field name="model">product.variant.pricelist.import.wizard</field>
         <field name="arch" type="xml">
@@ -11,14 +11,22 @@
                         <field name="category_id"/>
                         <field name="attribute_id"/>
                         <field name="pricelist_id"/>
+                        <field name="csv_filename"/>
                     </group>
                     <group>
-                        <field name="csv_filename"/>
+                        <field name="uom_id"/>
+                        <field name="sale_secondary_uom_id"/>
                         <field name="coefficient"/>
-                        <field name="update_standard_price"/>
-                        <field name="archive_missing_variants"/>
-                        <field name="remove_missing_pricelist_items"/>
+                        <field name="factor_mode"/>
+                        <field name="factor_column_name" invisible="factor_mode != 'csv'"/>
+                        <field name="fixed_factor" invisible="factor_mode != 'fixed'"/>
                     </group>
+                </group>
+
+                <group string="Options">
+                    <field name="update_standard_price"/>
+                    <field name="archive_missing_variants"/>
+                    <field name="remove_missing_pricelist_items"/>
                 </group>
 
                 <footer>
