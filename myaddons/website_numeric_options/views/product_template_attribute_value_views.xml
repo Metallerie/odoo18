@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_attribute_value_form_inherit_numeric_options" model="ir.ui.view">
+        <field name="name">product.template.attribute.value.form.numeric.options</field>
+        <field name="model">product.template.attribute.value</field>
+        <field name="inherit_id" ref="product.product_template_attribute_value_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="inside">
+                <group string="Saisie libre">
+                    <field name="value_input_type"/>
+                    <field name="numeric_type" invisible="value_input_type != 'numeric'"/>
+                </group>
+
+                <group string="Calcul" invisible="value_input_type != 'computed'">
+                    <field name="calc_operation"/>
+                    <field name="calc_operand_1_id"/>
+                    <field name="calc_operand_2_id"/>
+                    <field name="is_computed_readonly"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_attribute_value_tree_inherit_numeric_options" model="ir.ui.view">
+        <field name="name">product.template.attribute.value.tree.numeric.options</field>
+        <field name="model">product.template.attribute.value</field>
+        <field name="inherit_id" ref="product.product_template_attribute_value_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="value_input_type" optional="show"/>
+                <field name="numeric_type" optional="hide"/>
+                <field name="calc_operation" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
