@@ -203,7 +203,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             )
             updated_variants += 1
 
-            _, created = self._create_or_update_pricelist_item(
+            pricelist_item, created = self._create_or_update_pricelist_item(
                 variant=variant,
                 standard_price=standard_price,
                 factor=factor,
@@ -357,9 +357,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
     def _write_secondary_unit_data(self, variant, factor):
         """
-        Crée ou met à jour la ligne product.secondary.unit spécifique à la variante.
-        Puis affecte cette ligne comme unité secondaire par défaut sur la variante
-        et sur le template si les champs existent.
+        Crée ou met à jour la ligne product.secondary.unit pour la variante.
+        Puis met cette ligne comme unité secondaire par défaut là où le champ existe.
         """
         SecondaryUnit = self.env["product.secondary.unit"]
 
@@ -389,7 +388,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         else:
             secondary_line = SecondaryUnit.create(vals)
 
-        # Sur product.product, ces champs pointent vers product.secondary.unit
+        # product.product : ces champs pointent vers product.secondary.unit
         product_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
             product_vals["sale_secondary_uom_id"] = secondary_line.id
@@ -398,7 +397,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if product_vals:
             variant.write(product_vals)
 
-        # Sur product.template, même logique si les champs existent
+        # product.template : idem si présents
         template_vals = {}
         if "sale_secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["sale_secondary_uom_id"] = secondary_line.id
