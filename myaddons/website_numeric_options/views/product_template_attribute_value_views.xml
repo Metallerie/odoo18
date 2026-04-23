@@ -26,7 +26,7 @@
         <field name="model">product.template.attribute.value</field>
         <field name="inherit_id" ref="product.product_template_attribute_value_view_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//tree" position="inside">
+            <xpath expr="//list" position="inside">
                 <field name="value_input_type" optional="show"/>
                 <field name="numeric_type" optional="hide"/>
                 <field name="calc_operation" optional="hide"/>
