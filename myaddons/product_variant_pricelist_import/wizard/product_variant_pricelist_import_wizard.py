@@ -51,10 +51,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         required=True,
     )
 
-    product_secondary_unit_id = fields.Many2one(
-        "product.secondary.unit",
+    product_secondary_uom_id = fields.Many2one(
+        "uom.uom",
         string="Unité de mesure secondaire",
         required=True,
+        help="Exemple : ML, PI, KG",
     )
 
     dependency_type = fields.Selection(
@@ -87,7 +88,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         compute="_compute_csv_format_help",
     )
 
-    @api.depends("product_secondary_unit_id")
+    @api.depends("product_secondary_uom_id")
     def _compute_csv_format_help(self):
         for wizard in self:
             lines = [
@@ -107,11 +108,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "71111,HEA 100,KG,1.1500,6,17.6575",
                 "71114,HEA 120,KG,1.0400,6,21.0410",
             ]
-            if wizard.product_secondary_unit_id:
+            if wizard.product_secondary_uom_id:
                 lines.append("")
                 lines.append(
                     "Unité secondaire choisie : %s"
-                    % wizard.product_secondary_unit_id.display_name
+                    % wizard.product_secondary_uom_id.display_name
                 )
             wizard.csv_format_help = "\n".join(lines)
 
@@ -353,6 +354,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     def _write_secondary_unit_data(self, variant, factor):
         """
         Écrit l'unité secondaire sur la variante concernée.
+        Le wizard choisit une unité Odoo primaire (uom.uom).
+        On la pousse ensuite dans la ligne secondaire du module OCA.
         """
         SecondaryLine = None
         line_field_name = None
@@ -365,12 +368,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             line_field_name = "product_secondary_unit_ids"
 
         if not SecondaryLine or not line_field_name:
-            # fallback doux : on tente au moins de poser l'unité par défaut si le champ existe
             direct_vals = {}
             if "sale_secondary_uom_id" in variant._fields:
-                direct_vals["sale_secondary_uom_id"] = self.product_secondary_unit_id.id
+                direct_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
             if "secondary_uom_id" in variant._fields:
-                direct_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+                direct_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
             if direct_vals:
                 variant.write(direct_vals)
                 return
@@ -406,12 +408,17 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 (
                     "secondary_uom_id" in l._fields
                     and l.secondary_uom_id
-                    and l.secondary_uom_id.id == self.product_secondary_unit_id.id
+                    and l.secondary_uom_id.id == self.product_secondary_uom_id.id
                 )
                 or (
                     "secondary_unit_id" in l._fields
                     and l.secondary_unit_id
-                    and l.secondary_unit_id.id == self.product_secondary_unit_id.id
+                    and l.secondary_unit_id.id == self.product_secondary_uom_id.id
+                )
+                or (
+                    "uom_id" in l._fields
+                    and l.uom_id
+                    and l.uom_id.id == self.product_secondary_uom_id.id
                 )
         )[:1]
 
@@ -425,18 +432,17 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             vals["product_tmpl_id"] = variant.product_tmpl_id.id
 
         if "secondary_uom_id" in SecondaryLine._fields:
-            vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+            vals["secondary_uom_id"] = self.product_secondary_uom_id.id
         elif "secondary_unit_id" in SecondaryLine._fields:
-            vals["secondary_unit_id"] = self.product_secondary_unit_id.id
+            vals["secondary_unit_id"] = self.product_secondary_uom_id.id
+        elif "uom_id" in SecondaryLine._fields:
+            vals["uom_id"] = self.product_secondary_uom_id.id
 
         if "code" in SecondaryLine._fields:
-            if hasattr(self.product_secondary_unit_id, "uom_id") and self.product_secondary_unit_id.uom_id:
-                vals["code"] = self.product_secondary_unit_id.uom_id.name
-            else:
-                vals["code"] = self.product_secondary_unit_id.display_name
+            vals["code"] = self.product_secondary_uom_id.name
 
         if "name" in SecondaryLine._fields:
-            vals["name"] = self.product_secondary_unit_id.display_name
+            vals["name"] = self.product_secondary_uom_id.display_name
 
         if "factor" in SecondaryLine._fields:
             vals["factor"] = factor
@@ -456,9 +462,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         direct_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
-            direct_vals["sale_secondary_uom_id"] = self.product_secondary_unit_id.id
+            direct_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
         if "secondary_uom_id" in variant._fields:
-            direct_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+            direct_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
         if direct_vals:
             variant.write(direct_vals)
 
