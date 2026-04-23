@@ -196,7 +196,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             )
             updated_variants += 1
 
-            item, created = self._create_or_update_pricelist_item(variant, standard_price)
+            item, created = self._create_or_update_pricelist_item(
+                variant=variant,
+                standard_price=standard_price,
+                factor=factor,
+            )
             if item:
                 if created:
                     created_pricelist_items += 1
@@ -339,7 +343,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if self.update_standard_price:
             vals["standard_price"] = standard_price
 
-        # Champ custom si tu veux garder la longueur source
         if "x_meter" in variant._fields:
             vals["x_meter"] = meter
 
@@ -349,71 +352,118 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
     def _write_secondary_unit_data(self, variant, factor):
         """
-        Essaie d'écrire sur les champs les plus probables.
-        Adapte ici si ton module OCA utilise d'autres noms.
+        Écrit l'unité secondaire sur la variante concernée.
         """
-        written = False
+        SecondaryLine = None
+        line_field_name = None
 
-        # Cas 1 : champs directs sur product.product
+        if "secondary_unit_ids" in variant._fields:
+            SecondaryLine = self.env[variant._fields["secondary_unit_ids"].comodel_name]
+            line_field_name = "secondary_unit_ids"
+        elif "product_secondary_unit_ids" in variant._fields:
+            SecondaryLine = self.env[variant._fields["product_secondary_unit_ids"].comodel_name]
+            line_field_name = "product_secondary_unit_ids"
+
+        if not SecondaryLine or not line_field_name:
+            # fallback doux : on tente au moins de poser l'unité par défaut si le champ existe
+            direct_vals = {}
+            if "sale_secondary_uom_id" in variant._fields:
+                direct_vals["sale_secondary_uom_id"] = self.product_secondary_unit_id.id
+            if "secondary_uom_id" in variant._fields:
+                direct_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+            if direct_vals:
+                variant.write(direct_vals)
+                return
+
+            raise UserError(
+                _("Impossible de trouver la relation d'unités secondaires sur la variante '%s'.")
+                % variant.display_name
+            )
+
+        lines = variant[line_field_name]
+
+        existing = lines.filtered(
+            lambda l:
+                (
+                    "product_id" in l._fields
+                    and l.product_id
+                    and l.product_id.id == variant.id
+                )
+                or (
+                    "product_variant_id" in l._fields
+                    and l.product_variant_id
+                    and l.product_variant_id.id == variant.id
+                )
+                or (
+                    "product_tmpl_id" in l._fields
+                    and l.product_tmpl_id
+                    and l.product_tmpl_id.id == variant.product_tmpl_id.id
+                )
+        )
+
+        existing = existing.filtered(
+            lambda l:
+                (
+                    "secondary_uom_id" in l._fields
+                    and l.secondary_uom_id
+                    and l.secondary_uom_id.id == self.product_secondary_unit_id.id
+                )
+                or (
+                    "secondary_unit_id" in l._fields
+                    and l.secondary_unit_id
+                    and l.secondary_unit_id.id == self.product_secondary_unit_id.id
+                )
+        )[:1]
+
+        vals = {}
+
+        if "product_id" in SecondaryLine._fields:
+            vals["product_id"] = variant.id
+        elif "product_variant_id" in SecondaryLine._fields:
+            vals["product_variant_id"] = variant.id
+        elif "product_tmpl_id" in SecondaryLine._fields:
+            vals["product_tmpl_id"] = variant.product_tmpl_id.id
+
+        if "secondary_uom_id" in SecondaryLine._fields:
+            vals["secondary_uom_id"] = self.product_secondary_unit_id.id
+        elif "secondary_unit_id" in SecondaryLine._fields:
+            vals["secondary_unit_id"] = self.product_secondary_unit_id.id
+
+        if "code" in SecondaryLine._fields:
+            if hasattr(self.product_secondary_unit_id, "uom_id") and self.product_secondary_unit_id.uom_id:
+                vals["code"] = self.product_secondary_unit_id.uom_id.name
+            else:
+                vals["code"] = self.product_secondary_unit_id.display_name
+
+        if "name" in SecondaryLine._fields:
+            vals["name"] = self.product_secondary_unit_id.display_name
+
+        if "factor" in SecondaryLine._fields:
+            vals["factor"] = factor
+        elif "sale_secondary_uom_factor" in SecondaryLine._fields:
+            vals["sale_secondary_uom_factor"] = factor
+
+        if "dependency_type" in SecondaryLine._fields:
+            vals["dependency_type"] = self.dependency_type
+
+        if "active" in SecondaryLine._fields:
+            vals["active"] = True
+
+        if existing:
+            existing.write(vals)
+        else:
+            variant.write({line_field_name: [(0, 0, vals)]})
+
         direct_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
             direct_vals["sale_secondary_uom_id"] = self.product_secondary_unit_id.id
         if "secondary_uom_id" in variant._fields:
             direct_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
-        if "sale_secondary_uom_factor" in variant._fields:
-            direct_vals["sale_secondary_uom_factor"] = factor
-        if "secondary_uom_factor" in variant._fields:
-            direct_vals["secondary_uom_factor"] = factor
-        if "dependency_type" in variant._fields:
-            direct_vals["dependency_type"] = self.dependency_type
-
         if direct_vals:
             variant.write(direct_vals)
-            written = True
 
-        # Cas 2 : relation one2many vers product.secondary.unit
-        if not written and "secondary_unit_ids" in variant._fields:
-            existing = variant.secondary_unit_ids.filtered(
-                lambda r: r.secondary_uom_id.id == self.product_secondary_unit_id.id
-                or r.secondary_unit_id.id == self.product_secondary_unit_id.id
-            )[:1]
-
-            line_vals = {}
-            if existing:
-                if "factor" in existing._fields:
-                    line_vals["factor"] = factor
-                if "dependency_type" in existing._fields:
-                    line_vals["dependency_type"] = self.dependency_type
-                if line_vals:
-                    existing.write(line_vals)
-                written = True
-            else:
-                create_vals = {}
-                if "secondary_uom_id" in self.env["product.secondary.unit"]._fields:
-                    create_vals["secondary_uom_id"] = self.product_secondary_unit_id.id
-                elif "secondary_unit_id" in self.env["product.secondary.unit"]._fields:
-                    create_vals["secondary_unit_id"] = self.product_secondary_unit_id.id
-
-                if "factor" in self.env["product.secondary.unit"]._fields:
-                    create_vals["factor"] = factor
-                if "dependency_type" in self.env["product.secondary.unit"]._fields:
-                    create_vals["dependency_type"] = self.dependency_type
-
-                if create_vals:
-                    variant.write({"secondary_unit_ids": [(0, 0, create_vals)]})
-                    written = True
-
-        if not written:
-            raise UserError(
-                _(
-                    "Impossible d'écrire l'unité secondaire sur la variante '%s'. "
-                    "Il faut vérifier les noms de champs du module OCA."
-                )
-                % variant.display_name
-            )
-
-    def _create_or_update_pricelist_item(self, variant, standard_price):
-        fixed_price = standard_price * self.coefficient
+    def _create_or_update_pricelist_item(self, variant, standard_price, factor):
+        fixed_price = standard_price * factor * self.coefficient
 
         item = self.env["product.pricelist.item"].search(
             [
