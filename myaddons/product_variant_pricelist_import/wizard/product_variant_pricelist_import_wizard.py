@@ -202,11 +202,10 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 standard_price=standard_price,
                 factor=factor,
             )
-            if item:
-                if created:
-                    created_pricelist_items += 1
-                else:
-                    updated_pricelist_items += 1
+            if created:
+                created_pricelist_items += 1
+            else:
+                updated_pricelist_items += 1
 
         if self.archive_missing_variants:
             self._archive_missing_variants(imported_codes)
@@ -348,118 +347,37 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             vals["x_meter"] = meter
 
         variant.write(vals)
-
         self._write_secondary_unit_data(variant, factor)
 
     def _write_secondary_unit_data(self, variant, factor):
-        """
-        Écrit l'unité secondaire sur la variante concernée.
-        Le wizard choisit une unité Odoo primaire (uom.uom).
-        On la pousse ensuite dans la ligne secondaire du module OCA.
-        """
-        SecondaryLine = None
-        line_field_name = None
+        SecondaryUnit = self.env["product.secondary.unit"]
 
-        if "secondary_unit_ids" in variant._fields:
-            SecondaryLine = self.env[variant._fields["secondary_unit_ids"].comodel_name]
-            line_field_name = "secondary_unit_ids"
-        elif "product_secondary_unit_ids" in variant._fields:
-            SecondaryLine = self.env[variant._fields["product_secondary_unit_ids"].comodel_name]
-            line_field_name = "product_secondary_unit_ids"
-
-        if not SecondaryLine or not line_field_name:
-            direct_vals = {}
-            if "sale_secondary_uom_id" in variant._fields:
-                direct_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
-            if "secondary_uom_id" in variant._fields:
-                direct_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
-            if direct_vals:
-                variant.write(direct_vals)
-                return
-
-            raise UserError(
-                _("Impossible de trouver la relation d'unités secondaires sur la variante '%s'.")
-                % variant.display_name
-            )
-
-        lines = variant[line_field_name]
-
-        existing = lines.filtered(
-            lambda l:
-                (
-                    "product_id" in l._fields
-                    and l.product_id
-                    and l.product_id.id == variant.id
-                )
-                or (
-                    "product_variant_id" in l._fields
-                    and l.product_variant_id
-                    and l.product_variant_id.id == variant.id
-                )
-                or (
-                    "product_tmpl_id" in l._fields
-                    and l.product_tmpl_id
-                    and l.product_tmpl_id.id == variant.product_tmpl_id.id
-                )
+        existing = SecondaryUnit.search(
+            [
+                ("product_tmpl_id", "=", variant.product_tmpl_id.id),
+                ("product_id", "=", variant.id),
+                ("uom_id", "=", self.product_secondary_uom_id.id),
+            ],
+            limit=1,
         )
 
-        existing = existing.filtered(
-            lambda l:
-                (
-                    "secondary_uom_id" in l._fields
-                    and l.secondary_uom_id
-                    and l.secondary_uom_id.id == self.product_secondary_uom_id.id
-                )
-                or (
-                    "secondary_unit_id" in l._fields
-                    and l.secondary_unit_id
-                    and l.secondary_unit_id.id == self.product_secondary_uom_id.id
-                )
-                or (
-                    "uom_id" in l._fields
-                    and l.uom_id
-                    and l.uom_id.id == self.product_secondary_uom_id.id
-                )
-        )[:1]
-
-        vals = {}
-
-        if "product_id" in SecondaryLine._fields:
-            vals["product_id"] = variant.id
-        elif "product_variant_id" in SecondaryLine._fields:
-            vals["product_variant_id"] = variant.id
-        elif "product_tmpl_id" in SecondaryLine._fields:
-            vals["product_tmpl_id"] = variant.product_tmpl_id.id
-
-        if "secondary_uom_id" in SecondaryLine._fields:
-            vals["secondary_uom_id"] = self.product_secondary_uom_id.id
-        elif "secondary_unit_id" in SecondaryLine._fields:
-            vals["secondary_unit_id"] = self.product_secondary_uom_id.id
-        elif "uom_id" in SecondaryLine._fields:
-            vals["uom_id"] = self.product_secondary_uom_id.id
-
-        if "code" in SecondaryLine._fields:
-            vals["code"] = self.product_secondary_uom_id.name
-
-        if "name" in SecondaryLine._fields:
-            vals["name"] = self.product_secondary_uom_id.display_name
-
-        if "factor" in SecondaryLine._fields:
-            vals["factor"] = factor
-        elif "sale_secondary_uom_factor" in SecondaryLine._fields:
-            vals["sale_secondary_uom_factor"] = factor
-
-        if "dependency_type" in SecondaryLine._fields:
-            vals["dependency_type"] = self.dependency_type
-
-        if "active" in SecondaryLine._fields:
-            vals["active"] = True
+        vals = {
+            "name": self.product_secondary_uom_id.display_name,
+            "code": self.product_secondary_uom_id.name,
+            "product_tmpl_id": variant.product_tmpl_id.id,
+            "product_id": variant.id,
+            "uom_id": self.product_secondary_uom_id.id,
+            "dependency_type": self.dependency_type,
+            "factor": factor,
+            "active": True,
+        }
 
         if existing:
             existing.write(vals)
         else:
-            variant.write({line_field_name: [(0, 0, vals)]})
+            SecondaryUnit.create(vals)
 
+        # valeur par défaut visible sur le produit/template si les champs existent
         direct_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
             direct_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
@@ -467,6 +385,14 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             direct_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
         if direct_vals:
             variant.write(direct_vals)
+
+        tmpl_vals = {}
+        if "sale_secondary_uom_id" in variant.product_tmpl_id._fields:
+            tmpl_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
+        if "secondary_uom_id" in variant.product_tmpl_id._fields:
+            tmpl_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
+        if tmpl_vals:
+            variant.product_tmpl_id.write(tmpl_vals)
 
     def _create_or_update_pricelist_item(self, variant, standard_price, factor):
         fixed_price = standard_price * factor * self.coefficient
