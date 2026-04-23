@@ -1,12 +1,12 @@
-# models/product_attribute_value.py
+# -*- coding: utf-8 -*-
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 
 class ProductAttributeValue(models.Model):
-    
-    _inherit = "product.template.attribute.value"
-    
+    _inherit = "product.attribute.value"
+
     value_input_type = fields.Selection(
         [
             ("text", "Texte"),
