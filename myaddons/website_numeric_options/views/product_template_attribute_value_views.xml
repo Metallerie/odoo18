@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="product_attribute_value_form_inherit_numeric_options" model="ir.ui.view">
-        <field name="name">product.attribute.value.form.numeric.options</field>
-        <field name="model">product.attribute.value</field>
-        <field name="inherit_id" ref="product.product_attribute_value_view_form"/>
+    <record id="product_template_attribute_value_form_inherit_numeric_options" model="ir.ui.view">
+        <field name="name">product.template.attribute.value.form.numeric.options</field>
+        <field name="model">product.template.attribute.value</field>
+        <field name="inherit_id" ref="product.product_template_attribute_value_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group" position="inside">
+            <xpath expr="//form//group" position="inside">
                 <group string="Saisie libre">
                     <field name="value_input_type"/>
                     <field name="numeric_type" invisible="value_input_type != 'numeric'"/>
@@ -21,10 +21,10 @@
         </field>
     </record>
 
-    <record id="product_attribute_value_list_inherit_numeric_options" model="ir.ui.view">
-        <field name="name">product.attribute.value.list.numeric.options</field>
-        <field name="model">product.attribute.value</field>
-        <field name="inherit_id" ref="product.product_attribute_value_view_tree"/>
+    <record id="product_template_attribute_value_list_inherit_numeric_options" model="ir.ui.view">
+        <field name="name">product.template.attribute.value.list.numeric.options</field>
+        <field name="model">product.template.attribute.value</field>
+        <field name="inherit_id" ref="product.product_template_attribute_value_view_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//list" position="inside">
                 <field name="value_input_type" optional="show"/>
