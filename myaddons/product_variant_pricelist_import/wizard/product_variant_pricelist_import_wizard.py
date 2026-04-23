@@ -172,18 +172,24 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             imported_codes.add(default_code)
 
             uom = self._get_uom_by_code(uom_code)
-            attr_value, value_created = self._get_or_create_attribute_value(attribute_value_name)
+            attr_value, value_created = self._get_or_create_attribute_value(
+                attribute_value_name
+            )
             if value_created:
                 created_values += 1
 
             self._sync_template_attribute_line(attr_value)
-            self.template_id.invalidate_recordset(["attribute_line_ids", "product_variant_ids"])
+            self.template_id.invalidate_recordset(
+                ["attribute_line_ids", "product_variant_ids"]
+            )
             self.template_id._create_variant_ids()
 
             variant = self._find_variant_from_value(attr_value)
             if not variant:
                 raise UserError(
-                    _("Impossible de trouver ou créer la variante pour la valeur '%s'.")
+                    _(
+                        "Impossible de trouver ou créer la variante pour la valeur '%s'."
+                    )
                     % attribute_value_name
                 )
 
@@ -197,7 +203,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             )
             updated_variants += 1
 
-            item, created = self._create_or_update_pricelist_item(
+            _, created = self._create_or_update_pricelist_item(
                 variant=variant,
                 standard_price=standard_price,
                 factor=factor,
@@ -350,6 +356,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         self._write_secondary_unit_data(variant, factor)
 
     def _write_secondary_unit_data(self, variant, factor):
+        """
+        Crée ou met à jour la ligne product.secondary.unit spécifique à la variante.
+        Puis affecte cette ligne comme unité secondaire par défaut sur la variante
+        et sur le template si les champs existent.
+        """
         SecondaryUnit = self.env["product.secondary.unit"]
 
         existing = SecondaryUnit.search(
@@ -374,25 +385,27 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         if existing:
             existing.write(vals)
+            secondary_line = existing
         else:
-            SecondaryUnit.create(vals)
+            secondary_line = SecondaryUnit.create(vals)
 
-        # valeur par défaut visible sur le produit/template si les champs existent
-        direct_vals = {}
+        # Sur product.product, ces champs pointent vers product.secondary.unit
+        product_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
-            direct_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
+            product_vals["sale_secondary_uom_id"] = secondary_line.id
         if "secondary_uom_id" in variant._fields:
-            direct_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
-        if direct_vals:
-            variant.write(direct_vals)
+            product_vals["secondary_uom_id"] = secondary_line.id
+        if product_vals:
+            variant.write(product_vals)
 
-        tmpl_vals = {}
+        # Sur product.template, même logique si les champs existent
+        template_vals = {}
         if "sale_secondary_uom_id" in variant.product_tmpl_id._fields:
-            tmpl_vals["sale_secondary_uom_id"] = self.product_secondary_uom_id.id
+            template_vals["sale_secondary_uom_id"] = secondary_line.id
         if "secondary_uom_id" in variant.product_tmpl_id._fields:
-            tmpl_vals["secondary_uom_id"] = self.product_secondary_uom_id.id
-        if tmpl_vals:
-            variant.product_tmpl_id.write(tmpl_vals)
+            template_vals["secondary_uom_id"] = secondary_line.id
+        if template_vals:
+            variant.product_tmpl_id.write(template_vals)
 
     def _create_or_update_pricelist_item(self, variant, standard_price, factor):
         fixed_price = standard_price * factor * self.coefficient
