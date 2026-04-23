@@ -4,8 +4,9 @@ from odoo.exceptions import ValidationError
 
 
 class ProductAttributeValue(models.Model):
-    _inherit = "product.attribute.value"
-
+    
+    _inherit = "product.template.attribute.value"
+    
     value_input_type = fields.Selection(
         [
             ("text", "Texte"),
