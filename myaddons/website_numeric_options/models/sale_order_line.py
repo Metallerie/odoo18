@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-
 from odoo import api, models
 
 
@@ -9,7 +8,7 @@ class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
     # -----------------------------
-    # UTILITAIRE : parser nombre
+    # PARSE NUMERIC
     # -----------------------------
     def _parse_numeric_value(self, value):
         if not value:
@@ -27,9 +26,9 @@ class SaleOrderLine(models.Model):
             return None
 
     # -----------------------------
-    # CALCUL PRINCIPAL
+    # CALCUL CENTRAL
     # -----------------------------
-    def _compute_from_numeric_options(self):
+    def _apply_numeric_logic(self):
         for line in self:
 
             if not line.product_custom_attribute_value_ids:
@@ -37,18 +36,14 @@ class SaleOrderLine(models.Model):
 
             values_map = {}
 
-            # 🔹 récupération des valeurs numériques
             for custom_value in line.product_custom_attribute_value_ids:
-
                 pav = custom_value.product_attribute_value_id
 
                 if pav.value_input_type == "numeric":
                     number = self._parse_numeric_value(custom_value.custom_value)
-
                     if number is not None:
                         values_map[pav.id] = number
 
-            # 🔹 recherche des options calculées actives
             computed_values = self.env["product.attribute.value"].search([
                 ("value_input_type", "=", "computed"),
                 ("use_as_order_qty", "=", True),
@@ -67,25 +62,28 @@ class SaleOrderLine(models.Model):
                         line.product_uom_qty = result
 
     # -----------------------------
-    # ONCHANGE → déclenchement TABULATION
+    # HACK IMPORTANT
     # -----------------------------
-    @api.onchange("product_custom_attribute_value_ids")
-    def _onchange_numeric_options(self):
-        self._compute_from_numeric_options()
+    @api.depends(
+        "product_custom_attribute_value_ids",
+        "product_custom_attribute_value_ids.custom_value",
+    )
+    def _compute_amount(self):
+        super()._compute_amount()
+
+        # 👉 ON FORCE LE CALCUL ICI
+        self._apply_numeric_logic()
 
     # -----------------------------
-    # CREATE (sécurité serveur)
+    # CREATE / WRITE sécurité
     # -----------------------------
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
-        lines._compute_from_numeric_options()
+        lines._apply_numeric_logic()
         return lines
 
-    # -----------------------------
-    # WRITE (sécurité serveur)
-    # -----------------------------
     def write(self, vals):
         res = super().write(vals)
-        self._compute_from_numeric_options()
+        self._apply_numeric_logic()
         return res
