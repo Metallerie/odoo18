@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#product_template_attribute_value.py
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
