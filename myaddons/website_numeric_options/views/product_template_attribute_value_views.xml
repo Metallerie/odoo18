@@ -7,11 +7,10 @@
         <field name="inherit_id" ref="product.product_attribute_view_form"/>
         <field name="arch" type="xml">
 
-            <!-- On enrichit la liste des valeurs -->
             <xpath expr="//field[@name='value_ids']/list/field[@name='name']" position="after">
-                
+
                 <field name="value_input_type" string="Type"/>
-                
+
                 <field name="numeric_type"
                        invisible="value_input_type != 'numeric'"/>
 
@@ -19,10 +18,12 @@
                        invisible="value_input_type != 'computed'"/>
 
                 <field name="calc_operand_1_id"
-                       invisible="value_input_type != 'computed'"/>
+                       invisible="value_input_type != 'computed'"
+                       options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
 
                 <field name="calc_operand_2_id"
-                       invisible="value_input_type != 'computed'"/>
+                       invisible="value_input_type != 'computed'"
+                       options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
 
             </xpath>
 
