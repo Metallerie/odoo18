@@ -17,7 +17,10 @@ class ProductAttributeValue(models.Model):
         string="Type de saisie",
         default="text",
     )
-
+    use_as_order_qty = fields.Boolean(
+        string="Utiliser comme quantité de commande",
+        default=False,
+    )
     numeric_type = fields.Selection(
         [
             ("int", "Entier"),
