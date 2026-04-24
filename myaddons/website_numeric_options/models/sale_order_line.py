@@ -7,6 +7,9 @@ from odoo import api, models
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
+    # -----------------------------
+    # PARSE NUMERIC
+    # -----------------------------
     def _parse_numeric_value(self, value):
         if not value:
             return None
@@ -22,6 +25,9 @@ class SaleOrderLine(models.Model):
         except ValueError:
             return None
 
+    # -----------------------------
+    # CALCUL CENTRAL
+    # -----------------------------
     def _apply_numeric_logic(self):
         for line in self:
 
@@ -33,13 +39,21 @@ class SaleOrderLine(models.Model):
             for custom_value in line.product_custom_attribute_value_ids:
 
                 ptav = custom_value.custom_product_template_attribute_value_id
+                if not ptav:
+                    continue
+
                 pav = ptav.product_attribute_value_id
+                if not pav:
+                    continue
 
                 if pav.value_input_type == "numeric":
                     number = self._parse_numeric_value(custom_value.custom_value)
 
                     if number is not None:
                         values_map[pav.id] = number
+
+            # DEBUG (tu peux enlever après)
+            print("VALUES MAP:", values_map)
 
             computed_values = self.env["product.attribute.value"].search([
                 ("value_input_type", "=", "computed"),
@@ -55,23 +69,33 @@ class SaleOrderLine(models.Model):
 
                     result = computed.compute_option_value(values_map)
 
+                    print("CALCUL RESULT:", result)
+
                     if result and result > 0:
                         line.product_uom_qty = result
 
-    @api.depends(
+    # -----------------------------
+    # ONCHANGE (sécurisé)
+    # -----------------------------
+    @api.onchange(
         "product_custom_attribute_value_ids",
         "product_custom_attribute_value_ids.custom_value",
     )
-    def _compute_amount(self):
-        super()._compute_amount()
+    def _onchange_numeric_options(self):
         self._apply_numeric_logic()
 
+    # -----------------------------
+    # CREATE
+    # -----------------------------
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
         lines._apply_numeric_logic()
         return lines
 
+    # -----------------------------
+    # WRITE
+    # -----------------------------
     def write(self, vals):
         res = super().write(vals)
         self._apply_numeric_logic()
