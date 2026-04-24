@@ -7,9 +7,6 @@ from odoo import api, models
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
-    # -----------------------------
-    # PARSE NUMERIC
-    # -----------------------------
     def _parse_numeric_value(self, value):
         if not value:
             return None
@@ -25,9 +22,6 @@ class SaleOrderLine(models.Model):
         except ValueError:
             return None
 
-    # -----------------------------
-    # CALCUL CENTRAL
-    # -----------------------------
     def _apply_numeric_logic(self):
         for line in self:
 
@@ -37,10 +31,13 @@ class SaleOrderLine(models.Model):
             values_map = {}
 
             for custom_value in line.product_custom_attribute_value_ids:
-                pav = custom_value.product_attribute_value_id
+
+                ptav = custom_value.custom_product_template_attribute_value_id
+                pav = ptav.product_attribute_value_id
 
                 if pav.value_input_type == "numeric":
                     number = self._parse_numeric_value(custom_value.custom_value)
+
                     if number is not None:
                         values_map[pav.id] = number
 
@@ -61,22 +58,14 @@ class SaleOrderLine(models.Model):
                     if result and result > 0:
                         line.product_uom_qty = result
 
-    # -----------------------------
-    # HACK IMPORTANT
-    # -----------------------------
     @api.depends(
         "product_custom_attribute_value_ids",
         "product_custom_attribute_value_ids.custom_value",
     )
     def _compute_amount(self):
         super()._compute_amount()
-
-        # 👉 ON FORCE LE CALCUL ICI
         self._apply_numeric_logic()
 
-    # -----------------------------
-    # CREATE / WRITE sécurité
-    # -----------------------------
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
