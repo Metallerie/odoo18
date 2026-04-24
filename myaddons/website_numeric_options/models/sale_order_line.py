@@ -2,6 +2,7 @@
 
 import re
 from odoo import api, models
+from odoo.tools.float_utils import float_compare
 
 
 class SaleOrderLine(models.Model):
@@ -23,10 +24,10 @@ class SaleOrderLine(models.Model):
             return None
 
     def _get_numeric_values(self):
+        self.ensure_one()
         values_map = {}
 
         for custom_value in self.product_custom_attribute_value_ids:
-
             ptav = custom_value.custom_product_template_attribute_value_id
             if not ptav:
                 continue
@@ -37,49 +38,62 @@ class SaleOrderLine(models.Model):
 
             if pav.value_input_type == "numeric":
                 number = self._parse_numeric_value(custom_value.custom_value)
-
                 if number is not None:
                     values_map[pav.id] = number
 
         return values_map
 
+    def _get_numeric_computed_qty(self):
+        self.ensure_one()
+
+        values_map = self._get_numeric_values()
+        if not values_map:
+            return False
+
+        computed_values = self.env["product.attribute.value"].search([
+            ("value_input_type", "=", "computed"),
+            ("use_as_order_qty", "=", True),
+        ])
+
+        for computed in computed_values:
+            if (
+                computed.calc_operand_1_id.id in values_map
+                and computed.calc_operand_2_id.id in values_map
+            ):
+                result = computed.compute_option_value(values_map)
+                if result and result > 0:
+                    return result
+
+        return False
+
     def _apply_numeric_logic(self):
+        if self.env.context.get("skip_numeric_option_qty"):
+            return
+
         for line in self:
-
-            values_map = line._get_numeric_values()
-
-            if not values_map:
+            result = line._get_numeric_computed_qty()
+            if not result:
                 continue
 
-            computed_values = self.env["product.attribute.value"].search([
-                ("value_input_type", "=", "computed"),
-                ("use_as_order_qty", "=", True),
-            ])
+            precision = line.product_uom.rounding if line.product_uom else 0.01
 
-            for computed in computed_values:
+            if float_compare(line.product_uom_qty, result, precision_rounding=precision) == 0:
+                continue
 
-                if (
-                    computed.calc_operand_1_id.id in values_map
-                    and computed.calc_operand_2_id.id in values_map
-                ):
+            line.with_context(skip_numeric_option_qty=True).write({
+                "product_uom_qty": result,
+            })
 
-                    result = computed.compute_option_value(values_map)
-
-                    if result and result > 0:
-                        line.product_uom_qty = result
-
-    # 💥 LE POINT CLÉ
-    @api.depends(
+    @api.onchange(
         "product_custom_attribute_value_ids",
         "product_custom_attribute_value_ids.custom_value",
     )
-    def _compute_product_uom_qty(self):
-        super()._compute_product_uom_qty()
+    def _onchange_numeric_options(self):
+        for line in self:
+            result = line._get_numeric_computed_qty()
+            if result:
+                line.product_uom_qty = result
 
-        # recalcul automatique
-        self._apply_numeric_logic()
-
-    # sécurité backend
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
@@ -88,5 +102,8 @@ class SaleOrderLine(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        self._apply_numeric_logic()
+
+        if not self.env.context.get("skip_numeric_option_qty"):
+            self._apply_numeric_logic()
+
         return res
