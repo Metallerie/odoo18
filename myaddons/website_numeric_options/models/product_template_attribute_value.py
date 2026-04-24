@@ -36,26 +36,13 @@ class ProductAttributeValue(models.Model):
     calc_operand_1_id = fields.Many2one(
         "product.attribute.value",
         string="Opérande 1",
-        domain="""
-            [
-                ('attribute_id', '=', attribute_id),
-                ('value_input_type', '=', 'numeric'),
-                ('id', '!=', id)
-            ]
-        """,
+        domain="[('value_input_type', '=', 'numeric'), ('id', '!=', id)]",
     )
 
     calc_operand_2_id = fields.Many2one(
         "product.attribute.value",
         string="Opérande 2",
-        domain="""
-            [
-                ('attribute_id', '=', attribute_id),
-                ('value_input_type', '=', 'numeric'),
-                ('id', '!=', id),
-                ('id', '!=', calc_operand_1_id)
-            ]
-        """,
+        domain="[('value_input_type', '=', 'numeric'), ('id', '!=', id), ('id', '!=', calc_operand_1_id)]",
     )
 
     is_computed_readonly = fields.Boolean(
@@ -83,46 +70,14 @@ class ProductAttributeValue(models.Model):
             if rec.calc_operand_1_id == rec or rec.calc_operand_2_id == rec:
                 raise ValidationError("Une option calculée ne peut pas se référencer elle-même.")
 
-            if rec.calc_operand_1_id.attribute_id != rec.attribute_id:
-                raise ValidationError("L'opérande 1 doit appartenir au même attribut.")
-
-            if rec.calc_operand_2_id.attribute_id != rec.attribute_id:
-                raise ValidationError("L'opérande 2 doit appartenir au même attribut.")
+            if rec.calc_operand_1_id == rec.calc_operand_2_id:
+                raise ValidationError("Les deux opérandes doivent être différentes.")
 
             if rec.calc_operand_1_id.value_input_type != "numeric":
                 raise ValidationError("L'opérande 1 doit être une valeur numérique.")
 
             if rec.calc_operand_2_id.value_input_type != "numeric":
                 raise ValidationError("L'opérande 2 doit être une valeur numérique.")
-
-            if rec.calc_operand_1_id == rec.calc_operand_2_id:
-                raise ValidationError("Les deux opérandes doivent être différentes.")
-
-    def compute_option_value(self, values_map):
-        """
-        values_map = {
-            product.attribute.value.id: valeur_numérique
-        }
-        """
-        self.ensure_one()
-
-        if self.value_input_type != "computed":
-            return values_map.get(self.id)
-
-        left = values_map.get(self.calc_operand_1_id.id, 0.0)
-        right = values_map.get(self.calc_operand_2_id.id, 0.0)
-
-        try:
-            left = float(left or 0.0)
-            right = float(right or 0.0)
-        except (TypeError, ValueError):
-            left = 0.0
-            right = 0.0
-
-        if self.calc_operation == "multiply":
-            return left * right
-
-        return 0.0
 
     @api.onchange("value_input_type")
     def _onchange_value_input_type(self):
@@ -134,3 +89,23 @@ class ProductAttributeValue(models.Model):
 
             if rec.value_input_type != "numeric":
                 rec.numeric_type = "float"
+
+    def compute_option_value(self, values_map):
+        self.ensure_one()
+
+        if self.value_input_type != "computed":
+            return values_map.get(self.id)
+
+        left = values_map.get(self.calc_operand_1_id.id, 0.0)
+        right = values_map.get(self.calc_operand_2_id.id, 0.0)
+
+        try:
+            left = float(str(left or "0").replace(",", "."))
+            right = float(str(right or "0").replace(",", "."))
+        except (TypeError, ValueError):
+            return 0.0
+
+        if self.calc_operation == "multiply":
+            return left * right
+
+        return 0.0
