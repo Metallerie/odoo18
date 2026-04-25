@@ -69,15 +69,14 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         for wizard in self:
             lines = [
                 "Colonnes obligatoires :",
-                "default_code, attribute_value, uom_code, standard_price, meter, factor, height, width, length, diameter, thickness",
+                "default_code, attribute_value, uom_code, standard_price, factor, height, width, length, diameter, thickness",
                 "",
                 "Sens des colonnes :",
                 "- default_code : référence produit",
                 "- attribute_value : valeur d'option / variante",
                 "- uom_code : unité principale Odoo (KG, ML, PI...)",
                 "- standard_price : coût dans l'unité principale Odoo",
-                "- meter : longueur de référence",
-                "- factor : rapport Odoo pour l'unité secondaire si conversion nécessaire",
+                "- factor : rapport entre unité d'achat et unité de vente. Exemple : 1 PI = 6.15 ML",
                 "- height, width, length, diameter, thickness : dimensions optionnelles du produit",
                 "",
                 "Cas 1 : achat/vente dans la même unité",
@@ -89,10 +88,10 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "- le prix de la pricelist = standard_price × factor × coefficient",
                 "",
                 "Exemple :",
-                "default_code,attribute_value,uom_code,standard_price,meter,factor,height,width,length,diameter,thickness",
-                "71111,100,KG,1.1500,6,17.6575,100,96,6,,5",
-                "71114,120,KG,1.0400,6,21.0410,120,114,6,,5.5",
+                "default_code,attribute_value,uom_code,standard_price,factor,height,width,length,diameter,thickness",
+                "71655,40x40x2,ML,17.53,6.15,0.04,0.04,6.15,,0.002",
             ]
+
             if wizard.product_secondary_uom_id:
                 lines.append("")
                 lines.append(
@@ -102,6 +101,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             else:
                 lines.append("")
                 lines.append("Aucune unité secondaire choisie : pas de conversion.")
+
             wizard.csv_format_help = "\n".join(lines)
 
     @api.model
@@ -128,9 +128,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             "attribute_value",
             "uom_code",
             "standard_price",
-            "meter",
             "factor",
         }
+
         header_keys = set(rows[0].keys())
         missing = required_columns - header_keys
         if missing:
@@ -152,7 +152,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             uom_code = self._clean_str(row.get("uom_code"))
             standard_price = self._to_float(row.get("standard_price"))
             factor = self._to_float(row.get("factor"))
-            meter = self._to_float(row.get("meter"))
             dimensions = self._extract_dimensions_from_row(row)
 
             if not default_code or not attribute_value_name or not uom_code:
@@ -186,7 +185,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 uom=uom,
                 standard_price=standard_price,
                 factor=factor,
-                meter=meter,
                 dimensions=dimensions,
             )
             updated_variants += 1
@@ -347,7 +345,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         uom,
         standard_price,
         factor,
-        meter,
         dimensions=None,
     ):
         vals = {
@@ -359,8 +356,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if self.update_standard_price:
             vals["standard_price"] = standard_price
 
-        if "x_meter" in variant._fields:
-            vals["x_meter"] = meter
+        if "product_factor" in variant._fields:
+            vals["product_factor"] = factor
 
         if dimensions:
             for field_name, value in dimensions.items():
