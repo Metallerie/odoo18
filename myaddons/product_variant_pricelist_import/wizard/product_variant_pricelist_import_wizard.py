@@ -14,36 +14,12 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
     CSV_DIR = "/data/odoo/metal-odoo18-p8179/csv"
 
-    template_id = fields.Many2one(
-        "product.template",
-        string="Template",
-        required=True,
-    )
+    template_id = fields.Many2one("product.template", string="Template", required=True)
+    category_id = fields.Many2one("product.category", string="Catégorie", required=True)
+    attribute_id = fields.Many2one("product.attribute", string="Attribut", required=True)
+    pricelist_id = fields.Many2one("product.pricelist", string="Pricelist", required=True)
 
-    category_id = fields.Many2one(
-        "product.category",
-        string="Catégorie",
-        required=True,
-    )
-
-    attribute_id = fields.Many2one(
-        "product.attribute",
-        string="Attribut",
-        required=True,
-        help="Attribut existant. Le module crée seulement les valeurs.",
-    )
-
-    pricelist_id = fields.Many2one(
-        "product.pricelist",
-        string="Pricelist",
-        required=True,
-    )
-
-    coefficient = fields.Float(
-        string="Coefficient",
-        default=2.5,
-        required=True,
-    )
+    coefficient = fields.Float(string="Coefficient", default=2.5, required=True)
 
     csv_filename = fields.Selection(
         selection="_selection_csv_files",
@@ -54,8 +30,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     product_secondary_uom_id = fields.Many2one(
         "uom.uom",
         string="Unité de mesure secondaire",
-        required=True,
-        help="Exemple : ML, PI, KG",
+        required=False,
+        help="Laisse vide si achat et vente sont dans la même unité.",
     )
 
     dependency_type = fields.Selection(
@@ -93,7 +69,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         for wizard in self:
             lines = [
                 "Colonnes obligatoires :",
-                "default_code, attribute_value, uom_code, standard_price, meter, factor",
+                "default_code, attribute_value, uom_code, standard_price, meter, factor, height, width, length, diameter, thickness",
                 "",
                 "Sens des colonnes :",
                 "- default_code : référence produit",
@@ -101,12 +77,21 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "- uom_code : unité principale Odoo (KG, ML, PI...)",
                 "- standard_price : coût dans l'unité principale Odoo",
                 "- meter : longueur de référence",
-                "- factor : rapport Odoo pour l'unité secondaire",
+                "- factor : rapport Odoo pour l'unité secondaire si conversion nécessaire",
+                "- height, width, length, diameter, thickness : dimensions optionnelles du produit",
+                "",
+                "Cas 1 : achat/vente dans la même unité",
+                "- laisser l'unité secondaire vide",
+                "- le prix de la pricelist = standard_price × coefficient",
+                "",
+                "Cas 2 : achat/vente dans des unités différentes",
+                "- choisir une unité secondaire dans le wizard",
+                "- le prix de la pricelist = standard_price × factor × coefficient",
                 "",
                 "Exemple :",
-                "default_code,attribute_value,uom_code,standard_price,meter,factor",
-                "71111,HEA 100,KG,1.1500,6,17.6575",
-                "71114,HEA 120,KG,1.0400,6,21.0410",
+                "default_code,attribute_value,uom_code,standard_price,meter,factor,height,width,length,diameter,thickness",
+                "71111,100,KG,1.1500,6,17.6575,100,96,6,,5",
+                "71114,120,KG,1.0400,6,21.0410,120,114,6,,5.5",
             ]
             if wizard.product_secondary_uom_id:
                 lines.append("")
@@ -114,6 +99,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "Unité secondaire choisie : %s"
                     % wizard.product_secondary_uom_id.display_name
                 )
+            else:
+                lines.append("")
+                lines.append("Aucune unité secondaire choisie : pas de conversion.")
             wizard.csv_format_help = "\n".join(lines)
 
     @api.model
@@ -165,6 +153,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             standard_price = self._to_float(row.get("standard_price"))
             factor = self._to_float(row.get("factor"))
             meter = self._to_float(row.get("meter"))
+            dimensions = self._extract_dimensions_from_row(row)
 
             if not default_code or not attribute_value_name or not uom_code:
                 continue
@@ -187,9 +176,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             variant = self._find_variant_from_value(attr_value)
             if not variant:
                 raise UserError(
-                    _(
-                        "Impossible de trouver ou créer la variante pour la valeur '%s'."
-                    )
+                    _("Impossible de trouver ou créer la variante pour la valeur '%s'.")
                     % attribute_value_name
                 )
 
@@ -200,6 +187,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 standard_price=standard_price,
                 factor=factor,
                 meter=meter,
+                dimensions=dimensions,
             )
             updated_variants += 1
 
@@ -229,7 +217,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "Variantes mises à jour : %(variants)s | "
                     "Lignes pricelist créées : %(pl_create)s | "
                     "Lignes pricelist mises à jour : %(pl_update)s"
-                ) % {
+                )
+                % {
                     "values": created_values,
                     "variants": updated_variants,
                     "pl_create": created_pricelist_items,
@@ -271,9 +260,21 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
     def _to_float(self, value, default=0.0):
         try:
-            return float(str(value or "").replace(",", ".").strip() or default)
+            value = str(value or "").replace(",", ".").strip()
+            if not value:
+                return default
+            return float(value)
         except Exception:
             return default
+
+    def _extract_dimensions_from_row(self, row):
+        return {
+            "product_height": self._to_float(row.get("height")),
+            "product_width": self._to_float(row.get("width")),
+            "product_length": self._to_float(row.get("length")),
+            "product_diameter": self._to_float(row.get("diameter")),
+            "product_thickness": self._to_float(row.get("thickness")),
+        }
 
     def _get_uom_by_code(self, code):
         uom = self.env["uom.uom"].search([("name", "=", code)], limit=1)
@@ -306,7 +307,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         self.ensure_one()
 
         line = self.template_id.attribute_line_ids.filtered(
-            lambda l: l.attribute_id.id == self.attribute_id.id
+            lambda line: line.attribute_id.id == self.attribute_id.id
         )[:1]
 
         if line:
@@ -339,7 +340,16 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 return variant
         return False
 
-    def _write_variant_data(self, variant, default_code, uom, standard_price, factor, meter):
+    def _write_variant_data(
+        self,
+        variant,
+        default_code,
+        uom,
+        standard_price,
+        factor,
+        meter,
+        dimensions=None,
+    ):
         vals = {
             "default_code": default_code,
             "uom_id": uom.id,
@@ -352,14 +362,20 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if "x_meter" in variant._fields:
             vals["x_meter"] = meter
 
+        if dimensions:
+            for field_name, value in dimensions.items():
+                if field_name in variant._fields:
+                    vals[field_name] = value
+
         variant.write(vals)
-        self._write_secondary_unit_data(variant, factor)
+
+        if (
+            self.product_secondary_uom_id
+            and variant.uom_id.id != self.product_secondary_uom_id.id
+        ):
+            self._write_secondary_unit_data(variant, factor)
 
     def _write_secondary_unit_data(self, variant, factor):
-        """
-        Crée ou met à jour la ligne product.secondary.unit pour la variante.
-        Puis met cette ligne comme unité secondaire par défaut là où le champ existe.
-        """
         SecondaryUnit = self.env["product.secondary.unit"]
 
         existing = SecondaryUnit.search(
@@ -388,7 +404,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         else:
             secondary_line = SecondaryUnit.create(vals)
 
-        # product.product : ces champs pointent vers product.secondary.unit
         product_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
             product_vals["sale_secondary_uom_id"] = secondary_line.id
@@ -397,7 +412,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if product_vals:
             variant.write(product_vals)
 
-        # product.template : idem si présents
         template_vals = {}
         if "sale_secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["sale_secondary_uom_id"] = secondary_line.id
@@ -407,7 +421,13 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             variant.product_tmpl_id.write(template_vals)
 
     def _create_or_update_pricelist_item(self, variant, standard_price, factor):
-        fixed_price = standard_price * factor * self.coefficient
+        if (
+            self.product_secondary_uom_id
+            and variant.uom_id.id != self.product_secondary_uom_id.id
+        ):
+            fixed_price = standard_price * factor * self.coefficient
+        else:
+            fixed_price = standard_price * self.coefficient
 
         item = self.env["product.pricelist.item"].search(
             [
