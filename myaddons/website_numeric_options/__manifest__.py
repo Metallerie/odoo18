@@ -10,6 +10,11 @@
     "data": [
         "views/product_template_attribute_value_views.xml",
     ],
+    "assets": {
+    "web.assets_frontend": [
+        "website_numeric_options/static/src/js/website_numeric_options.js",
+    ],
+},
     "installable": True,
     "application": False,
     "license": "LGPL-3",
