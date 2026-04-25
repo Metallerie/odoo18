@@ -15,7 +15,7 @@
                     <field name="product_width" string="Width" />
                     <field name="product_thickness" string="Thickness" />
                     <field name="product_diameter" string="Diameter" />
-                    <field name="product_kg_ml" string="Poids (kg) par mètre linéaire" />
+                    <field name="product_factor" string="Facteur"/>    
                 </group>
             </xpath>
         </field>
@@ -38,8 +38,7 @@
                     <field name="product_width" string="Width" />
                     <field name="product_thickness"/>
                     <field name="product_diameter"/>
-                    <field name="product_kg_ml" string="Poids (kg) par mètre linéaire" />
-               
+                    <field name="product_factor" string="Facteur"/>               
                 </group>
             </xpath>
         </field>
@@ -72,7 +71,7 @@
           <field name="product_width" string="Largeur"/>
           <field name="product_thickness" string="Épaisseur"/>
           <field name="product_diameter" string="Diamètre"/>
-          <field name="product_kg_ml" string="Kg/ML"/>
+          <field name="product_factor" string="Facteur"/> 
         </xpath>
       </field>
     </record>
