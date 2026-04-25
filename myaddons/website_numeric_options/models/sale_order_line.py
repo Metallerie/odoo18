@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import math
 import re
 
 from odoo import api, models
@@ -66,11 +67,11 @@ class SaleOrderLine(models.Model):
 
         values_map = self._get_numeric_values()
         if not values_map:
-            return False, False
+            return False, False, False
 
         computed = self._get_computed_order_qty_option()
         if not computed:
-            return False, False
+            return False, False, False
 
         if (
             computed.calc_operand_1_id.id in values_map
@@ -78,9 +79,10 @@ class SaleOrderLine(models.Model):
         ):
             result = computed.compute_option_value(values_map)
             if result and result > 0:
-                return computed, result
+                qty_to_set = math.ceil(result) if computed.round_order_qty_up else result
+                return computed, result, qty_to_set
 
-        return False, False
+        return False, False, False
 
     def _find_computed_ptav(self, computed):
         self.ensure_one()
@@ -99,10 +101,7 @@ class SaleOrderLine(models.Model):
     def _set_computed_custom_value(self, computed, result):
         self.ensure_one()
 
-        if not computed or not result:
-            return
-
-        if not self.id:
+        if not computed or not result or not self.id:
             return
 
         result_text = self._format_numeric_value(result)
@@ -137,17 +136,19 @@ class SaleOrderLine(models.Model):
             return
 
         for line in self:
-            computed, result = line._get_numeric_computed_qty()
-            if not computed or not result:
+            computed, result, qty_to_set = line._get_numeric_computed_qty()
+            if not computed or not result or not qty_to_set:
                 continue
 
+            # On écrit l'option calculée avec la valeur exacte.
             line._set_computed_custom_value(computed, result)
 
+            # On met la quantité de commande avec ou sans arrondi.
             precision = line.product_uom.rounding if line.product_uom else 0.01
 
-            if float_compare(line.product_uom_qty, result, precision_rounding=precision) != 0:
+            if float_compare(line.product_uom_qty, qty_to_set, precision_rounding=precision) != 0:
                 line.with_context(skip_numeric_option_qty=True).write({
-                    "product_uom_qty": result,
+                    "product_uom_qty": qty_to_set,
                 })
 
     @api.onchange(
@@ -156,13 +157,12 @@ class SaleOrderLine(models.Model):
     )
     def _onchange_numeric_options(self):
         for line in self:
-            computed, result = line._get_numeric_computed_qty()
-            if not computed or not result:
+            computed, result, qty_to_set = line._get_numeric_computed_qty()
+            if not computed or not result or not qty_to_set:
                 continue
 
             result_text = line._format_numeric_value(result)
 
-            found = False
             for custom_value in line.product_custom_attribute_value_ids:
                 ptav = custom_value.custom_product_template_attribute_value_id
                 if not ptav:
@@ -171,11 +171,8 @@ class SaleOrderLine(models.Model):
                 pav = ptav.product_attribute_value_id
                 if pav == computed:
                     custom_value.custom_value = result_text
-                    found = True
 
-            # En onchange, si la valeur calculée n'existe pas encore,
-            # elle sera créée au create/write serveur.
-            line.product_uom_qty = result
+            line.product_uom_qty = qty_to_set
 
     @api.model_create_multi
     def create(self, vals_list):
