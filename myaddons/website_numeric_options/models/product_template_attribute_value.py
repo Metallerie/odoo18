@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#product_template_attribute_value.py
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
@@ -17,10 +16,7 @@ class ProductAttributeValue(models.Model):
         string="Type de saisie",
         default="text",
     )
-    use_as_order_qty = fields.Boolean(
-        string="Utiliser comme quantité de commande",
-        default=False,
-    )
+
     numeric_type = fields.Selection(
         [
             ("int", "Entier"),
@@ -52,6 +48,17 @@ class ProductAttributeValue(models.Model):
     is_computed_readonly = fields.Boolean(
         string="Résultat en lecture seule",
         default=True,
+    )
+
+    use_as_order_qty = fields.Boolean(
+        string="Utiliser comme quantité de commande",
+        default=False,
+    )
+
+    round_order_qty_up = fields.Boolean(
+        string="Arrondir la quantité au supérieur",
+        default=False,
+        help="Si coché, la valeur calculée reste exacte dans l'option, mais la quantité vendue est arrondie au supérieur.",
     )
 
     @api.constrains(
@@ -90,6 +97,8 @@ class ProductAttributeValue(models.Model):
                 rec.calc_operation = False
                 rec.calc_operand_1_id = False
                 rec.calc_operand_2_id = False
+                rec.use_as_order_qty = False
+                rec.round_order_qty_up = False
 
             if rec.value_input_type != "numeric":
                 rec.numeric_type = "float"
