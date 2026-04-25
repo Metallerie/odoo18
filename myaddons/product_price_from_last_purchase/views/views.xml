@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="product_price_from_last_purchase.list">
+      <field name="name">product_price_from_last_purchase list</field>
+      <field name="model">product_price_from_last_purchase.product_price_from_last_purchase</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </list>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="product_price_from_last_purchase.action_window">
+      <field name="name">product_price_from_last_purchase window</field>
+      <field name="res_model">product_price_from_last_purchase.product_price_from_last_purchase</field>
+      <field name="view_mode">list,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="product_price_from_last_purchase.action_server">
+      <field name="name">product_price_from_last_purchase server</field>
+      <field name="model_id" ref="model_product_price_from_last_purchase_product_price_from_last_purchase"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="product_price_from_last_purchase" id="product_price_from_last_purchase.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="product_price_from_last_purchase.menu_1" parent="product_price_from_last_purchase.menu_root"/>
+    <menuitem name="Menu 2" id="product_price_from_last_purchase.menu_2" parent="product_price_from_last_purchase.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="product_price_from_last_purchase.menu_1_list" parent="product_price_from_last_purchase.menu_1"
+              action="product_price_from_last_purchase.action_window"/>
+    <menuitem name="Server to list" id="product_price_from_last_purchase" parent="product_price_from_last_purchase.menu_2"
+              action="product_price_from_last_purchase.action_server"/>
+-->
+  </data>
+</odoo>
