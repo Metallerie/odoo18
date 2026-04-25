@@ -24,8 +24,13 @@
                 <field name="calc_operand_2_id"
                        invisible="value_input_type != 'computed'"
                        options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
-            <field name="use_as_order_qty"
+
+                <field name="use_as_order_qty"
                        invisible="value_input_type != 'computed'"/>
+
+                <field name="round_order_qty_up"
+                       invisible="value_input_type != 'computed' or not use_as_order_qty"/>
+
             </xpath>
 
         </field>
