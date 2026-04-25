@@ -15,6 +15,7 @@
                     <field name="product_width" string="Width" />
                     <field name="product_thickness" string="Thickness" />
                     <field name="product_diameter" string="Diameter" />
+                   <field name="product_factor" string="Facteur"/> 
                 </group>
             </xpath>
         </field>
