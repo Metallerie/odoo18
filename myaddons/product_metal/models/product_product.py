@@ -14,7 +14,7 @@ class ProductProduct(models.Model):
     product_thickness = fields.Float("thickness", digits=(16, 6))
     product_diameter = fields.Float("diameter", digits=(16, 6))
     product_kg_ml = fields.Float(string="Poids (kg) par mètre linéaire", digits='Product Unit of Measure')
-    product_factor = fields.Float(string="Facteur", digits=(16, 6),help="Facteur de conversion entre l’unité d’achat est l'unité de conditionnement ou unité d'achat mininimum."
+    product_factor = fields.Float(string="Facteur", digits=(16, 6),help="Facteur de conversion entre l’unité d’achat est l'unité de conditionnement ou unité d'achat minimale."
 )
   
     
