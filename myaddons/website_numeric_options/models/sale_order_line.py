@@ -82,8 +82,28 @@ class SaleOrderLine(models.Model):
 
         return False, False
 
+    def _find_computed_ptav(self, computed):
+        self.ensure_one()
+
+        if not self.product_template_id:
+            return False
+
+        ptavs = self.product_template_id.valid_product_template_attribute_line_ids.mapped(
+            "product_template_value_ids"
+        )
+
+        return ptavs.filtered(
+            lambda ptav: ptav.product_attribute_value_id == computed
+        )[:1]
+
     def _set_computed_custom_value(self, computed, result):
         self.ensure_one()
+
+        if not computed or not result:
+            return
+
+        if not self.id:
+            return
 
         result_text = self._format_numeric_value(result)
 
@@ -99,6 +119,18 @@ class SaleOrderLine(models.Model):
                         "custom_value": result_text,
                     })
                 return
+
+        computed_ptav = self._find_computed_ptav(computed)
+        if not computed_ptav:
+            return
+
+        self.env["product.attribute.custom.value"].with_context(
+            skip_numeric_option_qty=True
+        ).create({
+            "sale_order_line_id": self.id,
+            "custom_product_template_attribute_value_id": computed_ptav.id,
+            "custom_value": result_text,
+        })
 
     def _apply_numeric_logic(self):
         if self.env.context.get("skip_numeric_option_qty"):
@@ -130,6 +162,7 @@ class SaleOrderLine(models.Model):
 
             result_text = line._format_numeric_value(result)
 
+            found = False
             for custom_value in line.product_custom_attribute_value_ids:
                 ptav = custom_value.custom_product_template_attribute_value_id
                 if not ptav:
@@ -138,7 +171,10 @@ class SaleOrderLine(models.Model):
                 pav = ptav.product_attribute_value_id
                 if pav == computed:
                     custom_value.custom_value = result_text
+                    found = True
 
+            # En onchange, si la valeur calculée n'existe pas encore,
+            # elle sera créée au create/write serveur.
             line.product_uom_qty = result
 
     @api.model_create_multi
