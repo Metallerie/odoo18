@@ -118,13 +118,17 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const cutQty = this._parseNumber(cutQtyInput.value);
         const cutLength = this._parseNumber(cutLengthInput.value);
 
+        // Ne calcule pas tant que les deux valeurs utiles ne sont pas renseignées
+        if (cutQty <= 0 || cutLength <= 0) {
+            return;
+        }
+
         const exactQty = cutQty * cutLength;
         const soldQty = Math.ceil(exactQty);
 
         const exactQtyFormatted = this._formatDecimal(exactQty);
         const soldQtyFormatted = String(soldQty);
 
-        // Important : on évite la boucle get_combination_info
         this._updateInputIfChanged(computedInput, exactQtyFormatted, true);
 
         const qtyInput = this._getQuantityInput();
