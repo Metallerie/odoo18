@@ -37,13 +37,6 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         return Math.max(0, number).toFixed(2);
     },
 
-    _formatNumber(value) {
-        if (Number.isInteger(value)) {
-            return String(value);
-        }
-        return String(Math.round(value * 10000) / 10000).replace(".", ",");
-    },
-
     _findInputByLabel(labelText) {
         const labels = this.el.querySelectorAll("label, .css_attribute_color, strong, b");
         labelText = labelText.toLowerCase();
@@ -75,23 +68,40 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         return this.el.querySelector("input[name='add_qty']");
     },
 
+    _updateInputIfChanged(input, newValue, triggerEvents = true) {
+        if (!input) {
+            return;
+        }
+
+        if (String(input.value) === String(newValue)) {
+            return;
+        }
+
+        input.value = newValue;
+
+        if (triggerEvents) {
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+            input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+    },
+
     _initializeNumericFields() {
         const cutQtyInput = this._findInputByLabel("nombre de coupes");
         const cutLengthInput = this._findInputByLabel("longueur de coupe");
         const computedInput = this._findInputByLabel("calcule quantité");
 
         if (cutQtyInput && !cutQtyInput.value) {
-            cutQtyInput.value = "0";
+            this._updateInputIfChanged(cutQtyInput, "0", false);
         }
 
         if (cutLengthInput && !cutLengthInput.value) {
-            cutLengthInput.value = "0.00";
+            this._updateInputIfChanged(cutLengthInput, "0.00", false);
         }
 
         if (computedInput) {
             computedInput.readOnly = true;
             if (!computedInput.value) {
-                computedInput.value = "0.00";
+                this._updateInputIfChanged(computedInput, "0.00", false);
             }
         }
     },
@@ -111,15 +121,15 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const exactQty = cutQty * cutLength;
         const soldQty = Math.ceil(exactQty);
 
-        computedInput.value = this._formatDecimal(exactQty);
-        computedInput.dispatchEvent(new Event("input", { bubbles: true }));
-        computedInput.dispatchEvent(new Event("change", { bubbles: true }));
+        const exactQtyFormatted = this._formatDecimal(exactQty);
+        const soldQtyFormatted = String(soldQty);
+
+        // Important : on évite la boucle get_combination_info
+        this._updateInputIfChanged(computedInput, exactQtyFormatted, true);
 
         const qtyInput = this._getQuantityInput();
         if (qtyInput) {
-            qtyInput.value = String(soldQty);
-            qtyInput.dispatchEvent(new Event("input", { bubbles: true }));
-            qtyInput.dispatchEvent(new Event("change", { bubbles: true }));
+            this._updateInputIfChanged(qtyInput, soldQtyFormatted, true);
         }
     },
 
@@ -128,11 +138,11 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const containerText = (input.closest(".mb-3, .variant_attribute, div")?.innerText || "").toLowerCase();
 
         if (containerText.includes("nombre de coupes")) {
-            input.value = this._formatInteger(input.value);
+            this._updateInputIfChanged(input, this._formatInteger(input.value), false);
         }
 
         if (containerText.includes("longueur de coupe")) {
-            input.value = this._formatDecimal(input.value);
+            this._updateInputIfChanged(input, this._formatDecimal(input.value), false);
         }
 
         this._computeNumericOptions();
@@ -142,6 +152,6 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         window.clearTimeout(this.numericOptionsTimer);
         this.numericOptionsTimer = window.setTimeout(() => {
             this._computeNumericOptions();
-        }, 100);
+        }, 300);
     },
 });
