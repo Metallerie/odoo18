@@ -77,8 +77,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "Colonnes optionnelles :",
                     "height,width,length,diameter,thickness,attribute_value",
                     "",
-                    "Si attribute_value est absent, il est déduit du name.",
-                    "Exemple : Tube carré 40x40x2 -> 40x40x2",
+                    "Règle importante :",
+                    "- si default_code existe déjà, la variante est mise à jour",
+                    "- si default_code n'existe pas, la variante est créée via l'attribut",
                     "",
                     "purchase_unit sert à créer le conditionnement.",
                     "Exemple : purchase_unit=Tube et factor=6.15 => 1 Tube = 6.15 ML",
@@ -124,6 +125,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         imported_codes = set()
         created_values = 0
+        created_variants = 0
         updated_variants = 0
         created_pricelist_items = 0
         updated_pricelist_items = 0
@@ -140,31 +142,44 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             purchase_unit = self._clean_str(row.get("purchase_unit")) or "Barre"
             dimensions = self._extract_dimensions_from_row(row)
 
-            if not default_code or not product_name or not attribute_value_name or not uom_code:
+            if not default_code or not product_name or not uom_code:
                 continue
 
             imported_codes.add(default_code)
 
             uom = self._get_uom_by_code(uom_code)
 
-            attr_value, value_created = self._get_or_create_attribute_value(
-                attribute_value_name
-            )
-            if value_created:
-                created_values += 1
+            variant = self._find_variant_by_default_code(default_code)
 
-            self._sync_template_attribute_line(attr_value)
-            self.template_id.invalidate_recordset(
-                ["attribute_line_ids", "product_variant_ids"]
-            )
-            self.template_id._create_variant_ids()
+            if variant:
+                updated_variants += 1
+            else:
+                if not attribute_value_name:
+                    raise UserError(
+                        _("Impossible de créer la variante %s : attribut introuvable.")
+                        % default_code
+                    )
 
-            variant = self._find_variant_from_value(attr_value)
-            if not variant:
-                raise UserError(
-                    _("Impossible de trouver ou créer la variante pour la valeur '%s'.")
-                    % attribute_value_name
+                attr_value, value_created = self._get_or_create_attribute_value(
+                    attribute_value_name
                 )
+                if value_created:
+                    created_values += 1
+
+                self._sync_template_attribute_line(attr_value)
+                self.template_id.invalidate_recordset(
+                    ["attribute_line_ids", "product_variant_ids"]
+                )
+                self.template_id._create_variant_ids()
+
+                variant = self._find_variant_from_value(attr_value)
+                if not variant:
+                    raise UserError(
+                        _("Impossible de trouver ou créer la variante pour la valeur '%s'.")
+                        % attribute_value_name
+                    )
+
+                created_variants += 1
 
             self._write_variant_data(
                 variant=variant,
@@ -174,7 +189,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 factor=factor,
                 dimensions=dimensions,
             )
-            updated_variants += 1
 
             packaging, packaging_created = self._create_or_update_packaging(
                 variant=variant,
@@ -209,7 +223,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "title": _("Import terminé"),
                 "message": _(
                     "Valeurs créées : %(values)s | "
-                    "Variantes mises à jour : %(variants)s | "
+                    "Variantes créées : %(variants_create)s | "
+                    "Variantes mises à jour : %(variants_update)s | "
                     "Conditionnements créés : %(pack_create)s | "
                     "Conditionnements mis à jour : %(pack_update)s | "
                     "Pricelist créées : %(pl_create)s | "
@@ -217,7 +232,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 )
                 % {
                     "values": created_values,
-                    "variants": updated_variants,
+                    "variants_create": created_variants,
+                    "variants_update": updated_variants,
                     "pack_create": created_packagings,
                     "pack_update": updated_packagings,
                     "pl_create": created_pricelist_items,
@@ -273,9 +289,16 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             return value
 
         name = self._clean_str(row.get("name"))
-        match = re.search(r"(\d+(?:[.,]\d+)?x\d+(?:[.,]\d+)?x\d+(?:[.,]\d+)?)", name)
+        match = re.search(
+            r"(\d+(?:[.,]\d+)?)x(\d+(?:[.,]\d+)?)x(\d+(?:[.,]\d+)?)",
+            name,
+            re.IGNORECASE,
+        )
         if match:
-            return match.group(1).replace(",", ".")
+            a = match.group(1).replace(",", ".")
+            b = match.group(2).replace(",", ".")
+            c = match.group(3).replace(",", ".")
+            return "%sX%sx%s mm" % (a, b, c)
 
         return name
 
@@ -295,6 +318,22 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if not uom:
             raise UserError(_("Unité introuvable : %s") % code)
         return uom
+
+    def _find_variant_by_default_code(self, default_code):
+        variant = self.env["product.product"].search(
+            [
+                ("default_code", "=", default_code),
+                ("product_tmpl_id", "=", self.template_id.id),
+            ],
+            limit=1,
+        )
+        if variant:
+            return variant
+
+        return self.env["product.product"].search(
+            [("default_code", "=", default_code)],
+            limit=1,
+        )
 
     def _get_or_create_attribute_value(self, value_name):
         value = self.env["product.attribute.value"].search(
