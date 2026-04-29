@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-#product_variant_pricelist_import_wizard.py
+# product_variant_pricelist_import_wizard.py
 
 import csv
 import io
 import os
+import re
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -68,42 +69,21 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     @api.depends("product_secondary_uom_id")
     def _compute_csv_format_help(self):
         for wizard in self:
-            lines = [
-                "Colonnes obligatoires :",
-                "default_code, attribute_value, uom_code, standard_price, factor, height, width, length, diameter, thickness",
-                "",
-                "Sens des colonnes :",
-                "- default_code : référence produit",
-                "- attribute_value : valeur d'option / variante",
-                "- uom_code : unité principale Odoo (KG, ML, PI...)",
-                "- standard_price : coût dans l'unité principale Odoo",
-                "- factor : rapport entre unité d'achat et unité de vente. Exemple : 1 PI = 6.15 ML",
-                "- height, width, length, diameter, thickness : dimensions optionnelles du produit",
-                "",
-                "Cas 1 : achat/vente dans la même unité",
-                "- laisser l'unité secondaire vide",
-                "- le prix de la pricelist = standard_price × coefficient",
-                "",
-                "Cas 2 : achat/vente dans des unités différentes",
-                "- choisir une unité secondaire dans le wizard",
-                "- le prix de la pricelist = standard_price × factor × coefficient",
-                "",
-                "Exemple :",
-                "default_code,attribute_value,uom_code,standard_price,factor,height,width,length,diameter,thickness",
-                "71655,40x40x2,ML,17.53,6.15,0.04,0.04,6.15,,0.002",
-            ]
-
-            if wizard.product_secondary_uom_id:
-                lines.append("")
-                lines.append(
-                    "Unité secondaire choisie : %s"
-                    % wizard.product_secondary_uom_id.display_name
-                )
-            else:
-                lines.append("")
-                lines.append("Aucune unité secondaire choisie : pas de conversion.")
-
-            wizard.csv_format_help = "\n".join(lines)
+            wizard.csv_format_help = "\n".join(
+                [
+                    "Colonnes obligatoires :",
+                    "default_code,name,uom_code,standard_price,factor,purchase_unit",
+                    "",
+                    "Colonnes optionnelles :",
+                    "height,width,length,diameter,thickness,attribute_value",
+                    "",
+                    "Si attribute_value est absent, il est déduit du name.",
+                    "Exemple : Tube carré 40x40x2 -> 40x40x2",
+                    "",
+                    "purchase_unit sert à créer le conditionnement.",
+                    "Exemple : purchase_unit=Tube et factor=6.15 => 1 Tube = 6.15 ML",
+                ]
+            )
 
     @api.model
     def _selection_csv_files(self):
@@ -126,10 +106,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         required_columns = {
             "default_code",
-            "attribute_value",
+            "name",
             "uom_code",
             "standard_price",
             "factor",
+            "purchase_unit",
         }
 
         header_keys = set(rows[0].keys())
@@ -146,21 +127,26 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         updated_variants = 0
         created_pricelist_items = 0
         updated_pricelist_items = 0
+        created_packagings = 0
+        updated_packagings = 0
 
         for row in rows:
             default_code = self._clean_str(row.get("default_code"))
-            attribute_value_name = self._clean_str(row.get("attribute_value"))
+            product_name = self._clean_str(row.get("name"))
+            attribute_value_name = self._get_attribute_value_from_row(row)
             uom_code = self._clean_str(row.get("uom_code"))
             standard_price = self._to_float(row.get("standard_price"))
-            factor = self._to_float(row.get("factor"))
+            factor = self._to_float(row.get("factor"), default=1.0)
+            purchase_unit = self._clean_str(row.get("purchase_unit")) or "Barre"
             dimensions = self._extract_dimensions_from_row(row)
 
-            if not default_code or not attribute_value_name or not uom_code:
+            if not default_code or not product_name or not attribute_value_name or not uom_code:
                 continue
 
             imported_codes.add(default_code)
 
             uom = self._get_uom_by_code(uom_code)
+
             attr_value, value_created = self._get_or_create_attribute_value(
                 attribute_value_name
             )
@@ -190,6 +176,16 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             )
             updated_variants += 1
 
+            packaging, packaging_created = self._create_or_update_packaging(
+                variant=variant,
+                name=purchase_unit,
+                qty=factor,
+            )
+            if packaging_created:
+                created_packagings += 1
+            else:
+                updated_packagings += 1
+
             pricelist_item, created = self._create_or_update_pricelist_item(
                 variant=variant,
                 standard_price=standard_price,
@@ -214,12 +210,16 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 "message": _(
                     "Valeurs créées : %(values)s | "
                     "Variantes mises à jour : %(variants)s | "
-                    "Lignes pricelist créées : %(pl_create)s | "
-                    "Lignes pricelist mises à jour : %(pl_update)s"
+                    "Conditionnements créés : %(pack_create)s | "
+                    "Conditionnements mis à jour : %(pack_update)s | "
+                    "Pricelist créées : %(pl_create)s | "
+                    "Pricelist mises à jour : %(pl_update)s"
                 )
                 % {
                     "values": created_values,
                     "variants": updated_variants,
+                    "pack_create": created_packagings,
+                    "pack_update": updated_packagings,
                     "pl_create": created_pricelist_items,
                     "pl_update": updated_pricelist_items,
                 },
@@ -247,6 +247,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     normalized = {
                         str(k).strip(): (str(v).strip() if v is not None else "")
                         for k, v in row.items()
+                        if k is not None
                     }
                     if any(normalized.values()):
                         rows.append(normalized)
@@ -265,6 +266,18 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             return float(value)
         except Exception:
             return default
+
+    def _get_attribute_value_from_row(self, row):
+        value = self._clean_str(row.get("attribute_value"))
+        if value:
+            return value
+
+        name = self._clean_str(row.get("name"))
+        match = re.search(r"(\d+(?:[.,]\d+)?x\d+(?:[.,]\d+)?x\d+(?:[.,]\d+)?)", name)
+        if match:
+            return match.group(1).replace(",", ".")
+
+        return name
 
     def _extract_dimensions_from_row(self, row):
         return {
@@ -372,6 +385,35 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             and variant.uom_id.id != self.product_secondary_uom_id.id
         ):
             self._write_secondary_unit_data(variant, factor)
+
+    def _create_or_update_packaging(self, variant, name, qty):
+        ProductPackaging = self.env["product.packaging"]
+
+        packaging = ProductPackaging.search(
+            [
+                ("product_id", "=", variant.id),
+                ("name", "=", name),
+            ],
+            limit=1,
+        )
+
+        vals = {
+            "name": name,
+            "product_id": variant.id,
+            "qty": qty,
+        }
+
+        if "purchase" in ProductPackaging._fields:
+            vals["purchase"] = True
+
+        if "sales" in ProductPackaging._fields:
+            vals["sales"] = False
+
+        if packaging:
+            packaging.write(vals)
+            return packaging, False
+
+        return ProductPackaging.create(vals), True
 
     def _write_secondary_unit_data(self, variant, factor):
         SecondaryUnit = self.env["product.secondary.unit"]
