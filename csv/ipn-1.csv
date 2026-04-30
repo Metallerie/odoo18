@@ -1,0 +1,11 @@
+default_code,name,height,width,length,thickness,uom_code,factor,standard_price,purchase_unit
+73309,"POUTRELLE IPN 80/6,20M",,,6.0,,KG,38.7,38.7,Barre
+73310,"POUTRELLE IPN 80/12,20M",,,12.0,,KG,74.42,77.4,Barre
+71046,"POUTRELLE IPN 100/6,20M",,,6.0,,KG,52.782,52.78,Barre
+71047,"POUTRELLE IPN 100/12,20M",,,12.0,,KG,104.699,104.7,Barre
+71048,"POUTRELLE IPN 120/6,20M",,,6.0,,KG,71.053,71.05,Barre
+293747,IPN 100,,,1.0,,KG,1.0,0.0,Barre
+71049,IPN 140,,,1.0,,KG,1.0,0.0,Barre
+71050,IPN 160,,,1.0,,KG,1.0,0.0,Barre
+71051,IPN 180,,,1.0,,KG,1.0,0.0,Barre
+71052,IPN 200,,,1.0,,KG,1.0,0.0,Barre
