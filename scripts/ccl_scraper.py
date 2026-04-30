@@ -5,6 +5,7 @@ import csv
 import os
 import re
 from getpass import getpass
+import time
 
 from playwright.sync_api import sync_playwright
 
@@ -24,18 +25,14 @@ def extract_float(value, default=0.0):
 
 
 def extract_dimensions(name):
-    """
-    Exemple :
-    Tube soudés rectangulaire 30x20x2 longueur 6,15 m
-    -> height=0.03, width=0.02, thickness=0.002, length=6.15
-    """
     height = ""
     width = ""
     thickness = ""
     length = ""
 
+    # accepte espaces : 90X 50X3
     dim_match = re.search(
-        r"(\d+(?:[.,]\d+)?)x(\d+(?:[.,]\d+)?)x(\d+(?:[.,]\d+)?)",
+        r"(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)",
         name,
         re.IGNORECASE,
     )
@@ -45,7 +42,7 @@ def extract_dimensions(name):
         thickness = extract_float(dim_match.group(3)) / 1000
 
     length_match = re.search(
-        r"longueur\s+(\d+(?:[.,]\d+)?)\s*m",
+        r"(\d+(?:[.,]\d+)?)\s*m",
         name,
         re.IGNORECASE,
     )
@@ -58,7 +55,7 @@ def extract_dimensions(name):
 def clean_product_name(name):
     name = re.sub(r"\s+", " ", name or "").strip()
     name = re.sub(r"\s+longueur\s+\d+(?:[.,]\d+)?\s*m", "", name, flags=re.I)
-    return name
+    return name.upper()
 
 
 def normalize_purchase_unit(name, uom_code):
@@ -68,7 +65,7 @@ def normalize_purchase_unit(name, uom_code):
         return "Tube"
     if "corni" in name_lower:
         return "Barre"
-    if "fer plat" in name_lower or "plat" in name_lower:
+    if "plat" in name_lower:
         return "Barre"
 
     if uom_code == "ML":
@@ -116,14 +113,22 @@ def main():
 
         for article in articles:
             try:
-                raw_name = article.locator("span.title").inner_text().strip()
+                # 🔥 correction ici
+                title_locator = article.locator("span.title")
+
+                if title_locator.count() == 0:
+                    print("Article ignoré : pas de titre")
+                    continue
+
+                raw_name = title_locator.first.inner_text(timeout=3000).strip()
                 name = clean_product_name(raw_name)
+
                 text = article.inner_text()
 
                 ref_match = re.search(r"Réf CCL\s*:\s*(\d+)", text)
                 uom_match = re.search(r"Unité de vente\s*:\s*([A-Z]+)", text)
                 factor_match = re.search(
-                    r"Rapport\s*:\s*1\s*PI\s*=\s*([\d.,]+)\s*([A-Z]+)?",
+                    r"Rapport\s*:\s*1\s*PI\s*=\s*([\d.,]+)",
                     text,
                     re.IGNORECASE,
                 )
@@ -136,19 +141,17 @@ def main():
                 if not ref_match or not price_match:
                     continue
 
-                default_code = ref_match.group(1).strip()
-                uom_code = uom_match.group(1).strip() if uom_match else "ML"
+                default_code = ref_match.group(1)
+                uom_code = uom_match.group(1) if uom_match else "ML"
                 factor = extract_float(factor_match.group(1), 1.0) if factor_match else 1.0
                 price_net = extract_float(price_match.group(1))
 
                 height, width, length, thickness = extract_dimensions(raw_name)
 
                 if not length:
-                    length = factor if factor else ""
+                    length = factor
 
-                # Pour ton wizard : standard_price doit être dans l'unité Odoo.
-                # Exemple : prix CCL 10.64 € pour 1 PI = 6.15 ML
-                # => coût ML = 10.64 / 6.15
+                # conversion prix → ML
                 standard_price = price_net
                 if uom_code == "ML" and factor:
                     standard_price = price_net / factor
@@ -169,6 +172,8 @@ def main():
                         "purchase_unit": purchase_unit,
                     }
                 )
+
+                time.sleep(0.5)  # 👈 ralentit (important)
 
             except Exception as exc:
                 print("Erreur article :", exc)
