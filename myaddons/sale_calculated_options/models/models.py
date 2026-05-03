@@ -7,10 +7,7 @@ from odoo.exceptions import ValidationError
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
 
-    is_calculated = fields.Boolean(
-        string="Attribut calculé",
-        default=False,
-    )
+    is_calculated = fields.Boolean(string="Attribut calculé", default=False)
 
     calc_method = fields.Selection(
         [
@@ -20,25 +17,10 @@ class ProductAttribute(models.Model):
         string="Méthode de calcul",
     )
 
-    use_as_order_qty = fields.Boolean(
-        string="Utiliser comme quantité de commande",
-        default=False,
-    )
-
-    affect_price = fields.Boolean(
-        string="Affecte le prix",
-        default=False,
-    )
-
-    show_result_in_cart = fields.Boolean(
-        string="Afficher le résultat dans le panier",
-        default=True,
-    )
-
-    result_readonly = fields.Boolean(
-        string="Résultat en lecture seule",
-        default=True,
-    )
+    use_as_order_qty = fields.Boolean(string="Utiliser comme quantité de commande", default=False)
+    affect_price = fields.Boolean(string="Affecte le prix", default=False)
+    show_result_in_cart = fields.Boolean(string="Afficher le résultat dans le panier", default=True)
+    result_readonly = fields.Boolean(string="Résultat en lecture seule", default=True)
 
     @api.onchange("is_calculated")
     def _onchange_is_calculated(self):
@@ -54,9 +36,7 @@ class ProductAttribute(models.Model):
     def _check_calculated_attribute(self):
         for rec in self:
             if rec.is_calculated and not rec.calc_method:
-                raise ValidationError(
-                    "Un attribut calculé doit avoir une méthode de calcul."
-                )
+                raise ValidationError("Un attribut calculé doit avoir une méthode de calcul.")
 
 
 class ProductAttributeValue(models.Model):
@@ -81,10 +61,41 @@ class ProductAttributeValue(models.Model):
         default="float",
     )
 
-    is_free_text = fields.Boolean(
-        string="Texte libre",
-        default=False,
+    is_free_text = fields.Boolean(string="Texte libre", default=False)
+
+    option_cost = fields.Float(
+        string="Coût option",
+        default=0.0,
+        help="Coût fournisseur de cette valeur d'option.",
     )
+
+    option_coef = fields.Float(
+        string="Coefficient",
+        default=1.0,
+        help="Coefficient appliqué au coût pour calculer le prix client.",
+    )
+
+    option_price = fields.Float(
+        string="Prix option",
+        compute="_compute_option_price",
+        store=True,
+        readonly=True,
+    )
+
+    option_price_unit = fields.Selection(
+        [
+            ("kg", "€/kg"),
+            ("ml", "€/ml"),
+            ("m2", "€/m²"),
+            ("unit", "€/pièce"),
+        ],
+        string="Unité de prix",
+    )
+
+    @api.depends("option_cost", "option_coef")
+    def _compute_option_price(self):
+        for rec in self:
+            rec.option_price = rec.option_cost * rec.option_coef
 
     @api.onchange("value_input_type")
     def _onchange_value_input_type(self):
@@ -108,10 +119,7 @@ class ProductTemplateCalculatedOptionLine(models.Model):
     _description = "Dépendance d'option calculée par produit"
     _order = "product_tmpl_id, calculated_attribute_id, sequence, id"
 
-    sequence = fields.Integer(
-        string="Séquence",
-        default=10,
-    )
+    sequence = fields.Integer(string="Séquence", default=10)
 
     product_tmpl_id = fields.Many2one(
         "product.template",
@@ -194,34 +202,17 @@ class ProductTemplateCalculatedOptionLine(models.Model):
     def _compute_source_infos(self):
         for rec in self:
             first_value = rec.source_attribute_id.value_ids[:1]
+            rec.source_value_input_type = first_value.value_input_type if first_value else False
+            rec.source_numeric_type = first_value.numeric_type if first_value else False
+            rec.source_is_free_text = first_value.is_free_text if first_value else False
 
-            rec.source_value_input_type = (
-                first_value.value_input_type if first_value else False
-            )
-            rec.source_numeric_type = (
-                first_value.numeric_type if first_value else False
-            )
-            rec.source_is_free_text = (
-                first_value.is_free_text if first_value else False
-            )
-
-    @api.constrains(
-        "product_tmpl_id",
-        "calculated_attribute_id",
-        "source_attribute_id",
-    )
+    @api.constrains("product_tmpl_id", "calculated_attribute_id", "source_attribute_id")
     def _check_line_consistency(self):
         for rec in self:
             if rec.source_attribute_id == rec.calculated_attribute_id:
-                raise ValidationError(
-                    "Un attribut calculé ne peut pas dépendre de lui-même."
-                )
+                raise ValidationError("Un attribut calculé ne peut pas dépendre de lui-même.")
 
-            product_attribute_ids = rec.product_tmpl_id.attribute_line_ids.mapped(
-                "attribute_id"
-            ).ids
+            product_attribute_ids = rec.product_tmpl_id.attribute_line_ids.mapped("attribute_id").ids
 
             if rec.source_attribute_id.id not in product_attribute_ids:
-                raise ValidationError(
-                    "L'attribut source doit être présent sur le produit."
-                )
+                raise ValidationError("L'attribut source doit être présent sur le produit.")
