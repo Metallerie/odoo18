@@ -14,8 +14,17 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
 
     start() {
         this._super(...arguments);
+
+        if (this._isCartPage()) {
+            return;
+        }
+
         this._initializeNumericFields();
         this._computeNumericOptions();
+    },
+
+    _isCartPage() {
+        return window.location.pathname.includes("/shop/cart");
     },
 
     _parseNumber(value) {
@@ -107,6 +116,10 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _computeNumericOptions() {
+        if (this._isCartPage()) {
+            return;
+        }
+
         const cutQtyInput = this._findInputByLabel("nombre de coupes");
         const cutLengthInput = this._findInputByLabel("longueur de coupe");
         const computedInput = this._findInputByLabel("calcule quantité");
@@ -118,7 +131,6 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const cutQty = this._parseNumber(cutQtyInput.value);
         const cutLength = this._parseNumber(cutLengthInput.value);
 
-        // Ne calcule pas tant que les deux valeurs utiles ne sont pas renseignées
         if (cutQty <= 0 || cutLength <= 0) {
             return;
         }
@@ -126,18 +138,19 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const exactQty = cutQty * cutLength;
         const soldQty = Math.ceil(exactQty);
 
-        const exactQtyFormatted = this._formatDecimal(exactQty);
-        const soldQtyFormatted = String(soldQty);
-
-        this._updateInputIfChanged(computedInput, exactQtyFormatted, true);
+        this._updateInputIfChanged(computedInput, this._formatDecimal(exactQty), true);
 
         const qtyInput = this._getQuantityInput();
         if (qtyInput) {
-            this._updateInputIfChanged(qtyInput, soldQtyFormatted, true);
+            this._updateInputIfChanged(qtyInput, String(soldQty), true);
         }
     },
 
     _onInputFocusOut(ev) {
+        if (this._isCartPage()) {
+            return;
+        }
+
         const input = ev.target;
         const containerText = (input.closest(".mb-3, .variant_attribute, div")?.innerText || "").toLowerCase();
 
@@ -153,6 +166,10 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _onInputChanged() {
+        if (this._isCartPage()) {
+            return;
+        }
+
         window.clearTimeout(this.numericOptionsTimer);
         this.numericOptionsTimer = window.setTimeout(() => {
             this._computeNumericOptions();
