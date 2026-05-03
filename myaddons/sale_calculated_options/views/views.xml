@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="sale_calculated_options.list">
+      <field name="name">sale_calculated_options list</field>
+      <field name="model">sale_calculated_options.sale_calculated_options</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </list>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="sale_calculated_options.action_window">
+      <field name="name">sale_calculated_options window</field>
+      <field name="res_model">sale_calculated_options.sale_calculated_options</field>
+      <field name="view_mode">list,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="sale_calculated_options.action_server">
+      <field name="name">sale_calculated_options server</field>
+      <field name="model_id" ref="model_sale_calculated_options_sale_calculated_options"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="sale_calculated_options" id="sale_calculated_options.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="sale_calculated_options.menu_1" parent="sale_calculated_options.menu_root"/>
+    <menuitem name="Menu 2" id="sale_calculated_options.menu_2" parent="sale_calculated_options.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="sale_calculated_options.menu_1_list" parent="sale_calculated_options.menu_1"
+              action="sale_calculated_options.action_window"/>
+    <menuitem name="Server to list" id="sale_calculated_options" parent="sale_calculated_options.menu_2"
+              action="sale_calculated_options.action_server"/>
+-->
+  </data>
+</odoo>
