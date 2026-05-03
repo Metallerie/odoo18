@@ -30,9 +30,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _parseNumber(value) {
-        if (!value) {
-            return 0;
-        }
+        if (!value) return 0;
         const cleaned = String(value).replace(",", ".");
         const number = parseFloat(cleaned);
         return isNaN(number) ? 0 : number;
@@ -57,9 +55,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
                 const container = label.closest(".variant_attribute, .js_product, .mb-3, div");
                 if (container) {
                     const input = container.querySelector("input[type='text'], input:not([type]), input.form-control");
-                    if (input) {
-                        return input;
-                    }
+                    if (input) return input;
                 }
             }
         }
@@ -67,9 +63,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const allInputs = this.el.querySelectorAll("input[type='text'], input:not([type]), input.form-control");
         for (const input of allInputs) {
             const placeholder = (input.placeholder || "").toLowerCase();
-            if (placeholder.includes(labelText)) {
-                return input;
-            }
+            if (placeholder.includes(labelText)) return input;
         }
 
         return null;
@@ -80,13 +74,9 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _updateInputIfChanged(input, newValue, triggerEvents = true) {
-        if (!input) {
-            return;
-        }
+        if (!input) return;
 
-        if (String(input.value) === String(newValue)) {
-            return;
-        }
+        if (String(input.value) === String(newValue)) return;
 
         input.value = newValue;
 
@@ -118,24 +108,18 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _computeNumericOptions() {
-        if (this._isCartPage()) {
-            return;
-        }
+        if (this._isCartPage()) return;
 
         const cutQtyInput = this._findInputByLabel("nombre de coupes");
         const cutLengthInput = this._findInputByLabel("longueur de coupe");
         const computedInput = this._findInputByLabel("calcule quantité");
 
-        if (!cutQtyInput || !cutLengthInput || !computedInput) {
-            return;
-        }
+        if (!cutQtyInput || !cutLengthInput || !computedInput) return;
 
         const cutQty = this._parseNumber(cutQtyInput.value);
         const cutLength = this._parseNumber(cutLengthInput.value);
 
-        if (cutQty <= 0 || cutLength <= 0) {
-            return;
-        }
+        if (cutQty <= 0 || cutLength <= 0) return;
 
         const exactQty = cutQty * cutLength;
         const soldQty = Math.ceil(exactQty);
@@ -148,11 +132,21 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         }
     },
 
+    _getCartLines() {
+        return this.el.querySelectorAll(
+            "#cart_products .o_cart_product, #cart_products tr, .oe_cart .o_cart_product, .oe_cart tr"
+        );
+    },
+
     _formatCartNumericOptions() {
-        const cartLines = this.el.querySelectorAll(".o_cart_product, tr, .row");
+        const cartLines = this._getCartLines();
 
         for (const line of cartLines) {
             const lineText = line.innerText || "";
+
+            if (!lineText.toLowerCase().includes("longueur de coupe")) {
+                continue;
+            }
 
             const quantityMatch = lineText.match(
                 /Nombre de pi[eè]ce[^:]*:\s*(?:Quantit[eé]\s*:\s*)?([0-9]+(?:[,.][0-9]+)?)/i
@@ -162,24 +156,20 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
                 /Longueur de coupe[^:]*:\s*(?:Dimension\s*:\s*)?([0-9]+(?:[,.][0-9]+)?)/i
             );
 
-            if (!quantityMatch || !lengthMatch) {
-                continue;
-            }
+            if (!quantityMatch || !lengthMatch) continue;
 
             const cutQty = this._parseNumber(quantityMatch[1]);
             const cutLength = this._parseNumber(lengthMatch[1]);
             const totalLength = cutQty * cutLength;
 
-            if (totalLength <= 0) {
-                continue;
-            }
+            if (totalLength <= 0) continue;
 
-            const elements = line.querySelectorAll("*");
+            const optionElements = line.querySelectorAll("small, span, div, li");
 
-            for (const el of elements) {
-                const content = el.textContent || "";
+            for (const el of optionElements) {
+                const content = (el.textContent || "").toLowerCase().trim();
 
-                if (content.toLowerCase().includes("calcule quantité")) {
+                if (content.startsWith("calcule quantité")) {
                     el.textContent = `Calcule quantité: Longueur totale coupée: ${this._formatDecimal(totalLength)}`;
                     break;
                 }
@@ -188,7 +178,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _bindCartProtection() {
-        const cartLines = this.el.querySelectorAll(".o_cart_product, tr, .row");
+        const cartLines = this._getCartLines();
 
         for (const line of cartLines) {
             const text = (line.innerText || "").toLowerCase();
@@ -211,9 +201,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
 
             for (const minus of minusButtons) {
                 minus.addEventListener("click", (ev) => {
-                    if (!qtyInput) {
-                        return;
-                    }
+                    if (!qtyInput) return;
 
                     const currentQty = this._parseNumber(qtyInput.value);
 
@@ -231,17 +219,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
                 const originalValue = qtyInput.value;
 
                 qtyInput.addEventListener("input", () => {
-                    if (String(qtyInput.value) === "0") {
-                        return;
-                    }
-
-                    this._showCartWarning(line);
-                    qtyInput.value = originalValue;
-                });
-
-                qtyInput.addEventListener("change", () => {
-                    if (String(qtyInput.value) === "0") {
-                        qtyInput.dispatchEvent(new Event("change", { bubbles: true }));
+                    if (String(qtyInput.value).trim() === "0") {
                         return;
                     }
 
@@ -253,9 +231,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _showCartWarning(line) {
-        if (line.querySelector(".o_cart_warning_numeric")) {
-            return;
-        }
+        if (line.querySelector(".o_cart_warning_numeric")) return;
 
         const warning = document.createElement("div");
         warning.className = "text-danger mt-2 o_cart_warning_numeric";
@@ -265,7 +241,8 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
             Pour modifier, mettez la quantité à 0 puis recommencez depuis la fiche produit.
         `;
 
-        line.appendChild(warning);
+        const target = line.querySelector(".td-product_name, .o_cart_product_name, td, div") || line;
+        target.appendChild(warning);
 
         window.setTimeout(() => {
             warning.remove();
@@ -273,14 +250,12 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _onInputFocusOut(ev) {
-        if (this._isCartPage()) {
-            return;
-        }
+        if (this._isCartPage()) return;
 
         const input = ev.target;
         const containerText = (input.closest(".mb-3, .variant_attribute, div")?.innerText || "").toLowerCase();
 
-        if (containerText.includes("nombre de coupes")) {
+        if (containerText.includes("nombre de coupes") || containerText.includes("nombre de pièce")) {
             this._updateInputIfChanged(input, this._formatInteger(input.value), false);
         }
 
@@ -292,9 +267,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _onInputChanged() {
-        if (this._isCartPage()) {
-            return;
-        }
+        if (this._isCartPage()) return;
 
         window.clearTimeout(this.numericOptionsTimer);
         this.numericOptionsTimer = window.setTimeout(() => {
