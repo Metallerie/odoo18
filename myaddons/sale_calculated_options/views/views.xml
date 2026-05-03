@@ -39,8 +39,9 @@
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="calculated_attribute_id"/>
+                            <field name="available_source_attribute_ids" column_invisible="1"/>
                             <field name="source_attribute_id"
-                                   domain="[('id', 'in', parent.attribute_line_ids.attribute_id)]"/>
+                                   domain="[('id', 'in', available_source_attribute_ids)]"/>
                             <field name="source_value_input_type"/>
                             <field name="source_numeric_type"/>
                             <field name="source_is_free_text"/>
