@@ -11,6 +11,10 @@
                 <field name="value_input_type"/>
                 <field name="numeric_type"/>
                 <field name="is_free_text"/>
+                <field name="option_cost"/>
+                <field name="option_coef"/>
+                <field name="option_price"/>
+                <field name="option_price_unit"/>
             </xpath>
 
             <xpath expr="//sheet" position="inside">
