@@ -7,10 +7,7 @@ from odoo.exceptions import ValidationError
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
 
-    is_calculated = fields.Boolean(
-        string="Attribut calculé",
-        default=False,
-    )
+    is_calculated = fields.Boolean(string="Attribut calculé", default=False)
 
     calc_method = fields.Selection(
         [
@@ -18,12 +15,6 @@ class ProductAttribute(models.Model):
             ("sheet_laser_cut", "Tôle : découpe laser"),
         ],
         string="Méthode de calcul",
-    )
-
-    calculation_line_ids = fields.One2many(
-        "product.attribute.calculation.line",
-        "calculated_attribute_id",
-        string="Attributs nécessaires",
     )
 
     use_as_order_qty = fields.Boolean(
@@ -46,28 +37,6 @@ class ProductAttribute(models.Model):
         default=True,
     )
 
-    @api.constrains("is_calculated", "calc_method", "calculation_line_ids")
-    def _check_calculated_attribute(self):
-        for rec in self:
-            if not rec.is_calculated:
-                continue
-
-            if not rec.calc_method:
-                raise ValidationError(
-                    "Un attribut calculé doit avoir une méthode de calcul."
-                )
-
-            if not rec.calculation_line_ids:
-                raise ValidationError(
-                    "Un attribut calculé doit avoir au moins un attribut nécessaire."
-                )
-
-            for line in rec.calculation_line_ids:
-                if line.source_attribute_id == rec:
-                    raise ValidationError(
-                        "Un attribut calculé ne peut pas dépendre de lui-même."
-                    )
-
     @api.onchange("is_calculated")
     def _onchange_is_calculated(self):
         for rec in self:
@@ -78,100 +47,129 @@ class ProductAttribute(models.Model):
                 rec.show_result_in_cart = True
                 rec.result_readonly = True
 
-    def compute_calculated_value(self, values_map):
-        """
-        values_map attendu :
-        {
-            attribute_id: value,
-            ...
-        }
-        """
-        self.ensure_one()
-
-        if not self.is_calculated or not self.calc_method:
-            return False
-
-        if self.calc_method == "tube_cut_total_length":
-            return self._compute_tube_cut_total_length(values_map)
-
-        if self.calc_method == "sheet_laser_cut":
-            return self._compute_sheet_laser_cut(values_map)
-
-        return False
-
-    def _get_numeric_value_from_map(self, values_map, source_attribute):
-        value = values_map.get(source_attribute.id, 0.0)
-
-        try:
-            return float(str(value or "0").replace(",", "."))
-        except (TypeError, ValueError):
-            return 0.0
-
-    def _compute_tube_cut_total_length(self, values_map):
-        """
-        Méthode tube :
-        nombre de pièces × longueur
-        """
-        self.ensure_one()
-
-        result = 1.0
-
-        for line in self.calculation_line_ids.sorted("sequence"):
-            result *= self._get_numeric_value_from_map(
-                values_map,
-                line.source_attribute_id,
-            )
-
-        return result
-
-    def _compute_sheet_laser_cut(self, values_map):
-        """
-        Première version simple :
-        multiplication des attributs nécessaires.
-
-        Exemple :
-        nombre × longueur × largeur × épaisseur
-
-        On affinera après pour retourner aussi prix, poids, note, etc.
-        """
-        self.ensure_one()
-
-        result = 1.0
-
-        for line in self.calculation_line_ids.sorted("sequence"):
-            result *= self._get_numeric_value_from_map(
-                values_map,
-                line.source_attribute_id,
-            )
-
-        return result
+    @api.constrains("is_calculated", "calc_method")
+    def _check_calculated_attribute(self):
+        for rec in self:
+            if rec.is_calculated and not rec.calc_method:
+                raise ValidationError(
+                    "Un attribut calculé doit avoir une méthode de calcul."
+                )
 
 
-class ProductAttributeCalculationLine(models.Model):
-    _name = "product.attribute.calculation.line"
-    _description = "Ligne de dépendance d'attribut calculé"
-    _order = "sequence, id"
+class ProductAttributeValue(models.Model):
+    _inherit = "product.attribute.value"
 
-    sequence = fields.Integer(
-        string="Séquence",
-        default=10,
+    value_input_type = fields.Selection(
+        [
+            ("text", "Texte"),
+            ("numeric", "Numérique"),
+            ("computed", "Calculé"),
+        ],
+        string="Type de saisie",
+        default="text",
+    )
+
+    numeric_type = fields.Selection(
+        [
+            ("int", "Entier"),
+            ("float", "Décimal"),
+        ],
+        string="Type numérique",
+        default="float",
+    )
+
+    is_free_text = fields.Boolean(
+        string="Texte libre",
+        default=False,
+    )
+
+    @api.onchange("value_input_type")
+    def _onchange_value_input_type(self):
+        for rec in self:
+            if rec.value_input_type != "numeric":
+                rec.numeric_type = "float"
+
+
+class ProductTemplate(models.Model):
+    _inherit = "product.template"
+
+    calculated_option_line_ids = fields.One2many(
+        "product.template.calculated.option.line",
+        "product_tmpl_id",
+        string="Dépendances des options calculées",
+    )
+
+
+class ProductTemplateCalculatedOptionLine(models.Model):
+    _name = "product.template.calculated.option.line"
+    _description = "Dépendance d'option calculée par produit"
+    _order = "product_tmpl_id, calculated_attribute_id, sequence, id"
+
+    sequence = fields.Integer(string="Séquence", default=10)
+
+    product_tmpl_id = fields.Many2one(
+        "product.template",
+        string="Produit",
+        required=True,
+        ondelete="cascade",
     )
 
     calculated_attribute_id = fields.Many2one(
         "product.attribute",
         string="Attribut calculé",
         required=True,
-        ondelete="cascade",
+        domain="[('is_calculated', '=', True)]",
+        ondelete="restrict",
+    )
+
+    source_ptav_id = fields.Many2one(
+        "product.template.attribute.value",
+        string="Valeur présente sur le produit",
+        required=True,
+        domain="[('product_tmpl_id', '=', product_tmpl_id)]",
+        ondelete="restrict",
     )
 
     source_attribute_id = fields.Many2one(
         "product.attribute",
-        string="Attribut nécessaire",
-        required=True,
-        ondelete="restrict",
+        string="Attribut source",
+        related="source_ptav_id.attribute_id",
+        store=True,
+        readonly=True,
+    )
+
+    source_value_input_type = fields.Selection(
+        related="source_ptav_id.product_attribute_value_id.value_input_type",
+        string="Type",
+        readonly=True,
+    )
+
+    source_numeric_type = fields.Selection(
+        related="source_ptav_id.product_attribute_value_id.numeric_type",
+        string="Type numérique",
+        readonly=True,
+    )
+
+    source_is_free_text = fields.Boolean(
+        related="source_ptav_id.product_attribute_value_id.is_free_text",
+        string="Texte libre",
+        readonly=True,
     )
 
     role = fields.Char(
         string="Rôle",
         help="Exemple : nombre_piece, longueur, largeur, epaisseur.",
     )
+
+    @api.constrains("product_tmpl_id", "calculated_attribute_id", "source_ptav_id")
+    def _check_line_consistency(self):
+        for rec in self:
+            if rec.source_ptav_id.product_tmpl_id != rec.product_tmpl_id:
+                raise ValidationError(
+                    "La valeur source doit appartenir au produit configuré."
+                )
+
+            if rec.source_ptav_id.attribute_id == rec.calculated_attribute_id:
+                raise ValidationError(
+                    "Un attribut calculé ne peut pas dépendre de lui-même."
+                )
