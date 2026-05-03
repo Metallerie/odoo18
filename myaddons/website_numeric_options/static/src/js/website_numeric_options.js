@@ -16,6 +16,8 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         this._super(...arguments);
 
         if (this._isCartPage()) {
+            this._formatCartNumericOptions();
+            this._bindCartProtection();
             return;
         }
 
@@ -144,6 +146,130 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         if (qtyInput) {
             this._updateInputIfChanged(qtyInput, String(soldQty), true);
         }
+    },
+
+    _formatCartNumericOptions() {
+        const cartLines = this.el.querySelectorAll(".o_cart_product, tr, .row");
+
+        for (const line of cartLines) {
+            const lineText = line.innerText || "";
+
+            const quantityMatch = lineText.match(
+                /Nombre de pi[eè]ce[^:]*:\s*(?:Quantit[eé]\s*:\s*)?([0-9]+(?:[,.][0-9]+)?)/i
+            );
+
+            const lengthMatch = lineText.match(
+                /Longueur de coupe[^:]*:\s*(?:Dimension\s*:\s*)?([0-9]+(?:[,.][0-9]+)?)/i
+            );
+
+            if (!quantityMatch || !lengthMatch) {
+                continue;
+            }
+
+            const cutQty = this._parseNumber(quantityMatch[1]);
+            const cutLength = this._parseNumber(lengthMatch[1]);
+            const totalLength = cutQty * cutLength;
+
+            if (totalLength <= 0) {
+                continue;
+            }
+
+            const elements = line.querySelectorAll("*");
+
+            for (const el of elements) {
+                const content = el.textContent || "";
+
+                if (content.toLowerCase().includes("calcule quantité")) {
+                    el.textContent = `Calcule quantité: Longueur totale coupée: ${this._formatDecimal(totalLength)}`;
+                    break;
+                }
+            }
+        }
+    },
+
+    _bindCartProtection() {
+        const cartLines = this.el.querySelectorAll(".o_cart_product, tr, .row");
+
+        for (const line of cartLines) {
+            const text = (line.innerText || "").toLowerCase();
+
+            if (!text.includes("longueur de coupe")) {
+                continue;
+            }
+
+            const plusButtons = line.querySelectorAll(".js_add, button:has(.fa-plus)");
+            const minusButtons = line.querySelectorAll(".js_subtract, button:has(.fa-minus)");
+            const qtyInput = line.querySelector("input[name='add_qty'], input.js_quantity");
+
+            for (const plus of plusButtons) {
+                plus.addEventListener("click", (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    this._showCartWarning(line);
+                });
+            }
+
+            for (const minus of minusButtons) {
+                minus.addEventListener("click", (ev) => {
+                    if (!qtyInput) {
+                        return;
+                    }
+
+                    const currentQty = this._parseNumber(qtyInput.value);
+
+                    if (currentQty <= 1) {
+                        return;
+                    }
+
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    this._showCartWarning(line);
+                });
+            }
+
+            if (qtyInput) {
+                const originalValue = qtyInput.value;
+
+                qtyInput.addEventListener("input", () => {
+                    if (String(qtyInput.value) === "0") {
+                        return;
+                    }
+
+                    this._showCartWarning(line);
+                    qtyInput.value = originalValue;
+                });
+
+                qtyInput.addEventListener("change", () => {
+                    if (String(qtyInput.value) === "0") {
+                        qtyInput.dispatchEvent(new Event("change", { bubbles: true }));
+                        return;
+                    }
+
+                    this._showCartWarning(line);
+                    qtyInput.value = originalValue;
+                });
+            }
+        }
+    },
+
+    _showCartWarning(line) {
+        if (line.querySelector(".o_cart_warning_numeric")) {
+            return;
+        }
+
+        const warning = document.createElement("div");
+        warning.className = "text-danger mt-2 o_cart_warning_numeric";
+        warning.style.fontSize = "0.9em";
+        warning.innerHTML = `
+            ⚠️ Quantité calculée automatiquement.<br>
+            Pour modifier, mettez la quantité à 0 puis recommencez depuis la fiche produit.
+        `;
+
+        line.appendChild(warning);
+
+        window.setTimeout(() => {
+            warning.remove();
+        }, 4000);
     },
 
     _onInputFocusOut(ev) {
