@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Formulaire attribut -->
     <record id="product_attribute_view_form_sale_calculated_options" model="ir.ui.view">
         <field name="name">product.attribute.form.sale.calculated.options</field>
         <field name="model">product.attribute</field>
         <field name="inherit_id" ref="product.product_attribute_view_form"/>
         <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='value_ids']/list" position="inside">
+                <field name="value_input_type"/>
+                <field name="numeric_type"/>
+                <field name="is_free_text"/>
+            </xpath>
 
             <xpath expr="//sheet" position="inside">
                 <group string="Options calculées">
@@ -15,11 +22,31 @@
                     <field name="affect_price" invisible="not is_calculated"/>
                     <field name="show_result_in_cart" invisible="not is_calculated"/>
                     <field name="result_readonly" invisible="not is_calculated"/>
+                </group>
+            </xpath>
 
-                    <field name="calculation_line_ids" invisible="not is_calculated">
+        </field>
+    </record>
+
+    <!-- Formulaire produit -->
+    <record id="product_template_form_sale_calculated_options" model="ir.ui.view">
+        <field name="name">product.template.form.sale.calculated.options</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='attribute_line_ids']" position="after">
+                <group string="Configuration des options calculées">
+                    <field name="calculated_option_line_ids" context="{'default_product_tmpl_id': id}">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
+                            <field name="calculated_attribute_id"/>
+                            <field name="source_ptav_id"
+                                   domain="[('product_tmpl_id', '=', parent.id)]"/>
                             <field name="source_attribute_id"/>
+                            <field name="source_value_input_type"/>
+                            <field name="source_numeric_type"/>
+                            <field name="source_is_free_text"/>
                             <field name="role"/>
                         </list>
                     </field>
