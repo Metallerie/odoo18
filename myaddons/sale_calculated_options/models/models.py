@@ -128,10 +128,17 @@ class ProductTemplateCalculatedOptionLine(models.Model):
         ondelete="restrict",
     )
 
+    available_source_attribute_ids = fields.Many2many(
+        "product.attribute",
+        string="Attributs disponibles",
+        compute="_compute_available_source_attribute_ids",
+    )
+
     source_attribute_id = fields.Many2one(
         "product.attribute",
         string="Attribut source",
         required=True,
+        domain="[('id', 'in', available_source_attribute_ids)]",
         ondelete="restrict",
     )
 
@@ -166,6 +173,17 @@ class ProductTemplateCalculatedOptionLine(models.Model):
         string="Rôle",
         help="Exemple : nombre_piece, longueur, largeur, epaisseur.",
     )
+
+    @api.depends(
+        "product_tmpl_id",
+        "product_tmpl_id.attribute_line_ids",
+        "product_tmpl_id.attribute_line_ids.attribute_id",
+    )
+    def _compute_available_source_attribute_ids(self):
+        for rec in self:
+            rec.available_source_attribute_ids = (
+                rec.product_tmpl_id.attribute_line_ids.mapped("attribute_id")
+            )
 
     @api.depends(
         "source_attribute_id",
