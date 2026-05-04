@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Attribut : options calculées -->
     <record id="product_attribute_view_form_sale_calculated_options" model="ir.ui.view">
         <field name="name">product.attribute.form.sale.calculated.options</field>
         <field name="model">product.attribute</field>
         <field name="inherit_id" ref="product.product_attribute_view_form"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//field[@name='attribute_line_ids']//button[@name='action_open_attribute_values']" position="after">
+            <xpath expr="//field[@name='value_ids']/list" position="inside">
                 <field name="value_input_type"/>
                 <field name="numeric_type"/>
                 <field name="is_free_text"/>
@@ -27,6 +28,7 @@
         </field>
     </record>
 
+    <!-- Bibliothèque des variables -->
     <record id="product_option_variable_view_list" model="ir.ui.view">
         <field name="name">product.option.variable.list</field>
         <field name="model">product.option.variable</field>
@@ -70,13 +72,14 @@
         action="product_option_variable_action"
         sequence="95"/>
 
+    <!-- Variables par valeur d'attribut et par produit -->
     <record id="product_template_attribute_value_variable_view_list" model="ir.ui.view">
         <field name="name">product.template.attribute.value.variable.list</field>
         <field name="model">product.template.attribute.value.variable</field>
         <field name="arch" type="xml">
             <list editable="bottom">
-                <field name="product_tmpl_id" column_invisible="1"/>
-                <field name="attribute_id" column_invisible="1"/>
+                <field name="product_tmpl_id"/>
+                <field name="attribute_id"/>
                 <field name="available_value_ids" column_invisible="1"/>
                 <field name="value_id" domain="[('id', 'in', available_value_ids)]"/>
                 <field name="variable_id"/>
@@ -110,22 +113,20 @@
         </field>
     </record>
 
-    <record id="product_template_form_attribute_line_variables" model="ir.ui.view">
-        <field name="name">product.template.form.attribute.line.variables</field>
-        <field name="model">product.template</field>
-        <field name="inherit_id" ref="product.product_template_form_view"/>
-        <field name="arch" type="xml">
-
-            <xpath expr="//field[@name='attribute_line_ids']/list" position="inside">
-                <button name="action_open_value_variables"
-                        type="object"
-                        string="Variables"
-                        class="btn-secondary"/>
-            </xpath>
-
-        </field>
+    <record id="product_template_attribute_value_variable_action" model="ir.actions.act_window">
+        <field name="name">Variables par valeur d'attribut</field>
+        <field name="res_model">product.template.attribute.value.variable</field>
+        <field name="view_mode">list,form</field>
     </record>
 
+    <menuitem
+        id="product_template_attribute_value_variable_menu"
+        name="Variables par valeur"
+        parent="sale.product_menu_catalog"
+        action="product_template_attribute_value_variable_action"
+        sequence="96"/>
+
+    <!-- Produit : configuration options calculées -->
     <record id="product_template_form_sale_calculated_options" model="ir.ui.view">
         <field name="name">product.template.form.sale.calculated.options</field>
         <field name="model">product.template</field>
