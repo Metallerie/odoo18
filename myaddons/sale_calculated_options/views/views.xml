@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="product.product_attribute_view_form"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//field[@name='value_ids']/list" position="inside">
+            <xpath expr="//field[@name='attribute_line_ids']//button[@name='action_open_attribute_values']" position="after">
                 <field name="value_input_type"/>
                 <field name="numeric_type"/>
                 <field name="is_free_text"/>
