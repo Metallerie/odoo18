@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
-
-
+# models.py
+import re
+import unicodedata
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+
+
+def format_variable_name(value):
+    value = value or ""
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-zA-Z0-9_]+", "_", value)
+    value = re.sub(r"_+", "_", value)
+    return value.strip("_").lower()
 
 
 class ProductAttribute(models.Model):
@@ -65,40 +74,6 @@ class ProductAttributeValue(models.Model):
 
     is_free_text = fields.Boolean(string="Texte libre", default=False)
 
-    option_cost = fields.Float(
-        string="Coût option",
-        default=0.0,
-        help="Coût fournisseur de cette valeur d'option.",
-    )
-
-    option_coef = fields.Float(
-        string="Coefficient",
-        default=1.0,
-        help="Coefficient appliqué au coût pour calculer le prix client.",
-    )
-
-    option_price = fields.Float(
-        string="Prix option",
-        compute="_compute_option_price",
-        store=True,
-        readonly=True,
-    )
-
-    option_price_unit = fields.Selection(
-        [
-            ("kg", "€/kg"),
-            ("ml", "€/ml"),
-            ("m2", "€/m²"),
-            ("unit", "€/pièce"),
-        ],
-        string="Unité de prix",
-    )
-
-    @api.depends("option_cost", "option_coef")
-    def _compute_option_price(self):
-        for rec in self:
-            rec.option_price = rec.option_cost * rec.option_coef
-
     @api.onchange("value_input_type")
     def _onchange_value_input_type(self):
         for rec in self:
@@ -114,6 +89,104 @@ class ProductTemplate(models.Model):
         "product_tmpl_id",
         string="Dépendances des options calculées",
     )
+
+    attribute_value_variable_ids = fields.One2many(
+        "product.template.attribute.value.variable",
+        "product_tmpl_id",
+        string="Variables des valeurs d'attribut",
+    )
+
+
+class ProductTemplateAttributeValueVariable(models.Model):
+    _name = "product.template.attribute.value.variable"
+    _description = "Variable liée à une valeur d'attribut"
+    _order = "product_tmpl_id, attribute_id, value_id, variable_name"
+
+    product_tmpl_id = fields.Many2one(
+        "product.template",
+        string="Produit",
+        required=True,
+        ondelete="cascade",
+    )
+
+    attribute_id = fields.Many2one(
+        "product.attribute",
+        string="Attribut",
+        required=True,
+        ondelete="restrict",
+    )
+
+    value_id = fields.Many2one(
+        "product.attribute.value",
+        string="Valeur d'attribut",
+        required=True,
+        ondelete="restrict",
+        domain="[('attribute_id', '=', attribute_id)]",
+    )
+
+    variable_name = fields.Char(
+        string="Nom variable",
+        required=True,
+        help="Exemple : density, sale_coef, cut_price, thickness.",
+    )
+
+    variable_type = fields.Selection(
+        [
+            ("numeric", "Numérique"),
+            ("text", "Texte"),
+        ],
+        string="Type",
+        default="numeric",
+        required=True,
+    )
+
+    variable_numeric_value = fields.Float(string="Valeur numérique")
+    variable_text_value = fields.Char(string="Valeur texte")
+
+    @api.onchange("variable_name")
+    def _onchange_variable_name(self):
+        for rec in self:
+            if rec.variable_name:
+                rec.variable_name = format_variable_name(rec.variable_name)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("variable_name"):
+                vals["variable_name"] = format_variable_name(vals["variable_name"])
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get("variable_name"):
+            vals["variable_name"] = format_variable_name(vals["variable_name"])
+        return super().write(vals)
+
+    @api.onchange("variable_type")
+    def _onchange_variable_type(self):
+        for rec in self:
+            if rec.variable_type == "numeric":
+                rec.variable_text_value = False
+            elif rec.variable_type == "text":
+                rec.variable_numeric_value = 0.0
+
+    @api.constrains("product_tmpl_id", "attribute_id", "value_id")
+    def _check_consistency(self):
+        for rec in self:
+            product_attribute_ids = rec.product_tmpl_id.attribute_line_ids.mapped("attribute_id").ids
+
+            if rec.attribute_id.id not in product_attribute_ids:
+                raise ValidationError("L'attribut doit être présent sur le produit.")
+
+            if rec.value_id.attribute_id != rec.attribute_id:
+                raise ValidationError("La valeur choisie ne correspond pas à l'attribut.")
+
+    _sql_constraints = [
+        (
+            "unique_product_attribute_value_variable",
+            "unique(product_tmpl_id, attribute_id, value_id, variable_name)",
+            "Cette variable existe déjà pour cette valeur d'attribut.",
+        )
+    ]
 
 
 class ProductTemplateCalculatedOptionLine(models.Model):
@@ -181,7 +254,7 @@ class ProductTemplateCalculatedOptionLine(models.Model):
 
     role = fields.Char(
         string="Rôle",
-        help="Exemple : nombre_piece, longueur, largeur, epaisseur.",
+        help="Exemple : nombre_piece, longueur, largeur, epaisseur, materiau.",
     )
 
     @api.depends(
