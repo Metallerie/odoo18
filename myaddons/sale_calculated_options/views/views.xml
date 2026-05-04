@@ -11,10 +11,6 @@
                 <field name="value_input_type"/>
                 <field name="numeric_type"/>
                 <field name="is_free_text"/>
-                <field name="option_cost"/>
-                <field name="option_coef"/>
-                <field name="option_price"/>
-                <field name="option_price_unit"/>
             </xpath>
 
             <xpath expr="//sheet" position="inside">
@@ -38,6 +34,20 @@
         <field name="arch" type="xml">
 
             <xpath expr="//field[@name='attribute_line_ids']" position="after">
+
+                <group string="Variables des valeurs d'attribut">
+                    <field name="attribute_value_variable_ids" context="{'default_product_tmpl_id': id}">
+                        <list editable="bottom">
+                            <field name="attribute_id"/>
+                            <field name="value_id"/>
+                            <field name="variable_name"/>
+                            <field name="variable_type"/>
+                            <field name="variable_numeric_value" invisible="variable_type != 'numeric'"/>
+                            <field name="variable_text_value" invisible="variable_type != 'text'"/>
+                        </list>
+                    </field>
+                </group>
+
                 <group string="Configuration des options calculées">
                     <field name="calculated_option_line_ids" context="{'default_product_tmpl_id': id}">
                         <list editable="bottom">
@@ -53,6 +63,7 @@
                         </list>
                     </field>
                 </group>
+
             </xpath>
 
         </field>
