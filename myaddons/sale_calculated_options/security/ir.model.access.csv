@@ -1,4 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_product_option_variable_user,product.option.variable.user,model_product_option_variable,base.group_user,1,1,1,1
-access_product_attribute_value_variable_user,product.attribute.value.variable.user,model_product_attribute_value_variable,base.group_user,1,1,1,1
+access_product_template_attribute_value_variable_user,product.template.attribute.value.variable.user,model_product_template_attribute_value_variable,base.group_user,1,1,1,1
 access_product_template_calculated_option_line_user,product.template.calculated.option.line.user,model_product_template_calculated_option_line,base.group_user,1,1,1,1
