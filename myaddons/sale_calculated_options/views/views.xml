@@ -27,31 +27,27 @@
         </field>
     </record>
 
-    <record id="product_attribute_value_view_form_variables" model="ir.ui.view">
-        <field name="name">product.attribute.value.form.variables</field>
-        <field name="model">product.attribute.value</field>
-        <field name="inherit_id" ref="product.product_attribute_value_view_form"/>
-        <field name="arch" type="xml">
+<record id="product_attribute_value_tree_inherit_variables" model="ir.ui.view">
+    <field name="name">product.attribute.value.tree.variables</field>
+    <field name="model">product.attribute.value</field>
+    <field name="inherit_id" ref="product.product_attribute_value_list"/>
+    <field name="arch" type="xml">
 
-            <xpath expr="//sheet" position="inside">
-                <notebook>
-                    <page string="Variables">
-                        <field name="variable_ids">
-                            <list editable="bottom">
-                                <field name="variable_id"/>
-                                <field name="variable_code"/>
-                                <field name="variable_type"/>
-                                <field name="numeric_value" invisible="variable_type != 'numeric'"/>
-                                <field name="text_value" invisible="variable_type != 'text'"/>
-                            </list>
-                        </field>
-                    </page>
-                </notebook>
-            </xpath>
+        <xpath expr="//list" position="inside">
+            <field name="variable_ids" widget="one2many_list">
+                <list editable="bottom">
+                    <field name="variable_id"/>
+                    <field name="variable_code"/>
+                    <field name="variable_type"/>
+                    <field name="numeric_value" invisible="variable_type != 'numeric'"/>
+                    <field name="text_value" invisible="variable_type != 'text'"/>
+                </list>
+            </field>
+        </xpath>
 
-        </field>
-    </record>
-
+    </field>
+</record>
+       
     <record id="product_option_variable_view_list" model="ir.ui.view">
         <field name="name">product.option.variable.list</field>
         <field name="model">product.option.variable</field>
