@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# models.py
+
 import re
 import unicodedata
 
@@ -7,7 +7,7 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 
-def format_variable_name(value):
+def format_variable_code(value):
     value = value or ""
     value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"[^a-zA-Z0-9_]+", "_", value)
@@ -74,6 +74,12 @@ class ProductAttributeValue(models.Model):
 
     is_free_text = fields.Boolean(string="Texte libre", default=False)
 
+    variable_ids = fields.One2many(
+        "product.attribute.value.variable",
+        "attribute_value_id",
+        string="Variables",
+    )
+
     @api.onchange("value_input_type")
     def _onchange_value_input_type(self):
         for rec in self:
@@ -81,53 +87,17 @@ class ProductAttributeValue(models.Model):
                 rec.numeric_type = "float"
 
 
-class ProductTemplate(models.Model):
-    _inherit = "product.template"
+class ProductOptionVariable(models.Model):
+    _name = "product.option.variable"
+    _description = "Variable de calcul"
+    _order = "code, id"
 
-    calculated_option_line_ids = fields.One2many(
-        "product.template.calculated.option.line",
-        "product_tmpl_id",
-        string="Dépendances des options calculées",
-    )
+    name = fields.Char(string="Nom", required=True)
 
-    attribute_value_variable_ids = fields.One2many(
-        "product.template.attribute.value.variable",
-        "product_tmpl_id",
-        string="Variables des valeurs d'attribut",
-    )
-
-
-class ProductTemplateAttributeValueVariable(models.Model):
-    _name = "product.template.attribute.value.variable"
-    _description = "Variable liée à une valeur d'attribut"
-    _order = "product_tmpl_id, attribute_id, value_id, variable_name"
-
-    product_tmpl_id = fields.Many2one(
-        "product.template",
-        string="Produit",
+    code = fields.Char(
+        string="Code calcul",
         required=True,
-        ondelete="cascade",
-    )
-
-    attribute_id = fields.Many2one(
-        "product.attribute",
-        string="Attribut",
-        required=True,
-        ondelete="restrict",
-    )
-
-    value_id = fields.Many2one(
-        "product.attribute.value",
-        string="Valeur d'attribut",
-        required=True,
-        ondelete="restrict",
-        domain="[('attribute_id', '=', attribute_id)]",
-    )
-
-    variable_name = fields.Char(
-        string="Nom variable",
-        required=True,
-        help="Exemple : density, sale_coef, cut_price, thickness.",
+        help="Nom technique utilisé par les formules. Exemple : coef, densite, standard_price_par_ml.",
     )
 
     variable_type = fields.Selection(
@@ -140,53 +110,122 @@ class ProductTemplateAttributeValueVariable(models.Model):
         required=True,
     )
 
-    variable_numeric_value = fields.Float(string="Valeur numérique")
-    variable_text_value = fields.Char(string="Valeur texte")
+    note = fields.Char(string="Note")
 
-    @api.onchange("variable_name")
-    def _onchange_variable_name(self):
+    @api.onchange("name")
+    def _onchange_name_generate_code(self):
         for rec in self:
-            if rec.variable_name:
-                rec.variable_name = format_variable_name(rec.variable_name)
+            if rec.name and not rec.code:
+                rec.code = format_variable_code(rec.name)
+
+    @api.onchange("code")
+    def _onchange_code_format(self):
+        for rec in self:
+            if rec.code:
+                rec.code = format_variable_code(rec.code)
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get("variable_name"):
-                vals["variable_name"] = format_variable_name(vals["variable_name"])
+            if vals.get("code"):
+                vals["code"] = format_variable_code(vals["code"])
+            elif vals.get("name"):
+                vals["code"] = format_variable_code(vals["name"])
         return super().create(vals_list)
 
     def write(self, vals):
-        if vals.get("variable_name"):
-            vals["variable_name"] = format_variable_name(vals["variable_name"])
+        if vals.get("code"):
+            vals["code"] = format_variable_code(vals["code"])
         return super().write(vals)
-
-    @api.onchange("variable_type")
-    def _onchange_variable_type(self):
-        for rec in self:
-            if rec.variable_type == "numeric":
-                rec.variable_text_value = False
-            elif rec.variable_type == "text":
-                rec.variable_numeric_value = 0.0
-
-    @api.constrains("product_tmpl_id", "attribute_id", "value_id")
-    def _check_consistency(self):
-        for rec in self:
-            product_attribute_ids = rec.product_tmpl_id.attribute_line_ids.mapped("attribute_id").ids
-
-            if rec.attribute_id.id not in product_attribute_ids:
-                raise ValidationError("L'attribut doit être présent sur le produit.")
-
-            if rec.value_id.attribute_id != rec.attribute_id:
-                raise ValidationError("La valeur choisie ne correspond pas à l'attribut.")
 
     _sql_constraints = [
         (
-            "unique_product_attribute_value_variable",
-            "unique(product_tmpl_id, attribute_id, value_id, variable_name)",
+            "unique_product_option_variable_code",
+            "unique(code)",
+            "Ce code de variable existe déjà.",
+        )
+    ]
+
+
+class ProductAttributeValueVariable(models.Model):
+    _name = "product.attribute.value.variable"
+    _description = "Valeur de variable par valeur d'attribut"
+    _order = "attribute_value_id, variable_id"
+
+    attribute_value_id = fields.Many2one(
+        "product.attribute.value",
+        string="Valeur d'attribut",
+        required=True,
+        ondelete="cascade",
+    )
+
+    attribute_id = fields.Many2one(
+        related="attribute_value_id.attribute_id",
+        string="Attribut",
+        store=True,
+        readonly=True,
+    )
+
+    variable_id = fields.Many2one(
+        "product.option.variable",
+        string="Variable",
+        required=True,
+        ondelete="restrict",
+    )
+
+    variable_code = fields.Char(
+        related="variable_id.code",
+        string="Code",
+        store=True,
+        readonly=True,
+    )
+
+    variable_type = fields.Selection(
+        related="variable_id.variable_type",
+        string="Type",
+        store=True,
+        readonly=True,
+    )
+
+    numeric_value = fields.Float(string="Valeur numérique")
+    text_value = fields.Char(string="Valeur texte")
+
+    @api.onchange("variable_id")
+    def _onchange_variable_id(self):
+        for rec in self:
+            if rec.variable_type == "numeric":
+                rec.text_value = False
+            elif rec.variable_type == "text":
+                rec.numeric_value = 0.0
+
+    @api.constrains("attribute_value_id", "variable_id")
+    def _check_unique_variable_per_value(self):
+        for rec in self:
+            duplicate = self.search_count([
+                ("id", "!=", rec.id),
+                ("attribute_value_id", "=", rec.attribute_value_id.id),
+                ("variable_id", "=", rec.variable_id.id),
+            ])
+            if duplicate:
+                raise ValidationError("Cette variable est déjà définie pour cette valeur d'attribut.")
+
+    _sql_constraints = [
+        (
+            "unique_attribute_value_variable",
+            "unique(attribute_value_id, variable_id)",
             "Cette variable existe déjà pour cette valeur d'attribut.",
         )
     ]
+
+
+class ProductTemplate(models.Model):
+    _inherit = "product.template"
+
+    calculated_option_line_ids = fields.One2many(
+        "product.template.calculated.option.line",
+        "product_tmpl_id",
+        string="Dépendances des options calculées",
+    )
 
 
 class ProductTemplateCalculatedOptionLine(models.Model):
@@ -264,9 +303,7 @@ class ProductTemplateCalculatedOptionLine(models.Model):
     )
     def _compute_available_source_attribute_ids(self):
         for rec in self:
-            rec.available_source_attribute_ids = (
-                rec.product_tmpl_id.attribute_line_ids.mapped("attribute_id")
-            )
+            rec.available_source_attribute_ids = rec.product_tmpl_id.attribute_line_ids.mapped("attribute_id")
 
     @api.depends(
         "source_attribute_id",
