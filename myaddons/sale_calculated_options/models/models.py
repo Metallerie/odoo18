@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# models.py
 
 import re
 import unicodedata
@@ -92,7 +91,7 @@ class ProductOptionVariable(models.Model):
     code = fields.Char(
         string="Code calcul",
         required=True,
-        help="Nom technique utilisé dans les formules. Exemple : coef, densite, standard_price_par_ml.",
+        help="Nom technique utilisé dans les formules. Exemple : coef, densite, prix_coupe_ml.",
     )
 
     variable_type = fields.Selection(
@@ -151,15 +150,23 @@ class ProductTemplate(models.Model):
         string="Dépendances des options calculées",
     )
 
+    option_attribute_line_ids = fields.One2many(
+        "product.template.attribute.line",
+        "product_tmpl_id",
+        string="Variables d'options",
+        readonly=True,
+    )
+
 
 class ProductTemplateAttributeLine(models.Model):
     _inherit = "product.template.attribute.line"
 
     def action_open_value_variables(self):
         self.ensure_one()
+
         return {
             "type": "ir.actions.act_window",
-            "name": "Variables des valeurs : %s" % self.attribute_id.display_name,
+            "name": "Variables : %s" % self.attribute_id.display_name,
             "res_model": "product.template.attribute.value.variable",
             "view_mode": "list,form",
             "target": "new",
