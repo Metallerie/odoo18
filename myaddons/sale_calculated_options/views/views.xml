@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- /views.xml-->
 <odoo>
 
     <!-- Attribut : options calculées -->
@@ -79,13 +78,13 @@
         <field name="model">product.template.attribute.value.variable</field>
         <field name="arch" type="xml">
             <list editable="bottom">
-                <field name="product_tmpl_id"/>
-                <field name="attribute_id"/>
+                <field name="product_tmpl_id" readonly="1"/>
+                <field name="attribute_id" readonly="1"/>
                 <field name="available_value_ids" column_invisible="1"/>
                 <field name="value_id" domain="[('id', 'in', available_value_ids)]"/>
                 <field name="variable_id"/>
-                <field name="variable_code"/>
-                <field name="variable_type"/>
+                <field name="variable_code" readonly="1"/>
+                <field name="variable_type" readonly="1"/>
                 <field name="numeric_value" invisible="variable_type != 'numeric'"/>
                 <field name="text_value" invisible="variable_type != 'text'"/>
             </list>
@@ -99,8 +98,8 @@
             <form string="Variable de valeur">
                 <sheet>
                     <group>
-                        <field name="product_tmpl_id"/>
-                        <field name="attribute_id"/>
+                        <field name="product_tmpl_id" readonly="1"/>
+                        <field name="attribute_id" readonly="1"/>
                         <field name="available_value_ids" invisible="1"/>
                         <field name="value_id" domain="[('id', 'in', available_value_ids)]"/>
                         <field name="variable_id"/>
@@ -127,29 +126,50 @@
         action="product_template_attribute_value_variable_action"
         sequence="96"/>
 
-    <!-- Produit : configuration options calculées -->
+    <!-- Produit : onglets ergonomiques -->
     <record id="product_template_form_sale_calculated_options" model="ir.ui.view">
         <field name="name">product.template.form.sale.calculated.options</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//field[@name='attribute_line_ids']" position="after">
-                <group string="Configuration des options calculées">
-                    <field name="calculated_option_line_ids" context="{'default_product_tmpl_id': id}">
-                        <list editable="bottom">
-                            <field name="sequence" widget="handle"/>
-                            <field name="calculated_attribute_id"/>
-                            <field name="available_source_attribute_ids" column_invisible="1"/>
-                            <field name="source_attribute_id"
-                                   domain="[('id', 'in', available_source_attribute_ids)]"/>
-                            <field name="source_value_input_type"/>
-                            <field name="source_numeric_type"/>
-                            <field name="source_is_free_text"/>
-                            <field name="role"/>
-                        </list>
-                    </field>
-                </group>
+            <xpath expr="//notebook" position="inside">
+
+                <page string="Variables d'options">
+                    <group string="Attributs configurables">
+                        <field name="option_attribute_line_ids" readonly="1" nolabel="1">
+                            <list>
+                                <field name="attribute_id"/>
+                                <field name="value_ids" widget="many2many_tags"/>
+                                <button name="action_open_value_variables"
+                                        type="object"
+                                        string="Configurer"
+                                        class="btn-secondary"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+
+                <page string="Options calculées">
+                    <group string="Dépendances de calcul">
+                        <field name="calculated_option_line_ids"
+                               context="{'default_product_tmpl_id': id}"
+                               nolabel="1">
+                            <list editable="bottom">
+                                <field name="sequence" widget="handle"/>
+                                <field name="calculated_attribute_id"/>
+                                <field name="available_source_attribute_ids" column_invisible="1"/>
+                                <field name="source_attribute_id"
+                                       domain="[('id', 'in', available_source_attribute_ids)]"/>
+                                <field name="source_value_input_type"/>
+                                <field name="source_numeric_type"/>
+                                <field name="source_is_free_text"/>
+                                <field name="role"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+
             </xpath>
 
         </field>
