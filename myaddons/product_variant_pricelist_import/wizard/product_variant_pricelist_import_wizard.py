@@ -413,35 +413,31 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if self.product_secondary_uom_id:
             self._write_secondary_unit_data(variant, factor)
 
-    def _create_or_update_packaging(self, variant, name, qty):
-        ProductPackaging = self.env["product.packaging"]
+    def _create_or_update_pricelist_item(self, variant, standard_price, factor):
+        fixed_price = standard_price * self.coefficient
 
-        packaging = ProductPackaging.search(
+        item = self.env["product.pricelist.item"].search(
             [
+                ("pricelist_id", "=", self.pricelist_id.id),
                 ("product_id", "=", variant.id),
-                ("name", "=", name),
             ],
             limit=1,
         )
 
         vals = {
-            "name": name,
+            "pricelist_id": self.pricelist_id.id,
+            "applied_on": "0_product_variant",
             "product_id": variant.id,
-            "qty": qty,
+            "compute_price": "fixed",
+            "fixed_price": fixed_price,
         }
 
-        if "purchase" in ProductPackaging._fields:
-            vals["purchase"] = True
+        if item:
+            item.write(vals)
+            return item, False
 
-        if "sales" in ProductPackaging._fields:
-            vals["sales"] = False
-
-        if packaging:
-            packaging.write(vals)
-            return packaging, False
-
-        return ProductPackaging.create(vals), True
-
+        return self.env["product.pricelist.item"].create(vals), True
+        
     def _write_secondary_unit_data(self, variant, factor):
         SecondaryUnit = self.env["product.secondary.unit"]
 
