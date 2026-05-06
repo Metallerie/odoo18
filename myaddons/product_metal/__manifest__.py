@@ -7,7 +7,7 @@
     'license': 'AGPL-3',
     'website': 'https://www.metallerie.xyz',
     'depends': [
-       "base",  "product", "uom",
+       "base",  "product", "uom","product_metal",
     ],
     'data': [
         'security/ir.model.access.csv',
