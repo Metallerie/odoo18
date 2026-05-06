@@ -22,7 +22,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         }
 
         this._initializeNumericFields();
-        setTimeout(() => this._computeNumericOptions(), 300);
+        window.setTimeout(() => this._computeNumericOptions(), 300);
     },
 
     _isCartPage() {
@@ -52,9 +52,8 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _findInputByLabels(labels) {
-        const wantedLabels = labels.map((l) => this._normalize(l));
-
-        const blocks = this.el.querySelectorAll("fieldset, .mb-3, .variant_attribute, .js_product, div");
+        const wantedLabels = labels.map((label) => this._normalize(label));
+        const blocks = this.el.querySelectorAll("fieldset, .mb-3, .variant_attribute");
 
         for (const block of blocks) {
             const text = this._normalize(block.innerText || "");
@@ -98,10 +97,25 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _getComputedInput() {
+        const inputs = this.el.querySelectorAll("input[type='text'], input.form-control, input:not([type])");
+
+        for (const input of inputs) {
+            const placeholder = this._normalize(input.placeholder || "");
+
+            if (
+                placeholder.includes("longueur totale coupee") ||
+                placeholder.includes("quantite calculee") ||
+                placeholder.includes("calcule quantite")
+            ) {
+                return input;
+            }
+        }
+
         return this._findInputByLabels([
             "calcule quantite",
-            "calcul quantité",
+            "calcul quantite",
             "calcule quantité",
+            "calcul quantité",
             "quantite calculee",
             "quantité calculée",
         ]);
@@ -297,7 +311,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
 
         const input = ev.target;
         const containerText = this._normalize(
-            input.closest("fieldset, .mb-3, .variant_attribute, div")?.innerText || ""
+            input.closest("fieldset, .mb-3, .variant_attribute")?.innerText || ""
         );
 
         if (
