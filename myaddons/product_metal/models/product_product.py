@@ -1,4 +1,4 @@
-# product_product.py
+# myaddons/product_metal/models/product_product.py
 
 from odoo import api, fields, models
 
