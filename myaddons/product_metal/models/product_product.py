@@ -1,3 +1,5 @@
+# product_product.py
+
 from odoo import api, fields, models
 
 class ProductProduct(models.Model):
