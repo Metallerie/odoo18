@@ -78,6 +78,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "height,width,length,diameter,thickness,attribute_value",
                     "",
                     "Règle importante :",
+                    "- l'unité principale du produit n'est jamais modifiée",
                     "- si default_code existe déjà, la variante est mise à jour",
                     "- si default_code n'existe pas, la variante est créée via l'attribut",
                     "",
@@ -142,12 +143,10 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             purchase_unit = self._clean_str(row.get("purchase_unit")) or "Barre"
             dimensions = self._extract_dimensions_from_row(row)
 
-            if not default_code or not product_name or not uom_code:
+            if not default_code or not product_name:
                 continue
 
             imported_codes.add(default_code)
-
-            uom = self._get_uom_by_code(uom_code)
 
             variant = self._find_variant_by_default_code(default_code)
 
@@ -184,7 +183,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             self._write_variant_data(
                 variant=variant,
                 default_code=default_code,
-                uom=uom,
                 standard_price=standard_price,
                 factor=factor,
                 dimensions=dimensions,
@@ -311,14 +309,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             "product_thickness": self._to_float(row.get("thickness")),
         }
 
-    def _get_uom_by_code(self, code):
-        uom = self.env["uom.uom"].search([("name", "=", code)], limit=1)
-        if not uom:
-            uom = self.env["uom.uom"].search([("display_name", "=", code)], limit=1)
-        if not uom:
-            raise UserError(_("Unité introuvable : %s") % code)
-        return uom
-
     def _find_variant_by_default_code(self, default_code):
         variant = self.env["product.product"].search(
             [
@@ -395,15 +385,12 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         self,
         variant,
         default_code,
-        uom,
         standard_price,
         factor,
         dimensions=None,
     ):
         vals = {
             "default_code": default_code,
-            "uom_id": uom.id,
-            "uom_po_id": uom.id,
         }
 
         if self.update_standard_price:
@@ -417,12 +404,13 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 if field_name in variant._fields:
                     vals[field_name] = value
 
+        # Sécurité absolue : ne jamais modifier les unités Odoo
+        vals.pop("uom_id", None)
+        vals.pop("uom_po_id", None)
+
         variant.write(vals)
 
-        if (
-            self.product_secondary_uom_id
-            and variant.uom_id.id != self.product_secondary_uom_id.id
-        ):
+        if self.product_secondary_uom_id:
             self._write_secondary_unit_data(variant, factor)
 
     def _create_or_update_packaging(self, variant, name, qty):
@@ -488,6 +476,10 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             product_vals["sale_secondary_uom_id"] = secondary_line.id
         if "secondary_uom_id" in variant._fields:
             product_vals["secondary_uom_id"] = secondary_line.id
+
+        product_vals.pop("uom_id", None)
+        product_vals.pop("uom_po_id", None)
+
         if product_vals:
             variant.write(product_vals)
 
@@ -496,14 +488,15 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             template_vals["sale_secondary_uom_id"] = secondary_line.id
         if "secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["secondary_uom_id"] = secondary_line.id
+
+        template_vals.pop("uom_id", None)
+        template_vals.pop("uom_po_id", None)
+
         if template_vals:
             variant.product_tmpl_id.write(template_vals)
 
     def _create_or_update_pricelist_item(self, variant, standard_price, factor):
-        if (
-            self.product_secondary_uom_id
-            and variant.uom_id.id != self.product_secondary_uom_id.id
-        ):
+        if self.product_secondary_uom_id:
             fixed_price = standard_price * factor * self.coefficient
         else:
             fixed_price = standard_price * self.coefficient
