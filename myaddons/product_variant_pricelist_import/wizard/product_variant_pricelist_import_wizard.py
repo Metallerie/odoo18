@@ -494,7 +494,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
     def _create_or_update_pricelist_item(self, variant, standard_price):
         
-        fixed_price = (standard_price * self.coefficient) / product_length
+        fixed_price = (standard_price * self.coefficient) / length
         item = self.env["product.pricelist.item"].search(
             [
                 ("pricelist_id", "=", self.pricelist_id.id),
