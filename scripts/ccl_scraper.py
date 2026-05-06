@@ -4,8 +4,8 @@
 import csv
 import os
 import re
-from getpass import getpass
 import time
+from getpass import getpass
 
 from playwright.sync_api import sync_playwright
 
@@ -30,10 +30,9 @@ def extract_dimensions(name):
     thickness = ""
     length = ""
 
-    # accepte espaces : 90X 50X3
     dim_match = re.search(
         r"(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)",
-        name,
+        name or "",
         re.IGNORECASE,
     )
     if dim_match:
@@ -42,8 +41,8 @@ def extract_dimensions(name):
         thickness = extract_float(dim_match.group(3)) / 1000
 
     length_match = re.search(
-        r"(\d+(?:[.,]\d+)?)\s*m",
-        name,
+        r"longueur\s+(\d+(?:[.,]\d+)?)\s*m",
+        name or "",
         re.IGNORECASE,
     )
     if length_match:
@@ -58,7 +57,7 @@ def clean_product_name(name):
     return name.upper()
 
 
-def normalize_purchase_unit(name, uom_code):
+def normalize_purchase_unit(name, purchase_uom_code):
     name_lower = (name or "").lower()
 
     if "tube" in name_lower:
@@ -68,10 +67,26 @@ def normalize_purchase_unit(name, uom_code):
     if "plat" in name_lower:
         return "Barre"
 
-    if uom_code == "ML":
+    if purchase_uom_code == "ML":
         return "Tube"
 
     return "Barre"
+
+
+def compute_standard_price(price_net, purchase_uom_code, factor):
+    """
+    Prix de revient utilisé par Odoo.
+
+    Important :
+    - purchase_uom_code vient de CCL : KG, ML, PI...
+    - On ne s'en sert PAS pour modifier uom_id dans Odoo.
+    - On garde l'info uniquement pour le calcul et le CSV.
+    """
+
+    if purchase_uom_code == "ML" and factor:
+        return price_net / factor
+
+    return price_net
 
 
 def main():
@@ -113,7 +128,6 @@ def main():
 
         for article in articles:
             try:
-                # 🔥 correction ici
                 title_locator = article.locator("span.title")
 
                 if title_locator.count() == 0:
@@ -122,7 +136,6 @@ def main():
 
                 raw_name = title_locator.first.inner_text(timeout=3000).strip()
                 name = clean_product_name(raw_name)
-
                 text = article.inner_text()
 
                 ref_match = re.search(r"Réf CCL\s*:\s*(\d+)", text)
@@ -138,11 +151,16 @@ def main():
                     re.IGNORECASE,
                 )
 
-                if not ref_match or not price_match:
+                if not ref_match:
+                    print("Article ignoré : pas de référence CCL")
+                    continue
+
+                if not price_match:
+                    print(f"Article ignoré : pas de prix net pour {raw_name}")
                     continue
 
                 default_code = ref_match.group(1)
-                uom_code = uom_match.group(1) if uom_match else "ML"
+                purchase_uom_code = uom_match.group(1) if uom_match else "ML"
                 factor = extract_float(factor_match.group(1), 1.0) if factor_match else 1.0
                 price_net = extract_float(price_match.group(1))
 
@@ -151,12 +169,13 @@ def main():
                 if not length:
                     length = factor
 
-                # conversion prix → ML
-                standard_price = price_net
-                if uom_code == "ML" and factor:
-                    standard_price = price_net / factor
+                standard_price = compute_standard_price(
+                    price_net=price_net,
+                    purchase_uom_code=purchase_uom_code,
+                    factor=factor,
+                )
 
-                purchase_unit = normalize_purchase_unit(name, uom_code)
+                purchase_unit = normalize_purchase_unit(name, purchase_uom_code)
 
                 rows.append(
                     {
@@ -166,14 +185,14 @@ def main():
                         "width": width,
                         "length": length,
                         "thickness": thickness,
-                        "purchase_uom_code": uom_code,    
+                        "purchase_uom_code": purchase_uom_code,
                         "factor": factor,
                         "standard_price": round(standard_price, 3),
                         "purchase_unit": purchase_unit,
                     }
                 )
 
-                time.sleep(0.5)  # 👈 ralentit (important)
+                time.sleep(0.5)
 
             except Exception as exc:
                 print("Erreur article :", exc)
