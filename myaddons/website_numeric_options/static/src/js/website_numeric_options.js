@@ -22,51 +22,89 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         }
 
         this._initializeNumericFields();
-        this._computeNumericOptions();
+        setTimeout(() => this._computeNumericOptions(), 300);
     },
 
     _isCartPage() {
         return window.location.pathname.includes("/shop/cart");
     },
 
+    _normalize(text) {
+        return (text || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    },
+
     _parseNumber(value) {
         if (!value) return 0;
-        const cleaned = String(value).replace(",", ".");
-        const number = parseFloat(cleaned);
+        const number = parseFloat(String(value).replace(",", "."));
         return isNaN(number) ? 0 : number;
     },
 
     _formatInteger(value) {
-        const number = this._parseNumber(value);
-        return String(Math.max(0, Math.floor(number)));
+        return String(Math.max(0, Math.floor(this._parseNumber(value))));
     },
 
     _formatDecimal(value) {
-        const number = this._parseNumber(value);
-        return Math.max(0, number).toFixed(2);
+        return Math.max(0, this._parseNumber(value)).toFixed(2);
     },
 
-    _findInputByLabel(labelText) {
-        const labels = this.el.querySelectorAll("label, .css_attribute_color, strong, b");
-        labelText = labelText.toLowerCase();
+    _findInputByLabels(labels) {
+        const wantedLabels = labels.map((l) => this._normalize(l));
 
-        for (const label of labels) {
-            if ((label.textContent || "").toLowerCase().includes(labelText)) {
-                const container = label.closest(".variant_attribute, .js_product, .mb-3, div");
-                if (container) {
-                    const input = container.querySelector("input[type='text'], input:not([type]), input.form-control");
-                    if (input) return input;
-                }
+        const blocks = this.el.querySelectorAll("fieldset, .mb-3, .variant_attribute, .js_product, div");
+
+        for (const block of blocks) {
+            const text = this._normalize(block.innerText || "");
+
+            if (wantedLabels.some((label) => text.includes(label))) {
+                const input = block.querySelector("input[type='text'], input.form-control, input:not([type])");
+                if (input) return input;
             }
         }
 
-        const allInputs = this.el.querySelectorAll("input[type='text'], input:not([type]), input.form-control");
-        for (const input of allInputs) {
-            const placeholder = (input.placeholder || "").toLowerCase();
-            if (placeholder.includes(labelText)) return input;
+        const inputs = this.el.querySelectorAll("input[type='text'], input.form-control, input:not([type])");
+
+        for (const input of inputs) {
+            const placeholder = this._normalize(input.placeholder || "");
+            const name = this._normalize(input.name || "");
+
+            if (wantedLabels.some((label) => placeholder.includes(label) || name.includes(label))) {
+                return input;
+            }
         }
 
         return null;
+    },
+
+    _getCutQtyInput() {
+        return this._findInputByLabels([
+            "nombre de piece",
+            "nombre de pièce",
+            "nombre de pieces",
+            "nombre de pièces",
+            "nombre de coupe",
+            "nombre de coupes",
+        ]);
+    },
+
+    _getCutLengthInput() {
+        return this._findInputByLabels([
+            "longueur de coupe",
+            "longueur coupe",
+        ]);
+    },
+
+    _getComputedInput() {
+        return this._findInputByLabels([
+            "calcule quantite",
+            "calcul quantité",
+            "calcule quantité",
+            "quantite calculee",
+            "quantité calculée",
+        ]);
     },
 
     _getQuantityInput() {
@@ -87,9 +125,9 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     },
 
     _initializeNumericFields() {
-        const cutQtyInput = this._findInputByLabel("nombre de coupes");
-        const cutLengthInput = this._findInputByLabel("longueur de coupe");
-        const computedInput = this._findInputByLabel("calcule quantité");
+        const cutQtyInput = this._getCutQtyInput();
+        const cutLengthInput = this._getCutLengthInput();
+        const computedInput = this._getComputedInput();
 
         if (cutQtyInput && !cutQtyInput.value) {
             this._updateInputIfChanged(cutQtyInput, "0", false);
@@ -101,7 +139,9 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
 
         if (computedInput) {
             computedInput.readOnly = true;
-            if (!computedInput.value) {
+            computedInput.classList.add("bg-light");
+
+            if (!computedInput.value || this._parseNumber(computedInput.value) === 0) {
                 this._updateInputIfChanged(computedInput, "0.00", false);
             }
         }
@@ -110,23 +150,26 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
     _computeNumericOptions() {
         if (this._isCartPage()) return;
 
-        const cutQtyInput = this._findInputByLabel("nombre de coupes");
-        const cutLengthInput = this._findInputByLabel("longueur de coupe");
-        const computedInput = this._findInputByLabel("calcule quantité");
+        const cutQtyInput = this._getCutQtyInput();
+        const cutLengthInput = this._getCutLengthInput();
+        const computedInput = this._getComputedInput();
+        const qtyInput = this._getQuantityInput();
 
         if (!cutQtyInput || !cutLengthInput || !computedInput) return;
 
         const cutQty = this._parseNumber(cutQtyInput.value);
         const cutLength = this._parseNumber(cutLengthInput.value);
 
-        if (cutQty <= 0 || cutLength <= 0) return;
+        if (cutQty <= 0 || cutLength <= 0) {
+            this._updateInputIfChanged(computedInput, "0.00", true);
+            return;
+        }
 
         const exactQty = cutQty * cutLength;
         const soldQty = Math.ceil(exactQty);
 
         this._updateInputIfChanged(computedInput, this._formatDecimal(exactQty), true);
 
-        const qtyInput = this._getQuantityInput();
         if (qtyInput) {
             this._updateInputIfChanged(qtyInput, String(soldQty), true);
         }
@@ -144,7 +187,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         for (const line of cartLines) {
             const lineText = line.innerText || "";
 
-            if (!lineText.toLowerCase().includes("longueur de coupe")) {
+            if (!this._normalize(lineText).includes("longueur de coupe")) {
                 continue;
             }
 
@@ -167,9 +210,9 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
             const optionElements = line.querySelectorAll("small, span, div, li");
 
             for (const el of optionElements) {
-                const content = (el.textContent || "").toLowerCase().trim();
+                const content = this._normalize(el.textContent || "");
 
-                if (content.startsWith("calcule quantité")) {
+                if (content.startsWith("calcule quantite") || content.startsWith("calcul quantite")) {
                     el.textContent = `Calcule quantité: Longueur totale coupée: ${this._formatDecimal(totalLength)}`;
                     break;
                 }
@@ -181,7 +224,7 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         const cartLines = this._getCartLines();
 
         for (const line of cartLines) {
-            const text = (line.innerText || "").toLowerCase();
+            const text = this._normalize(line.innerText || "");
 
             if (!text.includes("longueur de coupe")) {
                 continue;
@@ -253,9 +296,15 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         if (this._isCartPage()) return;
 
         const input = ev.target;
-        const containerText = (input.closest(".mb-3, .variant_attribute, div")?.innerText || "").toLowerCase();
+        const containerText = this._normalize(
+            input.closest("fieldset, .mb-3, .variant_attribute, div")?.innerText || ""
+        );
 
-        if (containerText.includes("nombre de coupes") || containerText.includes("nombre de pièce")) {
+        if (
+            containerText.includes("nombre de piece") ||
+            containerText.includes("nombre de pieces") ||
+            containerText.includes("nombre de coupe")
+        ) {
             this._updateInputIfChanged(input, this._formatInteger(input.value), false);
         }
 
@@ -272,6 +321,6 @@ publicWidget.registry.WebsiteNumericOptions = publicWidget.Widget.extend({
         window.clearTimeout(this.numericOptionsTimer);
         this.numericOptionsTimer = window.setTimeout(() => {
             this._computeNumericOptions();
-        }, 300);
+        }, 200);
     },
 });
