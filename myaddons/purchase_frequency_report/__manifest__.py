@@ -9,6 +9,8 @@
     "depends": [
         "purchase",
         "product",
+        "product_metal",
+
     ],
     "data": [
         "security/ir.model.access.csv",
