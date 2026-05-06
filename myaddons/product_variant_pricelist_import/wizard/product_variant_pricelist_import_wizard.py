@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # product_variant_pricelist_import_wizard.py
 
 import csv
