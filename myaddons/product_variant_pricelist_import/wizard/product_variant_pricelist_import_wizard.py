@@ -82,6 +82,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "- si default_code existe déjà, la variante est mise à jour",
                     "- si default_code n'existe pas, la variante est créée via l'attribut",
                     "",
+                    "Calcul prix de vente :",
+                    "prix vente ML = (standard_price × coefficient) / product_length",
+                    "",
                     "purchase_unit sert à créer le conditionnement.",
                     "Exemple : purchase_unit=Tube et factor=6.15 => 1 Tube = 6.15 ML",
                 ]
@@ -137,9 +140,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             default_code = self._clean_str(row.get("default_code"))
             product_name = self._clean_str(row.get("name"))
             attribute_value_name = self._get_attribute_value_from_row(row)
+
             standard_price = self._to_float(row.get("standard_price"))
             factor = self._to_float(row.get("factor"), default=1.0)
             purchase_unit = self._clean_str(row.get("purchase_unit")) or "Barre"
+
             dimensions = self._extract_dimensions_from_row(row)
 
             if not default_code or not product_name:
@@ -200,6 +205,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             pricelist_item, created = self._create_or_update_pricelist_item(
                 variant=variant,
                 standard_price=standard_price,
+                factor=factor,
             )
             if created:
                 created_pricelist_items += 1
@@ -407,6 +413,18 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         variant.write(vals)
 
+        template_vals = {}
+        if dimensions:
+            for field_name, value in dimensions.items():
+                if field_name in variant.product_tmpl_id._fields:
+                    template_vals[field_name] = value
+
+        template_vals.pop("uom_id", None)
+        template_vals.pop("uom_po_id", None)
+
+        if template_vals:
+            variant.product_tmpl_id.write(template_vals)
+
         if self.product_secondary_uom_id:
             self._write_secondary_unit_data(variant, factor)
 
@@ -492,9 +510,27 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if template_vals:
             variant.product_tmpl_id.write(template_vals)
 
-    def _create_or_update_pricelist_item(self, variant, standard_price):
-        
-        fixed_price = (standard_price * self.coefficient) / length
+    def _get_product_length_for_price(self, variant, factor):
+        if "product_length" in variant._fields and variant.product_length:
+            return variant.product_length
+
+        if (
+            variant.product_tmpl_id
+            and "product_length" in variant.product_tmpl_id._fields
+            and variant.product_tmpl_id.product_length
+        ):
+            return variant.product_tmpl_id.product_length
+
+        return factor or 1.0
+
+    def _create_or_update_pricelist_item(self, variant, standard_price, factor):
+        product_length = self._get_product_length_for_price(variant, factor)
+
+        if not product_length:
+            product_length = 1.0
+
+        fixed_price = (standard_price * self.coefficient) / product_length
+
         item = self.env["product.pricelist.item"].search(
             [
                 ("pricelist_id", "=", self.pricelist_id.id),
