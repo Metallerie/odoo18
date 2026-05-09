@@ -153,8 +153,8 @@ def main():
 
                 # conversion prix → ML
                 standard_price = price_net
-                if uom_code == "ML" and factor:
-                    standard_price = price_net / factor
+          #      if uom_code == "ML" and factor:
+          #          standard_price = price_net / factor
 
                 purchase_unit = normalize_purchase_unit(name, uom_code)
 
