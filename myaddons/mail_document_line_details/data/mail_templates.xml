@@ -1,17 +1,39 @@
 <odoo>
 
-    <!-- Achat -->
-    <template id="purchase_email_template_inherit"
-              inherit_id="purchase.email_template_edi_purchase">
+    <record id="purchase.email_template_edi_purchase" model="mail.template">
+        <field name="body_html" type="html"><![CDATA[
+<div>
+    <p>
+        Bonjour <t t-out="object.partner_id.name or ''"/>
+    </p>
 
-        <xpath expr="//div" position="inside">
+    <p>
+        Vous trouverez ci-joint le bon de commande
+        <strong><t t-out="object.name or ''"/></strong>
+        avec la référence :
+        <t t-out="object.partner_ref or ''"/>
+        pour un montant de
+        <strong><t t-out="format_amount(object.amount_total, object.currency_id)"/></strong>
+        de la part de
+        <t t-out="object.company_id.name or ''"/>.
+    </p>
 
-            <t t-if="object">
-                <t t-out="object._get_mail_line_details_html()"/>
-            </t>
+    <p>
+        La réception est prévue le
+        <strong><t t-out="format_date(object.date_planned)"/></strong>.
+    </p>
 
-        </xpath>
+    <t t-out="object._get_mail_line_details_html()"/>
 
-    </template>
+    <p>
+        Pourriez-vous confirmer la bonne réception de cette commande ?
+    </p>
+
+    <p>
+        Plus d'info
+    </p>
+</div>
+        ]]></field>
+    </record>
 
 </odoo>
