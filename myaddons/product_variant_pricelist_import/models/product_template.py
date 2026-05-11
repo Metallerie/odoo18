@@ -9,9 +9,7 @@ class ProductTemplate(models.Model):
 
     def action_open_variant_pricelist_import_wizard(self):
         self.ensure_one()
-          last_variant_import_date = fields.Datetime(
-        string="Dernier import variantes"
-    )
+         
         return {
             "type": "ir.actions.act_window",
             "name": "Import variantes et pricelist",
@@ -23,3 +21,6 @@ class ProductTemplate(models.Model):
                 "default_category_id": self.categ_id.id,
             },
         }
+     last_variant_import_date = fields.Datetime(
+        string="Dernier import variantes"
+    )
