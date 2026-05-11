@@ -246,7 +246,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         if self.remove_missing_pricelist_items:
             self._remove_missing_pricelist_items(imported_codes)
-
+            
+        self.template_id.last_variant_import_date = fields.Datetime.now()
+        
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
