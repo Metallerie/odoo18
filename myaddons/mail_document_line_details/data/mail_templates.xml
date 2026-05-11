@@ -1,11 +1,8 @@
 <odoo>
-
     <record id="purchase.email_template_edi_purchase" model="mail.template">
         <field name="body_html" type="html"><![CDATA[
 <div>
-    <p>
-        Bonjour <t t-out="object.partner_id.name or ''"/>
-    </p>
+    <p>Bonjour <t t-out="object.partner_id.name or ''"/></p>
 
     <p>
         Vous trouverez ci-joint le bon de commande
@@ -25,15 +22,8 @@
 
     <t t-out="object._get_mail_line_details_html()"/>
 
-    <p>
-        Pourriez-vous confirmer la bonne réception de cette commande ?
-    </p>
-
-    <p>
-        Plus d'info
-    </p>
+    <p>Pourriez-vous confirmer la bonne réception de cette commande ?</p>
 </div>
         ]]></field>
     </record>
-
 </odoo>
