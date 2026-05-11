@@ -499,6 +499,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         product_vals = {}
         if "sale_secondary_uom_id" in variant._fields:
             product_vals["sale_secondary_uom_id"] = secondary_line.id
+        if "purchase_secondary_uom_id" in variant._fields:
+            product_vals["purchase_secondary_uom_id"] = secondary_line.id
         if "secondary_uom_id" in variant._fields:
             product_vals["secondary_uom_id"] = secondary_line.id
 
@@ -511,6 +513,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         template_vals = {}
         if "sale_secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["sale_secondary_uom_id"] = secondary_line.id
+        if "purchase_secondary_uom_id" in variant.product_tmpl_id._fields:
+            template_vals["purchase_secondary_uom_id"] = secondary_line.id
         if "secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["secondary_uom_id"] = secondary_line.id
 
