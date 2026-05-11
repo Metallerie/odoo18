@@ -11,6 +11,11 @@
                     type="object"
                     string="Import variantes + pricelist"
                     class="btn btn-primary"/>
+                <field
+                    name="last_variant_import_date"
+                    readonly="1"
+                    class="oe_inline"
+                    string="Dernier import"/>
             </xpath>
         </field>
     </record>
