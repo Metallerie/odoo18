@@ -79,9 +79,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "height,width,length,diameter,thickness,attribute_value",
                     "",
                     "Règle importante :",
-                    "- l'unité principale du produit n'est jamais modifiée",
-                    "- si default_code existe déjà, la variante est mise à jour",
+                    "- si default_code existe déjà dans le template, la variante est mise à jour",
+                    "- aucune option n'est créée si la variante existe déjà",
+                    "- si default_code existe sur un autre template, l'import est bloqué",
                     "- si default_code n'existe pas, la variante est créée via l'attribut",
+                    "- l'unité principale du produit n'est jamais modifiée",
                     "",
                     "Calcul coût d'achat :",
                     "standard_price Odoo = standard_price CSV / product_length",
@@ -143,7 +145,6 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         for row in rows:
             default_code = self._clean_str(row.get("default_code"))
             product_name = self._clean_str(row.get("name"))
-            attribute_value_name = self._get_attribute_value_from_row(row)
 
             supplier_price = self._to_float(row.get("standard_price"))
             factor = self._to_float(row.get("factor"), default=1.0)
@@ -156,11 +157,23 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
             imported_codes.add(default_code)
 
-            variant = self._find_variant_by_default_code(default_code)
+            variant = self._find_variant_by_default_code_in_template(default_code)
 
             if variant:
                 updated_variants += 1
+
             else:
+                other_variant = self._find_variant_by_default_code_other_template(default_code)
+                if other_variant:
+                    raise UserError(
+                        _(
+                            "La référence %s existe déjà sur un autre template : %s.\n"
+                            "Import bloqué pour éviter de créer une mauvaise option."
+                        )
+                        % (default_code, other_variant.product_tmpl_id.display_name)
+                    )
+
+                attribute_value_name = self._get_attribute_value_from_row(row)
                 if not attribute_value_name:
                     raise UserError(
                         _("Impossible de créer la variante %s : attribut introuvable.")
@@ -174,6 +187,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     created_values += 1
 
                 self._sync_template_attribute_line(attr_value)
+
                 self.template_id.invalidate_recordset(
                     ["attribute_line_ids", "product_variant_ids"]
                 )
@@ -193,7 +207,10 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 dimensions=dimensions,
                 factor=factor,
             )
-            standard_price_ml = supplier_price / product_length if product_length else supplier_price
+
+            standard_price_ml = (
+                supplier_price / product_length if product_length else supplier_price
+            )
 
             self._write_variant_data(
                 variant=variant,
@@ -208,6 +225,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 name=purchase_unit,
                 qty=factor,
             )
+
             if packaging_created:
                 created_packagings += 1
             else:
@@ -217,6 +235,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 variant=variant,
                 standard_price=standard_price_ml,
             )
+
             if created:
                 created_pricelist_items += 1
             else:
@@ -323,19 +342,21 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             "product_thickness": self._to_float(row.get("thickness")),
         }
 
-    def _find_variant_by_default_code(self, default_code):
-        variant = self.env["product.product"].search(
+    def _find_variant_by_default_code_in_template(self, default_code):
+        return self.env["product.product"].search(
             [
                 ("default_code", "=", default_code),
                 ("product_tmpl_id", "=", self.template_id.id),
             ],
             limit=1,
         )
-        if variant:
-            return variant
 
+    def _find_variant_by_default_code_other_template(self, default_code):
         return self.env["product.product"].search(
-            [("default_code", "=", default_code)],
+            [
+                ("default_code", "=", default_code),
+                ("product_tmpl_id", "!=", self.template_id.id),
+            ],
             limit=1,
         )
 
@@ -347,6 +368,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             ],
             limit=1,
         )
+
         if value:
             return value, False
 
@@ -387,12 +409,15 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     def _find_variant_from_value(self, attr_value):
         self.ensure_one()
 
+        self.template_id.invalidate_recordset(["product_variant_ids"])
+
         for variant in self.template_id.product_variant_ids:
             value_ids = variant.product_template_attribute_value_ids.mapped(
                 "product_attribute_value_id"
             )
             if attr_value in value_ids:
                 return variant
+
         return False
 
     def _write_variant_data(
@@ -497,10 +522,13 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             secondary_line = SecondaryUnit.create(vals)
 
         product_vals = {}
+
         if "sale_secondary_uom_id" in variant._fields:
             product_vals["sale_secondary_uom_id"] = secondary_line.id
+
         if "purchase_secondary_uom_id" in variant._fields:
             product_vals["purchase_secondary_uom_id"] = secondary_line.id
+
         if "secondary_uom_id" in variant._fields:
             product_vals["secondary_uom_id"] = secondary_line.id
 
@@ -511,10 +539,13 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             variant.write(product_vals)
 
         template_vals = {}
+
         if "sale_secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["sale_secondary_uom_id"] = secondary_line.id
+
         if "purchase_secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["purchase_secondary_uom_id"] = secondary_line.id
+
         if "secondary_uom_id" in variant.product_tmpl_id._fields:
             template_vals["secondary_uom_id"] = secondary_line.id
 
@@ -524,7 +555,12 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if template_vals:
             variant.product_tmpl_id.write(template_vals)
 
-    def _get_product_length_for_price_from_dimensions(self, variant, dimensions=None, factor=1.0):
+    def _get_product_length_for_price_from_dimensions(
+        self,
+        variant,
+        dimensions=None,
+        factor=1.0,
+    ):
         dimensions = dimensions or {}
 
         product_length = dimensions.get("product_length")
@@ -582,6 +618,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 ("product_tmpl_id", "=", False),
             ]
         )
+
         for item in items:
             if item.product_id.product_tmpl_id == self.template_id:
                 if item.product_id.default_code not in imported_codes:
