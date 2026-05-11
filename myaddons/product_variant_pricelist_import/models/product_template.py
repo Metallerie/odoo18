@@ -7,7 +7,7 @@ from odoo import models
 class ProductTemplate(models.Model):
     _inherit = "product.template"
     
-     last_variant_import_date = fields.Datetime(
+    last_variant_import_date = fields.Datetime(
         string="Dernier import variantes"
     )
 
