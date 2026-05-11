@@ -83,8 +83,11 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "- si default_code existe déjà, la variante est mise à jour",
                     "- si default_code n'existe pas, la variante est créée via l'attribut",
                     "",
+                    "Calcul coût d'achat :",
+                    "standard_price Odoo = standard_price CSV / product_length",
+                    "",
                     "Calcul prix de vente :",
-                    "prix vente ML = (standard_price × coefficient) / product_length",
+                    "prix vente ML = standard_price Odoo × coefficient",
                     "",
                     "purchase_unit sert à créer le conditionnement.",
                     "Exemple : purchase_unit=Tube et factor=6.15 => 1 Tube = 6.15 ML",
@@ -142,7 +145,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             product_name = self._clean_str(row.get("name"))
             attribute_value_name = self._get_attribute_value_from_row(row)
 
-            standard_price = self._to_float(row.get("standard_price"))
+            supplier_price = self._to_float(row.get("standard_price"))
             factor = self._to_float(row.get("factor"), default=1.0)
             purchase_unit = self._clean_str(row.get("purchase_unit")) or "Barre"
 
@@ -185,10 +188,17 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
                 created_variants += 1
 
+            product_length = self._get_product_length_for_price_from_dimensions(
+                variant=variant,
+                dimensions=dimensions,
+                factor=factor,
+            )
+            standard_price_ml = supplier_price / product_length if product_length else supplier_price
+
             self._write_variant_data(
                 variant=variant,
                 default_code=default_code,
-                standard_price=standard_price,
+                standard_price=standard_price_ml,
                 factor=factor,
                 dimensions=dimensions,
             )
@@ -205,8 +215,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
             pricelist_item, created = self._create_or_update_pricelist_item(
                 variant=variant,
-                standard_price=standard_price,
-                factor=factor,
+                standard_price=standard_price_ml,
             )
             if created:
                 created_pricelist_items += 1
@@ -511,7 +520,13 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if template_vals:
             variant.product_tmpl_id.write(template_vals)
 
-    def _get_product_length_for_price(self, variant, factor):
+    def _get_product_length_for_price_from_dimensions(self, variant, dimensions=None, factor=1.0):
+        dimensions = dimensions or {}
+
+        product_length = dimensions.get("product_length")
+        if product_length:
+            return product_length
+
         if "product_length" in variant._fields and variant.product_length:
             return variant.product_length
 
@@ -524,13 +539,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         return factor or 1.0
 
-    def _create_or_update_pricelist_item(self, variant, standard_price, factor):
-        product_length = self._get_product_length_for_price(variant, factor)
-
-        if not product_length:
-            product_length = 1.0
-
-        fixed_price = (standard_price * self.coefficient) / product_length
+    def _create_or_update_pricelist_item(self, variant, standard_price):
+        fixed_price = standard_price * self.coefficient
 
         item = self.env["product.pricelist.item"].search(
             [
