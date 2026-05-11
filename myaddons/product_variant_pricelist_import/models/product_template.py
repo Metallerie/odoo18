@@ -6,6 +6,10 @@ from odoo import models
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
+    
+     last_variant_import_date = fields.Datetime(
+        string="Dernier import variantes"
+    )
 
     def action_open_variant_pricelist_import_wizard(self):
         self.ensure_one()
@@ -21,6 +25,4 @@ class ProductTemplate(models.Model):
                 "default_category_id": self.categ_id.id,
             },
         }
-     last_variant_import_date = fields.Datetime(
-        string="Dernier import variantes"
-    )
+    
