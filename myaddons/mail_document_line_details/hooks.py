@@ -1,45 +1,51 @@
-from markupsafe import Markup, escape
-from odoo import models
+from odoo import api, SUPERUSER_ID
 
 
-class PurchaseOrder(models.Model):
-    _inherit = "purchase.order"
+DETAIL_BLOCK = '<t t-out="object._get_mail_line_details_html()"/>'
 
-    def _get_mail_line_details_html(self):
-        self.ensure_one()
+ANCHORS = [
+    "Pourriez-vous confirmer la bonne réception de cette commande ?",
+    "Could you please confirm receipt of this order?",
+]
 
-        rows = ""
-        for line in self.order_line:
-            if line.display_type:
-                continue
 
-            rows += f"""
-                <tr>
-                    <td style="padding:6px;border:1px solid #ddd;">{escape(line.name or "")}</td>
-                    <td style="padding:6px;border:1px solid #ddd;text-align:right;">{line.product_qty:g}</td>
-                    <td style="padding:6px;border:1px solid #ddd;">{escape(line.product_uom.name or "")}</td>
-                    <td style="padding:6px;border:1px solid #ddd;text-align:right;">{line.price_unit:.2f}</td>
-                    <td style="padding:6px;border:1px solid #ddd;text-align:right;">{line.price_subtotal:.2f}</td>
-                </tr>
-            """
+def _get_env(cr):
+    return api.Environment(cr, SUPERUSER_ID, {})
 
-        if not rows:
-            return Markup("")
 
-        return Markup(f"""
-            <div style="margin-top:16px;margin-bottom:16px;">
-                <p><strong>Détail de la commande :</strong></p>
-                <table style="border-collapse:collapse;width:100%;font-size:13px;">
-                    <thead>
-                        <tr style="background-color:#f5f5f5;">
-                            <th style="padding:6px;border:1px solid #ddd;text-align:left;">Désignation</th>
-                            <th style="padding:6px;border:1px solid #ddd;text-align:right;">Qté</th>
-                            <th style="padding:6px;border:1px solid #ddd;text-align:left;">Unité</th>
-                            <th style="padding:6px;border:1px solid #ddd;text-align:right;">PU HT</th>
-                            <th style="padding:6px;border:1px solid #ddd;text-align:right;">Total HT</th>
-                        </tr>
-                    </thead>
-                    <tbody>{rows}</tbody>
-                </table>
-            </div>
-        """)
+def post_init_hook(env_or_cr):
+    if hasattr(env_or_cr, "cr"):
+        env = env_or_cr
+    else:
+        env = _get_env(env_or_cr)
+
+    template = env.ref("purchase.email_template_edi_purchase", raise_if_not_found=False)
+    if not template or not template.body_html:
+        return
+
+    body = template.body_html
+
+    if DETAIL_BLOCK in body:
+        return
+
+    for anchor in ANCHORS:
+        if anchor in body:
+            body = body.replace(anchor, DETAIL_BLOCK + "<br/><br/>" + anchor, 1)
+            template.write({"body_html": body})
+            return
+
+
+def uninstall_hook(env_or_cr):
+    if hasattr(env_or_cr, "cr"):
+        env = env_or_cr
+    else:
+        env = _get_env(env_or_cr)
+
+    template = env.ref("purchase.email_template_edi_purchase", raise_if_not_found=False)
+    if not template or not template.body_html:
+        return
+
+    body = template.body_html
+    body = body.replace(DETAIL_BLOCK + "<br/><br/>", "")
+    body = body.replace(DETAIL_BLOCK, "")
+    template.write({"body_html": body})
