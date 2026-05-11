@@ -1,76 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Achat : demande de prix / commande fournisseur -->
-    <record id="purchase.email_template_edi_purchase" model="mail.template">
-        <field name="body_html" type="html">
-            <div>
-                <p>
-                    Bonjour,
-                </p>
+    <!-- Achat -->
+    <template id="purchase_email_template_inherit"
+              inherit_id="purchase.email_template_edi_purchase">
 
-                <p>
-                    Veuillez trouver ci-joint notre document
-                    <strong>
-                        <t t-out="object.name"/>
-                    </strong>.
-                </p>
+        <xpath expr="//div" position="inside">
 
+            <t t-if="object">
                 <t t-out="object._get_mail_line_details_html()"/>
+            </t>
 
-                <p>
-                    Cordialement,
-                </p>
-            </div>
-        </field>
-    </record>
+        </xpath>
 
-    <!-- Vente : devis / commande client -->
-    <record id="sale.email_template_edi_sale" model="mail.template">
-        <field name="body_html" type="html">
-            <div>
-                <p>
-                    Bonjour,
-                </p>
-
-                <p>
-                    Veuillez trouver ci-joint votre document
-                    <strong>
-                        <t t-out="object.name"/>
-                    </strong>.
-                </p>
-
-                <t t-out="object._get_mail_line_details_html()"/>
-
-                <p>
-                    Cordialement,
-                </p>
-            </div>
-        </field>
-    </record>
-
-    <!-- Facture client / fournisseur -->
-    <record id="account.email_template_edi_invoice" model="mail.template">
-        <field name="body_html" type="html">
-            <div>
-                <p>
-                    Bonjour,
-                </p>
-
-                <p>
-                    Veuillez trouver ci-joint le document
-                    <strong>
-                        <t t-out="object.name"/>
-                    </strong>.
-                </p>
-
-                <t t-out="object._get_mail_line_details_html()"/>
-
-                <p>
-                    Cordialement,
-                </p>
-            </div>
-        </field>
-    </record>
+    </template>
 
 </odoo>
