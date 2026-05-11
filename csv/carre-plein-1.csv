@@ -1,4 +1,5 @@
 default_code,name,height,width,length,thickness,uom_code,factor,standard_price,purchase_unit
+70793,CARRE PLEIN DE 6,6,6,1.791,,KG,1.791,1.95,Barre
 70794,CARRÉ PLEIN DE 08,8,8,3.211,,KG,3.211,4.01,Barre
 70795,CARRÉ PLEIN DE 10,10,10,4.989,,KG,4.989,5.79,Barre
 70796,CARRÉ PLEIN DE 12,12,12,7.227,,KG,7.227,8.17,Barre
@@ -12,5 +13,4 @@ default_code,name,height,width,length,thickness,uom_code,factor,standard_price,p
 70804,CARRÉ PLEIN DE 35,35,35,61.53,,KG,61.53,63.38,Barre
 70805,CARRÉ PLEIN DE 40,40,40,80.59,,KG,80.59,83.01,Barre
 70806,CARRÉ PLEIN DE 50,50,50,125.49,,KG,125.49,136.78,Barre
-70793,CARRE PLEIN DE 6,6,6,1.791,,KG,1.791,1.95,Barre
 70807,CARRE PLEIN DE 60,60,60,181.007,,KG,181.007,226.26,Barre
