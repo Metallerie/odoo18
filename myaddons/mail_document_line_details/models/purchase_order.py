@@ -1,6 +1,4 @@
-
 from markupsafe import Markup, escape
-
 from odoo import models
 
 
@@ -28,7 +26,7 @@ class PurchaseOrder(models.Model):
         if not rows:
             return Markup("")
 
-        html = f"""
+        return Markup(f"""
             <div style="margin-top:16px;margin-bottom:16px;">
                 <p><strong>Détail de la commande :</strong></p>
                 <table style="border-collapse:collapse;width:100%;font-size:13px;">
@@ -44,5 +42,4 @@ class PurchaseOrder(models.Model):
                     <tbody>{rows}</tbody>
                 </table>
             </div>
-        """
-        return Markup(html)
+        """)
