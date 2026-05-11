@@ -1,33 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
- <data>
-        <record id="purchase.email_template_edi_purchase" model="mail.template">
-            <field name="body_html" type="html"><![CDATA[
-<div>
-    <p>Bonjour <t t-out="object.partner_id.name or ''"/></p>
+<odoo><data noupdate="1">
 
-    <p>
-        Vous trouverez ci-joint le bon de commande
-        <strong><t t-out="object.name or ''"/></strong>
-        avec la référence :
-        <t t-out="object.partner_ref or ''"/>
-        pour un montant de
-        <strong><t t-out="format_amount(object.amount_total, object.currency_id)"/></strong>
-        de la part de
-        <t t-out="object.company_id.name or ''"/>.
-    </p>
+    <template id="_track_po_line_template">
+        <div>
+            <strong>The ordered quantity has been updated.</strong>
+            <ul>
+                <li><t t-esc="line.product_id.display_name"/>:</li>
+                Ordered Quantity: <t t-esc="line.product_qty" /> -&gt; <t t-esc="float(product_qty)"/><br/>
+                <t t-if='line.order_id.product_id.type != "consu"'>
+                    Received Quantity: <t t-esc="line.qty_received" /><br/>
+                </t>
+                Billed Quantity: <t t-esc="line.qty_invoiced"/>
+            </ul>
+        </div>
+    </template>
 
-    <p>
-        La réception est prévue le
-        <strong><t t-out="format_date(object.date_planned)"/></strong>.
-    </p>
+    <template id="track_po_line_qty_received_template">
+        <div>
+            <strong>The received quantity has been updated.</strong>
+            <ul>
+                <li><t t-esc="line.product_id.display_name"/>:</li>
+                Received Quantity: <t t-esc="line.qty_received" /> -&gt; <t t-esc="float(qty_received)"/><br/>
+            </ul>
+        </div>
+    </template>
 
-    <t t-out="object._get_mail_line_details_html()"/>
-
-    <p>Pourriez-vous confirmer la bonne réception de cette commande ?</p>
-</div>
-            ]]></field>
-        </record>
-
-    </data>
-</odoo>
+</data></odoo>
