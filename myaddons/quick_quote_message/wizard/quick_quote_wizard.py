@@ -103,7 +103,7 @@ class QuickQuoteWizard(models.TransientModel):
 
             if has_out_of_stock:
                 parts.append("")
-                parts.append("Pour les commandes hors stock, veuillez passer commande en ligne. Confirmation avant lundi pour l’arrivage de mardi.")
+                parts.append("Pour les commandes hors stock, Vous pouvez passer commande en ligne. Confirmation avant lundi pour l’arrivage de mardi.")
                 parts.append("https://www.metallerie.xyz/shop ou La Métallerie – Corneilla-del-Vercol.")
 
             parts.append("")
