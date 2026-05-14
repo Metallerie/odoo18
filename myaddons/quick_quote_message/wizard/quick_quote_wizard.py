@@ -48,10 +48,7 @@ class QuickQuoteWizard(models.TransientModel):
         for wizard in self:
             parts = [
                 "Bonjour,",
-                "",
-                "Merci pour votre demande.",
-                "",
-                "Voici la proposition pour le matériel :",
+                "Voici le détail pour votre demande : :",
                 "",
             ]
 
@@ -109,15 +106,13 @@ class QuickQuoteWizard(models.TransientModel):
             if has_out_of_stock:
                 parts.append("")
                 parts.append(
-                    "Pour les produits sur commande, merci de confirmer avant lundi "
-                    "pour l’arrivage de mardi."
+                    "Arrivage tous les mardi."
                 )
-                parts.append("Commande possible sur : https://www.metallerie.xyz/shop")
+                parts.append("Commande possible sur le site internet de la Métallerie : https://www.metallerie.xyz/shop")
 
             parts.append("")
             parts.append("Retrait à l’atelier : La Métallerie, Corneilla-del-Vercol")
             parts.append("Tél. 06 25 15 91 20")
-            parts.append("")
             parts.append("TVA non applicable, art. 293 B du CGI")
             parts.append("Plus de prix sur : metallerie.xyz/shop")
 
@@ -127,6 +122,8 @@ class QuickQuoteWizard(models.TransientModel):
         raw_name = (line.name or "").strip()
         raw_lines = [l.strip() for l in raw_name.splitlines() if l.strip()]
 
+        product_label = ""
+
         if raw_lines:
             product_label = raw_lines[0]
             inline_notes = raw_lines[1:]
@@ -134,13 +131,28 @@ class QuickQuoteWizard(models.TransientModel):
             product_label = (line.product_id.name or "").strip()
             inline_notes = []
 
-        # Enlève la référence produit : [71651]
+        # Enlève la référence produit au début : [71651]
         if product_label.startswith("[") and "]" in product_label:
             product_label = product_label.split("]", 1)[1].strip()
 
         return product_label, inline_notes
 
     def _format_inline_notes(self, inline_notes):
+        """
+        Transforme les lignes techniques Odoo en texte lisible client.
+
+        Exemple source :
+        Nombre de coupes: Quantité: 2
+        Longueur de coupe (en mètre): Dimension: 3
+        Calcule quantité: Longueur totale coupée: 6
+        Relicat: Chute:
+
+        Exemple rendu :
+        Découpe prévue :
+        - 2 morceaux de 3 m
+        - Longueur totale coupée : 6 m
+        - Chute / reliquat : à calculer
+        """
         formatted = []
 
         cut_qty = False
@@ -177,149 +189,30 @@ class QuickQuoteWizard(models.TransientModel):
             formatted.append("Découpe prévue :")
 
             if cut_qty and cut_length:
-                formatted.append(
-                    f"- {cut_qty} morceaux de {self._format_meter_value(cut_length)}"
-                )
+                formatted.append(f"- {cut_qty} morceaux de {self._format_meter_value(cut_length)}")
             elif cut_qty:
                 formatted.append(f"- Nombre de morceaux : {cut_qty}")
             elif cut_length:
-                formatted.append(
-                    f"- Longueur de coupe : {self._format_meter_value(cut_length)}"
-                )
+                formatted.append(f"- Longueur de coupe : {self._format_meter_value(cut_length)}")
 
             if total_length:
                 formatted.append(
                     f"- Longueur totale coupée : {self._format_meter_value(total_length)}"
                 )
 
-            if has_relicat and cut_qty and cut_length:
-                self._append_cutting_plan(
-                    formatted=formatted,
-                    cut_qty=cut_qty,
-                    cut_length=cut_length,
-                )
-            elif has_relicat:
+            if has_relicat:
                 formatted.append("- Chute / reliquat : à calculer")
 
         return formatted
 
-    def _append_cutting_plan(self, formatted, cut_qty, cut_length):
-        """
-        Ajoute le calcul de chute/reliquat dans les lignes du devis.
-        Pour l’instant conditionnement fixe à 6,15 m.
-        """
-        conditionnement = 6.15
-
-        try:
-            qty_int = int(float(str(cut_qty).replace(",", ".")))
-            length_float = float(str(cut_length).replace(",", "."))
-
-            plan = self._compute_cutting_plan(
-                quantity=qty_int,
-                piece_length=length_float,
-                conditionnement=conditionnement,
-            )
-
-            if not plan or not plan.get("total_bars"):
-                formatted.append("- Chute / reliquat : à calculer")
-                return
-
-            formatted.append(
-                f"- Conditionnement utilisé : "
-                f"{plan['total_bars']} barre(s) de {self._format_meter_value(conditionnement)}"
-            )
-
-            scraps = self._group_lengths(plan.get("scraps", []))
-            stockable = self._group_lengths(plan.get("stockable", []))
-
-            if scraps:
-                formatted.append("- Chutes facturées :")
-                for scrap in scraps:
-                    formatted.append(f"  • {scrap}")
-
-            if stockable:
-                formatted.append("- Reliquats conservés atelier :")
-                for stock in stockable:
-                    formatted.append(f"  • {stock}")
-
-        except Exception:
-            formatted.append("- Chute / reliquat : erreur de calcul")
-
-    def _compute_cutting_plan(self, quantity, piece_length, conditionnement):
-        """
-        Calcul simple de débit par barre.
-
-        Règle :
-        - on calcule combien de morceaux rentrent dans une barre
-        - on débite barre par barre
-        - les mètres entiers du reste sont conservés atelier
-        - la partie inférieure à 1 m est considérée comme chute facturée
-        """
-        result = {
-            "bars": [],
-            "total_bars": 0,
-            "scraps": [],
-            "stockable": [],
-        }
-
-        if quantity <= 0 or piece_length <= 0 or conditionnement <= 0:
-            return result
-
-        pieces_per_bar = int(conditionnement // piece_length)
-
-        if pieces_per_bar <= 0:
-            return result
-
-        remaining_pieces = int(quantity)
-
-        while remaining_pieces > 0:
-            current_pieces = min(pieces_per_bar, remaining_pieces)
-
-            used_length = round(current_pieces * piece_length, 2)
-            remainder = round(conditionnement - used_length, 2)
-
-            stock_part = int(remainder)
-            scrap_part = round(remainder - stock_part, 2)
-
-            bar_data = {
-                "pieces": current_pieces,
-                "used_length": used_length,
-                "remainder": remainder,
-                "stockable": stock_part,
-                "scrap": scrap_part,
-            }
-
-            result["bars"].append(bar_data)
-
-            if stock_part > 0:
-                result["stockable"].append(float(stock_part))
-
-            if scrap_part > 0:
-                result["scraps"].append(scrap_part)
-
-            remaining_pieces -= current_pieces
-
-        result["total_bars"] = len(result["bars"])
-
-        return result
-
-    def _group_lengths(self, values):
-        grouped = {}
-
-        for value in values:
-            value = round(float(value), 2)
-            grouped[value] = grouped.get(value, 0) + 1
-
-        result = []
-
-        for length, qty in sorted(grouped.items()):
-            formatted_length = self._format_meter_value(length)
-            result.append(f"{qty} x {formatted_length}")
-
-        return result
-
     def _format_meter_value(self, value):
-        value = str(value or "").strip().replace(",", ".")
+        """
+        Formate une valeur en mètres pour éviter :
+        3 -> 3 m
+        3.5 -> 3,5 m
+        3,5 -> 3,5 m
+        """
+        value = (value or "").strip().replace(",", ".")
 
         try:
             number = float(value)
