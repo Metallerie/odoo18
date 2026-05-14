@@ -48,10 +48,7 @@ class QuickQuoteWizard(models.TransientModel):
         for wizard in self:
             parts = [
                 "Bonjour,",
-                "",
-                "Merci pour votre demande.",
-                "",
-                "Voici la proposition pour le matériel :",
+                "Voici le détail pour votre demande : :",
                 "",
             ]
 
@@ -109,15 +106,13 @@ class QuickQuoteWizard(models.TransientModel):
             if has_out_of_stock:
                 parts.append("")
                 parts.append(
-                    "Pour les produits sur commande, merci de confirmer avant lundi "
-                    "pour l’arrivage de mardi."
+                    "Arrivage tous les mardi."
                 )
-                parts.append("Commande possible sur : https://www.metallerie.xyz/shop")
+                parts.append("Commande possible sur le site internet de la Métallerie : https://www.metallerie.xyz/shop")
 
             parts.append("")
             parts.append("Retrait à l’atelier : La Métallerie, Corneilla-del-Vercol")
             parts.append("Tél. 06 25 15 91 20")
-            parts.append("")
             parts.append("TVA non applicable, art. 293 B du CGI")
             parts.append("Plus de prix sur : metallerie.xyz/shop")
 
