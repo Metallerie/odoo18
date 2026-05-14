@@ -132,7 +132,7 @@ class QuickQuoteWizard(models.TransientModel):
         raw_name = (line.name or "").strip()
         raw_lines = [l.strip() for l in raw_name.splitlines() if l.strip()]
 
-        product_label = (line.product_id.display_name or "").strip()
+        product_label = (line.product_id.name or "").strip()
 
         if not product_label and raw_lines:
             product_label = raw_lines[0]
