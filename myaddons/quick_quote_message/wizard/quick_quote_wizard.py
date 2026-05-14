@@ -124,30 +124,21 @@ class QuickQuoteWizard(models.TransientModel):
             wizard.generated_text = "\n".join(parts).strip()
 
     def _split_product_and_notes(self, line):
-        """
-        Retourne :
-        - le libellé produit propre
-        - les lignes complémentaires éventuelles venant du champ name
-        """
         raw_name = (line.name or "").strip()
         raw_lines = [l.strip() for l in raw_name.splitlines() if l.strip()]
 
-        product_label = (line.product_id.name or "").strip()
-
-        if not product_label and raw_lines:
-            product_label = raw_lines[0]
-
-        inline_notes = []
+        product_label = ""
 
         if raw_lines:
-            first_line = raw_lines[0]
-            if product_label and first_line == product_label:
-                inline_notes = raw_lines[1:]
-            elif product_label:
-                inline_notes = raw_lines
-            else:
-                product_label = first_line
-                inline_notes = raw_lines[1:]
+            product_label = raw_lines[0]
+            inline_notes = raw_lines[1:]
+        else:
+            product_label = (line.product_id.name or "").strip()
+            inline_notes = []
+
+        # Enlève la référence produit au début : [71651]
+        if product_label.startswith("[") and "]" in product_label:
+            product_label = product_label.split("]", 1)[1].strip()
 
         return product_label, inline_notes
 
