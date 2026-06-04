@@ -85,14 +85,20 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "- si default_code n'existe pas, la variante est créée via l'attribut",
                     "- l'unité principale du produit n'est jamais modifiée",
                     "",
-                    "Calcul coût d'achat :",
-                    "standard_price Odoo = standard_price CSV / product_length",
+                    "Calcul coût d'achat selon purchase_unit :",
+                    "- Tube / Barre : standard_price Odoo = prix CSV / longueur",
+                    "- Tôle / Tole : standard_price Odoo = prix CSV",
+                    "- Autre : standard_price Odoo = prix CSV",
                     "",
                     "Calcul prix de vente :",
-                    "prix vente ML = standard_price Odoo × coefficient",
+                    "prix vente = standard_price Odoo × coefficient",
                     "",
-                    "purchase_unit sert à créer le conditionnement.",
-                    "Exemple : purchase_unit=Tube et factor=6.15 => 1 Tube = 6.15 ML",
+                    "Le script met aussi à jour list_price sur les variantes.",
+                    "Le list_price du template est mis au prix minimum des variantes actives.",
+                    "",
+                    "purchase_unit sert à créer le conditionnement et à choisir le calcul.",
+                    "Exemple Tube : purchase_unit=Tube et factor=6.15 => prix au ML",
+                    "Exemple Tôle : purchase_unit=TÔLE => prix à la tôle complète",
                 ]
             )
 
@@ -202,20 +208,18 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
                 created_variants += 1
 
-            product_length = self._get_product_length_for_price_from_dimensions(
+            computed_standard_price = self._compute_standard_price(
                 variant=variant,
+                supplier_price=supplier_price,
+                purchase_unit=purchase_unit,
                 dimensions=dimensions,
                 factor=factor,
-            )
-
-            standard_price_ml = (
-                supplier_price / product_length if product_length else supplier_price
             )
 
             self._write_variant_data(
                 variant=variant,
                 default_code=default_code,
-                standard_price=standard_price_ml,
+                standard_price=computed_standard_price,
                 factor=factor,
                 dimensions=dimensions,
             )
@@ -233,7 +237,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
             pricelist_item, created = self._create_or_update_pricelist_item(
                 variant=variant,
-                standard_price=standard_price_ml,
+                standard_price=computed_standard_price,
             )
 
             if created:
@@ -246,7 +250,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         if self.remove_missing_pricelist_items:
             self._remove_missing_pricelist_items(imported_codes)
-            
+
+        self._update_template_list_price()
+
         self.template_id.last_variant_import_date = fields.Datetime.now()
         
         return {
@@ -437,6 +443,8 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if self.update_standard_price:
             vals["standard_price"] = standard_price
 
+        vals["list_price"] = standard_price * self.coefficient
+
         if "product_factor" in variant._fields:
             vals["product_factor"] = factor
 
@@ -580,6 +588,51 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             return variant.product_tmpl_id.product_length
 
         return factor or 1.0
+
+    def _normalize_purchase_unit(self, purchase_unit):
+        value = self._clean_str(purchase_unit).upper()
+        value = value.replace("É", "E").replace("È", "E").replace("Ê", "E")
+        return value
+
+    def _compute_standard_price(
+        self,
+        variant,
+        supplier_price,
+        purchase_unit,
+        dimensions=None,
+        factor=1.0,
+    ):
+        """Calcule le coût unitaire Odoo selon le type d'achat.
+
+        - TUBE / BARRE : le prix fournisseur est le prix du conditionnement complet,
+          donc on divise par la longueur pour obtenir un prix au mètre.
+        - TOLE / TÔLE : le prix fournisseur est gardé tel quel, car on vend la tôle complète.
+        - Autres cas : le prix fournisseur est gardé tel quel.
+        """
+        unit = self._normalize_purchase_unit(purchase_unit)
+
+        if unit in ("TUBE", "BARRE"):
+            product_length = self._get_product_length_for_price_from_dimensions(
+                variant=variant,
+                dimensions=dimensions,
+                factor=factor,
+            )
+            return supplier_price / product_length if product_length else supplier_price
+
+        if unit in ("TOLE", "TOLES", "TÔLE", "TÔLES"):
+            return supplier_price
+
+        return supplier_price
+
+    def _update_template_list_price(self):
+        self.ensure_one()
+
+        prices = self.template_id.product_variant_ids.filtered(
+            lambda product: product.active and product.list_price > 0
+        ).mapped("list_price")
+
+        if prices:
+            self.template_id.list_price = min(prices)
 
     def _create_or_update_pricelist_item(self, variant, standard_price):
         fixed_price = standard_price * self.coefficient
