@@ -94,7 +94,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                     "prix vente = standard_price Odoo × coefficient",
                     "",
                     "Le script met aussi à jour list_price sur les variantes.",
-                    "Le list_price du template est mis au prix minimum des variantes actives.",
+                    "Le list_price du template est mis au prix minimum de la pricelist sélectionnée.",
                     "",
                     "purchase_unit sert à créer le conditionnement et à choisir le calcul.",
                     "Exemple Tube : purchase_unit=Tube et factor=6.15 => prix au ML",
@@ -627,12 +627,19 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     def _update_template_list_price(self):
         self.ensure_one()
 
-        prices = self.template_id.product_variant_ids.filtered(
-            lambda product: product.active and product.list_price > 0
-        ).mapped("list_price")
+        items = self.env["product.pricelist.item"].search(
+            [
+                ("pricelist_id", "=", self.pricelist_id.id),
+                ("product_id", "in", self.template_id.product_variant_ids.ids),
+                ("compute_price", "=", "fixed"),
+                ("fixed_price", ">", 0),
+            ]
+        )
+
+        prices = items.mapped("fixed_price")
 
         if prices:
-            self.template_id.list_price = min(prices)
+            self.template_id.write({"list_price": min(prices)})
 
     def _create_or_update_pricelist_item(self, variant, standard_price):
         fixed_price = standard_price * self.coefficient
