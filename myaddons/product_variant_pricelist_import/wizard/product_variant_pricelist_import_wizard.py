@@ -612,7 +612,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         """
         unit = self._normalize_purchase_unit(purchase_unit)
 
-        if unit in ("TUBE", "BARRE"):
+        if unit in ("TUBE", "BARRE", "PROFIL"):
             product_length = self._get_product_length_for_price_from_dimensions(
                 variant=variant,
                 dimensions=dimensions,
