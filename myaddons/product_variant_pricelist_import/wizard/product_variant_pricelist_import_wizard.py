@@ -364,6 +364,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             [
                 ("default_code", "=", default_code),
                 ("product_tmpl_id", "!=", self.template_id.id),
+                ("product_tmpl_id.active", "=", True),
             ],
             limit=1,
         )
