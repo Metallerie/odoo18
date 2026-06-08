@@ -12,7 +12,7 @@ backup/*.sql
 logs-archive/
 odoo-server.log
 nginx_metal.error.log
-
+.ccl_password
 # Python
 __pycache__/
 *.pyc
