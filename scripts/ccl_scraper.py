@@ -89,13 +89,15 @@ def read_password():
     
 def main():
     page_url = input("URL page CCL : ").strip()
+    password = read_password()
 
+    csv_name = get_csv_name_from_url(page_url)
 
     csv_path = os.path.join(CSV_DIR, csv_name)
     os.makedirs(CSV_DIR, exist_ok=True)
 
     rows = []
-
+    
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
