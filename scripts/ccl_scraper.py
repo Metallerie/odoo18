@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 CSV_DIR = "/data/odoo/metal-odoo18-p8179/csv"
 LOGIN_URL = "https://pro.ccl.fr/identification"
 EMAIL = "franckbardina@free.fr"
-PASSWORD_FILE = "/data/odoo/metal-odoo18-p8179.ccl_password"
+PASSWORD_FILE = "/data/odoo/metal-odoo18-p8179/.ccl_password"
 
 def extract_float(value, default=0.0):
     try:
