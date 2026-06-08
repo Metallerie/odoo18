@@ -4,8 +4,9 @@
 import csv
 import os
 import re
-from getpass import getpass
 import time
+from urllib.parse import urlparse
+from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
@@ -13,7 +14,7 @@ from playwright.sync_api import sync_playwright
 CSV_DIR = "/data/odoo/metal-odoo18-p8179/csv"
 LOGIN_URL = "https://pro.ccl.fr/identification"
 EMAIL = "franckbardina@free.fr"
-
+PASSWORD_FILE = "/data/odoo/metal-odoo18-p8179.ccl_password"
 
 def extract_float(value, default=0.0):
     try:
@@ -73,14 +74,22 @@ def normalize_purchase_unit(name, uom_code):
 
     return "Barre"
 
+def get_csv_name_from_url(page_url):
+    path = urlparse(page_url).path.strip("/")
+    slug = path.split("/")[-1]
+    slug = re.sub(r"[^a-zA-Z0-9_-]", "", slug)
+    return f"{slug}.csv"
 
+
+def read_password():
+    password_path = Path(PASSWORD_FILE)
+    if not password_path.exists():
+        raise FileNotFoundError(f"Fichier mot de passe introuvable : {PASSWORD_FILE}")
+    return password_path.read_text(encoding="utf-8").strip()
+    
 def main():
-    csv_name = input("Nom du CSV : ").strip()
     page_url = input("URL page CCL : ").strip()
-    password = getpass("Mot de passe : ")
 
-    if not csv_name.lower().endswith(".csv"):
-        csv_name += ".csv"
 
     csv_path = os.path.join(CSV_DIR, csv_name)
     os.makedirs(CSV_DIR, exist_ok=True)
