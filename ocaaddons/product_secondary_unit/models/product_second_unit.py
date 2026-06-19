@@ -46,4 +46,5 @@ class ProductSecondaryUnit(models.Model):
     @api.depends("name", "factor")
     def _compute_display_name(self):
         for unit in self:
-            unit.display_name = f"{unit.name}-{unit.factor}"
+        #    unit.display_name = f"{unit.name}-{unit.factor}"
+            unit.display_name = unit.uom_id.name
