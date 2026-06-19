@@ -613,17 +613,22 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         unit = self._normalize_purchase_unit(purchase_unit)
 
         if unit in ("TUBE", "BARRE", "PROFIL"):
-            product_length = self._get_product_length_for_price_from_dimensions(
-                variant=variant,
-                dimensions=dimensions,
-                factor=factor,
-            )
-            return supplier_price / product_length if product_length else supplier_price
+            product_uom = (variant.uom_id.name or "").upper()
 
-        if unit in ("TOLE", "TOLES", "TÔLE", "TÔLES"):
-            return supplier_price
+            # Si le produit est stocké/acheté en KG :
+            # prix CSV = prix de la barre
+            # factor = poids de la barre
+            # donc coût Odoo = €/KG
+        if product_uom == "KG" and factor:
+            return supplier_price / factor
 
-        return supplier_price
+            # Sinon logique ancienne : coût au mètre
+        product_length = self._get_product_length_for_price_from_dimensions(
+            variant=variant,
+            dimensions=dimensions,
+            factor=factor,
+        )
+        return supplier_price / product_length if product_length else supplier_price
 
     def _update_template_list_price(self):
         self.ensure_one()
