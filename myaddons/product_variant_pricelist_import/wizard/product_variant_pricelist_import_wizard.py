@@ -439,14 +439,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         return False
 
-    def _write_variant_data(
-        self,
-        variant,
-        default_code,
-        standard_price,
-        factor,
-        dimensions=None,
-    ):
+    def _write_variant_data(self, variant, default_code, standard_price, sale_price, factor, dimensions=None):
         vals = {
             "default_code": default_code,
         }
@@ -660,12 +653,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
     def _create_or_update_pricelist_item(self, variant, sale_price):
     fixed_price = sale_price * self.coefficient
     
-        item = self.env["product.pricelist.item"].search(
-            [
-                ("pricelist_id", "=", self.pricelist_id.id),
-                ("product_id", "=", variant.id),
-            ],
-            limit=1,
+        pricelist_item, created = self._create_or_update_pricelist_item(
+            variant=variant,
+            sale_price=computed_sale_price,
         )
 
         vals = {
