@@ -215,11 +215,19 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 dimensions=dimensions,
                 factor=factor,
             )
+            computed_sale_price = self._compute_sale_base_price(
+                variant=variant,
+                supplier_price=supplier_price,
+                purchase_unit=purchase_unit,
+                dimensions=dimensions,
+                factor=factor,
+            )
 
             self._write_variant_data(
                 variant=variant,
                 default_code=default_code,
                 standard_price=computed_standard_price,
+                sale_price=computed_sale_price,
                 factor=factor,
                 dimensions=dimensions,
             )
@@ -238,6 +246,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             pricelist_item, created = self._create_or_update_pricelist_item(
                 variant=variant,
                 standard_price=computed_standard_price,
+                sale_price=computed_sale_price
             )
 
             if created:
@@ -671,7 +680,30 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
             return item, False
 
         return self.env["product.pricelist.item"].create(vals), True
+        
+    def _compute_sale_base_price(self, variant, supplier_price, purchase_unit, dimensions=None, factor=1.0):
+    unit = self._normalize_purchase_unit(purchase_unit)
 
+    # Achat par conditionnement : barre / tube / profil
+    if unit in ("TUBE", "BARRE", "PROFIL"):
+        if variant.sale_secondary_uom_id:
+            length = self._get_product_length_for_price_from_dimensions(
+                variant=variant,
+                dimensions=dimensions,
+                factor=factor,
+            )
+            return supplier_price / length if length else supplier_price
+
+        return self._compute_standard_price(
+            variant=variant,
+            supplier_price=supplier_price,
+            purchase_unit=purchase_unit,
+            dimensions=dimensions,
+            factor=factor,
+        )
+
+    return supplier_price
+    
     def _archive_missing_variants(self, imported_codes):
         for variant in self.template_id.product_variant_ids:
             if variant.default_code and variant.default_code not in imported_codes:
