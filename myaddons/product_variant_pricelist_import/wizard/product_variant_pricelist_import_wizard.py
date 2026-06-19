@@ -230,6 +230,7 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
                 sale_price=computed_sale_price,
                 factor=factor,
                 dimensions=dimensions,
+                vals["list_price"] = sale_price * self.coefficient
             )
 
             packaging, packaging_created = self._create_or_update_packaging(
@@ -656,9 +657,9 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
         if prices:
             self.template_id.write({"list_price": min(prices)})
 
-    def _create_or_update_pricelist_item(self, variant, standard_price):
-        fixed_price = standard_price * self.coefficient
-
+    def _create_or_update_pricelist_item(self, variant, sale_price):
+    fixed_price = sale_price * self.coefficient
+    
         item = self.env["product.pricelist.item"].search(
             [
                 ("pricelist_id", "=", self.pricelist_id.id),
@@ -721,5 +722,23 @@ class ProductVariantPricelistImportWizard(models.TransientModel):
 
         for item in items:
             if item.product_id.product_tmpl_id == self.template_id:
+
+    def _compute_sale_price(
+        self, variant, supplier_price, purchase_unit, dimensions=None, factor=1.0
+    ):
+        unit = self._normalize_purchase_unit(purchase_unit)
+
+        if unit in ("TUBE", "BARRE", "PROFIL") and self.product_secondary_uom_id:
+            product_length = self._get_product_length_for_price_from_dimensions(
+                variant=variant,
+                dimensions=dimensions,
+                factor=factor,
+            )
+            return supplier_price / product_length if product_length else supplier_price
+
+        return supplier_price
+
+
+        
                 if item.product_id.default_code not in imported_codes:
                     item.unlink()
