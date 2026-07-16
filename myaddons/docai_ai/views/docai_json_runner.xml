@@ -52,10 +52,10 @@
 
         <!-- Crée débit/crédit dans la pièce comptable -->
         <button name="action_docai_create_bank_receipt_move_lines"
-                type="object"
-                string="Créer écriture bancaire"
-                class="btn-secondary"
-                invisible="move_type != 'entry' or state != 'draft' or not docai_json"/>
+        type="object"
+        string="Créer écriture bancaire"
+        class="oe_highlight"
+        invisible="move_type != 'entry' or state != 'draft'"/>
 
       </xpath>
 
