@@ -296,7 +296,7 @@ class AccountMoveBankReceipt(models.Model):
         )
         cash_code = ICP.get_param(
             "docai_ai.cash_account_code",
-            "531000",
+            "530000",
         )
 
         Account = self.env["account.account"].sudo()
