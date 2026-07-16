@@ -21,7 +21,11 @@ class AccountMove(models.Model):
 
     docai_json_raw = fields.Text("JSON complet DocAI", readonly=True)
     docai_json = fields.Text("JSON formaté DocAI", readonly=True)
-    docai_analyzed = fields.Boolean("Analysée par DocAI", default=False, readonly=True)
+    docai_analyzed = fields.Boolean(
+        "Analysée par DocAI",
+        default=False,
+        readonly=True,
+    )
 
     # -------------------------------------------------------------------------
     # MODELE DE SORTIE STABLE
@@ -168,7 +172,7 @@ class AccountMove(models.Model):
 
     def _build_formatted_json(self, parsed):
         """
-        Version formatée en fields avec structure stable.
+        Version formatée avec structure stable.
         Tous les champs attendus existent, même absents dans DocAI.
         """
         result = self._docai_empty_formatted_json()
@@ -177,7 +181,6 @@ class AccountMove(models.Model):
             entity_type = entity.get("type")
             props = entity.get("properties", []) or []
 
-            # line items
             if entity_type == "line_item":
                 item = self._docai_empty_line_item()
                 self._docai_format_properties_into(item, props)
@@ -185,7 +188,6 @@ class AccountMove(models.Model):
                 result["line_items"].append(item)
                 continue
 
-            # TVA
             if entity_type == "vat":
                 vat = self._docai_empty_vat_item()
                 self._docai_format_properties_into(vat, props)
@@ -193,7 +195,6 @@ class AccountMove(models.Model):
                 result["vat"].append(vat)
                 continue
 
-            # Entités simples
             key = self._docai_field_name(entity_type)
             value = self._docai_entity_to_field_value(entity)
 
@@ -208,31 +209,53 @@ class AccountMove(models.Model):
                         result[key] = [result[key]]
                     result[key].append(value)
             else:
-                # garde aussi les champs imprévus de DocAI
                 result[key] = value
 
         return result
 
+    def _docai_enrich_formatted_json(self, parsed, formatted):
+        """
+        Point d'extension neutre.
+
+        Les fichiers spécialisés, par exemple account_move_bank_receipt.py,
+        peuvent surcharger cette méthode pour enrichir le JSON simplifié sans
+        casser le traitement normal des factures et tickets de caisse.
+        """
+        return formatted
+
     # -------------------------------------------------------------------------
     # ESSAI AVEC UN PROCESSOR DONNE
     # -------------------------------------------------------------------------
-    def _try_processor(self, pdf_content, processor_id, label, project_id, location, key_path):
+    def _try_processor(
+        self,
+        pdf_content,
+        processor_id,
+        label,
+        project_id,
+        location,
+        key_path,
+    ):
         """Tente une analyse avec un processor spécifique."""
         try:
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
 
             client = documentai.DocumentProcessorServiceClient(
-                client_options={"api_endpoint": f"{location}-documentai.googleapis.com"}
+                client_options={
+                    "api_endpoint": f"{location}-documentai.googleapis.com"
+                }
             )
 
             raw_document = documentai.RawDocument(
                 content=pdf_content,
-                mime_type="application/pdf"
+                mime_type="application/pdf",
             )
 
             process_request = documentai.ProcessRequest(
-                name=f"projects/{project_id}/locations/{location}/processors/{processor_id}",
-                raw_document=raw_document
+                name=(
+                    f"projects/{project_id}/locations/{location}"
+                    f"/processors/{processor_id}"
+                ),
+                raw_document=raw_document,
             )
 
             result = client.process_document(request=process_request)
@@ -241,15 +264,27 @@ class AccountMove(models.Model):
             parsed = json.loads(raw_json)
 
             if not parsed.get("entities"):
-                _logger.warning(f"[DocAI] {label} -> aucune entité détectée")
+                _logger.warning(
+                    "[DocAI] %s -> aucune entité détectée",
+                    label,
+                )
                 return None, None
 
             formatted = self._build_formatted_json(parsed)
+            formatted = self._docai_enrich_formatted_json(parsed, formatted)
 
-            return raw_json, json.dumps(formatted, indent=2, ensure_ascii=False)
+            return raw_json, json.dumps(
+                formatted,
+                indent=2,
+                ensure_ascii=False,
+            )
 
         except Exception as e:
-            _logger.warning(f"[DocAI] {label} -> erreur lors de l’analyse : {e}")
+            _logger.warning(
+                "[DocAI] %s -> erreur lors de l’analyse : %s",
+                label,
+                e,
+            )
             return None, None
 
     # -------------------------------------------------------------------------
@@ -257,13 +292,24 @@ class AccountMove(models.Model):
     # -------------------------------------------------------------------------
     def analyze_with_fallback(self, pdf_content):
         ICP = self.env["ir.config_parameter"].sudo()
+
         project_id = ICP.get_param("docai_ai.project_id")
         location = ICP.get_param("docai_ai.location", "eu")
         key_path = ICP.get_param("docai_ai.key_path")
-        invoice_processor = ICP.get_param("docai_ai.invoice_processor_id")
-        expense_processor = ICP.get_param("docai_ai.expense_processor_id")
+        invoice_processor = ICP.get_param(
+            "docai_ai.invoice_processor_id"
+        )
+        expense_processor = ICP.get_param(
+            "docai_ai.expense_processor_id"
+        )
 
-        if not all([project_id, location, key_path, invoice_processor, expense_processor]):
+        if not all([
+            project_id,
+            location,
+            key_path,
+            invoice_processor,
+            expense_processor,
+        ]):
             raise UserError(_("Configuration Document AI incomplète."))
 
         raw_json, formatted = self._try_processor(
@@ -296,17 +342,22 @@ class AccountMove(models.Model):
     def action_docai_analyze_attachment(self, force=False):
         self.ensure_one()
 
-        if (self.docai_analyzed and not force) or (self.amount_total and not force):
-            raise UserError(_("Document déjà analysé ou total déjà présent."))
+        if (
+            (self.docai_analyzed and not force)
+            or (self.amount_total and not force)
+        ):
+            raise UserError(
+                _("Document déjà analysé ou total déjà présent.")
+            )
 
         attachment = self.env["ir.attachment"].search([
             ("res_model", "=", "account.move"),
             ("res_id", "=", self.id),
-            ("mimetype", "=", "application/pdf")
+            ("mimetype", "=", "application/pdf"),
         ], limit=1)
 
         if not attachment:
-            raise UserError(_("Aucun PDF trouvé sur cette facture."))
+            raise UserError(_("Aucun PDF trouvé sur cette pièce comptable."))
 
         pdf_content = base64.b64decode(attachment.datas or b"")
         if not pdf_content:
@@ -315,7 +366,9 @@ class AccountMove(models.Model):
         raw_json, formatted, label = self.analyze_with_fallback(pdf_content)
 
         if not raw_json:
-            raise UserError(_("Aucun résultat retourné par Document AI."))
+            raise UserError(
+                _("Aucun résultat retourné par Document AI.")
+            )
 
         vals = {
             "docai_analyzed": True,
@@ -331,7 +384,11 @@ class AccountMove(models.Model):
 
         self.write(vals)
 
-        _logger.info(f"[DocAI] {label} {self.name or self.id} analysé et sauvegardé")
+        _logger.info(
+            "[DocAI] %s %s analysé et sauvegardé",
+            label,
+            self.name or self.id,
+        )
 
         return {
             "type": "ir.actions.client",
@@ -357,13 +414,20 @@ class AccountMove(models.Model):
             ("docai_json", "=", False),
         ], limit=10)
 
-        _logger.info(f"[DocAI CRON] {len(moves)} documents à analyser")
+        _logger.info(
+            "[DocAI CRON] %s documents à analyser",
+            len(moves),
+        )
 
         for move in moves:
             try:
                 move.action_docai_analyze_attachment(force=False)
             except Exception as e:
-                _logger.error(f"[DocAI CRON] Erreur sur {move.name or move.id} : {e}")
+                _logger.error(
+                    "[DocAI CRON] Erreur sur %s : %s",
+                    move.name or move.id,
+                    e,
+                )
 
         return True
 
@@ -389,21 +453,33 @@ class AccountMove(models.Model):
 
 class DocaiDownloadController(http.Controller):
 
-    @http.route("/docai/download/<int:move_id>/<string:kind>", type="http", auth="user")
+    @http.route(
+        "/docai/download/<int:move_id>/<string:kind>",
+        type="http",
+        auth="user",
+    )
     def download_json(self, move_id, kind="min", **kwargs):
         move = request.env["account.move"].browse(move_id)
         if not move.exists():
             return request.not_found()
 
-        content = move.docai_json_raw if kind == "raw" else move.docai_json
+        content = (
+            move.docai_json_raw
+            if kind == "raw"
+            else move.docai_json
+        )
         if not content:
             return request.not_found()
 
         filename = f"document_{move.id}_{kind}.json"
+
         return request.make_response(
             content,
             headers=[
                 ("Content-Type", "application/json"),
-                ("Content-Disposition", f'attachment; filename="{filename}"'),
+                (
+                    "Content-Disposition",
+                    f'attachment; filename="{filename}"',
+                ),
             ],
         )
