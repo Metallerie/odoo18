@@ -65,6 +65,21 @@
                   type="object"
                   string="⬇ Télécharger JSON Simplifié"
                   class="btn-secondary"/>
+
+                 <!-- Reconstruit uniquement la partie bancaire depuis le JSON complet -->
+        <button name="action_docai_enrich_bank_receipt"
+                type="object"
+                string="Enrichir récépissé bancaire"
+                class="oe_highlight"
+                invisible="state != 'draft'"/>
+
+        <!-- Crée débit/crédit dans la pièce comptable -->
+        <button name="action_docai_create_bank_receipt_move_lines"
+        type="object"
+        string="Créer écriture bancaire"
+                 class="oe_highlight"
+                invisible="state != 'draft'"/>
+
         </xpath>
 
       </field>
