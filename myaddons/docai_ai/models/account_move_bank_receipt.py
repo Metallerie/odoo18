@@ -292,7 +292,7 @@ class AccountMoveBankReceipt(models.Model):
         ICP = self.env["ir.config_parameter"].sudo()
         bank_code = ICP.get_param(
             "docai_ai.bank_account_code",
-            "512000",
+            "512001",
         )
         cash_code = ICP.get_param(
             "docai_ai.cash_account_code",
