@@ -7,3 +7,4 @@ from . import account_move_line
 from . import invoice_import_cron
 from . import docai_json_runner
 from . import account_move_journal_target
+from . import account_move_bank_receipt.py
