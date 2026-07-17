@@ -15,7 +15,7 @@ des factures fournisseurs (account.move).
     'website': "http://www.metallerie.xyz",
 
     'category': 'Accounting',
-    'version': '1.0',
+    'version': '1.1.0',
 
     # dépendances nécessaires
     'depends': ['base', 'account'],
