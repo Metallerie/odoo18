@@ -33,6 +33,19 @@
           <group string="Requalification comptable">
             <field name="x_target_journal_code" invisible="state != 'draft'"/>
           </group>
+          <group string="Retrait / Dépôt d'espèces" invisible="move_type != 'entry'">
+            <group>
+              <field name="docai_cash_journal_id" readonly="state != 'draft' or docai_cash_transfer_done"/>
+              <field name="docai_bank_journal_id" readonly="state != 'draft' or docai_cash_transfer_done"/>
+              <field name="docai_transfer_account_id" readonly="state != 'draft' or docai_cash_transfer_done"/>
+            </group>
+            <group>
+              <field name="docai_transfer_reference" readonly="1"/>
+              <field name="docai_linked_move_id" readonly="1"/>
+              <field name="docai_transfer_origin_id" readonly="1"/>
+              <field name="docai_cash_transfer_done" invisible="1"/>
+            </group>
+          </group>
         </xpath>
 
         <!-- Onglets DocAI -->
@@ -66,19 +79,16 @@
                   string="⬇ Télécharger JSON Simplifié"
                   class="btn-secondary"/>
 
-                 <!-- Reconstruit uniquement la partie bancaire depuis le JSON complet -->
-        <button name="action_docai_enrich_bank_receipt"
-                type="object"
-                string="Enrichir récépissé bancaire"
-                class="oe_highlight"
-                invisible="state != 'draft'"/>
-
-        <!-- Crée débit/crédit dans la pièce comptable -->
-        <button name="action_docai_create_bank_receipt_move_lines"
-        type="object"
-        string="Créer écriture bancaire"
-                 class="oe_highlight"
-                invisible="state != 'draft'"/>
+          <button name="action_docai_process_cash_transfer"
+                  type="object"
+                  string="Retrait / Dépôt d'espèces"
+                  class="oe_highlight"
+                  invisible="state != 'draft' or docai_cash_transfer_done"/>
+          <button name="action_docai_open_linked_move"
+                  type="object"
+                  string="Voir la pièce liée"
+                  class="btn-secondary"
+                  invisible="not docai_linked_move_id and not docai_transfer_origin_id"/>
 
         </xpath>
 
