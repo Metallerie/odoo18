@@ -13,3 +13,7 @@ google-cloud-core>=2.0.0
 # gRPC core
 grpcio>=1.60.0
 grpcio-status>=1.60.0
+
+# Annotation PDF des pièces dépôt/retrait (optionnel : fallback sans annotation)
+pypdf>=4.0.0
+reportlab>=4.0.0
